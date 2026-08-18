@@ -53,7 +53,7 @@ Tài khoản dữ liệu mẫu sau khi chạy seed: `demo@nutriplan.vn` / `Demo@
 
 ```bash
 docker compose up -d --build
-docker exec food_app-backend-1 node dist/prisma/seed.js
+docker exec app_food-backend-1 node dist/prisma/seed.js
 ```
 
 Mở `http://localhost:8080`. Migration PostgreSQL được chạy tự động khi backend khởi động.
