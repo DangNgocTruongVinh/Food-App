@@ -1,0 +1,42 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: nutriplan
+      POSTGRES_USER: nutriplan
+      POSTGRES_PASSWORD: nutriplan
+    ports:
+      - "5432:5432"
+    volumes:
+      - nutriplan_postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nutriplan"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build: ./backend
+    environment:
+      NODE_ENV: production
+      PORT: 4000
+      FRONTEND_URL: http://localhost:8080
+      DATABASE_URL: postgresql://nutriplan:nutriplan@postgres:5432/nutriplan?schema=public
+      JWT_SECRET: local-docker-secret-change-before-production-123456
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_MODEL: ${OPENAI_MODEL:-gpt-5-mini}
+    ports:
+      - "4000:4000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
+
+volumes:
+  nutriplan_postgres:
