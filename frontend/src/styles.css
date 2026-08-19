@@ -1685,3 +1685,501 @@ body { background: #f8faf6; }
   .professional-profile-side { grid-template-columns: 1fr; }
   .profile-target-card { grid-row: auto; }
 }
+
+/* Readable type scale for Dashboard, Pantry and Profile */
+.reference-dashboard .overview-welcome .eyebrow { font-size: 10px; }
+.reference-dashboard .overview-welcome h1 { font-size: clamp(30px, 2.8vw, 40px); }
+.reference-dashboard .overview-welcome p { font-size: 14px; }
+.reference-dashboard .overview-search input { font-size: 13px; }
+.reference-dashboard .overview-calorie-chip b { font-size: 14px; }
+.reference-dashboard .overview-calorie-chip small { font-size: 9px; }
+.reference-dashboard .overview-metrics strong { font-size: 25px; }
+.reference-dashboard .overview-metrics article > div > b { font-size: 11px; }
+.reference-dashboard .overview-metrics article > div > small { font-size: 9px; }
+.reference-dashboard .overview-savings-metric span { font-size: 10px; }
+.reference-dashboard .overview-savings-metric small { font-size: 9px; }
+.reference-dashboard .overview-savings-metric b { font-size: 18px; }
+.reference-dashboard .overview-savings-metric em { font-size: 8px; }
+.reference-dashboard .overview-panel > header h2 { font-size: 17px; }
+.reference-dashboard .overview-panel > header > a { font-size: 10px; }
+.reference-dashboard .overview-expiry-row div strong { font-size: 11px; }
+.reference-dashboard .overview-expiry-row div small { font-size: 9px; }
+.reference-dashboard .overview-expiry-row > span:nth-child(3) { font-size: 8px; }
+.reference-dashboard .overview-expiry-row > b { font-size: 8px; }
+.reference-dashboard .overview-recipe-card > div > span { font-size: 8px; }
+.reference-dashboard .overview-recipe-card h3 { font-size: 12px; }
+.reference-dashboard .overview-recipe-card footer small,
+.reference-dashboard .overview-recipe-card footer span { font-size: 8px; }
+.reference-dashboard .overview-today > header > div > span,
+.reference-dashboard .overview-meal-time { font-size: 9px; }
+.reference-dashboard .overview-today-list div div strong { font-size: 10px; }
+.reference-dashboard .overview-today-list div div small { font-size: 8px; }
+.reference-dashboard .overview-outline-button,
+.reference-dashboard .overview-compact-empty p { font-size: 10px; }
+.reference-dashboard .overview-ai-banner .eyebrow { font-size: 10px; }
+.reference-dashboard .overview-ai-banner h2 { font-size: 16px; }
+.reference-dashboard .overview-ai-prompts a { font-size: 9px; }
+
+.pantry-page .pantry-title h1 { font-size: 21px; }
+.pantry-page .pantry-global-search input { font-size: 12px; }
+.pantry-page .pantry-add-button { font-size: 11px; }
+.pantry-page .pantry-hero-copy .eyebrow { font-size: 9px; }
+.pantry-page .pantry-hero-copy h2 { font-size: 22px; }
+.pantry-page .pantry-hero-copy p { font-size: 11px; }
+.pantry-page .pantry-hero-stats strong { font-size: 20px; }
+.pantry-page .pantry-hero-stats b { font-size: 10px; }
+.pantry-page .pantry-hero-stats small { font-size: 8px; }
+.pantry-page .pantry-filter-panel h2,
+.pantry-page .pantry-inventory-panel h2,
+.pantry-page .pantry-insights h2 { font-size: 12px; }
+.pantry-page .pantry-filter-panel button { font-size: 10px; }
+.pantry-page .pantry-filter-panel button b { font-size: 9px; }
+.pantry-page .pantry-filters label { font-size: 9px; }
+.pantry-page .pantry-filters select { font-size: 10px; }
+.pantry-page .pantry-tabs button { font-size: 9px; }
+.pantry-page .pantry-table { min-width: 735px; }
+.pantry-page .pantry-table-head { font-size: 8px; }
+.pantry-page .pantry-table-row,
+.pantry-page .pantry-table-row > strong { font-size: 9px; }
+.pantry-page .pantry-food-name strong { font-size: 10px; }
+.pantry-page .pantry-expiry small,
+.pantry-page .pantry-status { font-size: 8px; }
+.pantry-page .pantry-item-card > small,
+.pantry-page .pantry-item-card footer em { font-size: 8px; }
+.pantry-page .pantry-item-card h3 { font-size: 13px; }
+.pantry-page .pantry-item-card > b { font-size: 11px; }
+.pantry-page .pantry-pagination { font-size: 8px; }
+.pantry-page .pantry-pagination button { font-size: 9px; }
+.pantry-page .pantry-donut strong { font-size: 21px; }
+.pantry-page .pantry-donut small { font-size: 8px; }
+.pantry-page .pantry-overview-card li,
+.pantry-page .pantry-overview-card li b { font-size: 8px; }
+.pantry-page .pantry-tips-card b { font-size: 9px; }
+.pantry-page .pantry-tips-card small,
+.pantry-page .pantry-scan-card p { font-size: 8px; }
+.pantry-page .pantry-scan-card button { font-size: 9px; }
+
+.professional-profile-page .professional-profile-header .eyebrow { font-size: 10px; }
+.professional-profile-page .professional-profile-header p { font-size: 12px; }
+.professional-profile-page .profile-save-top,
+.professional-profile-page .profile-save-bottom { font-size: 11px; }
+.professional-profile-page .profile-identity-copy > span { font-size: 9px; }
+.professional-profile-page .profile-identity-copy h2 { font-size: 20px; }
+.professional-profile-page .profile-identity-copy p { font-size: 9px; }
+.professional-profile-page .profile-summary-tags span { font-size: 8px; }
+.professional-profile-page .profile-completion > div:first-child span { font-size: 9px; }
+.professional-profile-page .profile-completion > div:first-child b { font-size: 10px; }
+.professional-profile-page .profile-completion > small { font-size: 8px; }
+.professional-profile-page .profile-section-header small { font-size: 8px; }
+.professional-profile-page .profile-section-header h2 { font-size: 16px; }
+.professional-profile-page .profile-section-header p { font-size: 9px; }
+.professional-profile-page .profile-fields label { font-size: 10px; }
+.professional-profile-page .profile-fields label > small { font-size: 8px; }
+.professional-profile-page .profile-fields input,
+.professional-profile-page .profile-fields select { height: 44px; font-size: 11px; }
+.professional-profile-page .profile-fields label > div input + em { font-size: 9px; }
+.professional-profile-page .profile-form-actions > span { font-size: 9px; }
+.professional-profile-page .profile-target-card > header small { font-size: 8px; }
+.professional-profile-page .profile-target-card > header h2 { font-size: 14px; }
+.professional-profile-page .profile-calorie-ring strong { font-size: 32px; }
+.professional-profile-page .profile-calorie-ring span { font-size: 9px; }
+.professional-profile-page .profile-target-card > p { font-size: 9px; }
+.professional-profile-page .profile-macros header span { font-size: 9px; }
+.professional-profile-page .profile-macros header b { font-size: 10px; }
+.professional-profile-page .profile-disclaimer { font-size: 8px; }
+.professional-profile-page .profile-health-card > header > div > span { font-size: 9px; }
+.professional-profile-page .profile-health-card footer span { font-size: 9px; }
+.professional-profile-page .profile-health-card footer b { font-size: 8px; }
+.professional-profile-page .profile-ai-card small { font-size: 8px; }
+.professional-profile-page .profile-ai-card h2 { font-size: 11px; }
+.professional-profile-page .profile-ai-card p { font-size: 8px; }
+.professional-profile-page .profile-ai-card a { font-size: 9px; }
+
+@media (max-width: 620px) {
+  .pantry-page .pantry-add-button,
+  .professional-profile-page .profile-save-top { font-size: 0; }
+  .pantry-page .pantry-table-row > [data-label]::before { font-size: 8px; }
+}
+
+/* Standards-based accessible type scale: 12 / 14 / 16 / 20 / 24 / 40 */
+.reference-dashboard,
+.pantry-page,
+.professional-profile-page { font-size: 1rem; line-height: 1.5; }
+
+/* Dashboard */
+.reference-dashboard .overview-welcome .eyebrow { font-size: .75rem; line-height: 1.4; }
+.reference-dashboard .overview-welcome h1 { font-size: clamp(2rem, 3vw, 2.5rem); line-height: 1.15; }
+.reference-dashboard .overview-welcome p { font-size: 1rem; line-height: 1.6; }
+.reference-dashboard .overview-search input { font-size: 1rem; }
+.reference-dashboard .overview-calorie-chip b { font-size: 1rem; }
+.reference-dashboard .overview-calorie-chip small { font-size: .75rem; }
+.reference-dashboard .overview-metrics > article { min-height: 112px; }
+.reference-dashboard .overview-metrics strong { font-size: 1.625rem; }
+.reference-dashboard .overview-metrics article > div > b { font-size: .875rem; line-height: 1.35; }
+.reference-dashboard .overview-metrics article > div > small { font-size: .75rem; line-height: 1.4; }
+.reference-dashboard .overview-savings-metric span { font-size: .875rem; }
+.reference-dashboard .overview-savings-metric small { font-size: .75rem; }
+.reference-dashboard .overview-savings-metric b { font-size: 1.25rem; }
+.reference-dashboard .overview-savings-metric em { font-size: .75rem; }
+.reference-dashboard .overview-panel > header h2 { font-size: 1.125rem; line-height: 1.35; }
+.reference-dashboard .overview-panel > header > a { font-size: .8125rem; }
+.reference-dashboard .overview-expiry-row { min-height: 78px; }
+.reference-dashboard .overview-expiry-row div strong { font-size: .875rem; }
+.reference-dashboard .overview-expiry-row div small { font-size: .75rem; }
+.reference-dashboard .overview-expiry-row > span:nth-child(3) { font-size: .75rem; }
+.reference-dashboard .overview-expiry-row > b { font-size: .6875rem; }
+.reference-dashboard .overview-recipe-card > div > span { font-size: .75rem; }
+.reference-dashboard .overview-recipe-card h3 { font-size: .9375rem; line-height: 1.4; }
+.reference-dashboard .overview-recipe-card footer small,
+.reference-dashboard .overview-recipe-card footer span { font-size: .75rem; }
+.reference-dashboard .overview-today > header > div > span,
+.reference-dashboard .overview-meal-time { font-size: .75rem; }
+.reference-dashboard .overview-today-list > div { min-height: 70px; }
+.reference-dashboard .overview-today-list div div strong { font-size: .875rem; }
+.reference-dashboard .overview-today-list div div small { font-size: .75rem; }
+.reference-dashboard .overview-outline-button,
+.reference-dashboard .overview-compact-empty p { font-size: .875rem; }
+.reference-dashboard .overview-ai-banner .eyebrow { font-size: .75rem; }
+.reference-dashboard .overview-ai-banner h2 { font-size: 1.125rem; line-height: 1.4; }
+.reference-dashboard .overview-ai-prompts a { font-size: .8125rem; line-height: 1.35; }
+
+/* Pantry */
+.pantry-page .pantry-title h1 { font-size: 1.5rem; }
+.pantry-page .pantry-global-search { height: 46px; }
+.pantry-page .pantry-global-search input { font-size: 1rem; }
+.pantry-page .pantry-add-button { min-height: 44px; font-size: .875rem; }
+.pantry-page .pantry-hero { min-height: 225px; }
+.pantry-page .pantry-hero-copy .eyebrow { font-size: .75rem; }
+.pantry-page .pantry-hero-copy h2 { font-size: 1.5rem; line-height: 1.3; }
+.pantry-page .pantry-hero-copy p { font-size: .875rem; line-height: 1.5; }
+.pantry-page .pantry-hero-stats article { min-height: 88px; }
+.pantry-page .pantry-hero-stats strong { font-size: 1.5rem; }
+.pantry-page .pantry-hero-stats b { font-size: .875rem; }
+.pantry-page .pantry-hero-stats small { font-size: .75rem; }
+.pantry-page .pantry-layout { grid-template-columns: 205px minmax(0, 1fr) 270px; }
+.pantry-page .pantry-filter-panel h2,
+.pantry-page .pantry-inventory-panel h2,
+.pantry-page .pantry-insights h2 { font-size: 1rem; line-height: 1.4; }
+.pantry-page .pantry-filter-panel button { min-height: 42px; font-size: .875rem; }
+.pantry-page .pantry-filter-panel button b { font-size: .75rem; }
+.pantry-page .pantry-filters { gap: 15px; }
+.pantry-page .pantry-filters label { font-size: .875rem; }
+.pantry-page .pantry-filters select { height: 42px; font-size: .875rem; }
+.pantry-page .pantry-inventory-toolbar { min-height: 64px; }
+.pantry-page .pantry-tabs button { min-height: 38px; font-size: .8125rem; }
+.pantry-page .pantry-table { min-width: 920px; grid-template-columns: minmax(155px, 1.35fr) minmax(100px, .82fr) 88px 120px 112px 108px 54px; }
+.pantry-page .pantry-table-head { min-height: 44px; font-size: .75rem; }
+.pantry-page .pantry-table-row { min-height: 76px; font-size: .8125rem; }
+.pantry-page .pantry-table-row > strong { font-size: .8125rem; }
+.pantry-page .pantry-food-name strong { font-size: .875rem; }
+.pantry-page .pantry-expiry small,
+.pantry-page .pantry-status { font-size: .75rem; }
+.pantry-page .pantry-item-card > small,
+.pantry-page .pantry-item-card footer em { font-size: .75rem; }
+.pantry-page .pantry-item-card h3 { font-size: 1rem; line-height: 1.4; }
+.pantry-page .pantry-item-card > b { font-size: .875rem; }
+.pantry-page .pantry-pagination { min-height: 60px; font-size: .75rem; }
+.pantry-page .pantry-pagination button { min-width: 32px; height: 32px; font-size: .8125rem; }
+.pantry-page .pantry-donut strong { font-size: 1.5rem; }
+.pantry-page .pantry-donut small { font-size: .75rem; }
+.pantry-page .pantry-overview-card li,
+.pantry-page .pantry-overview-card li b { font-size: .75rem; }
+.pantry-page .pantry-tips-card b { font-size: .875rem; }
+.pantry-page .pantry-tips-card small,
+.pantry-page .pantry-scan-card p { font-size: .75rem; line-height: 1.5; }
+.pantry-page .pantry-scan-card button { min-height: 40px; font-size: .875rem; }
+
+/* Profile */
+.professional-profile-page .professional-profile-header .eyebrow { font-size: .75rem; }
+.professional-profile-page .professional-profile-header h1 { font-size: clamp(2rem, 3vw, 2.5rem); }
+.professional-profile-page .professional-profile-header p { font-size: 1rem; line-height: 1.6; }
+.professional-profile-page .profile-save-top,
+.professional-profile-page .profile-save-bottom { min-height: 44px; font-size: .875rem; }
+.professional-profile-page .profile-identity-copy > span { font-size: .75rem; }
+.professional-profile-page .profile-identity-copy h2 { font-size: 1.5rem; line-height: 1.3; }
+.professional-profile-page .profile-identity-copy p { font-size: .875rem; }
+.professional-profile-page .profile-summary-tags span { min-height: 34px; font-size: .75rem; }
+.professional-profile-page .profile-completion > div:first-child span { font-size: .875rem; }
+.professional-profile-page .profile-completion > div:first-child b { font-size: .875rem; }
+.professional-profile-page .profile-completion > small { font-size: .75rem; line-height: 1.5; }
+.professional-profile-page .profile-section-header small { font-size: .75rem; }
+.professional-profile-page .profile-section-header h2 { font-size: 1.25rem; line-height: 1.35; }
+.professional-profile-page .profile-section-header p { font-size: .875rem; line-height: 1.5; }
+.professional-profile-page .profile-fields { gap: 20px; }
+.professional-profile-page .profile-fields label { font-size: .875rem; }
+.professional-profile-page .profile-fields label > small { font-size: .75rem; line-height: 1.5; }
+.professional-profile-page .profile-fields input,
+.professional-profile-page .profile-fields select { height: 50px; font-size: 1rem; }
+.professional-profile-page .profile-fields label > div input + em { font-size: .8125rem; }
+.professional-profile-page .profile-form-actions > span { font-size: .8125rem; line-height: 1.5; }
+.professional-profile-page .profile-target-card > header small { font-size: .75rem; }
+.professional-profile-page .profile-target-card > header h2 { font-size: 1rem; }
+.professional-profile-page .profile-calorie-ring strong { font-size: 2rem; }
+.professional-profile-page .profile-calorie-ring span { font-size: .8125rem; }
+.professional-profile-page .profile-target-card > p { font-size: .8125rem; line-height: 1.55; }
+.professional-profile-page .profile-macros header span { font-size: .8125rem; }
+.professional-profile-page .profile-macros header b { font-size: .875rem; }
+.professional-profile-page .profile-disclaimer { font-size: .75rem; line-height: 1.5; }
+.professional-profile-page .profile-health-card > header > div > span { font-size: .8125rem; }
+.professional-profile-page .profile-health-card footer span { font-size: .8125rem; }
+.professional-profile-page .profile-health-card footer b { font-size: .75rem; }
+.professional-profile-page .profile-ai-card small { font-size: .75rem; }
+.professional-profile-page .profile-ai-card h2 { font-size: .9375rem; line-height: 1.45; }
+.professional-profile-page .profile-ai-card p { font-size: .8125rem; line-height: 1.55; }
+.professional-profile-page .profile-ai-card a { font-size: .8125rem; }
+
+@media (max-width: 1350px) {
+  .pantry-page .pantry-layout { grid-template-columns: 205px minmax(0, 1fr); }
+}
+
+@media (max-width: 1040px) {
+  .pantry-page .pantry-layout { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 620px) {
+  .reference-dashboard .overview-welcome h1,
+  .professional-profile-page .professional-profile-header h1 { font-size: 2rem; }
+  .pantry-page .pantry-add-button,
+  .professional-profile-page .profile-save-top { font-size: 0; }
+  .pantry-page .pantry-hero { min-height: 400px; }
+  .pantry-page .pantry-table { min-width: 0; }
+  .pantry-page .pantry-table-row { font-size: .875rem; }
+  .pantry-page .pantry-table-row > [data-label]::before { font-size: .75rem; }
+}
+
+/* Meal planner — aligned with the supplied Foodly reference */
+.reference-menu-page { max-width: none; padding: 20px 24px 40px; color: #25332c; font-size: 1rem; line-height: 1.5; }
+.menu-search-row { min-height: 50px; margin-bottom: 14px; display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+.menu-global-search { width: min(520px, 48%); height: 48px; padding: 0 13px 0 16px; border: 1px solid #e3e8e1; border-radius: 12px; color: #7f8c85; background: white; display: flex; align-items: center; gap: 10px; }
+.menu-global-search:focus-within { color: #4b9d39; border-color: #abd198; box-shadow: 0 0 0 3px rgba(89,174,60,.08); }
+.menu-global-search > svg { width: 19px; }
+.menu-global-search input { min-width: 0; flex: 1; border: 0; outline: 0; color: #31423a; background: transparent; font-size: .9375rem; }
+.menu-global-search kbd { padding: 3px 6px; border-radius: 6px; color: #7f8984; background: #f3f5f1; font: 600 .75rem Manrope; }
+.menu-generate-controls { display: flex; align-items: center; gap: 8px; }
+.menu-generate-controls input { height: 44px; padding: 0 11px; border: 1px solid #dfe6dd; border-radius: 10px; outline: 0; color: #5c6962; background: white; font-size: .8125rem; }
+.menu-generate-controls input:focus { border-color: #9bc988; }
+.menu-generate-controls button, .menu-hero-empty button { min-height: 44px; padding: 10px 15px; border: 0; border-radius: 10px; color: white; background: linear-gradient(135deg, #65bf3a, #449c2c); display: flex; align-items: center; justify-content: center; gap: 7px; font-size: .8125rem; font-weight: 700; box-shadow: 0 7px 18px rgba(67,151,43,.16); }
+.menu-generate-controls button:hover, .menu-hero-empty button:hover { background: #358a27; }
+.menu-generate-controls button:disabled { opacity: .6; cursor: wait; }
+.menu-generate-controls svg, .menu-hero-empty button svg { width: 16px; }
+.menu-page-error { margin: 0 0 12px; }
+
+.menu-top-grid { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 13px; }
+.menu-hero { position: relative; isolation: isolate; min-height: 235px; padding: 32px 34px; border: 1px solid #e8ede4; border-radius: 16px; background: #f2f7e9 url("/assets/nutrition-hero.jpg") center / cover no-repeat; overflow: hidden; }
+.menu-hero::before { content: ""; position: absolute; z-index: -1; inset: 0; background: linear-gradient(90deg, rgba(249,250,246,.99) 0%, rgba(246,249,235,.94) 43%, rgba(239,247,221,.22) 72%, transparent); }
+.menu-hero::after { content: ""; position: absolute; z-index: -1; width: 230px; height: 230px; left: 42%; bottom: -165px; border-radius: 50%; background: rgba(125,194,76,.11); }
+.menu-hero > div { max-width: 570px; }
+.menu-hero .eyebrow { color: #65aa49; font-size: .75rem; }
+.menu-hero .eyebrow svg { width: 13px; }
+.menu-hero h1 { margin: 13px 0 8px; color: #173a29; font-size: clamp(2.25rem, 3.4vw, 3.25rem); line-height: 1.05; letter-spacing: -2px; }
+.menu-hero p { margin: 0; color: #63716a; font-size: 1rem; line-height: 1.65; }
+.menu-plan-note { max-width: 480px; margin-top: 18px; color: #4f6c5b; display: flex; align-items: flex-start; gap: 7px; font-size: .75rem; line-height: 1.5; }
+.menu-plan-note svg { width: 14px; flex: 0 0 14px; color: #5cac3e; }
+.menu-hero-empty { margin-bottom: 14px; }
+.menu-hero-empty button { width: fit-content; margin-top: 20px; }
+.menu-empty-shell .state { border: 1px solid #e6ebe4; border-radius: 15px; background: white; }
+
+.menu-week-summary { min-height: 235px; padding: 22px; border: 1px solid #e5eae3; border-radius: 16px; background: white; }
+.menu-week-summary > header { margin-bottom: 17px; display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.menu-week-summary > header span { color: #27372f; font-size: 1rem; font-weight: 800; }
+.menu-week-summary > header h2 { margin: 3px 0 0; color: #8a958f; font-size: .75rem; font-weight: 600; }
+.menu-week-summary > header svg { width: 20px; color: #55ab3b; }
+.menu-summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+.menu-summary-grid article { min-height: 74px; padding: 11px; border-radius: 11px; background: #f7faf5; display: flex; align-items: center; gap: 9px; }
+.menu-summary-grid article:nth-child(2) { background: #fff8ef; }
+.menu-summary-grid article:nth-child(3) { background: #f3f9ef; }
+.menu-summary-grid article:nth-child(4) { background: #f7f3fb; }
+.menu-summary-grid article > span { width: 30px; height: 30px; flex: 0 0 30px; border-radius: 9px; color: #55a83d; background: #eaf6e2; display: grid; place-items: center; }
+.menu-summary-grid article > span.calories { color: #ef8633; background: #fff0e3; }
+.menu-summary-grid article > span.balanced { color: #4ba43a; background: #e9f6e5; }
+.menu-summary-grid article > span.progress { color: #8b61c9; background: #efe8f8; }
+.menu-summary-grid svg { width: 15px; }
+.menu-summary-grid strong, .menu-summary-grid small { display: block; }
+.menu-summary-grid strong { color: #25332c; font-size: .9375rem; line-height: 1.2; }
+.menu-summary-grid small { margin-top: 4px; color: #89938e; font-size: .6875rem; }
+
+.menu-content-layout { margin-top: 13px; display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 13px; align-items: start; }
+.menu-schedule-card, .menu-side-column > section { border: 1px solid #e5eae3; border-radius: 16px; background: white; }
+.menu-schedule-card { min-width: 0; padding: 18px; }
+.menu-week-toolbar { min-height: 48px; margin-bottom: 13px; display: flex; align-items: center; gap: 11px; }
+.menu-week-nav { display: flex; gap: 6px; }
+.menu-week-nav button { width: 38px; height: 38px; padding: 0; border: 1px solid #e2e7e1; border-radius: 9px; color: #59665f; background: white; display: grid; place-items: center; }
+.menu-week-nav button:hover:not(:disabled) { color: #4c9e38; border-color: #b9d8ac; background: #f6faf2; }
+.menu-week-nav button:disabled { opacity: .35; cursor: default; }
+.menu-week-nav svg { width: 16px; }
+.menu-plan-select { position: relative; height: 38px; padding: 0 28px 0 10px; border: 1px solid #e2e8df; border-radius: 9px; color: #50a039; background: #f5f9f1; display: flex; align-items: center; gap: 7px; }
+.menu-plan-select > svg:first-child { width: 14px; }
+.menu-plan-select > svg:last-child { position: absolute; right: 8px; width: 13px; pointer-events: none; }
+.menu-plan-select select { max-width: 160px; border: 0; outline: 0; appearance: none; color: #48703f; background: transparent; font-size: .75rem; font-weight: 700; }
+.menu-week-toolbar > strong { color: #28362f; font-size: .875rem; white-space: nowrap; }
+.menu-toolbar-actions { margin-left: auto; display: flex; align-items: center; gap: 6px; }
+.menu-plan-status { padding: 6px 8px; border-radius: 99px; color: #7a6640; background: #f6efdc; font-size: .6875rem; font-weight: 700; white-space: nowrap; }
+.menu-plan-status.active { color: #438f36; background: #eaf6e5; }
+.menu-plan-status.completed { color: #597069; background: #edf1ee; }
+.menu-activate-button { min-height: 34px; padding: 7px 9px; border: 0; border-radius: 8px; color: #397f32; background: #eaf5e5; display: flex; align-items: center; gap: 5px; font-size: .6875rem; font-weight: 700; }
+.menu-activate-button svg { width: 12px; }
+.menu-toolbar-actions > a { min-height: 38px; padding: 8px 12px; border-radius: 9px; color: white; background: linear-gradient(135deg, #62bb38, #439d2c); display: flex; align-items: center; gap: 6px; font-size: .75rem; font-weight: 700; white-space: nowrap; }
+.menu-toolbar-actions > a:hover { background: #368b27; }
+.menu-toolbar-actions > a svg { width: 14px; }
+
+.menu-day-tabs { margin-bottom: 18px; padding: 5px; border: 1px solid #e7ebe5; border-radius: 12px; background: #fbfcfa; display: grid; grid-template-columns: repeat(7, 1fr); }
+.menu-day-tabs button { min-width: 0; min-height: 56px; padding: 7px 4px; border: 0; border-right: 1px solid #ebeee9; border-radius: 9px; color: #69766f; background: transparent; }
+.menu-day-tabs button:last-child { border-right: 0; }
+.menu-day-tabs button:hover { color: #4da038; background: #f5f8f1; }
+.menu-day-tabs button.active { color: #3d9733; background: linear-gradient(135deg, #edf7e7, #f4f9ed); }
+.menu-day-tabs button.weekend { color: #e35d5e; }
+.menu-day-tabs strong, .menu-day-tabs span { display: block; }
+.menu-day-tabs strong { font-size: .8125rem; }
+.menu-day-tabs span { margin-top: 3px; font-size: .75rem; }
+
+.menu-meal-columns { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.menu-meal-column { min-width: 0; min-height: 470px; padding: 14px; border: 1px solid #e8ece6; border-radius: 14px; background: #fff; }
+.menu-meal-column > header { min-height: 42px; margin-bottom: 10px; display: grid; grid-template-columns: 32px 1fr 16px; align-items: center; gap: 8px; }
+.menu-meal-column > header > span { width: 30px; height: 30px; border-radius: 9px; color: #e99b24; background: #fff5dd; display: grid; place-items: center; }
+.menu-lunch > header > span { color: #4ea342; background: #eaf6e4; }
+.menu-dinner > header > span { color: #527ed8; background: #e9effc; }
+.menu-meal-column > header svg { width: 15px; }
+.menu-meal-column > header > svg { width: 14px; color: #7e8983; }
+.menu-meal-column > header strong, .menu-meal-column > header small { display: block; }
+.menu-meal-column > header strong { color: #28372f; font-size: .875rem; }
+.menu-meal-column > header small { color: #89948e; font-size: .6875rem; }
+.menu-featured-image { position: relative; height: 165px; border-radius: 12px; overflow: hidden; background: #edf1ea; }
+.menu-featured-image img { width: 100%; height: 100%; object-fit: cover; transition: transform .4s ease; }
+.menu-meal-column:hover .menu-featured-image img { transform: scale(1.035); }
+.menu-featured-image button { position: absolute; top: 9px; right: 9px; width: 31px; height: 31px; padding: 0; border: 1px solid rgba(255,255,255,.7); border-radius: 9px; color: transparent; background: rgba(255,255,255,.83); backdrop-filter: blur(5px); display: grid; place-items: center; }
+.menu-featured-image button:hover { color: #52a83b; background: white; }
+.menu-featured-image button.completed { color: white; border-color: #56aa3c; background: #56aa3c; }
+.menu-featured-image button svg { width: 15px; }
+.menu-featured-copy { padding: 12px 1px; border-bottom: 1px solid #edf0eb; }
+.menu-featured-copy h2 { margin: 0 0 6px; color: #25342c; font-size: 1rem; line-height: 1.3; }
+.menu-featured-copy > span { color: #7c8982; display: flex; align-items: center; gap: 5px; font-size: .75rem; }
+.menu-featured-copy > span svg { width: 12px; }
+.menu-featured-copy > span i { width: 3px; height: 3px; margin: 0 2px; border-radius: 50%; background: #b4bcb8; }
+.menu-featured-copy > div { margin-top: 9px; display: flex; flex-wrap: wrap; gap: 5px; }
+.menu-featured-copy b { padding: 5px 7px; border-radius: 7px; color: #48893b; background: #eaf5e5; font-size: .625rem; text-transform: capitalize; }
+.menu-featured-copy b.secondary { color: #d47a2d; background: #fff0e1; }
+.menu-alternative-list { display: grid; }
+.menu-alternative-list button { min-height: 66px; padding: 9px 0; border: 0; border-bottom: 1px solid #eef1ed; color: inherit; background: transparent; display: grid; grid-template-columns: 54px minmax(0, 1fr) 20px; align-items: center; gap: 9px; text-align: left; }
+.menu-alternative-list button:last-child { border-bottom: 0; }
+.menu-alternative-list button:hover { background: #fafbf8; }
+.menu-alternative-list button.completed { opacity: .58; }
+.menu-alternative-list img { width: 54px; height: 48px; border-radius: 9px; object-fit: cover; }
+.menu-alternative-list strong, .menu-alternative-list small { display: block; }
+.menu-alternative-list strong { overflow: hidden; color: #34443c; font-size: .75rem; text-overflow: ellipsis; white-space: nowrap; }
+.menu-alternative-list small { margin-top: 4px; color: #8b9690; font-size: .625rem; }
+.menu-alternative-list small svg { width: 10px; vertical-align: middle; }
+.menu-alternative-list button > i { width: 18px; height: 18px; border-radius: 50%; color: white; background: #54a93a; display: grid; place-items: center; }
+.menu-alternative-list button > i:empty { background: transparent; }
+.menu-alternative-list button > i svg { width: 10px; }
+.menu-missing-meal { min-height: 345px; color: #87938c; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+.menu-missing-meal > svg { color: #8bb27b; }
+.menu-missing-meal p { margin: 10px 0; font-size: .8125rem; }
+.menu-missing-meal a { color: #4d9f38; font-size: .75rem; font-weight: 700; }
+.menu-snack-strip { min-height: 62px; margin-top: 12px; padding: 10px 13px; border: 1px solid #e8ece5; border-radius: 12px; background: #fafbf8; display: flex; align-items: center; gap: 10px; }
+.menu-snack-strip > span { width: 36px; height: 36px; border-radius: 10px; color: #db7a52; background: #ffede5; display: grid; place-items: center; }
+.menu-snack-strip svg { width: 16px; }
+.menu-snack-strip div { flex: 1; }
+.menu-snack-strip small, .menu-snack-strip strong { display: block; }
+.menu-snack-strip small { color: #87928c; font-size: .6875rem; }
+.menu-snack-strip strong { margin-top: 2px; font-size: .8125rem; }
+.menu-snack-strip > b { font-size: .75rem; }
+.menu-add-meal { min-height: 48px; margin-top: 13px; border: 1px dashed #cad6c8; border-radius: 11px; color: #627068; display: flex; align-items: center; justify-content: center; gap: 7px; font-size: .8125rem; }
+.menu-add-meal:hover { color: #4b9d37; border-color: #89bd75; background: #f7faf4; }
+.menu-add-meal svg { width: 15px; }
+
+.menu-side-column { position: sticky; top: 18px; display: grid; gap: 11px; }
+.menu-side-column > section { padding: 18px; }
+.menu-nutrition-card > header, .menu-shopping-card > header { margin-bottom: 17px; display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.menu-nutrition-card > header span, .menu-shopping-card > header span { color: #7c8982; font-size: .6875rem; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; }
+.menu-nutrition-card > header h2, .menu-shopping-card > header h2 { margin: 3px 0 0; color: #26352d; font-size: 1rem; }
+.menu-nutrition-card > header svg, .menu-shopping-card > header svg { width: 20px; color: #56a93d; }
+.menu-nutrition-bars { display: grid; gap: 14px; }
+.menu-nutrition-bars > div > header { margin-bottom: 6px; display: flex; justify-content: space-between; gap: 8px; }
+.menu-nutrition-bars header span { color: #58665f; font-size: .75rem; }
+.menu-nutrition-bars header b { color: #6f7c75; font-size: .6875rem; font-weight: 600; }
+.menu-nutrition-bars > div > div { height: 5px; border-radius: 99px; overflow: hidden; background: #edf0eb; }
+.menu-nutrition-bars > div > div > span { display: block; height: 100%; border-radius: inherit; }
+.menu-nutrition-bars .energy { background: #52a73a; }
+.menu-nutrition-bars .protein { background: #4e82e6; }
+.menu-nutrition-bars .carbs { background: #ec8d2b; }
+.menu-nutrition-bars .fat { background: #9a64da; }
+.menu-nutrition-bars .fiber { background: #72b94f; }
+.menu-nutrition-card > a { min-height: 39px; margin-top: 17px; border: 1px solid #dce8d7; border-radius: 9px; color: #4f9f39; display: flex; align-items: center; justify-content: center; gap: 5px; font-size: .75rem; font-weight: 700; }
+.menu-nutrition-card > a:hover { color: white; border-color: #4f9f39; background: #4f9f39; }
+.menu-nutrition-card > a svg { width: 12px; }
+.menu-suggestion-card > header { margin-bottom: 11px; display: flex; align-items: center; gap: 8px; }
+.menu-suggestion-card > header svg { width: 17px; color: #f0a226; }
+.menu-suggestion-card > header h2 { margin: 0; color: #2d3b34; font-size: 1rem; }
+.menu-suggestion-card article { min-height: 64px; padding: 8px; border-radius: 10px; background: #f7f9f5; display: flex; align-items: center; gap: 9px; }
+.menu-suggestion-card article + article { margin-top: 8px; }
+.menu-suggestion-card img { width: 53px; height: 48px; flex: 0 0 53px; border-radius: 9px; object-fit: cover; }
+.menu-suggestion-card p { margin: 0; color: #69766f; font-size: .6875rem; line-height: 1.5; }
+.menu-shopping-card > header { margin-bottom: 10px; }
+.menu-shopping-card > div { max-height: 250px; padding-right: 3px; overflow-y: auto; display: grid; gap: 4px; scrollbar-color: #c8d8c3 transparent; }
+.menu-shopping-card label { min-height: 44px; padding: 6px; border-radius: 8px; display: flex; align-items: center; gap: 8px; cursor: pointer; }
+.menu-shopping-card label:hover { background: #f7f9f5; }
+.menu-shopping-card label.checked { opacity: .6; }
+.menu-shopping-card input { position: absolute; opacity: 0; }
+.menu-shopping-card label > span { width: 21px; height: 21px; flex: 0 0 21px; border: 1px solid #cbd5cb; border-radius: 6px; color: transparent; display: grid; place-items: center; }
+.menu-shopping-card label.checked > span { color: white; border-color: #55a93b; background: #55a93b; }
+.menu-shopping-card label > span svg { width: 11px; }
+.menu-shopping-card label p { min-width: 0; flex: 1; margin: 0; }
+.menu-shopping-card label strong, .menu-shopping-card label small { display: block; }
+.menu-shopping-card label strong { overflow: hidden; color: #48564f; font-size: .75rem; text-overflow: ellipsis; white-space: nowrap; }
+.menu-shopping-card label small { color: #8c9691; font-size: .625rem; }
+.menu-shopping-empty { margin: 0; color: #7c8982; display: flex; align-items: center; gap: 7px; font-size: .75rem; }
+.menu-shopping-empty svg { width: 16px; }
+.menu-optimize-card { text-align: center; }
+.menu-optimize-card > svg { width: 24px; color: #56a93d; }
+.menu-optimize-card p { margin: 8px 0 12px; color: #7b8781; font-size: .75rem; line-height: 1.5; }
+.menu-optimize-card a { min-height: 40px; border-radius: 9px; color: white; background: linear-gradient(135deg, #63bb39, #439b2c); display: flex; align-items: center; justify-content: center; gap: 7px; font-size: .8125rem; font-weight: 700; }
+.menu-optimize-card a:hover { background: #358a27; }
+.menu-optimize-card a svg { width: 14px; }
+
+@media (max-width: 1320px) {
+  .menu-top-grid, .menu-content-layout { grid-template-columns: minmax(0, 1fr) 280px; }
+  .menu-week-toolbar { flex-wrap: wrap; }
+  .menu-toolbar-actions { margin-left: 0; }
+  .menu-meal-columns { grid-template-columns: 1fr 1fr; }
+  .menu-meal-column:last-child { grid-column: 1 / -1; }
+}
+
+@media (max-width: 1020px) {
+  .menu-top-grid { grid-template-columns: 1fr; }
+  .menu-week-summary { min-height: 0; }
+  .menu-summary-grid { grid-template-columns: repeat(4, 1fr); }
+  .menu-content-layout { grid-template-columns: 1fr; }
+  .menu-side-column { position: static; grid-template-columns: 1fr 1fr; }
+}
+
+@media (max-width: 760px) {
+  .reference-menu-page { padding: 14px 12px 35px; }
+  .menu-search-row { align-items: stretch; flex-direction: column; }
+  .menu-global-search { width: 100%; }
+  .menu-generate-controls { width: 100%; }
+  .menu-generate-controls input { min-width: 0; flex: 1; }
+  .menu-hero { min-height: 360px; padding: 26px 22px; background-position: 63% center; }
+  .menu-hero::before { background: linear-gradient(180deg, rgba(249,250,246,.99) 0%, rgba(246,249,235,.92) 52%, rgba(239,247,221,.08) 84%); }
+  .menu-hero h1 { font-size: 2.5rem; }
+  .menu-plan-note { display: none; }
+  .menu-summary-grid { grid-template-columns: 1fr 1fr; }
+  .menu-schedule-card { padding: 12px; }
+  .menu-week-toolbar > strong { order: 4; width: 100%; }
+  .menu-toolbar-actions { margin-left: auto; }
+  .menu-plan-status { display: none; }
+  .menu-day-tabs { grid-template-columns: repeat(7, 74px); overflow-x: auto; }
+  .menu-meal-columns { grid-template-columns: 1fr; }
+  .menu-meal-column:last-child { grid-column: auto; }
+  .menu-featured-image { height: 220px; }
+  .menu-side-column { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 480px) {
+  .menu-generate-controls { align-items: stretch; flex-direction: column; }
+  .menu-week-toolbar { align-items: flex-start; }
+  .menu-week-nav { order: 1; }
+  .menu-plan-select { order: 2; flex: 1; }
+  .menu-toolbar-actions { order: 3; width: 100%; margin: 0; }
+  .menu-toolbar-actions > a { margin-left: auto; }
+  .menu-activate-button { flex: 1; justify-content: center; }
+}
