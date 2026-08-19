@@ -127,13 +127,13 @@ export default function ProfilePage() {
 
   return <div className="page professional-profile-page">
     <header className="professional-profile-header">
-      <div><span className="eyebrow"><Sparkles /> Cá nhân hóa dinh dưỡng</span><h1>Hồ sơ của bạn</h1><p>Cập nhật thông tin để NutriPlan xây dựng mục tiêu và thực đơn phù hợp hơn.</p></div>
+      <div><span className="eyebrow"><Sparkles /> Cá nhân hóa dinh dưỡng</span><h1>Hồ sơ của bạn</h1><p>Cập nhật thông tin để NOURI xây dựng mục tiêu và thực đơn phù hợp hơn.</p></div>
       <button form="nutrition-profile-form" className="button profile-save-top" disabled={save.isPending}><Save />{save.isPending ? "Đang lưu..." : "Lưu thay đổi"}</button>
     </header>
 
     <section className="profile-identity-card">
       <div className="profile-avatar"><span>{form.name.trim().charAt(0).toUpperCase() || "N"}</span><i><Check /></i></div>
-      <div className="profile-identity-copy"><span>Hồ sơ dinh dưỡng</span><h2>{form.name || "Người dùng NutriPlan"}</h2><p><Mail /> {data?.email ?? "Chưa có email"}</p></div>
+      <div className="profile-identity-copy"><span>Hồ sơ dinh dưỡng</span><h2>{form.name || "Người dùng NOURI"}</h2><p><Mail /> {data?.email ?? "Chưa có email"}</p></div>
       <div className="profile-summary-tags"><span><Target />{goalLabels[form.goal]}</span><span><Leaf />{dietLabels[form.dietType]}</span><span><Utensils />{form.mealsPerDay} bữa/ngày</span></div>
       <div className="profile-completion"><div><span>Mức độ hoàn thiện</span><b>{profileCompletion}%</b></div><div className="profile-completion-track"><span style={{ width: `${profileCompletion}%` }} /></div><small>{profileCompletion === 100 ? "Tuyệt vời! Hồ sơ của bạn đã đầy đủ." : "Bổ sung đủ thông tin để AI đưa ra gợi ý chính xác hơn."}</small></div>
     </section>
@@ -196,7 +196,7 @@ export default function ProfilePage() {
         </section>
 
         <section className="profile-ai-card">
-          <span><Sparkles /></span><div><small>NutriPlan AI</small><h2>Hồ sơ càng đầy đủ, gợi ý càng chính xác</h2><p>AI dùng mục tiêu, khẩu vị và dị ứng để xây dựng thực đơn riêng cho bạn.</p><Link to="/assistant">Trò chuyện với AI <ChevronRight /></Link></div>
+          <span><Sparkles /></span><div><small>NOURI AI</small><h2>Hồ sơ càng đầy đủ, gợi ý càng chính xác</h2><p>AI dùng mục tiêu, khẩu vị và dị ứng để xây dựng thực đơn riêng cho bạn.</p><Link to="/assistant">Trò chuyện với AI <ChevronRight /></Link></div>
         </section>
       </aside>
     </div>

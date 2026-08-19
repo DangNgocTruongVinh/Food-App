@@ -1,4 +1,4 @@
-# NutriPlan AI
+# NOURI AI
 
 Ứng dụng quản lý thực phẩm và lập kế hoạch bữa ăn thông minh, hướng đến giảm lãng phí thực phẩm, cân bằng dinh dưỡng và cá nhân hoá khẩu vị.
 

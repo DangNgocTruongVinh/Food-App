@@ -3,7 +3,7 @@ import { env } from "./config/env.js";
 import { prisma } from "./lib/prisma.js";
 
 const server = app.listen(env.PORT, () => {
-  console.log(`NutriPlan API đang chạy tại http://localhost:${env.PORT}`);
+  console.log(`NOURI API đang chạy tại http://localhost:${env.PORT}`);
 });
 
 async function shutdown() {

@@ -59,16 +59,58 @@ enum PlanStatus {
 }
 
 model User {
-  id           String          @id @default(cuid())
-  email        String          @unique
-  passwordHash String
-  name         String
-  profile      NutritionProfile?
-  pantryItems  PantryItem[]
-  mealPlans    MealPlan[]
-  chatMessages ChatMessage[]
-  createdAt    DateTime        @default(now())
-  updatedAt    DateTime        @updatedAt
+  id                String             @id @default(cuid())
+  email             String             @unique
+  passwordHash      String
+  name              String
+  profile           NutritionProfile?
+  pantryItems       PantryItem[]
+  mealPlans         MealPlan[]
+  chatMessages      ChatMessage[]
+  communityPosts    CommunityPost[]
+  communityLikes    CommunityLike[]
+  communityComments CommunityComment[]
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+}
+
+model CommunityPost {
+  id        String             @id @default(cuid())
+  authorId  String
+  author    User               @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  content   String
+  likes     CommunityLike[]
+  comments  CommunityComment[]
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+
+  @@index([createdAt])
+  @@index([authorId, createdAt])
+}
+
+model CommunityLike {
+  postId    String
+  userId    String
+  post      CommunityPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime      @default(now())
+
+  @@id([postId, userId])
+  @@index([userId, createdAt])
+}
+
+model CommunityComment {
+  id        String        @id @default(cuid())
+  postId    String
+  authorId  String
+  post      CommunityPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  author    User          @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  content   String
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  @@index([postId, createdAt])
+  @@index([authorId, createdAt])
 }
 
 model NutritionProfile {
@@ -96,19 +138,19 @@ model NutritionProfile {
 }
 
 model PantryItem {
-  id           String   @id @default(cuid())
+  id           String    @id @default(cuid())
   userId       String
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   name         String
   category     String
   quantity     Float
   unit         FoodUnit
   expiryDate   DateTime?
-  purchasedAt  DateTime @default(now())
-  minimumStock Float    @default(0)
+  purchasedAt  DateTime  @default(now())
+  minimumStock Float     @default(0)
   note         String?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 
   @@index([userId, expiryDate])
   @@index([userId, category])
@@ -182,27 +224,27 @@ model MealPlanDay {
 }
 
 model MealPlanItem {
-  id            String      @id @default(cuid())
-  dayId         String
-  day           MealPlanDay @relation(fields: [dayId], references: [id], onDelete: Cascade)
-  recipeId      String
-  recipe        Recipe      @relation(fields: [recipeId], references: [id])
-  mealType      MealType
-  servings      Float       @default(1)
-  completed     Boolean     @default(false)
-  calories      Int
+  id        String      @id @default(cuid())
+  dayId     String
+  day       MealPlanDay @relation(fields: [dayId], references: [id], onDelete: Cascade)
+  recipeId  String
+  recipe    Recipe      @relation(fields: [recipeId], references: [id])
+  mealType  MealType
+  servings  Float       @default(1)
+  completed Boolean     @default(false)
+  calories  Int
 
   @@index([dayId, mealType])
 }
 
 model ShoppingItem {
-  id         String    @id @default(cuid())
+  id         String   @id @default(cuid())
   mealPlanId String
-  mealPlan   MealPlan  @relation(fields: [mealPlanId], references: [id], onDelete: Cascade)
+  mealPlan   MealPlan @relation(fields: [mealPlanId], references: [id], onDelete: Cascade)
   name       String
   quantity   Float
   unit       FoodUnit
-  purchased  Boolean   @default(false)
+  purchased  Boolean  @default(false)
   category   String?
 
   @@index([mealPlanId, purchased])

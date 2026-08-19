@@ -27,7 +27,7 @@ export async function generatePlanWithAI(context: unknown): Promise<GeneratedPla
       {
         role: "system",
         content: [
-          "Bạn là chuyên gia lập thực đơn dinh dưỡng phổ thông cho ứng dụng NutriPlan AI.",
+          "Bạn là chuyên gia lập thực đơn dinh dưỡng phổ thông cho ứng dụng NOURI AI.",
           "Chỉ chọn recipeId có trong danh sách. Tuyệt đối tránh dị ứng và món người dùng không thích.",
           "Ưu tiên nguyên liệu sẵn có, đặc biệt món sắp hết hạn, đồng thời đa dạng món trong 7 ngày.",
           "Mỗi ngày đủ số bữa yêu cầu và tổng năng lượng gần mục tiêu trong sai số 15%.",
@@ -50,7 +50,7 @@ export async function answerNutritionQuestion(context: unknown, question: string
     input: [
       {
         role: "system",
-        content: "Bạn là trợ lý dinh dưỡng NutriPlan AI. Trả lời ngắn gọn bằng tiếng Việt, dựa trên hồ sơ và thực phẩm được cung cấp. Không chẩn đoán bệnh; với vấn đề y khoa, khuyên người dùng gặp chuyên gia.",
+        content: "Bạn là trợ lý dinh dưỡng NOURI AI. Trả lời ngắn gọn bằng tiếng Việt, dựa trên hồ sơ và thực phẩm được cung cấp. Không chẩn đoán bệnh; với vấn đề y khoa, khuyên người dùng gặp chuyên gia.",
       },
       { role: "user", content: `Ngữ cảnh: ${JSON.stringify(context)}\n\nCâu hỏi: ${question}` },
     ],

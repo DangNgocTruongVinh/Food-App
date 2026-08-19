@@ -4,6 +4,15 @@ export type MealType = "BREAKFAST" | "LUNCH" | "DINNER" | "SNACK";
 export interface User { id: string; name: string; email: string }
 export interface AuthResponse { token: string; user: User }
 
+export interface CommunityAuthor { id: string; name: string }
+export interface CommunityComment {
+  id: string; content: string; createdAt: string; updatedAt: string; author: CommunityAuthor;
+}
+export interface CommunityPost {
+  id: string; content: string; createdAt: string; updatedAt: string; author: CommunityAuthor;
+  likedByMe: boolean; likeCount: number; commentCount: number; comments: CommunityComment[];
+}
+
 export interface NutritionProfile {
   age?: number; gender?: "MALE" | "FEMALE" | "OTHER"; heightCm?: number; weightKg?: number;
   targetWeightKg?: number; activityLevel: string; goal: string; dietType: string;

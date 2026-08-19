@@ -5,6 +5,7 @@ import { env } from "./config/env.js";
 import { errorHandler, notFound } from "./middleware/error-handler.js";
 import aiRoutes from "./routes/ai.routes.js";
 import authRoutes from "./routes/auth.routes.js";
+import communityRoutes from "./routes/community.routes.js";
 import dashboardRoutes from "./routes/dashboard.routes.js";
 import mealPlanRoutes from "./routes/meal-plan.routes.js";
 import pantryRoutes from "./routes/pantry.routes.js";
@@ -18,6 +19,7 @@ app.use(express.json({ limit: "1mb" }));
 
 app.get("/api/health", (_req, res) => res.json({ status: "ok", service: "nutriplan-api" }));
 app.use("/api/auth", authRoutes);
+app.use("/api/community", communityRoutes);
 app.use("/api/profile", profileRoutes);
 app.use("/api/pantry", pantryRoutes);
 app.use("/api/recipes", recipeRoutes);

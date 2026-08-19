@@ -2,6 +2,7 @@ import { Navigate, Outlet, Route, Routes } from "react-router-dom";
 import { useAuth } from "./contexts/AuthContext";
 import AppLayout from "./layouts/AppLayout";
 import AiAssistantPage from "./pages/AiAssistantPage";
+import CommunityPage from "./pages/CommunityPage";
 import DashboardPage from "./pages/DashboardPage";
 import LoginPage from "./pages/LoginPage";
 import MealPlansPage from "./pages/MealPlansPage";
@@ -23,6 +24,7 @@ export default function App() {
         <Route path="pantry" element={<PantryPage />} />
         <Route path="meal-plans" element={<MealPlansPage />} />
         <Route path="recipes" element={<RecipesPage />} />
+        <Route path="community" element={<CommunityPage />} />
         <Route path="assistant" element={<AiAssistantPage />} />
         <Route path="profile" element={<ProfilePage />} />
       </Route>

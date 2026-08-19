@@ -37,7 +37,7 @@ export default function AiAssistantPage() {
   return <div className="assistant-page assistant-dashboard-page">
     <header className="assistant-header assistant-dashboard-hero">
       <div><span className="online"><i /> Đang hoạt động</span><h1>Trợ lý dinh dưỡng AI</h1><p>Hiểu thói quen, mục tiêu và thực phẩm của bạn để đưa ra gợi ý phù hợp nhất.</p></div>
-      <img src="/assets/ai-mascot.png" alt="Robot đầu bếp NutriPlan AI" />
+      <img src="/assets/ai-mascot.png" alt="Robot đầu bếp NOURI AI" />
       <div className="assistant-hero-foods" aria-hidden="true"><span className="avocado">🥑</span><span className="tomato">🍅</span><span className="greens">🥬</span></div>
     </header>
 
