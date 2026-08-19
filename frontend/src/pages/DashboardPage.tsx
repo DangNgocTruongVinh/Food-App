@@ -43,10 +43,12 @@ export default function DashboardPage() {
   const recommendedRecipes = data?.recommendedRecipes ?? [];
   const hour = new Date().getHours();
   const greeting = hour < 11 ? "Chào buổi sáng" : hour < 18 ? "Chào buổi chiều" : "Chào buổi tối";
+  const firstName = user?.name?.split(" ").at(-1) ?? "bạn";
 
   return <div className="page reference-dashboard">
     <section className="overview-welcome">
-      <div className="overview-welcome-copy"><span className="eyebrow">{format(new Date(), "EEEE, dd 'tháng' M", { locale: vi })}</span><h1>{greeting}, {user?.name?.split(" ").at(-1)}! <span aria-hidden="true">👋</span></h1><p>Hôm nay bạn muốn nấu món gì ngon?</p><form className="overview-search" onSubmit={submitSearch}><Search /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Tìm kiếm món ăn, nguyên liệu..." aria-label="Tìm kiếm món ăn hoặc nguyên liệu" /><button aria-label="Tìm kiếm"><Sparkles /></button></form></div>
+      <div className="overview-hero-backgrounds" aria-hidden="true"><span className="overview-hero-image" /></div>
+      <div className="overview-welcome-copy"><div className="overview-greeting-copy"><span className="eyebrow">{format(new Date(), "EEEE, dd 'tháng' M", { locale: vi })}</span><h1><span className="overview-greeting-fixed">{greeting},</span>{" "}<span className="overview-greeting-person"><strong>{firstName}!</strong> <span className="overview-wave" aria-hidden="true">👋</span></span></h1><p>Hôm nay bạn muốn nấu món gì ngon?</p></div><form className="overview-search" onSubmit={submitSearch}><Search /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Tìm kiếm món ăn, nguyên liệu..." aria-label="Tìm kiếm món ăn hoặc nguyên liệu" /><button aria-label="Tìm kiếm"><Sparkles /></button></form></div>
       <div className="overview-calorie-chip"><span><Flame /></span><div><b>{data?.nutritionTargets?.calories ?? "—"}</b><small>kcal mục tiêu</small></div></div>
     </section>
 
