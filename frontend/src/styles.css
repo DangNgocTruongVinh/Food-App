@@ -2183,3 +2183,91 @@ body { background: #f8faf6; }
   .menu-toolbar-actions > a { margin-left: auto; }
   .menu-activate-button { flex: 1; justify-content: center; }
 }
+
+/* Meal planner background palette — matched to the greener reference */
+.reference-menu-page {
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 58% 4%, rgba(190, 226, 166, .28), transparent 26rem),
+    linear-gradient(135deg, #fafcf9 0%, #f4f8f1 58%, #f8faf7 100%);
+}
+.reference-menu-page .menu-search-row { position: relative; z-index: 2; }
+.reference-menu-page .menu-global-search,
+.reference-menu-page .menu-generate-controls input { border-color: #dfe8dc; background: rgba(255,255,255,.88); }
+.reference-menu-page .menu-hero {
+  border-color: #dfe9d8;
+  background-color: #eef6e7;
+}
+.reference-menu-page .menu-hero::before {
+  background: linear-gradient(90deg, rgba(249,252,246,.99) 0%, rgba(239,248,230,.92) 44%, rgba(217,238,201,.2) 73%, transparent);
+}
+.reference-menu-page .menu-week-summary,
+.reference-menu-page .menu-side-column > section {
+  border-color: #e1e9de;
+  background: rgba(255,255,255,.94);
+  box-shadow: 0 8px 28px rgba(60, 92, 55, .035);
+}
+.reference-menu-page .menu-schedule-card {
+  border-color: #d3e6c7;
+  background:
+    radial-gradient(circle at 20% 15%, rgba(255,255,255,.34), transparent 18rem),
+    linear-gradient(145deg, #edf8e4 0%, #e4f3da 58%, #eaf6e2 100%);
+  box-shadow: 0 12px 34px rgba(75, 117, 63, .07);
+}
+.reference-menu-page .menu-week-toolbar {
+  padding: 7px 8px;
+  border-radius: 12px;
+  background: rgba(255,255,255,.28);
+}
+.reference-menu-page .menu-week-nav button,
+.reference-menu-page .menu-plan-select {
+  border-color: rgba(197,218,187,.88);
+  background: rgba(255,255,255,.78);
+}
+.reference-menu-page .menu-day-tabs {
+  border-color: rgba(196,219,184,.9);
+  background: rgba(255,255,255,.38);
+  box-shadow: inset 0 1px rgba(255,255,255,.55);
+}
+.reference-menu-page .menu-day-tabs button { border-right-color: rgba(193,215,183,.72); }
+.reference-menu-page .menu-day-tabs button:hover { background: rgba(255,255,255,.58); }
+.reference-menu-page .menu-day-tabs button.active {
+  color: #2f8e30;
+  background: linear-gradient(145deg, rgba(213,236,197,.96), rgba(232,245,220,.96));
+  box-shadow: 0 4px 13px rgba(73,130,55,.08);
+}
+.reference-menu-page .menu-meal-column {
+  border-color: rgba(203,222,193,.95);
+  background: linear-gradient(155deg, rgba(255,255,255,.72), rgba(247,252,242,.62));
+  box-shadow: 0 7px 20px rgba(78, 111, 68, .035);
+}
+.reference-menu-page .menu-featured-copy,
+.reference-menu-page .menu-alternative-list button { border-color: rgba(205,222,196,.78); }
+.reference-menu-page .menu-alternative-list button:hover { background: rgba(255,255,255,.55); }
+.reference-menu-page .menu-snack-strip {
+  border-color: rgba(198,219,188,.92);
+  background: rgba(255,255,255,.48);
+}
+.reference-menu-page .menu-add-meal {
+  border-color: #abc99d;
+  color: #476c48;
+  background: rgba(255,255,255,.16);
+}
+.reference-menu-page .menu-add-meal:hover {
+  color: #317f2d;
+  border-color: #72ae60;
+  background: rgba(255,255,255,.5);
+}
+.reference-menu-page .menu-summary-grid article { background: #f4f9f1; }
+.reference-menu-page .menu-summary-grid article:nth-child(2) { background: #fff7eb; }
+.reference-menu-page .menu-summary-grid article:nth-child(3) { background: #eef8e9; }
+.reference-menu-page .menu-summary-grid article:nth-child(4) { background: #f6f0fa; }
+.reference-menu-page .menu-suggestion-card article,
+.reference-menu-page .menu-shopping-card label:hover { background: #f4f8f1; }
+
+@media (max-width: 760px) {
+  .reference-menu-page .menu-hero::before {
+    background: linear-gradient(180deg, rgba(249,252,246,.99) 0%, rgba(235,246,224,.93) 52%, rgba(216,237,200,.1) 84%);
+  }
+  .reference-menu-page .menu-week-toolbar { padding: 6px; }
+}
