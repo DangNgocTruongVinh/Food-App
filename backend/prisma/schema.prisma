@@ -58,6 +58,22 @@ enum PlanStatus {
   COMPLETED
 }
 
+enum NotificationType {
+  PANTRY_EXPIRING
+  PANTRY_EXPIRED
+  PANTRY_LOW_STOCK
+  MEAL_REMINDER
+  MEAL_PLAN_CREATED
+  MEAL_PREP_REMINDER
+  COMMUNITY_LIKE
+  COMMUNITY_COMMENT
+  COMMUNITY_REPLY
+  COMMUNITY_FOLLOW
+  AI_RECIPE_SUGGESTION
+  AI_EXPIRY_SUGGESTION
+  AI_NUTRITION_SUGGESTION
+}
+
 model User {
   id                String             @id @default(cuid())
   email             String             @unique
@@ -70,6 +86,7 @@ model User {
   communityPosts    CommunityPost[]
   communityLikes    CommunityLike[]
   communityComments CommunityComment[]
+  notifications     Notification[]
   createdAt         DateTime           @default(now())
   updatedAt         DateTime           @updatedAt
 }
@@ -111,6 +128,23 @@ model CommunityComment {
 
   @@index([postId, createdAt])
   @@index([authorId, createdAt])
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      NotificationType
+  title     String
+  message   String
+  isRead    Boolean          @default(false)
+  relatedId String?
+  actionUrl String?
+  dedupeKey String?          @unique
+  createdAt DateTime         @default(now())
+
+  @@index([userId, createdAt])
+  @@index([userId, isRead, createdAt])
 }
 
 model NutritionProfile {

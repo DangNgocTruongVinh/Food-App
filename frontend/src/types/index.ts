@@ -13,6 +13,33 @@ export interface CommunityPost {
   likedByMe: boolean; likeCount: number; commentCount: number; comments: CommunityComment[];
 }
 
+export type NotificationType =
+  | "PANTRY_EXPIRING"
+  | "PANTRY_EXPIRED"
+  | "PANTRY_LOW_STOCK"
+  | "MEAL_REMINDER"
+  | "MEAL_PLAN_CREATED"
+  | "MEAL_PREP_REMINDER"
+  | "COMMUNITY_LIKE"
+  | "COMMUNITY_COMMENT"
+  | "COMMUNITY_REPLY"
+  | "COMMUNITY_FOLLOW"
+  | "AI_RECIPE_SUGGESTION"
+  | "AI_EXPIRY_SUGGESTION"
+  | "AI_NUTRITION_SUGGESTION";
+
+export interface AppNotification {
+  id: string;
+  userId: string;
+  type: NotificationType;
+  title: string;
+  message: string;
+  isRead: boolean;
+  relatedId: string | null;
+  actionUrl: string | null;
+  createdAt: string;
+}
+
 export interface NutritionProfile {
   age?: number; gender?: "MALE" | "FEMALE" | "OTHER"; heightCm?: number; weightKg?: number;
   targetWeightKg?: number; activityLevel: string; goal: string; dietType: string;

@@ -18,7 +18,8 @@ import {
   UserPlus,
   UsersRound,
 } from "lucide-react";
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
+import { useSearchParams } from "react-router-dom";
 import { api, getApiError } from "../api/client";
 import { LoadingState } from "../components/States";
 import { useAuth } from "../contexts/AuthContext";
@@ -49,6 +50,8 @@ function relativeTime(value: string) {
 export default function CommunityPage() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const [searchParams] = useSearchParams();
+  const focusedPostId = searchParams.get("post");
   const [postContent, setPostContent] = useState("");
   const [commentDrafts, setCommentDrafts] = useState<Record<string, string>>({});
   const [savedPosts, setSavedPosts] = useState<Set<string>>(() => new Set());
@@ -59,6 +62,14 @@ export default function CommunityPage() {
     queryKey: communityKey,
     queryFn: async () => (await api.get<CommunityPost[]>("/community")).data,
   });
+
+  useEffect(() => {
+    if (!focusedPostId || !feed.data) return;
+    const frame = requestAnimationFrame(() => {
+      document.getElementById(`post-${focusedPostId}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [feed.data, focusedPostId]);
 
   const publish = useMutation({
     mutationFn: async (content: string) => (await api.post<CommunityPost>("/community", { content })).data,
@@ -200,7 +211,7 @@ export default function CommunityPage() {
           )}
 
           {feed.data?.map((post) => (
-            <article className="community-post" key={post.id}>
+            <article id={`post-${post.id}`} className={`community-post${focusedPostId === post.id ? " notification-target" : ""}`} key={post.id}>
               <header className="community-post-header">
                 <span className="community-avatar">{initials(post.author.name)}</span>
                 <div className="community-post-author">

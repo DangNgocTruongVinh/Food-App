@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "../lib/prisma.js";
 import { requireAuth } from "../middleware/auth.js";
 import { validate } from "../middleware/validate.js";
+import { syncPantryNotifications } from "../services/notification.service.js";
 import type { AuthenticatedRequest } from "../types/http.js";
 import { asyncHandler } from "../utils/async-handler.js";
 import { HttpError } from "../utils/http-error.js";
@@ -27,7 +28,9 @@ router.get("/", asyncHandler(async (req, res) => {
 router.post("/", validate(z.object({ body: itemBody, params: empty, query: empty })), asyncHandler(async (req, res) => {
   const userId = (req as AuthenticatedRequest).userId;
   const data = { ...req.body, expiryDate: req.body.expiryDate ? new Date(`${req.body.expiryDate}T00:00:00.000Z`) : null };
-  res.status(201).json(await prisma.pantryItem.create({ data: { userId, ...data } }));
+  const item = await prisma.pantryItem.create({ data: { userId, ...data } });
+  await syncPantryNotifications(userId);
+  res.status(201).json(item);
 }));
 
 router.put("/:id", validate(z.object({ body: itemBody.partial(), params: z.object({ id: z.string().cuid() }), query: empty })), asyncHandler(async (req, res) => {
@@ -36,13 +39,25 @@ router.put("/:id", validate(z.object({ body: itemBody.partial(), params: z.objec
   const exists = await prisma.pantryItem.findFirst({ where: { id, userId } });
   if (!exists) throw new HttpError(404, "Không tìm thấy thực phẩm.");
   const data = { ...req.body, expiryDate: req.body.expiryDate ? new Date(`${req.body.expiryDate}T00:00:00.000Z`) : req.body.expiryDate };
-  res.json(await prisma.pantryItem.update({ where: { id }, data }));
+  const item = await prisma.$transaction(async (tx) => {
+    const updated = await tx.pantryItem.update({ where: { id }, data });
+    await tx.notification.deleteMany({
+      where: { userId, relatedId: id, type: { in: ["PANTRY_EXPIRING", "PANTRY_EXPIRED", "PANTRY_LOW_STOCK"] } },
+    });
+    return updated;
+  });
+  await syncPantryNotifications(userId);
+  res.json(item);
 }));
 
 router.delete("/:id", validate(z.object({ body: empty, params: z.object({ id: z.string().cuid() }), query: empty })), asyncHandler(async (req, res) => {
   const userId = (req as AuthenticatedRequest).userId;
-  const result = await prisma.pantryItem.deleteMany({ where: { id: String(req.params.id), userId } });
+  const id = String(req.params.id);
+  const result = await prisma.pantryItem.deleteMany({ where: { id, userId } });
   if (!result.count) throw new HttpError(404, "Không tìm thấy thực phẩm.");
+  await prisma.notification.deleteMany({
+    where: { userId, relatedId: id, type: { in: ["PANTRY_EXPIRING", "PANTRY_EXPIRED", "PANTRY_LOW_STOCK"] } },
+  });
   res.status(204).send();
 }));
 

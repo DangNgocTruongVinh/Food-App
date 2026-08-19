@@ -59,15 +59,37 @@ router.post("/:postId/like", validate(z.object({
 })), asyncHandler(async (req, res) => {
   const userId = (req as AuthenticatedRequest).userId;
   const postId = String(req.params.postId);
-  const post = await prisma.communityPost.findUnique({ where: { id: postId }, select: { id: true } });
+  const [post, actor] = await Promise.all([
+    prisma.communityPost.findUnique({ where: { id: postId }, select: { id: true, authorId: true } }),
+    prisma.user.findUnique({ where: { id: userId }, select: { name: true } }),
+  ]);
   if (!post) throw new HttpError(404, "Không tìm thấy bài viết.");
 
   const existingLike = await prisma.communityLike.findUnique({ where: { postId_userId: { postId, userId } } });
   const liked = !existingLike;
+  const notificationKey = `community-like:${postId}:${userId}`;
   if (existingLike) {
-    await prisma.communityLike.delete({ where: { postId_userId: { postId, userId } } });
+    await prisma.$transaction([
+      prisma.communityLike.delete({ where: { postId_userId: { postId, userId } } }),
+      prisma.notification.deleteMany({ where: { dedupeKey: notificationKey } }),
+    ]);
   } else {
-    await prisma.communityLike.create({ data: { postId, userId } });
+    await prisma.$transaction(async (tx) => {
+      await tx.communityLike.create({ data: { postId, userId } });
+      if (post.authorId !== userId) {
+        await tx.notification.create({
+          data: {
+            userId: post.authorId,
+            type: "COMMUNITY_LIKE",
+            title: "Bài viết được yêu thích",
+            message: `${actor?.name ?? "Một thành viên"} đã thích bài viết của bạn.`,
+            relatedId: postId,
+            actionUrl: `/community?post=${encodeURIComponent(postId)}`,
+            dedupeKey: notificationKey,
+          },
+        });
+      }
+    });
   }
 
   res.json({ liked, likeCount: await prisma.communityLike.count({ where: { postId } }) });
@@ -80,12 +102,31 @@ router.post("/:postId/comments", validate(z.object({
 })), asyncHandler(async (req, res) => {
   const authorId = (req as AuthenticatedRequest).userId;
   const postId = String(req.params.postId);
-  const post = await prisma.communityPost.findUnique({ where: { id: postId }, select: { id: true } });
+  const [post, actor] = await Promise.all([
+    prisma.communityPost.findUnique({ where: { id: postId }, select: { id: true, authorId: true } }),
+    prisma.user.findUnique({ where: { id: authorId }, select: { name: true } }),
+  ]);
   if (!post) throw new HttpError(404, "Không tìm thấy bài viết.");
 
-  const comment = await prisma.communityComment.create({
-    data: { postId, authorId, content: req.body.content },
-    include: { author: { select: authorSelect } },
+  const comment = await prisma.$transaction(async (tx) => {
+    const created = await tx.communityComment.create({
+      data: { postId, authorId, content: req.body.content },
+      include: { author: { select: authorSelect } },
+    });
+    if (post.authorId !== authorId) {
+      await tx.notification.create({
+        data: {
+          userId: post.authorId,
+          type: "COMMUNITY_COMMENT",
+          title: "Bình luận mới",
+          message: `${actor?.name ?? "Một thành viên"} đã bình luận bài viết của bạn.`,
+          relatedId: postId,
+          actionUrl: `/community?post=${encodeURIComponent(postId)}`,
+          dedupeKey: `community-comment:${created.id}`,
+        },
+      });
+    }
+    return created;
   });
   res.status(201).json(comment);
 }));
