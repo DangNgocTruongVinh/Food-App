@@ -1,28 +1,71 @@
 import { useQuery } from "@tanstack/react-query";
-import { ArrowRight, CalendarCheck, Flame, PackageOpen, Sparkles, TimerReset } from "lucide-react";
-import { Link } from "react-router-dom";
-import { format, differenceInCalendarDays } from "date-fns";
+import { differenceInCalendarDays, format } from "date-fns";
 import { vi } from "date-fns/locale";
+import { ArrowRight, CalendarCheck, Check, Clock3, Flame, Heart, PackageCheck, PackageOpen, Search, Sparkles, TimerReset } from "lucide-react";
+import { useState, type FormEvent } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { api } from "../api/client";
 import { LoadingState } from "../components/States";
 import { useAuth } from "../contexts/AuthContext";
-import type { DashboardData } from "../types";
+import type { DashboardData, MealType } from "../types";
+
+const mealLabels: Record<MealType, string> = { BREAKFAST: "Sáng", LUNCH: "Trưa", DINNER: "Tối", SNACK: "Bữa phụ" };
+
+const mealImage = (name: string) => {
+  const normalized = name.toLowerCase();
+  if (normalized.includes("yến mạch") || normalized.includes("sữa chua") || normalized.includes("chuối")) return "/assets/recipe-oats.jpg";
+  if (normalized.includes("cá") || normalized.includes("tôm") || normalized.includes("ngừ")) return "/assets/recipe-salmon.jpg";
+  if (normalized.includes("đậu") || normalized.includes("rau") || normalized.includes("nấm") || normalized.includes("bowl")) return "/assets/recipe-vegan-bowl.jpg";
+  return "/assets/nutrition-hero.jpg";
+};
+
+const foodEmoji = (name: string) => {
+  const normalized = name.toLowerCase();
+  if (normalized.includes("gà") || normalized.includes("thịt")) return "🍗";
+  if (normalized.includes("cá") || normalized.includes("tôm")) return "🐟";
+  if (normalized.includes("trứng")) return "🥚";
+  if (normalized.includes("khoai")) return "🍠";
+  return "🥦";
+};
 
 export default function DashboardPage() {
   const { user } = useAuth();
+  const navigate = useNavigate();
+  const [search, setSearch] = useState("");
   const { data, isLoading } = useQuery({ queryKey: ["dashboard"], queryFn: async () => (await api.get<DashboardData>("/dashboard")).data });
   if (isLoading) return <LoadingState />;
-  const targets = data?.nutritionTargets;
-  return <div className="page">
-    <header className="page-header"><div><span className="eyebrow">{format(new Date(), "EEEE, dd 'tháng' M", { locale: vi })}</span><h1>Xin chào, {user?.name?.split(" ").at(-1)}!</h1><p>Hôm nay mình cùng ăn ngon và dùng thực phẩm thông minh nhé.</p></div><Link className="button primary" to="/meal-plans"><Sparkles size={17} /> Tạo thực đơn AI</Link></header>
-    <section className="hero-card"><div><span className="pill light"><Sparkles size={14} /> Gợi ý hôm nay</span><h2>{data?.expiringItems.length ? `Có ${data.expiringItems.length} thực phẩm nên dùng sớm` : "Kho thực phẩm đang được kiểm soát tốt"}</h2><p>{data?.expiringItems.length ? `Hãy ưu tiên ${data.expiringItems.slice(0, 2).map((x) => x.name).join(" và ")} trong bữa ăn tiếp theo.` : "Thêm thực phẩm vào kho để AI gợi ý món phù hợp hơn."}</p><Link to="/pantry">Xem kho thực phẩm <ArrowRight size={16} /></Link></div><div className="hero-orbit"><span><Flame /></span><b>{targets?.calories ?? "—"}</b><small>kcal mục tiêu</small></div></section>
-    <section className="metric-grid">
-      <article className="metric"><span className="metric-icon green"><PackageOpen /></span><div><small>Trong kho</small><strong>{data?.pantryCount ?? 0}</strong><p>loại thực phẩm</p></div></article>
-      <article className="metric"><span className="metric-icon orange"><TimerReset /></span><div><small>Sắp hết hạn</small><strong>{data?.expiringItems.length ?? 0}</strong><p>trong 7 ngày</p></div></article>
-      <article className="metric"><span className="metric-icon blue"><CalendarCheck /></span><div><small>Tiến độ tuần</small><strong>{data?.activePlan?.completionRate ?? 0}%</strong><p>bữa đã hoàn thành</p></div></article>
-      <article className="metric nutrition"><div className="macro"><span>Protein</span><b>{targets?.proteinG ?? 0}g</b></div><div className="macro"><span>Carb</span><b>{targets?.carbsG ?? 0}g</b></div><div className="macro"><span>Chất béo</span><b>{targets?.fatG ?? 0}g</b></div></article>
+
+  const submitSearch = (event: FormEvent) => {
+    event.preventDefault();
+    if (search.trim()) navigate(`/recipes?q=${encodeURIComponent(search.trim())}`);
+  };
+  const todayMeals = data?.todayMeals ?? [];
+  const recommendedRecipes = data?.recommendedRecipes ?? [];
+  const hour = new Date().getHours();
+  const greeting = hour < 11 ? "Chào buổi sáng" : hour < 18 ? "Chào buổi chiều" : "Chào buổi tối";
+
+  return <div className="page reference-dashboard">
+    <section className="overview-welcome">
+      <div className="overview-welcome-copy"><span className="eyebrow">{format(new Date(), "EEEE, dd 'tháng' M", { locale: vi })}</span><h1>{greeting}, {user?.name?.split(" ").at(-1)}! <span aria-hidden="true">👋</span></h1><p>Hôm nay bạn muốn nấu món gì ngon?</p><form className="overview-search" onSubmit={submitSearch}><Search /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Tìm kiếm món ăn, nguyên liệu..." aria-label="Tìm kiếm món ăn hoặc nguyên liệu" /><button aria-label="Tìm kiếm"><Sparkles /></button></form></div>
+      <div className="overview-calorie-chip"><span><Flame /></span><div><b>{data?.nutritionTargets?.calories ?? "—"}</b><small>kcal mục tiêu</small></div></div>
     </section>
-    <section className="two-column"><article className="card"><div className="section-title"><div><span className="eyebrow">Cần ưu tiên</span><h2>Thực phẩm sắp hết hạn</h2></div><Link to="/pantry">Xem tất cả</Link></div>{data?.expiringItems.length ? <div className="expiry-list">{data.expiringItems.map((item) => <div key={item.id}><span className="food-dot">{item.name.charAt(0)}</span><div><strong>{item.name}</strong><small>{item.quantity} {item.unit.toLowerCase()}</small></div><span className="expiry-badge">{Math.max(0, differenceInCalendarDays(new Date(item.expiryDate!), new Date()))} ngày</span></div>)}</div> : <p className="muted">Không có thực phẩm nào hết hạn trong 7 ngày tới.</p>}</article>
-      <article className="card plan-progress"><span className="eyebrow">Kế hoạch hiện tại</span><h2>{data?.activePlan?.name ?? "Chưa có thực đơn đang áp dụng"}</h2><p>{data?.activePlan ? "Tiếp tục đánh dấu những bữa ăn bạn đã hoàn thành." : "Tạo thực đơn 7 ngày theo mục tiêu và thực phẩm đang có."}</p><div className="progress"><span style={{ width: `${data?.activePlan?.completionRate ?? 0}%` }} /></div><Link className="button secondary" to="/meal-plans">{data?.activePlan ? "Mở thực đơn" : "Lập thực đơn"}<ArrowRight size={16} /></Link></article></section>
+
+    <section className="overview-metrics" aria-label="Thông tin tổng quan">
+      <article><span className="overview-metric-icon stock"><PackageOpen /></span><div><strong>{data?.pantryCount ?? 0}</strong><b>Thực phẩm</b><small>Trong kho</small></div></article>
+      <article><span className="overview-metric-icon soon"><TimerReset /></span><div><strong>{data?.expiringItems.length ?? 0}</strong><b>Sắp hết hạn</b><small>Cần dùng sớm</small></div></article>
+      <article><span className="overview-metric-icon expired"><PackageCheck /></span><div><strong>{data?.expiredCount ?? 0}</strong><b>Đã hết hạn</b><small>Kiểm tra ngay</small></div></article>
+      <article><span className="overview-metric-icon meals"><Heart /></span><div><strong>{todayMeals.length}</strong><b>Bữa hôm nay</b><small>Đã lên lịch</small></div></article>
+      <article className="overview-savings-metric"><div><span>Tiết kiệm tháng này</span><small>↑ 18%</small><b>450.000đ</b><em>so với tháng trước</em></div><svg viewBox="0 0 110 48" role="img" aria-label="Xu hướng tiết kiệm tăng 18 phần trăm"><path className="saving-area" d="M2 40 C14 31, 22 42, 32 31 S47 5, 59 10 S72 38, 84 28 S98 22, 108 15 L108 48 L2 48 Z" /><path className="saving-line" d="M2 40 C14 31, 22 42, 32 31 S47 5, 59 10 S72 38, 84 28 S98 22, 108 15" /></svg></article>
+    </section>
+
+    <section className="overview-panels">
+      <article className="overview-panel overview-expiry"><header><h2>Sắp hết hạn</h2><Link to="/pantry">Xem tất cả</Link></header>{data?.expiringItems.length ? <div>{data.expiringItems.slice(0, 4).map((item) => { const days = Math.max(0, differenceInCalendarDays(new Date(item.expiryDate!), new Date())); return <div className="overview-expiry-row" key={item.id}><span className="overview-food-thumb" aria-hidden="true">{foodEmoji(item.name)}</span><div><strong>{item.name}</strong><small>{item.quantity} {item.unit.toLowerCase()}</small></div><span>HSD: {format(new Date(item.expiryDate!), "dd/MM")}</span><b>{days} ngày</b></div>; })}</div> : <div className="overview-compact-empty"><PackageCheck /><p>Kho thực phẩm đang được kiểm soát tốt.</p></div>}</article>
+
+      <article className="overview-panel overview-recommendations"><header><h2>Gợi ý món ăn cho bạn</h2><Link to="/recipes">Xem tất cả</Link></header>{recommendedRecipes.length ? <div className="overview-recipe-grid">{recommendedRecipes.map((recipe) => <Link to="/recipes" className="overview-recipe-card" key={recipe.id}><div><img src={mealImage(recipe.name)} alt="" /><span><Clock3 /> {recipe.prepMinutes + recipe.cookMinutes} phút</span></div><h3>{recipe.name}</h3><footer><small>{recipe.dietTags.includes("VEGETARIAN") ? "Món chay" : "Cân bằng"}</small><span><Flame /> {recipe.calories} kcal</span></footer></Link>)}</div> : <div className="overview-compact-empty"><Sparkles /><p>Chưa có công thức để đề xuất.</p></div>}</article>
+
+      <article className="overview-panel overview-today"><header><div><h2>Kế hoạch hôm nay</h2><span>{format(new Date(), "EEEE, dd/MM", { locale: vi })}</span></div><CalendarCheck /></header>{todayMeals.length ? <div className="overview-today-list">{todayMeals.slice(0, 4).map((item) => <div className={item.completed ? "completed" : ""} key={item.id}><span className="overview-meal-time">{mealLabels[item.mealType]}</span><img src={mealImage(item.recipe.name)} alt="" /><div><strong>{item.recipe.name}</strong><small><Clock3 /> {item.recipe.prepMinutes + item.recipe.cookMinutes} phút</small></div><span className="overview-meal-check">{item.completed && <Check />}</span></div>)}</div> : <div className="overview-compact-empty"><CalendarCheck /><p>Chưa có bữa ăn cho hôm nay.</p></div>}<Link className="overview-outline-button" to="/meal-plans">Xem kế hoạch chi tiết <ArrowRight /></Link></article>
+    </section>
+
+    <section className="overview-ai-banner"><img className="overview-ai-mascot" src="/assets/ai-mascot.png" alt="Trợ lý dinh dưỡng NutriPlan AI" /><div><span className="eyebrow">AI gợi ý cho bạn <Sparkles /></span><h2>Bạn muốn ăn gì hôm nay?</h2><div className="overview-ai-prompts"><Link to="/assistant">Món dưới 30 phút</Link><Link to="/assistant">Món ít calo</Link><Link to="/assistant">Tận dụng thực phẩm sắp hết hạn</Link><Link to="/assistant">Thực đơn 3 ngày</Link></div></div><Link className="button primary" to="/assistant">Hỏi AI ngay <ArrowRight /></Link></section>
   </div>;
 }

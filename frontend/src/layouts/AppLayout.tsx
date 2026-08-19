@@ -1,5 +1,5 @@
-import { Bot, CalendarDays, CookingPot, LayoutDashboard, LogOut, PackageOpen, UserRound } from "lucide-react";
-import { NavLink, Outlet } from "react-router-dom";
+import { ArrowRight, Bot, CalendarDays, CookingPot, LayoutDashboard, LogOut, PackageOpen, Sparkles, UserRound } from "lucide-react";
+import { Link, NavLink, Outlet } from "react-router-dom";
 import Logo from "../components/Logo";
 import { useAuth } from "../contexts/AuthContext";
 
@@ -17,10 +17,12 @@ export default function AppLayout() {
   return <div className="app-shell">
     <aside className="sidebar">
       <Logo />
-      <nav>{links.map(({ to, label, icon: Icon, end }) => <NavLink key={to} to={to} end={end}><Icon size={19} /><span>{label}</span></NavLink>)}</nav>
-      <div className="sidebar-user"><span className="avatar">{user?.name?.charAt(0).toUpperCase()}</span><div><strong>{user?.name}</strong><small>{user?.email}</small></div><button onClick={logout} aria-label="Đăng xuất"><LogOut size={18} /></button></div>
+      <p className="sidebar-tagline">Ăn lành mạnh, sống nhẹ nhàng.</p>
+      <nav aria-label="Điều hướng chính"><span className="nav-label">Không gian của bạn</span>{links.map(({ to, label, icon: Icon, end }) => <NavLink key={to} to={to} end={end}><Icon size={19} /><span>{label}</span></NavLink>)}</nav>
+      <Link to="/assistant" className="sidebar-tip"><span className="tip-icon"><Sparkles size={14} /></span><div><b>NutriPlan AI</b><span>Gợi ý món ăn phù hợp từ chính kho thực phẩm của bạn.</span><em>Hỏi AI ngay <ArrowRight size={12} /></em></div></Link>
+      <div className="sidebar-user"><Link to="/profile" className="avatar" aria-label="Mở hồ sơ">{user?.name?.charAt(0).toUpperCase()}</Link><div><strong>{user?.name}</strong><small>{user?.email}</small></div><button onClick={logout} aria-label="Đăng xuất" title="Đăng xuất"><LogOut size={18} /></button></div>
     </aside>
-    <main className="main-content"><Outlet /></main>
-    <nav className="mobile-nav">{links.slice(0, 5).map(({ to, label, icon: Icon, end }) => <NavLink key={to} to={to} end={end}><Icon size={20} /><span>{label}</span></NavLink>)}</nav>
+    <main className="main-content"><header className="mobile-header"><Logo /><Link to="/profile" className="mobile-avatar" aria-label="Mở hồ sơ">{user?.name?.charAt(0).toUpperCase()}</Link></header><Outlet /></main>
+    <nav className="mobile-nav" aria-label="Điều hướng trên điện thoại">{links.slice(0, 5).map(({ to, label, icon: Icon, end }) => <NavLink key={to} to={to} end={end}><Icon size={20} /><span>{label}</span></NavLink>)}</nav>
   </div>;
 }

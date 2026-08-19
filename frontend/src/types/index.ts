@@ -35,8 +35,13 @@ export interface MealPlan {
 
 export interface DashboardData {
   nutritionTargets: { calories: number; proteinG: number; carbsG: number; fatG: number } | null;
-  pantryCount: number; expiringItems: PantryItem[];
+  pantryCount: number; expiringItems: PantryItem[]; expiredCount: number;
   activePlan: { id: string; name: string; completionRate: number } | null;
+  recommendedRecipes: Array<{ id: string; name: string; calories: number; prepMinutes: number; cookMinutes: number; dietTags: string[] }>;
+  todayMeals: Array<{
+    id: string; mealType: MealType; calories: number; completed: boolean;
+    recipe: { id: string; name: string; prepMinutes: number; cookMinutes: number };
+  }>;
 }
 
 export interface ChatMessage { id: string; role: "user" | "assistant"; content: string; createdAt: string }
