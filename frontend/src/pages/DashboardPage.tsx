@@ -47,9 +47,16 @@ export default function DashboardPage() {
 
   return <div className="page reference-dashboard">
     <section className="overview-welcome">
-      <div className="overview-hero-backgrounds" aria-hidden="true"><span className="overview-hero-image" /></div>
+      <div className="overview-hero-backgrounds" aria-hidden="true">
+        <div className="overview-hero-track">
+          <span className="overview-hero-slide nutrition" />
+          <span className="overview-hero-slide salmon" />
+          <span className="overview-hero-slide vegan" />
+          <span className="overview-hero-slide oats" />
+          <span className="overview-hero-slide nutrition" />
+        </div>
+      </div>
       <div className="overview-welcome-copy"><div className="overview-greeting-copy"><span className="eyebrow">{format(new Date(), "EEEE, dd 'tháng' M", { locale: vi })}</span><h1><span className="overview-greeting-fixed">{greeting},</span>{" "}<span className="overview-greeting-person"><strong>{firstName}!</strong> <span className="overview-wave" aria-hidden="true">👋</span></span></h1><p>Hôm nay bạn muốn nấu món gì ngon?</p></div><form className="overview-search" onSubmit={submitSearch}><Search /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Tìm kiếm món ăn, nguyên liệu..." aria-label="Tìm kiếm món ăn hoặc nguyên liệu" /><button aria-label="Tìm kiếm"><Sparkles /></button></form></div>
-      <div className="overview-calorie-chip"><span><Flame /></span><div><b>{data?.nutritionTargets?.calories ?? "—"}</b><small>kcal mục tiêu</small></div></div>
     </section>
 
     <section className="overview-metrics" aria-label="Thông tin tổng quan">
@@ -57,7 +64,6 @@ export default function DashboardPage() {
       <article><span className="overview-metric-icon soon"><TimerReset /></span><div><strong>{data?.expiringItems.length ?? 0}</strong><b>Sắp hết hạn</b><small>Cần dùng sớm</small></div></article>
       <article><span className="overview-metric-icon expired"><PackageCheck /></span><div><strong>{data?.expiredCount ?? 0}</strong><b>Đã hết hạn</b><small>Kiểm tra ngay</small></div></article>
       <article><span className="overview-metric-icon meals"><Heart /></span><div><strong>{todayMeals.length}</strong><b>Bữa hôm nay</b><small>Đã lên lịch</small></div></article>
-      <article className="overview-savings-metric"><div><span>Tiết kiệm tháng này</span><small>↑ 18%</small><b>450.000đ</b><em>so với tháng trước</em></div><svg viewBox="0 0 110 48" role="img" aria-label="Xu hướng tiết kiệm tăng 18 phần trăm"><path className="saving-area" d="M2 40 C14 31, 22 42, 32 31 S47 5, 59 10 S72 38, 84 28 S98 22, 108 15 L108 48 L2 48 Z" /><path className="saving-line" d="M2 40 C14 31, 22 42, 32 31 S47 5, 59 10 S72 38, 84 28 S98 22, 108 15" /></svg></article>
     </section>
 
     <section className="overview-panels">
