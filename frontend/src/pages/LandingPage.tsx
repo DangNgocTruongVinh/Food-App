@@ -1,6 +1,7 @@
 import {
-  ArrowRight, Bookmark, CalendarDays, Check, Clock3, Flame,
-  HeartPulse, Leaf, Menu, Moon, Sparkles, UsersRound, Utensils, X,
+  ArrowLeft, ArrowRight, Bookmark, CalendarDays, Check, ChefHat, Clock3,
+  Dumbbell, Flame, Grid2X2, HeartPulse, Leaf, Menu, Moon, Salad,
+  Sparkles, Star, Sunrise, UsersRound, Utensils, X,
 } from "lucide-react";
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
@@ -20,17 +21,46 @@ const features = [
 ];
 
 const recipes = [
-  { image: "/assets/recipe-vegan-bowl.jpg", name: "Salad ức gà sốt chanh dây", time: "20 phút", level: "Dễ" },
-  { image: "/assets/recipe-salmon.jpg", name: "Cá hồi áp chảo sốt bơ tỏi", time: "25 phút", level: "Trung bình" },
-  { image: "/assets/nutrition-hero.jpg", name: "Bowl quinoa rau củ nướng", time: "30 phút", level: "Dễ" },
-  { image: "/assets/recipe-oats.jpg", name: "Yến mạch trái cây bổ dưỡng", time: "15 phút", level: "Dễ" },
+  { image: "/assets/recipe-vegan-bowl.jpg", name: "Salad ức gà sốt chanh dây", description: "Ức gà mềm mọng cùng rau xanh và sốt chanh dây thanh nhẹ, giàu đạm nhưng vẫn tươi mát.", tags: ["Giàu protein", "Eat clean"], time: "20 phút", level: "Dễ", servings: "2 phần" },
+  { image: "/assets/recipe-salmon.jpg", name: "Cá hồi áp chảo sốt bơ tỏi", description: "Cá hồi áp chảo vàng cạnh, kết hợp sốt bơ tỏi thơm dịu và rau củ nướng cân bằng.", tags: ["Giàu protein", "Ít carb"], time: "25 phút", level: "Trung bình", servings: "2 phần" },
+  { image: "/assets/nutrition-hero.jpg", name: "Bowl quinoa rau củ nướng", description: "Quinoa bùi nhẹ, rau củ theo mùa và quả bơ tạo nên một bữa ăn nhiều chất xơ, đủ năng lượng.", tags: ["Nhiều chất xơ", "Eat clean"], time: "30 phút", level: "Dễ", servings: "2 phần" },
+  { image: "/assets/recipe-oats.jpg", name: "Yến mạch trái cây bổ dưỡng", description: "Yến mạch mềm mịn với trái cây, hạt rang và sữa chua cho bữa sáng nhẹ nhàng, no lâu.", tags: ["Bữa sáng", "Thuần chay"], time: "15 phút", level: "Dễ", servings: "1 phần" },
+];
+
+const recipeCategories = [
+  { id: "all", label: "Tất cả", count: 245, icon: Grid2X2, recipeIndex: 1 },
+  { id: "weight-loss", label: "Giảm cân", count: 56, icon: Leaf, recipeIndex: 2 },
+  { id: "protein", label: "Giàu protein", count: 48, icon: Dumbbell, recipeIndex: 1 },
+  { id: "eat-clean", label: "Eat clean", count: 62, icon: Salad, recipeIndex: 0 },
+  { id: "vegan", label: "Thuần chay", count: 40, icon: Leaf, recipeIndex: 2 },
+  { id: "breakfast", label: "Bữa sáng", count: 38, icon: Sunrise, recipeIndex: 3 },
 ];
 
 export default function LandingPage() {
   const { user } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [featuredRecipeIndex, setFeaturedRecipeIndex] = useState(1);
+  const [activeRecipeCategory, setActiveRecipeCategory] = useState("all");
   const pageRef = useRef<HTMLDivElement>(null);
+  const recipeCarouselRef = useRef<HTMLDivElement>(null);
+  const recipeDirectionRef = useRef(1);
   const appLink = user ? "/dashboard" : "/login";
+  const getRecipeAt = (offset: number) => recipes[(featuredRecipeIndex + offset + recipes.length) % recipes.length];
+  const previousRecipe = getRecipeAt(-1);
+  const featuredRecipe = getRecipeAt(0);
+  const nextRecipe = getRecipeAt(1);
+
+  const moveRecipe = (direction: -1 | 1) => {
+    recipeDirectionRef.current = direction;
+    setActiveRecipeCategory("all");
+    setFeaturedRecipeIndex((current) => (current + direction + recipes.length) % recipes.length);
+  };
+
+  const selectRecipeCategory = (categoryId: string, recipeIndex: number) => {
+    recipeDirectionRef.current = recipeIndex >= featuredRecipeIndex ? 1 : -1;
+    setActiveRecipeCategory(categoryId);
+    setFeaturedRecipeIndex(recipeIndex);
+  };
 
   useGSAP(() => {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
@@ -65,21 +95,98 @@ export default function LandingPage() {
       scrollTrigger: { trigger: ".landing-feature-grid", start: "top 84%", once: true },
     });
 
-    gsap.utils.toArray<HTMLElement>(".landing-recipe-grid article > div").forEach((media) => {
-      gsap.fromTo(media,
-        { scale: 0.88, opacity: 0.45 },
-        {
-          scale: 1,
-          opacity: 1,
-          ease: "none",
-          scrollTrigger: {
-            trigger: media,
-            start: "top 95%",
-            end: "center 58%",
-            scrub: 0.8,
-          },
-        },
-      );
+    const featureSection = pageRef.current?.querySelector<HTMLElement>(".landing-features");
+    const featureGrid = pageRef.current?.querySelector<HTMLElement>(".landing-feature-grid");
+    const featureCards = gsap.utils.toArray<HTMLElement>(".landing-feature-card-shell");
+    const featureMotion = gsap.matchMedia();
+
+    if (featureSection && featureGrid && featureCards.length === 4) {
+      featureMotion.add("(hover: hover) and (min-width: 961px)", () => {
+        const rotations = [-6, -2, 2.5, 6];
+        const verticalOffsets = [16, 2, 4, 18];
+
+        const getStackOffsets = () => {
+          const cardWidth = featureCards[0].offsetWidth;
+          const fanStep = Math.min(116, Math.max(82, cardWidth * 0.36));
+          const gridCenter = featureGrid.clientWidth / 2;
+
+          return featureCards.map((card, index) => {
+            const naturalCenter = card.offsetLeft + card.offsetWidth / 2;
+            const stackedCenter = gridCenter + (index - 1.5) * fanStep;
+            return stackedCenter - naturalCenter;
+          });
+        };
+
+        const setStack = () => {
+          const offsets = getStackOffsets();
+          gsap.set(featureCards, {
+            x: (index) => offsets[index],
+            y: (index) => verticalOffsets[index],
+            rotation: (index) => rotations[index],
+            transformOrigin: "50% 82%",
+            zIndex: (index) => index + 1,
+          });
+        };
+
+        const expandCards = () => {
+          gsap.to(featureCards, {
+            x: 0,
+            y: 0,
+            rotation: 0,
+            duration: 0.95,
+            stagger: { each: 0.025, from: "center" },
+            ease: "power4.inOut",
+            overwrite: "auto",
+          });
+        };
+
+        const stackCards = () => {
+          const offsets = getStackOffsets();
+          gsap.to(featureCards, {
+            x: (index) => offsets[index],
+            y: (index) => verticalOffsets[index],
+            rotation: (index) => rotations[index],
+            duration: 1.05,
+            stagger: { each: 0.025, from: "center" },
+            ease: "power4.inOut",
+            overwrite: "auto",
+          });
+        };
+
+        const syncStackOnResize = () => {
+          if (featureSection.matches(":hover")) expandCards();
+          else setStack();
+        };
+
+        setStack();
+        featureSection.addEventListener("pointerenter", expandCards);
+        featureSection.addEventListener("pointerleave", stackCards);
+        window.addEventListener("resize", syncStackOnResize);
+
+        return () => {
+          featureSection.removeEventListener("pointerenter", expandCards);
+          featureSection.removeEventListener("pointerleave", stackCards);
+          window.removeEventListener("resize", syncStackOnResize);
+          gsap.killTweensOf(featureCards);
+          gsap.set(featureCards, { clearProps: "transform,zIndex" });
+        };
+      });
+    }
+
+    gsap.from(".landing-recipe-carousel-shell", {
+      y: 54,
+      opacity: 0,
+      duration: 1,
+      ease: "power3.out",
+      scrollTrigger: { trigger: ".landing-recipe-carousel-shell", start: "top 86%", once: true },
+    });
+
+    gsap.from(".landing-recipe-filters", {
+      y: 24,
+      opacity: 0,
+      duration: 0.72,
+      ease: "power3.out",
+      scrollTrigger: { trigger: ".landing-recipe-filters", start: "top 92%", once: true },
     });
 
     gsap.fromTo(".landing-plan-copy > p",
@@ -95,7 +202,26 @@ export default function LandingPage() {
         },
       },
     );
+    return () => featureMotion.revert();
   }, { scope: pageRef });
+
+  useGSAP(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+    const direction = recipeDirectionRef.current;
+    const cards = recipeCarouselRef.current?.querySelectorAll<HTMLElement>(".landing-recipe-card");
+    const featuredImage = recipeCarouselRef.current?.querySelector<HTMLElement>(".landing-recipe-spotlight .landing-recipe-media img");
+    if (!cards?.length || !featuredImage) return;
+
+    gsap.fromTo(cards,
+      { x: direction * 34, opacity: 0.35, scale: 0.975 },
+      { x: 0, opacity: 1, scale: 1, duration: 0.72, stagger: 0.045, ease: "power3.out" },
+    );
+    gsap.fromTo(featuredImage,
+      { scale: 1.075 },
+      { scale: 1, duration: 1.05, ease: "power3.out" },
+    );
+  }, { scope: recipeCarouselRef, dependencies: [featuredRecipeIndex], revertOnUpdate: true });
 
   return <div className="landing-page" ref={pageRef}>
     <header className="landing-header">
@@ -154,19 +280,78 @@ export default function LandingPage() {
       <section className="landing-section landing-features" id="features">
         <div className="landing-container">
           <div className="landing-feature-intro"><span>NOURI GIÚP BẠN <Leaf /></span><h2>Trải nghiệm nấu ăn đơn giản hơn, lành mạnh hơn và thú vị hơn.</h2></div>
-          <div className="landing-feature-grid">{features.map(({ icon: Icon, title, copy, href }, index) => <article key={title}><span className={`tone-${index + 1}`}><Icon /></span><div><h3>{title}</h3><p>{copy}</p></div><a href={href} aria-label={`Khám phá ${title}`}><ArrowRight /></a></article>)}</div>
+          <div className="landing-feature-grid">{features.map(({ icon: Icon, title, copy, href }, index) => <div className="landing-feature-card-shell" key={title}><article><span className={`tone-${index + 1}`}><Icon /></span><div><h3>{title}</h3><p>{copy}</p></div><a href={href} aria-label={`Khám phá ${title}`}><ArrowRight /></a></article></div>)}</div>
         </div>
       </section>
 
       <section className="landing-section landing-recipes" id="recipes">
         <div className="landing-container">
-          <div className="landing-recipe-heading"><h2>Công thức nổi bật <Leaf /></h2><Link to={appLink}>Xem tất cả <ArrowRight /></Link></div>
-          <div className="landing-recipe-grid">{recipes.map((recipe) => <article key={recipe.name}><div><img src={recipe.image} alt={recipe.name} /><button type="button" aria-label={`Lưu ${recipe.name}`}><Bookmark /></button></div><h3>{recipe.name}</h3><p><Clock3 /> {recipe.time}<i />{recipe.level}</p></article>)}</div>
+          <div className="landing-recipe-heading">
+            <div>
+              <span className="landing-recipe-eyebrow"><Leaf /> Công thức ngon <i /> Dễ làm</span>
+              <h2>Công thức nổi bật <Leaf aria-hidden="true" /></h2>
+              <p>Khám phá những món ăn ngon, dễ làm và tốt cho sức khỏe được Nouri tuyển chọn mỗi ngày.</p>
+            </div>
+            <Link className="landing-recipe-all" to={appLink}>Xem tất cả công thức <ArrowRight /></Link>
+          </div>
+
+          <div className="landing-recipe-carousel-shell">
+            <button className="landing-recipe-control previous" type="button" onClick={() => moveRecipe(-1)} aria-label="Xem công thức trước"><ArrowLeft /></button>
+            <div className="landing-recipe-carousel" ref={recipeCarouselRef} aria-live="polite">
+              <article className="landing-recipe-card landing-recipe-preview preview-left">
+                <div className="landing-recipe-media">
+                  <img src={previousRecipe.image} alt={previousRecipe.name} />
+                  <button type="button" aria-label={`Lưu ${previousRecipe.name}`}><Bookmark /></button>
+                </div>
+                <div className="landing-recipe-preview-copy">
+                  <h3>{previousRecipe.name}</h3>
+                  <p><Clock3 /> {previousRecipe.time}<i /> <ChefHat /> {previousRecipe.level}</p>
+                </div>
+              </article>
+
+              <article className="landing-recipe-card landing-recipe-spotlight">
+                <div className="landing-recipe-media">
+                  <img src={featuredRecipe.image} alt={featuredRecipe.name} />
+                  <span className="landing-featured-badge"><Star /> Nổi bật</span>
+                  <button type="button" aria-label={`Lưu ${featuredRecipe.name}`}><Bookmark /></button>
+                </div>
+                <div className="landing-recipe-spotlight-copy">
+                  <div className="landing-recipe-tags">{featuredRecipe.tags.map((tag) => <span key={tag}><Leaf /> {tag}</span>)}</div>
+                  <h3>{featuredRecipe.name}</h3>
+                  <p>{featuredRecipe.description}</p>
+                  <footer>
+                    <div><span><Clock3 /> {featuredRecipe.time}</span><i /><span><ChefHat /> {featuredRecipe.level}</span><i /><span><UsersRound /> {featuredRecipe.servings}</span></div>
+                    <Link to={appLink} aria-label={`Xem công thức ${featuredRecipe.name}`}><ArrowRight /></Link>
+                  </footer>
+                </div>
+              </article>
+
+              <article className="landing-recipe-card landing-recipe-preview preview-right">
+                <div className="landing-recipe-media">
+                  <img src={nextRecipe.image} alt={nextRecipe.name} />
+                  <button type="button" aria-label={`Lưu ${nextRecipe.name}`}><Bookmark /></button>
+                </div>
+                <div className="landing-recipe-preview-copy">
+                  <h3>{nextRecipe.name}</h3>
+                  <p><Clock3 /> {nextRecipe.time}<i /> <ChefHat /> {nextRecipe.level}</p>
+                </div>
+              </article>
+            </div>
+            <button className="landing-recipe-control next" type="button" onClick={() => moveRecipe(1)} aria-label="Xem công thức tiếp theo"><ArrowRight /></button>
+          </div>
+
+          <div className="landing-recipe-dots" aria-label="Chọn công thức nổi bật">
+            {recipes.map((recipe, index) => <button className={index === featuredRecipeIndex ? "active" : ""} type="button" key={recipe.name} onClick={() => selectRecipeCategory("all", index)} aria-label={`Hiển thị ${recipe.name}`} aria-pressed={index === featuredRecipeIndex} />)}
+          </div>
+
+          <div className="landing-recipe-filters" aria-label="Lọc công thức theo danh mục">
+            {recipeCategories.map(({ id, label, count, icon: Icon, recipeIndex }) => <button className={id === activeRecipeCategory ? "active" : ""} type="button" key={id} onClick={() => selectRecipeCategory(id, recipeIndex)} aria-pressed={id === activeRecipeCategory}><span><Icon /></span><span><strong>{label}</strong><small>{count} món</small></span></button>)}
+          </div>
         </div>
       </section>
 
       <section className="landing-trusted" aria-label="Thương hiệu tin dùng">
-        <div className="landing-container"><span>Được tin dùng bởi</span><div className="landing-marquee"><div><b>VNEXPRESS</b><b>CAFEF</b><b>GENK</b><b>THANH NIÊN</b><b>FOODY</b><b>aFamily</b></div><div aria-hidden="true"><b>VNEXPRESS</b><b>CAFEF</b><b>GENK</b><b>THANH NIÊN</b><b>FOODY</b><b>aFamily</b></div></div></div>
+        <div className="landing-container"><span>Được tin dùng bởi</span><div className="landing-brand-row"><b>THANH NIÊN</b><b>FOODY</b><b>aFamily</b><b>VNEXPRESS</b><b>CAFEF</b><b>GENK</b></div></div>
       </section>
 
       <section className="landing-section landing-plan-section" id="plan">
