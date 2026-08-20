@@ -4,6 +4,7 @@ import AppLayout from "./layouts/AppLayout";
 import AiAssistantPage from "./pages/AiAssistantPage";
 import CommunityPage from "./pages/CommunityPage";
 import DashboardPage from "./pages/DashboardPage";
+import LandingPage from "./pages/LandingPage";
 import LoginPage from "./pages/LoginPage";
 import MealPlansPage from "./pages/MealPlansPage";
 import PantryPage from "./pages/PantryPage";
@@ -17,10 +18,11 @@ function ProtectedRoute() {
 export default function App() {
   const { user } = useAuth();
   return <Routes>
-    <Route path="/login" element={user ? <Navigate to="/" replace /> : <LoginPage />} />
+    <Route index element={<LandingPage />} />
+    <Route path="/login" element={user ? <Navigate to="/dashboard" replace /> : <LoginPage />} />
     <Route element={<ProtectedRoute />}>
       <Route element={<AppLayout />}>
-        <Route index element={<DashboardPage />} />
+        <Route path="dashboard" element={<DashboardPage />} />
         <Route path="pantry" element={<PantryPage />} />
         <Route path="meal-plans" element={<MealPlansPage />} />
         <Route path="recipes" element={<RecipesPage />} />

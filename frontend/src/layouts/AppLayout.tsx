@@ -5,7 +5,7 @@ import NotificationCenter from "../components/notifications/NotificationCenter";
 import { useAuth } from "../contexts/AuthContext";
 
 const links = [
-  { to: "/", label: "Tổng quan", end: true },
+  { to: "/dashboard", label: "Tổng quan", end: true },
   { to: "/pantry", label: "Kho thực phẩm" },
   { to: "/meal-plans", label: "Thực đơn" },
   { to: "/recipes", label: "Công thức" },
@@ -28,7 +28,7 @@ export default function AppLayout() {
     <div className="app-shell topbar-layout">
       <header className="app-topbar">
         <div className="app-topbar-inner">
-          <Link to="/" className="topbar-brand" aria-label="Về trang tổng quan"><Logo /></Link>
+          <Link to="/dashboard" className="topbar-brand" aria-label="Về trang tổng quan"><Logo /></Link>
 
           <nav className="topbar-nav" aria-label="Điều hướng chính">
             {links.map(({ to, label, end }) => (
