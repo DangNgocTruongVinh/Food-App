@@ -1,7 +1,7 @@
 import {
   ArrowLeft, ArrowRight, Bookmark, CalendarDays, Check, ChefHat, Clock3,
   BookOpen, Bot, CircleHelp, Dumbbell, Facebook, FileText, Flame, Grid2X2, Heart,
-  HeartPulse, Instagram, Leaf, Lightbulb, Mail, Menu, MessageCircle, Moon, Play,
+  HeartPulse, Instagram, Leaf, Lightbulb, Mail, Menu, MessageCircle, Play,
   Newspaper, Package, Salad, ShieldCheck, Sparkles, Star, Sunrise,
   Target, TrendingUp, Trophy, UserRound, UsersRound, Utensils, X,
 } from "lucide-react";
@@ -52,6 +52,16 @@ const recipeCategories = [
   { id: "vegan", label: "Thuần chay", count: 40, icon: Leaf, recipeIndex: 2 },
   { id: "breakfast", label: "Bữa sáng", count: 38, icon: Sunrise, recipeIndex: 3 },
 ];
+
+const landingNavItems = [
+  { id: "home", label: "Trang chủ" },
+  { id: "recipes", label: "Công thức" },
+  { id: "plan", label: "Kế hoạch ăn uống" },
+  { id: "community", label: "Cộng đồng" },
+  { id: "about", label: "Về Nouri" },
+] as const;
+
+type LandingNavSection = (typeof landingNavItems)[number]["id"];
 
 const communityHighlights = [
   { icon: UsersRound, title: "Chia sẻ hành trình", copy: "Đăng nhật ký, chia sẻ bữa ăn và hành trình cải thiện sức khỏe của bạn.", image: "/assets/community-card-journey.png" },
@@ -110,11 +120,15 @@ function FooterBotanical({ side }: { side: "left" | "right" }) {
 export default function LandingPage() {
   const { user } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [activeNavSection, setActiveNavSection] = useState<LandingNavSection>("home");
   const [featuredRecipeIndex, setFeaturedRecipeIndex] = useState(1);
   const [activeRecipeCategory, setActiveRecipeCategory] = useState("all");
   const [recipeSlides, setRecipeSlides] = useState<RecipeSlide[]>(() => createRecipeSlides(1));
   const [isRecipeAnimating, setIsRecipeAnimating] = useState(false);
   const pageRef = useRef<HTMLDivElement>(null);
+  const landingNavRef = useRef<HTMLElement>(null);
+  const landingNavIndicatorRef = useRef<HTMLSpanElement>(null);
+  const navIndicatorReadyRef = useRef(false);
   const recipeCarouselRef = useRef<HTMLDivElement>(null);
   const activeRecipeIndexRef = useRef(1);
   const recipeAnimationRef = useRef(false);
@@ -181,6 +195,89 @@ export default function LandingPage() {
   useEffect(() => () => {
     if (recipeContinuationFrameRef.current !== null) cancelAnimationFrame(recipeContinuationFrameRef.current);
   }, []);
+
+  useEffect(() => {
+    let frameId: number | null = null;
+
+    const syncActiveSection = () => {
+      frameId = null;
+      const probeLine = Math.min(window.innerHeight * 0.32, 260);
+      let nextSection: LandingNavSection = "home";
+
+      landingNavItems.forEach(({ id }) => {
+        const section = document.getElementById(id);
+        if (section && section.getBoundingClientRect().top <= probeLine) nextSection = id;
+      });
+
+      const isAtPageEnd = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 8;
+      if (isAtPageEnd) nextSection = "about";
+
+      setActiveNavSection((current) => current === nextSection ? current : nextSection);
+    };
+
+    const scheduleSync = () => {
+      if (frameId === null) frameId = window.requestAnimationFrame(syncActiveSection);
+    };
+
+    syncActiveSection();
+    window.addEventListener("scroll", scheduleSync, { passive: true });
+    window.addEventListener("resize", scheduleSync);
+
+    return () => {
+      window.removeEventListener("scroll", scheduleSync);
+      window.removeEventListener("resize", scheduleSync);
+      if (frameId !== null) window.cancelAnimationFrame(frameId);
+    };
+  }, []);
+
+  useGSAP(() => {
+    const nav = landingNavRef.current;
+    const indicator = landingNavIndicatorRef.current;
+    if (!nav || !indicator) return;
+
+    let frameId: number | null = null;
+    const positionIndicator = () => {
+      frameId = null;
+      const activeLink = nav.querySelector<HTMLElement>(`[data-nav-section="${activeNavSection}"]`);
+      if (!activeLink || activeLink.offsetParent === null) return;
+
+      const navRect = nav.getBoundingClientRect();
+      const linkRect = activeLink.getBoundingClientRect();
+      const properties = {
+        x: linkRect.left - navRect.left,
+        y: linkRect.top - navRect.top,
+        width: linkRect.width,
+        height: linkRect.height,
+        autoAlpha: 1,
+      };
+      const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+      if (!navIndicatorReadyRef.current || reduceMotion) {
+        gsap.set(indicator, properties);
+        navIndicatorReadyRef.current = true;
+        return;
+      }
+
+      gsap.to(indicator, {
+        ...properties,
+        duration: 0.48,
+        ease: "power3.out",
+        overwrite: "auto",
+      });
+    };
+    const schedulePosition = () => {
+      if (frameId === null) frameId = window.requestAnimationFrame(positionIndicator);
+    };
+
+    schedulePosition();
+    window.addEventListener("resize", schedulePosition);
+
+    return () => {
+      window.removeEventListener("resize", schedulePosition);
+      if (frameId !== null) window.cancelAnimationFrame(frameId);
+      gsap.killTweensOf(indicator);
+    };
+  }, { scope: landingNavRef, dependencies: [activeNavSection, menuOpen] });
 
   useGSAP(() => {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
@@ -716,17 +813,35 @@ export default function LandingPage() {
   return <div className="landing-page" ref={pageRef}>
     <header className="landing-header">
       <div className="landing-container landing-header-inner">
-        <Link to="/" className="landing-brand" aria-label="Nouri - Trang chủ"><Logo /></Link>
-        <nav className={menuOpen ? "landing-nav open" : "landing-nav"} aria-label="Điều hướng trang chủ">
-          <a className="active" href="#home" onClick={() => setMenuOpen(false)}>Trang chủ</a>
-          <a href="#recipes" onClick={() => setMenuOpen(false)}>Công thức</a>
-          <a href="#plan" onClick={() => setMenuOpen(false)}>Kế hoạch ăn uống</a>
-          <a href="#community" onClick={() => setMenuOpen(false)}>Cộng đồng</a>
-          <a href="#about" onClick={() => setMenuOpen(false)}>Về Nouri</a>
+        <Link
+          to="/#home"
+          className="landing-brand"
+          aria-label="Nouri - Trang chủ"
+          onClick={() => {
+            setActiveNavSection("home");
+            setMenuOpen(false);
+            window.requestAnimationFrame(() => document.getElementById("home")?.scrollIntoView({
+              behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
+              block: "start",
+            }));
+          }}
+        ><Logo /></Link>
+        <nav className={menuOpen ? "landing-nav open" : "landing-nav"} aria-label="Điều hướng trang chủ" ref={landingNavRef}>
+          <span className="landing-nav-indicator" ref={landingNavIndicatorRef} aria-hidden="true" />
+          {landingNavItems.map(({ id, label }) => <a
+            className={activeNavSection === id ? "active" : undefined}
+            href={`#${id}`}
+            data-nav-section={id}
+            onClick={() => {
+              setActiveNavSection(id);
+              setMenuOpen(false);
+            }}
+            aria-current={activeNavSection === id ? "location" : undefined}
+            key={id}
+          >{label}</a>)}
         </nav>
         <div className="landing-header-actions">
-          <button className="landing-theme-button" type="button" aria-label="Giao diện sáng"><Moon /></button>
-          <Link className="landing-login" to={appLink}>{user ? "Vào ứng dụng" : "Đăng nhập"}</Link>
+          <Link className="landing-login" to="/login">Đăng nhập</Link>
           <button className="landing-menu-button" type="button" onClick={() => setMenuOpen((value) => !value)} aria-label={menuOpen ? "Đóng menu" : "Mở menu"} aria-expanded={menuOpen}>{menuOpen ? <X /> : <Menu />}</button>
         </div>
       </div>

@@ -1,5 +1,4 @@
 import { Navigate, Outlet, Route, Routes } from "react-router-dom";
-import { useAuth } from "./contexts/AuthContext";
 import AppLayout from "./layouts/AppLayout";
 import AiAssistantPage from "./pages/AiAssistantPage";
 import CommunityPage from "./pages/CommunityPage";
@@ -16,10 +15,9 @@ function ProtectedRoute() {
 }
 
 export default function App() {
-  const { user } = useAuth();
   return <Routes>
     <Route index element={<LandingPage />} />
-    <Route path="/login" element={user ? <Navigate to="/dashboard" replace /> : <LoginPage />} />
+    <Route path="/login" element={<LoginPage />} />
     <Route element={<ProtectedRoute />}>
       <Route element={<AppLayout />}>
         <Route path="dashboard" element={<DashboardPage />} />

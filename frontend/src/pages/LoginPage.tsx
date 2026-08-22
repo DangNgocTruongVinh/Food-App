@@ -1,10 +1,12 @@
 import { useState, type FormEvent } from "react";
 import { ArrowRight, CheckCircle2, Eye, EyeOff, Sparkles } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import Logo from "../components/Logo";
 import { getApiError } from "../api/client";
 import { useAuth } from "../contexts/AuthContext";
 
 export default function LoginPage() {
+  const navigate = useNavigate();
   const [registerMode, setRegisterMode] = useState(false);
   const [form, setForm] = useState({ name: "", email: "", password: "" });
   const [error, setError] = useState("");
@@ -13,7 +15,10 @@ export default function LoginPage() {
   const auth = useAuth();
   const submit = async (event: FormEvent) => {
     event.preventDefault(); setError(""); setLoading(true);
-    try { registerMode ? await auth.register(form.name, form.email, form.password) : await auth.login(form.email, form.password); }
+    try {
+      registerMode ? await auth.register(form.name, form.email, form.password) : await auth.login(form.email, form.password);
+      navigate("/dashboard", { replace: true });
+    }
     catch (err) { setError(getApiError(err)); } finally { setLoading(false); }
   };
   return <main className="auth-page">
