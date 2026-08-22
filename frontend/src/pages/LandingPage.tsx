@@ -1,7 +1,7 @@
 import {
   ArrowLeft, ArrowRight, Bookmark, CalendarDays, Check, ChefHat, Clock3,
   BookOpen, Bot, CircleHelp, Dumbbell, Facebook, FileText, Flame, Grid2X2, Heart,
-  HeartPulse, Instagram, Leaf, Lightbulb, Mail, Menu, MessageCircle, Moon, Play,
+  HeartPulse, Instagram, Leaf, Mail, Menu, MessageCircle, Moon, Play,
   Newspaper, Package, Salad, ShieldCheck, Sparkles, Star, Sunrise,
   Target, TrendingUp, Trophy, UserRound, UsersRound, Utensils, X,
 } from "lucide-react";
@@ -58,6 +58,15 @@ const communityHighlights = [
   { icon: Leaf, title: "Nhận cảm hứng", copy: "Khám phá câu chuyện, công thức và thói quen lành mạnh từ mọi người.", image: "/assets/community-card-inspiration.png" },
   { icon: MessageCircle, title: "Hỏi & Đáp", copy: "Đặt câu hỏi và nhận lời khuyên hữu ích từ cộng đồng và chuyên gia.", image: "/assets/community-card-qa.png" },
   { icon: Trophy, title: "Thử thách & Sự kiện", copy: "Tham gia thử thách, sự kiện thú vị để cùng nhau tiến bộ mỗi ngày.", image: "/assets/community-card-event.png" },
+];
+
+const heroIngredientItems = [
+  { id: "salmon" },
+  { id: "avocado" },
+  { id: "broccoli" },
+  { id: "tomato" },
+  { id: "lemon" },
+  { id: "herbs" },
 ];
 
 const footerGroups = [
@@ -185,106 +194,10 @@ export default function LandingPage() {
   useGSAP(() => {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
-    const heroMotion = gsap.matchMedia();
-    const intro = gsap.timeline({ defaults: { ease: "power3.out" } });
+    const intro = gsap.timeline({ defaults: { ease: "power2.out" } });
     intro
-      .from(".landing-header-inner", { y: -28, opacity: 0, duration: 0.8 })
-      .from(".landing-hero-copy > *", { y: 24, opacity: 0, duration: 0.56, stagger: 0.065 }, "-=0.45")
-      .from(".landing-hero-flow path", { strokeDashoffset: 170, opacity: 0, duration: 0.62, stagger: 0.055 }, "-=0.5")
-      .from(".landing-hero-ingredient-layer", { x: -38, y: 18, opacity: 0, duration: 0.72 }, "-=0.58")
-      .from(".landing-hero-ingredient", { scale: 0.92, rotation: -1.8, duration: 0.72 }, "<")
-      .from(".landing-hero-bowl-layer", { scale: 0.84, rotation: -3.2, opacity: 0, duration: 0.82 }, "-=0.52")
-      .from(".landing-hero-bowl-mark", { scale: 0.48, opacity: 0, duration: 0.46 }, "-=0.35")
-      .from(".landing-hero-nutrition-badge", { y: 16, opacity: 0, duration: 0.4, stagger: 0.065 }, "-=0.3");
-
-    gsap.to(".landing-hero-ingredients", { y: -7, duration: 4.2, delay: 1.15, repeat: -1, yoyo: true, ease: "sine.inOut" });
-    gsap.to(".landing-hero-bowl", { y: -4, duration: 4.8, delay: 1.2, repeat: -1, yoyo: true, ease: "sine.inOut" });
-    gsap.to(".landing-hero-bowl-aura", { rotation: 360, duration: 34, repeat: -1, ease: "none", transformOrigin: "50% 50%" });
-    gsap.to(".landing-hero-flow path", { strokeDashoffset: -120, duration: 7.5, repeat: -1, ease: "none", stagger: 0.28 });
-    gsap.to(".landing-hero-bowl-mark", { scale: 1.055, duration: 2.8, repeat: -1, yoyo: true, ease: "sine.inOut" });
-
-    const heroVisual = pageRef.current?.querySelector<HTMLElement>(".landing-hero-visual");
-    if (heroVisual) {
-      heroMotion.add("(hover: hover) and (min-width: 961px)", () => {
-        const parallaxLayers = gsap.utils.toArray<HTMLElement>(".landing-hero-parallax-layer");
-        const heroIngredients = heroVisual.querySelector<HTMLElement>(".landing-hero-ingredient");
-        const heroBowl = heroVisual.querySelector<HTMLElement>(".landing-hero-bowl");
-        const heroBadges = gsap.utils.toArray<HTMLElement>(".landing-hero-nutrition-badge");
-        const primaryCta = pageRef.current?.querySelector<HTMLElement>(".landing-primary-button");
-        const secondaryCta = pageRef.current?.querySelector<HTMLElement>(".landing-hero-watch");
-        const handlePointerMove = (event: PointerEvent) => {
-          const bounds = heroVisual.getBoundingClientRect();
-          const xRatio = (event.clientX - bounds.left) / bounds.width - 0.5;
-          const yRatio = (event.clientY - bounds.top) / bounds.height - 0.5;
-
-          parallaxLayers.forEach((layer) => {
-            const depth = Number(layer.dataset.depth ?? 1);
-            gsap.to(layer, {
-              x: xRatio * depth * 8,
-              y: yRatio * depth * 6,
-              duration: 0.72,
-              ease: "power3.out",
-              overwrite: "auto",
-            });
-          });
-        };
-        const engageVisual = () => {
-          heroVisual.classList.add("is-engaged");
-          if (heroIngredients) gsap.to(heroIngredients, { scale: 1.022, rotation: -0.45, duration: 0.76, ease: "power3.out", overwrite: "auto" });
-          if (heroBowl) gsap.to(heroBowl, { scale: 1.016, duration: 0.76, ease: "power3.out", overwrite: "auto" });
-          gsap.to(heroBadges, { y: (index) => [-3, -5, -3][index], duration: 0.62, stagger: 0.035, ease: "power3.out", overwrite: "auto" });
-        };
-        const resetParallax = () => {
-          heroVisual.classList.remove("is-engaged");
-          gsap.to(parallaxLayers, { x: 0, y: 0, duration: 0.9, ease: "power3.out", overwrite: "auto" });
-          if (heroIngredients) gsap.to(heroIngredients, { scale: 1, rotation: 0, duration: 0.82, ease: "power3.out", overwrite: "auto" });
-          if (heroBowl) gsap.to(heroBowl, { scale: 1, duration: 0.82, ease: "power3.out", overwrite: "auto" });
-          gsap.to(heroBadges, { y: 0, duration: 0.72, stagger: 0.025, ease: "power3.out", overwrite: "auto" });
-        };
-
-        const attachMagnet = (element: HTMLElement | null | undefined, accentSelector: string) => {
-          if (!element) return undefined;
-          const accent = element.querySelector<HTMLElement>(accentSelector);
-          const move = (event: PointerEvent) => {
-            const bounds = element.getBoundingClientRect();
-            const offsetX = event.clientX - (bounds.left + bounds.width / 2);
-            const offsetY = event.clientY - (bounds.top + bounds.height / 2);
-            gsap.to(element, { x: offsetX * 0.055, y: offsetY * 0.08, duration: 0.38, ease: "power3.out", overwrite: "auto" });
-            if (accent) gsap.to(accent, { x: offsetX * 0.1, y: offsetY * 0.08, rotation: offsetX * -0.035, duration: 0.38, ease: "power3.out", overwrite: "auto" });
-          };
-          const leave = () => {
-            gsap.to(element, { x: 0, y: 0, duration: 0.65, ease: "power3.out", overwrite: "auto" });
-            if (accent) gsap.to(accent, { x: 0, y: 0, rotation: 0, duration: 0.65, ease: "power3.out", overwrite: "auto" });
-          };
-          element.addEventListener("pointermove", move);
-          element.addEventListener("pointerleave", leave);
-          return () => {
-            element.removeEventListener("pointermove", move);
-            element.removeEventListener("pointerleave", leave);
-            gsap.killTweensOf([element, accent]);
-            gsap.set([element, accent], { clearProps: "transform" });
-          };
-        };
-
-        const detachPrimaryMagnet = attachMagnet(primaryCta, ".landing-primary-arrow");
-        const detachSecondaryMagnet = attachMagnet(secondaryCta, "span");
-
-        heroVisual.addEventListener("pointermove", handlePointerMove);
-        heroVisual.addEventListener("pointerenter", engageVisual);
-        heroVisual.addEventListener("pointerleave", resetParallax);
-
-        return () => {
-          heroVisual.removeEventListener("pointermove", handlePointerMove);
-          heroVisual.removeEventListener("pointerenter", engageVisual);
-          heroVisual.removeEventListener("pointerleave", resetParallax);
-          detachPrimaryMagnet?.();
-          detachSecondaryMagnet?.();
-          gsap.killTweensOf(parallaxLayers);
-          gsap.killTweensOf([heroIngredients, heroBowl, ...heroBadges]);
-          gsap.set(parallaxLayers, { clearProps: "transform" });
-        };
-      });
-    }
+      .from(".landing-header-inner", { y: -28, opacity: 0, duration: 0.8 }, 0)
+      .from(".landing-hero-copy > *", { y: 24, opacity: 0, duration: 0.56, stagger: 0.065 }, 0.16);
     gsap.utils.toArray<HTMLElement>(".landing-feature-intro, .landing-recipe-heading, .landing-section-heading").forEach((element) => {
       gsap.from(element, {
         y: 48,
@@ -352,9 +265,9 @@ export default function LandingPage() {
             y: 0,
             rotation: 0,
             zIndex: 2,
-            duration: 0.82,
-            stagger: { each: 0.028, from: "center" },
-            ease: "power3.inOut",
+            duration: 0.56,
+            stagger: { each: 0.018, from: "center" },
+            ease: "power3.out",
             overwrite: "auto",
           });
         };
@@ -370,8 +283,8 @@ export default function LandingPage() {
               y: (index) => stackLayout[index].y,
               rotation: (index) => stackLayout[index].rotation,
               zIndex: (index) => index + 1,
-              duration: 0.86,
-              stagger: { each: 0.024, from: "edges" },
+              duration: 0.58,
+              stagger: { each: 0.018, from: "edges" },
               ease: "power3.inOut",
               overwrite: "auto",
             });
@@ -435,7 +348,7 @@ export default function LandingPage() {
         opacity: 0,
         duration: 0.58,
         stagger: 0.075,
-        ease: "back.out(1.18)",
+        ease: "power3.out",
       }, "-=0.46")
       .to(".landing-plan-connections path", {
         strokeDashoffset: 0,
@@ -483,14 +396,13 @@ export default function LandingPage() {
       })
       .from(".landing-community-photo-main", { y: 36, scale: 0.86, opacity: 0, duration: 0.84, ease: "power3.out" }, "-=0.46")
       .from(".landing-community-photo-yoga", { x: 52, y: -20, opacity: 0, duration: 0.7, ease: "power3.out" }, "-=0.5")
-      .from(".landing-community-photo-smoothie", { x: 42, y: 26, opacity: 0, duration: 0.7, ease: "power3.out" }, "-=0.52")
       .from(".landing-community-float", {
         y: 20,
-        scale: 0.92,
+        scale: 0.96,
         opacity: 0,
         duration: 0.52,
         stagger: 0.085,
-        ease: "back.out(1.14)",
+        ease: "power3.out",
       }, "-=0.48")
       .from(".landing-community-feature", {
         y: 30,
@@ -499,79 +411,6 @@ export default function LandingPage() {
         stagger: 0.07,
         ease: "power3.out",
       }, "-=0.3");
-
-    const communityFeatureGrid = pageRef.current?.querySelector<HTMLElement>(".landing-community-feature-grid");
-    const communityFeatureCards = gsap.utils.toArray<HTMLElement>(".landing-community-feature");
-    const communityFeatureMotion = gsap.matchMedia();
-
-    if (communityFeatureGrid && communityFeatureCards.length === 4) {
-      communityFeatureMotion.add("(hover: hover) and (min-width: 961px)", () => {
-        let resetTimer: number | undefined;
-
-        const resetCards = () => {
-          if (resetTimer !== undefined) window.clearTimeout(resetTimer);
-          communityFeatureCards.forEach((card) => card.classList.remove("is-active"));
-          gsap.to(communityFeatureCards, {
-            flexGrow: 1,
-            y: 0,
-            duration: 0.62,
-            ease: "power3.inOut",
-            overwrite: "auto",
-          });
-          gsap.to(".landing-community-feature-media img", { scale: 1, duration: 0.72, ease: "power3.out", overwrite: "auto" });
-          gsap.to(".landing-community-feature-icon", { scale: 1, rotation: 0, duration: 0.5, ease: "power3.out", overwrite: "auto" });
-        };
-
-        const activateCard = (activeCard: HTMLElement) => {
-          if (resetTimer !== undefined) window.clearTimeout(resetTimer);
-          communityFeatureCards.forEach((card) => card.classList.toggle("is-active", card === activeCard));
-          gsap.to(communityFeatureCards, {
-            flexGrow: (index) => communityFeatureCards[index] === activeCard ? 1.48 : 0.84,
-            y: (index) => communityFeatureCards[index] === activeCard ? -6 : 0,
-            duration: 0.68,
-            stagger: { each: 0.018, from: communityFeatureCards.indexOf(activeCard) },
-            ease: "power3.out",
-            overwrite: "auto",
-          });
-          const activeImage = activeCard.querySelector(".landing-community-feature-media img");
-          const activeIcon = activeCard.querySelector(".landing-community-feature-icon");
-          if (activeImage) gsap.to(activeImage, { scale: 1.055, duration: 0.82, ease: "power3.out", overwrite: "auto" });
-          if (activeIcon) gsap.to(activeIcon, { scale: 1.06, rotation: -4, duration: 0.5, ease: "power3.out", overwrite: "auto" });
-        };
-
-        const pointerHandlers = communityFeatureCards.map((card) => {
-          const handler = () => activateCard(card);
-          card.addEventListener("pointerenter", handler);
-          return { card, handler };
-        });
-        const handlePointerLeave = () => {
-          resetTimer = window.setTimeout(resetCards, 110);
-        };
-        const handleFocusIn = (event: FocusEvent) => {
-          const card = (event.target as HTMLElement).closest<HTMLElement>(".landing-community-feature");
-          if (card) activateCard(card);
-        };
-        const handleFocusOut = (event: FocusEvent) => {
-          if (!communityFeatureGrid.contains(event.relatedTarget as Node | null)) handlePointerLeave();
-        };
-
-        communityFeatureGrid.addEventListener("pointerleave", handlePointerLeave);
-        communityFeatureGrid.addEventListener("focusin", handleFocusIn);
-        communityFeatureGrid.addEventListener("focusout", handleFocusOut);
-
-        return () => {
-          if (resetTimer !== undefined) window.clearTimeout(resetTimer);
-          pointerHandlers.forEach(({ card, handler }) => card.removeEventListener("pointerenter", handler));
-          communityFeatureGrid.removeEventListener("pointerleave", handlePointerLeave);
-          communityFeatureGrid.removeEventListener("focusin", handleFocusIn);
-          communityFeatureGrid.removeEventListener("focusout", handleFocusOut);
-          communityFeatureCards.forEach((card) => card.classList.remove("is-active"));
-          gsap.killTweensOf(communityFeatureCards);
-          gsap.set(communityFeatureCards, { clearProps: "flexGrow,transform" });
-          gsap.set(".landing-community-feature-media img, .landing-community-feature-icon", { clearProps: "transform" });
-        };
-      });
-    }
 
     const footerReveal = gsap.timeline({
       scrollTrigger: {
@@ -604,11 +443,7 @@ export default function LandingPage() {
         ease: "power2.out",
       }, "-=0.58");
 
-    return () => {
-      heroMotion.revert();
-      featureMotion.revert();
-      communityFeatureMotion.revert();
-    };
+    return () => featureMotion.revert();
   }, { scope: pageRef });
 
   useGSAP(() => {
@@ -686,24 +521,27 @@ export default function LandingPage() {
               <article><span><UsersRound /></span><div><strong>Cộng đồng</strong><small>yêu bếp</small></div></article>
             </div>
             <div className="landing-hero-actions">
-              <Link className="landing-primary-button" to={appLink}><Sparkles className="landing-primary-sparkle" /><span>Bắt đầu ngay</span><span className="landing-primary-arrow"><ArrowRight /></span></Link>
+              <Link className="landing-primary-button" to={appLink}><span>Bắt đầu ngay</span><span className="landing-primary-arrow"><ArrowRight /></span></Link>
               <a className="landing-hero-watch" href="#features"><span><Play /></span>Xem cách Nouri hoạt động</a>
             </div>
           </div>
 
-          <div className="landing-hero-visual" aria-label="Nguyên liệu tươi tạo thành bowl cá hồi lành mạnh">
+          <div className="landing-hero-visual" aria-label="Bát ngũ cốc với cá hồi, rau củ và nguyên liệu tươi bố trí xung quanh">
             <div className="landing-hero-orbit" aria-hidden="true" />
-            <span className="landing-hero-bowl-aura" aria-hidden="true"><i /><i /><i /></span>
+            <div className="landing-hero-completion-glow" aria-hidden="true" />
             <svg className="landing-hero-flow" viewBox="0 0 760 610" fill="none" aria-hidden="true">
-              <path d="M92 318C196 321 263 320 358 321" />
-              <path d="M239 124C332 140 374 193 426 258" />
-              <path d="M351 506C413 465 455 430 489 378" />
+              <path className="landing-hero-flow-main" pathLength="1" d="M78 70 C174 82 143 196 252 230 C326 254 344 336 445 355" />
+              <path className="landing-hero-badge-connector connector-calories" pathLength="1" d="M536 209 C592 159 626 132 680 118" />
+              <path className="landing-hero-badge-connector connector-protein" pathLength="1" d="M594 304 C646 292 674 281 716 264" />
+              <path className="landing-hero-badge-connector connector-time" pathLength="1" d="M548 445 C604 475 627 500 678 521" />
             </svg>
-            <div className="landing-hero-ingredient-layer landing-hero-parallax-layer" data-depth="1.8">
-              <img className="landing-hero-ingredient landing-hero-ingredients" src="/assets/hero-ingredients-clean-v3.png" alt="Cá hồi, quả bơ, bông cải, cà chua, chanh, quinoa, dầu ô liu và rau xanh" />
+            <div className="landing-hero-ingredient-scene" aria-hidden="true">
+              {heroIngredientItems.map(({ id }) => <span className={`landing-hero-ingredient-item ingredient-${id}`} key={id}>
+                <span className="landing-hero-ingredient-crop"><img src="/assets/hero-ingredients-clean-v3.png" alt="" draggable="false" /></span>
+              </span>)}
             </div>
-            <div className="landing-hero-bowl-layer landing-hero-parallax-layer" data-depth="0.8">
-              <img className="landing-hero-bowl" src="/assets/hero-bowl-clean-v3.png" alt="Bowl cá hồi với quinoa, quả bơ, bông cải, cà chua và rau xanh" />
+            <div className="landing-hero-bowl-layer">
+              <img className="landing-hero-bowl landing-hero-bowl-base" src="/assets/hero-bowl-rice-v5.png" alt="Bát ngũ cốc lành mạnh" />
               <span className="landing-hero-bowl-mark" aria-hidden="true"><Leaf /></span>
             </div>
             <article className="landing-hero-nutrition-badge badge-calories"><Flame /><span><strong>520</strong><small>kcal</small></span></article>
@@ -809,10 +647,8 @@ export default function LandingPage() {
             <div className="landing-plan-organic-shape" aria-hidden="true" />
             <svg className="landing-plan-connections" viewBox="0 0 760 720" preserveAspectRatio="none" aria-hidden="true">
               <path pathLength="1" d="M275 160 C330 160 326 215 365 236" />
-              <path pathLength="1" d="M248 353 C303 350 312 370 357 378" />
               <path pathLength="1" d="M276 580 C325 565 329 520 365 503" />
               <path pathLength="1" d="M488 148 C438 157 442 216 411 236" />
-              <path pathLength="1" d="M514 353 C462 350 454 374 414 381" />
               <path pathLength="1" d="M486 583 C441 565 443 524 410 506" />
             </svg>
 
@@ -834,15 +670,11 @@ export default function LandingPage() {
             </div>
 
             <div className="landing-plan-notes">
-              <article className="landing-plan-note note-goal"><i className="landing-note-clip" /><span><Target /></span><div><small>Mục tiêu của bạn</small><strong>Giảm cân</strong><em>-0.6 kg/tuần</em><b className="landing-note-bar"><i style={{ width: "69%" }} /></b></div></article>
+              <article className="landing-plan-note note-goal"><span><Target /></span><div><small>Mục tiêu của bạn</small><strong>Giảm cân</strong><em>-0.6 kg/tuần</em><b className="landing-note-bar"><i style={{ width: "69%" }} /></b></div></article>
               <article className="landing-plan-note note-energy"><span><Flame /></span><div><small>Năng lượng mỗi ngày</small><strong>1.650 kcal</strong><em>Đạt 80% mục tiêu</em><b className="landing-note-bar energy"><i style={{ width: "80%" }} /></b></div></article>
-              <article className="landing-plan-note note-preference"><i className="landing-note-clip" /><span><Salad /></span><div><small>Ưu tiên của bạn</small><strong>Eat clean</strong><em>Ít dầu mỡ, nhiều rau xanh</em></div></article>
-              <article className="landing-plan-note note-body"><span><HeartPulse /></span><div><small>Chỉ số cơ thể</small><p>Cân nặng <b>60 kg</b></p><p>BMI <b>21.5</b></p><p>Tỷ lệ mỡ <b>22%</b></p></div></article>
-              <article className="landing-plan-note note-ratio"><i className="landing-note-clip" /><span><Dumbbell /></span><div><small>Tỷ lệ dinh dưỡng</small><p>Protein <b>30%</b></p><p>Carb <b>45%</b></p><p>Fat <b>25%</b></p><b className="landing-note-ratio-bar"><i /><i /><i /></b></div></article>
+              <article className="landing-plan-note note-ratio"><span><Dumbbell /></span><div><small>Tỷ lệ dinh dưỡng</small><p>Protein <b>30%</b></p><p>Carb <b>45%</b></p><p>Fat <b>25%</b></p><b className="landing-note-ratio-bar"><i /><i /><i /></b></div></article>
               <article className="landing-plan-note note-progress"><span><TrendingUp /></span><div><small>Tiến độ mục tiêu</small><strong>68%</strong><em>Cố lên, bạn đang làm tốt</em><b className="landing-note-bar"><i style={{ width: "68%" }} /></b></div></article>
             </div>
-            <Leaf className="landing-plan-leaf leaf-a" aria-hidden="true" />
-            <Leaf className="landing-plan-leaf leaf-b" aria-hidden="true" />
           </div>
         </div>
       </section>
@@ -869,10 +701,8 @@ export default function LandingPage() {
 
             <div className="landing-community-visual">
               <div className="landing-community-blob" aria-hidden="true" />
-              <div className="landing-community-dots" aria-hidden="true" />
               <figure className="landing-community-photo landing-community-photo-main"><img src="/assets/nutrition-hero.jpg" alt="Bữa ăn lành mạnh được chia sẻ trong cộng đồng Nouri" /></figure>
               <figure className="landing-community-photo landing-community-photo-yoga"><img src="/assets/community-yoga.jpg" alt="Hai thành viên cùng tập yoga ngoài trời" /></figure>
-              <figure className="landing-community-photo landing-community-photo-smoothie"><img src="/assets/community-smoothie.jpg" alt="Smoothie xanh và bữa sáng lành mạnh" /></figure>
 
               <article className="landing-community-float landing-community-active-card">
                 <div className="landing-community-avatars"><span>AN</span><span>MY</span><span>LI</span></div>
@@ -884,12 +714,7 @@ export default function LandingPage() {
                 <div><strong>Bữa trưa hôm nay<br />siêu healthy!</strong><span><Heart /> 128 <i /> 2 giờ trước</span></div>
               </article>
 
-              <article className="landing-community-float landing-community-tip-card">
-                <span><Lightbulb /></span><strong>Gợi ý thực đơn<br />giàu dinh dưỡng</strong><ArrowRight />
-              </article>
               <UsersRound className="landing-community-mark" aria-hidden="true" />
-              <Leaf className="landing-community-leaf leaf-one" aria-hidden="true" />
-              <Leaf className="landing-community-leaf leaf-two" aria-hidden="true" />
             </div>
           </div>
 
