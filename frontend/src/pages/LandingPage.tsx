@@ -119,7 +119,7 @@ export default function LandingPage() {
   const activeRecipeIndexRef = useRef(1);
   const recipeAnimationRef = useRef(false);
   const recipeFlipStateRef = useRef<ReturnType<typeof Flip.getState> | null>(null);
-  const recipeStepRef = useRef<{ nextIndex: number } | null>(null);
+  const recipeStepRef = useRef<{ nextIndex: number; direction: -1 | 1 } | null>(null);
   const pendingRecipeTargetRef = useRef<{ index: number } | null>(null);
   const recipeContinuationFrameRef = useRef<number | null>(null);
   const appLink = user ? "/dashboard" : "/login";
@@ -135,14 +135,14 @@ export default function LandingPage() {
 
     const carousel = recipeCarouselRef.current;
     const motionTargets = carousel?.querySelectorAll<HTMLElement>(
-      ".landing-recipe-slide, .landing-recipe-slide .landing-recipe-media, .landing-recipe-copy-stage",
+      ".landing-recipe-slide, .landing-recipe-media",
     );
     if (!carousel || !motionTargets?.length) return;
 
     const nextIndex = wrapRecipeIndex(activeRecipeIndexRef.current + direction);
     recipeAnimationRef.current = true;
     setIsRecipeAnimating(true);
-    recipeStepRef.current = { nextIndex };
+    recipeStepRef.current = { nextIndex, direction };
     recipeFlipStateRef.current = Flip.getState(motionTargets, {
       props: "borderRadius,boxShadow,opacity",
     });
@@ -194,14 +194,12 @@ export default function LandingPage() {
       .from(".landing-hero-ingredient-layer", { x: -38, y: 18, opacity: 0, duration: 0.72 }, "-=0.58")
       .from(".landing-hero-ingredient", { scale: 0.92, rotation: -1.8, duration: 0.72 }, "<")
       .from(".landing-hero-bowl-layer", { scale: 0.84, rotation: -3.2, opacity: 0, duration: 0.82 }, "-=0.52")
-      .from(".landing-hero-bowl-mark", { scale: 0.48, opacity: 0, duration: 0.46 }, "-=0.35")
-      .from(".landing-hero-nutrition-badge", { y: 16, opacity: 0, duration: 0.4, stagger: 0.065 }, "-=0.3");
+      .from(".landing-hero-tableware-layer", { x: 24, y: 10, opacity: 0, duration: 0.68 }, "-=0.56");
 
     gsap.to(".landing-hero-ingredients", { y: -7, duration: 4.2, delay: 1.15, repeat: -1, yoyo: true, ease: "sine.inOut" });
     gsap.to(".landing-hero-bowl", { y: -4, duration: 4.8, delay: 1.2, repeat: -1, yoyo: true, ease: "sine.inOut" });
     gsap.to(".landing-hero-bowl-aura", { rotation: 360, duration: 34, repeat: -1, ease: "none", transformOrigin: "50% 50%" });
     gsap.to(".landing-hero-flow path", { strokeDashoffset: -120, duration: 7.5, repeat: -1, ease: "none", stagger: 0.28 });
-    gsap.to(".landing-hero-bowl-mark", { scale: 1.055, duration: 2.8, repeat: -1, yoyo: true, ease: "sine.inOut" });
 
     const heroVisual = pageRef.current?.querySelector<HTMLElement>(".landing-hero-visual");
     if (heroVisual) {
@@ -209,7 +207,6 @@ export default function LandingPage() {
         const parallaxLayers = gsap.utils.toArray<HTMLElement>(".landing-hero-parallax-layer");
         const heroIngredients = heroVisual.querySelector<HTMLElement>(".landing-hero-ingredient");
         const heroBowl = heroVisual.querySelector<HTMLElement>(".landing-hero-bowl");
-        const heroBadges = gsap.utils.toArray<HTMLElement>(".landing-hero-nutrition-badge");
         const primaryCta = pageRef.current?.querySelector<HTMLElement>(".landing-primary-button");
         const secondaryCta = pageRef.current?.querySelector<HTMLElement>(".landing-hero-watch");
         const handlePointerMove = (event: PointerEvent) => {
@@ -232,14 +229,12 @@ export default function LandingPage() {
           heroVisual.classList.add("is-engaged");
           if (heroIngredients) gsap.to(heroIngredients, { scale: 1.022, rotation: -0.45, duration: 0.76, ease: "power3.out", overwrite: "auto" });
           if (heroBowl) gsap.to(heroBowl, { scale: 1.016, duration: 0.76, ease: "power3.out", overwrite: "auto" });
-          gsap.to(heroBadges, { y: (index) => [-3, -5, -3][index], duration: 0.62, stagger: 0.035, ease: "power3.out", overwrite: "auto" });
         };
         const resetParallax = () => {
           heroVisual.classList.remove("is-engaged");
           gsap.to(parallaxLayers, { x: 0, y: 0, duration: 0.9, ease: "power3.out", overwrite: "auto" });
           if (heroIngredients) gsap.to(heroIngredients, { scale: 1, rotation: 0, duration: 0.82, ease: "power3.out", overwrite: "auto" });
           if (heroBowl) gsap.to(heroBowl, { scale: 1, duration: 0.82, ease: "power3.out", overwrite: "auto" });
-          gsap.to(heroBadges, { y: 0, duration: 0.72, stagger: 0.025, ease: "power3.out", overwrite: "auto" });
         };
 
         const attachMagnet = (element: HTMLElement | null | undefined, accentSelector: string) => {
@@ -280,7 +275,7 @@ export default function LandingPage() {
           detachPrimaryMagnet?.();
           detachSecondaryMagnet?.();
           gsap.killTweensOf(parallaxLayers);
-          gsap.killTweensOf([heroIngredients, heroBowl, ...heroBadges]);
+          gsap.killTweensOf([heroIngredients, heroBowl]);
           gsap.set(parallaxLayers, { clearProps: "transform" });
         };
       });
@@ -619,13 +614,38 @@ export default function LandingPage() {
     recipeFlipStateRef.current = null;
     recipeStepRef.current = null;
 
-    const transition = Flip.from(flipState, {
-      duration: 0.96,
-      ease: "power3.inOut",
-      nested: true,
-      scale: true,
-      prune: true,
+    const carousel = recipeCarouselRef.current;
+    if (!carousel) return;
+
+    const { direction } = completedStep;
+    const incomingCard = carousel.querySelector<HTMLElement>('[data-recipe-position="0"]');
+    const outgoingCard = carousel.querySelector<HTMLElement>(`[data-recipe-position="${-direction}"]`);
+    const incomingPreview = incomingCard?.querySelector<HTMLElement>(".landing-recipe-preview-copy");
+    const incomingSpotlight = incomingCard?.querySelector<HTMLElement>(".landing-recipe-spotlight-copy");
+    const outgoingPreview = outgoingCard?.querySelector<HTMLElement>(".landing-recipe-preview-copy");
+    const outgoingSpotlight = outgoingCard?.querySelector<HTMLElement>(".landing-recipe-spotlight-copy");
+    const incomingImage = incomingCard?.querySelector<HTMLElement>(".landing-recipe-media img");
+    const outgoingImage = outgoingCard?.querySelector<HTMLElement>(".landing-recipe-media img");
+    const incomingBadge = incomingCard?.querySelector<HTMLElement>(".landing-featured-badge");
+    const outgoingBadge = outgoingCard?.querySelector<HTMLElement>(".landing-featured-badge");
+
+    if (incomingPreview && incomingSpotlight) {
+      gsap.set(incomingPreview, { autoAlpha: 1, y: 0 });
+      gsap.set(incomingSpotlight, { autoAlpha: 0, y: 12 });
+    }
+    if (outgoingPreview && outgoingSpotlight) {
+      gsap.set(outgoingPreview, { autoAlpha: 0, y: 9 });
+      gsap.set(outgoingSpotlight, { autoAlpha: 1, y: 0 });
+    }
+    if (incomingBadge) gsap.set(incomingBadge, { autoAlpha: 0, y: -6, scale: 0.94 });
+    if (outgoingBadge) gsap.set(outgoingBadge, { autoAlpha: 1, y: 0, scale: 1 });
+
+    const transition = gsap.timeline({
+      defaults: { overwrite: "auto" },
       onComplete: () => {
+        gsap.set(carousel.querySelectorAll(".landing-recipe-preview-copy, .landing-recipe-spotlight-copy, .landing-recipe-media img, .landing-featured-badge"), {
+          clearProps: "opacity,visibility,transform",
+        });
         const { nextIndex } = completedStep;
         activeRecipeIndexRef.current = nextIndex;
         setFeaturedRecipeIndex(nextIndex);
@@ -650,6 +670,45 @@ export default function LandingPage() {
         setIsRecipeAnimating(false);
       },
     });
+
+    transition.add(Flip.from(flipState, {
+      duration: 0.84,
+      ease: "power3.inOut",
+      nested: true,
+      scale: false,
+      prune: true,
+    }), 0);
+
+    if (incomingPreview && incomingSpotlight) {
+      transition
+        .to(incomingPreview, { autoAlpha: 0, y: -6, duration: 0.2, ease: "power2.in" }, 0.08)
+        .to(incomingSpotlight, { autoAlpha: 1, y: 0, duration: 0.34, ease: "power2.out" }, 0.35);
+    }
+    if (outgoingPreview && outgoingSpotlight) {
+      transition
+        .to(outgoingSpotlight, { autoAlpha: 0, y: -6, duration: 0.2, ease: "power2.in" }, 0.06)
+        .to(outgoingPreview, { autoAlpha: 1, y: 0, duration: 0.32, ease: "power2.out" }, 0.32);
+    }
+    if (incomingImage) {
+      transition.fromTo(incomingImage,
+        { scale: 1.025, xPercent: direction * 1.4 },
+        { scale: 1, xPercent: 0, duration: 0.76, ease: "power2.out" },
+        0.04,
+      );
+    }
+    if (outgoingImage) {
+      transition.fromTo(outgoingImage,
+        { scale: 1, xPercent: 0 },
+        { scale: 1.012, xPercent: direction * -0.8, duration: 0.72, ease: "power2.inOut" },
+        0,
+      );
+    }
+    if (incomingBadge) {
+      transition.to(incomingBadge, { autoAlpha: 1, y: 0, scale: 1, duration: 0.3, ease: "power2.out" }, 0.42);
+    }
+    if (outgoingBadge) {
+      transition.to(outgoingBadge, { autoAlpha: 0, y: -5, scale: 0.96, duration: 0.18, ease: "power2.in" }, 0.06);
+    }
 
     return () => transition.kill();
   }, { scope: recipeCarouselRef, dependencies: [recipeSlides] });
@@ -692,6 +751,18 @@ export default function LandingPage() {
           </div>
 
           <div className="landing-hero-visual" aria-label="Nguyên liệu tươi tạo thành bowl cá hồi lành mạnh">
+            <svg className="landing-hero-organic-background" viewBox="0 0 1000 700" preserveAspectRatio="none" aria-hidden="true">
+              <defs>
+                <linearGradient id="landingHeroOrganicFill" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0" stopColor="#edf3e9" />
+                  <stop offset="0.5" stopColor="#dce8d7" />
+                  <stop offset="1" stopColor="#cdddc8" />
+                </linearGradient>
+              </defs>
+              <path className="landing-hero-organic-secondary" d="M300 0C235 50 145 85 92 150C48 214 65 280 120 346C174 411 157 474 91 540C37 598 65 644 170 674C320 716 452 638 594 670C750 705 872 744 1000 622L1000 0Z" />
+              <path className="landing-hero-organic-primary" d="M330 0C270 56 180 82 130 145C78 210 86 272 145 338C202 403 187 462 120 528C62 586 84 635 192 666C338 708 465 629 606 657C764 689 875 734 1000 608L1000 0Z" />
+              <path className="landing-hero-organic-contour" d="M330 0C270 56 180 82 130 145C78 210 86 272 145 338C202 403 187 462 120 528C62 586 84 635 192 666C338 708 465 629 606 657C764 689 875 734 1000 608" />
+            </svg>
             <div className="landing-hero-orbit" aria-hidden="true" />
             <span className="landing-hero-bowl-aura" aria-hidden="true"><i /><i /><i /></span>
             <svg className="landing-hero-flow" viewBox="0 0 760 610" fill="none" aria-hidden="true">
@@ -700,15 +771,22 @@ export default function LandingPage() {
               <path d="M351 506C413 465 455 430 489 378" />
             </svg>
             <div className="landing-hero-ingredient-layer landing-hero-parallax-layer" data-depth="1.8">
-              <img className="landing-hero-ingredient landing-hero-ingredients" src="/assets/hero-ingredients-clean-v3.png" alt="Cá hồi, quả bơ, bông cải, cà chua, chanh, quinoa, dầu ô liu và rau xanh" />
+              <div className="landing-hero-ingredient landing-hero-ingredients" aria-hidden="true">
+                <img className="landing-hero-composition-asset landing-hero-microgreens" src="/assets/hero-composition-microgreens.png" alt="" />
+                <img className="landing-hero-composition-asset landing-hero-dressing" src="/assets/hero-composition-dressing.png" alt="" />
+                <img className="landing-hero-composition-asset landing-hero-loose-leaves" src="/assets/hero-composition-leaves.png" alt="" />
+                <img className="landing-hero-composition-asset landing-hero-spices" src="/assets/hero-composition-spices.png" alt="" />
+                <img className="landing-hero-composition-asset landing-hero-leaf-accent-top" src="/assets/hero-composition-leaves.png" alt="" />
+                <img className="landing-hero-composition-asset landing-hero-spice-accent-bottom" src="/assets/hero-composition-spices.png" alt="" />
+              </div>
             </div>
             <div className="landing-hero-bowl-layer landing-hero-parallax-layer" data-depth="0.8">
-              <img className="landing-hero-bowl" src="/assets/hero-bowl-clean-v3.png" alt="Bowl cá hồi với quinoa, quả bơ, bông cải, cà chua và rau xanh" />
-              <span className="landing-hero-bowl-mark" aria-hidden="true"><Leaf /></span>
+              <img className="landing-hero-bowl" src="/assets/hero-composition-main-bowl.png" alt="Bowl cá hồi với quinoa, măng tây, quả bơ, đậu gà và rau xanh" />
+              <img className="landing-hero-steam" src="/assets/hero-composition-steam.png" alt="" aria-hidden="true" />
             </div>
-            <article className="landing-hero-nutrition-badge badge-calories"><Flame /><span><strong>520</strong><small>kcal</small></span></article>
-            <article className="landing-hero-nutrition-badge badge-protein"><Leaf /><span><strong>32g</strong><small>protein</small></span></article>
-            <article className="landing-hero-nutrition-badge badge-time"><Clock3 /><span><small>Sẵn sàng trong</small><strong>25 phút</strong></span></article>
+            <div className="landing-hero-tableware-layer landing-hero-parallax-layer" data-depth="1.15" aria-hidden="true">
+              <img className="landing-hero-composition-asset landing-hero-napkin" src="/assets/hero-composition-tableware-v2.png" alt="" />
+            </div>
           </div>
         </div>
       </section>
@@ -735,7 +813,7 @@ export default function LandingPage() {
 
           <div className="landing-recipe-carousel-shell">
             <button className="landing-recipe-control previous" type="button" onClick={() => moveRecipe(-1)} aria-label="Xem công thức trước" disabled={isRecipeAnimating}><ArrowLeft /></button>
-            <div className="landing-recipe-carousel" ref={recipeCarouselRef} aria-live="polite">
+            <div className={`landing-recipe-carousel${isRecipeAnimating ? " is-transitioning" : ""}`} ref={recipeCarouselRef} aria-live="polite">
               {recipeSlides.map((slide) => {
                 const recipe = recipes[slide.recipeIndex];
                 const isSpotlight = slide.position === 0;

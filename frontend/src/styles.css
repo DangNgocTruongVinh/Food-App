@@ -6756,6 +6756,11 @@ body { background: #f8faf6; }
 .landing-recipe-slide .landing-recipe-spotlight-copy {
   transition: opacity .38s ease, transform .62s cubic-bezier(.22, 1, .36, 1);
 }
+.landing-recipe-carousel.is-transitioning .landing-recipe-preview-copy,
+.landing-recipe-carousel.is-transitioning .landing-recipe-spotlight-copy,
+.landing-recipe-carousel.is-transitioning .landing-featured-badge {
+  transition: none;
+}
 .landing-recipe-slide.landing-recipe-preview .landing-recipe-preview-copy { opacity: 1; transform: translateY(0); }
 .landing-recipe-slide.landing-recipe-preview .landing-recipe-spotlight-copy { opacity: 0; transform: translateY(12px); pointer-events: none; }
 .landing-recipe-slide.landing-recipe-spotlight .landing-recipe-preview-copy { opacity: 0; transform: translateY(-10px); pointer-events: none; }
@@ -8689,4 +8694,229 @@ body { background: #f8faf6; }
   .landing-hero-bowl-mark,
   .landing-hero-bowl-mark::before,
   .landing-hero-nutrition-badge { transition: none; }
+}
+
+/* Scoped composition for the food visual on the right side of the homepage Hero. */
+.landing-main .landing-hero-visual::before {
+  content: none;
+}
+
+.landing-main .landing-hero-visual::after {
+  content: none;
+}
+
+.landing-main .landing-hero-organic-background {
+  position: absolute;
+  z-index: 0;
+  top: -8%;
+  left: -10%;
+  display: block;
+  width: 146%;
+  height: 123%;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.landing-main .landing-hero-organic-secondary {
+  fill: rgba(177, 199, 168, .36);
+}
+
+.landing-main .landing-hero-organic-primary {
+  fill: url(#landingHeroOrganicFill);
+}
+
+.landing-main .landing-hero-organic-contour {
+  fill: none;
+  stroke: rgba(105, 135, 98, .32);
+  stroke-width: 1.25;
+  vector-effect: non-scaling-stroke;
+}
+
+.landing-main .landing-hero-orbit {
+  right: 20%;
+  width: 69%;
+}
+
+.landing-main .landing-hero-ingredient-layer {
+  inset: 0;
+  width: auto;
+  height: 100%;
+  pointer-events: none;
+}
+
+.landing-main .landing-hero-ingredient {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  filter: none;
+  transform-origin: 56% 52%;
+}
+
+.landing-main .landing-hero-composition-asset {
+  position: absolute;
+  display: block;
+  max-width: none;
+  height: auto;
+  object-fit: contain;
+  user-select: none;
+  pointer-events: none;
+}
+
+.landing-main .landing-hero-napkin {
+  position: relative;
+  inset: auto;
+  width: 100%;
+  opacity: .96;
+  filter: drop-shadow(0 13px 15px rgba(53, 65, 43, .13));
+  transform: rotate(0deg);
+}
+
+.landing-main .landing-hero-tableware-layer {
+  position: absolute;
+  z-index: 5;
+  top: 10%;
+  right: auto;
+  left: 95%;
+  width: 36%;
+  pointer-events: none;
+  will-change: transform;
+}
+
+.landing-main .landing-hero-microgreens {
+  z-index: 3;
+  top: 15%;
+  left: 7%;
+  width: 23%;
+  opacity: .92;
+  filter: contrast(1.035) saturate(1.025) drop-shadow(0 10px 10px rgba(48, 62, 39, .13));
+  transform: rotate(-6deg);
+}
+
+.landing-main .landing-hero-dressing {
+  z-index: 3;
+  left: 9%;
+  bottom: 10%;
+  width: 20%;
+  opacity: .9;
+  filter: contrast(1.03) saturate(1.025) drop-shadow(0 10px 10px rgba(76, 61, 32, .12));
+  transform: rotate(4deg);
+}
+
+.landing-main .landing-hero-loose-leaves {
+  z-index: 1;
+  top: 8%;
+  left: 2%;
+  width: 102%;
+  opacity: .67;
+  filter: contrast(1.02) saturate(1.025) drop-shadow(0 5px 6px rgba(48, 70, 39, .08));
+  transform: rotate(-4deg);
+}
+
+.landing-main .landing-hero-spices {
+  z-index: 2;
+  top: 20%;
+  left: 4%;
+  width: 101%;
+  opacity: .58;
+  filter: contrast(1.035) saturate(1.04) drop-shadow(0 3px 4px rgba(76, 57, 33, .08));
+  transform: rotate(4deg);
+}
+
+.landing-main .landing-hero-leaf-accent-top {
+  z-index: 1;
+  top: -8%;
+  left: 36%;
+  width: 58%;
+  opacity: .4;
+  filter: contrast(1.02) saturate(1.02) drop-shadow(0 4px 5px rgba(48, 70, 39, .06));
+  transform: rotate(12deg);
+}
+
+.landing-main .landing-hero-spice-accent-bottom {
+  z-index: 1;
+  left: 34%;
+  bottom: -7%;
+  width: 70%;
+  opacity: .36;
+  filter: contrast(1.02) saturate(1.025) drop-shadow(0 3px 4px rgba(76, 57, 33, .06));
+  transform: rotate(176deg);
+}
+
+.landing-main .landing-hero-bowl-layer {
+  z-index: 4;
+  top: 12%;
+  right: 10%;
+  width: 69%;
+  aspect-ratio: 1;
+}
+
+.landing-main .landing-hero-bowl {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 29px 27px rgba(43, 59, 39, .18));
+}
+
+.landing-main .landing-hero-steam {
+  position: absolute;
+  z-index: 2;
+  top: -13%;
+  left: 28%;
+  display: block;
+  width: 43%;
+  height: auto;
+  opacity: .14;
+  filter: blur(.2px) contrast(.78);
+  -webkit-mask-image: linear-gradient(to top, rgba(0, 0, 0, .92) 12%, rgba(0, 0, 0, .5) 58%, transparent 96%);
+  mask-image: linear-gradient(to top, rgba(0, 0, 0, .92) 12%, rgba(0, 0, 0, .5) 58%, transparent 96%);
+  transform: rotate(-3deg);
+  pointer-events: none;
+}
+
+@media (max-width: 1180px) {
+  .landing-main .landing-hero-bowl-layer { top: 13%; right: 9%; width: 68%; }
+  .landing-main .landing-hero-tableware-layer { top: 12%; right: auto; left: 94%; width: 34%; }
+  .landing-main .landing-hero-orbit { right: 18%; width: 68%; }
+  .landing-main .landing-hero-microgreens { left: 5%; width: 22%; }
+  .landing-main .landing-hero-dressing { left: 7%; width: 19%; }
+}
+
+@media (max-width: 960px) {
+  .landing-main .landing-hero-organic-background { top: -7%; left: -12%; width: 148%; height: 121%; }
+  .landing-main .landing-hero-bowl-layer { top: 14%; right: 8%; width: 68%; }
+  .landing-main .landing-hero-tableware-layer { top: 13%; right: auto; left: 93.5%; width: 35%; }
+  .landing-main .landing-hero-orbit { right: 17%; width: 68%; }
+  .landing-main .landing-hero-microgreens { top: 16%; left: 4%; width: 23%; }
+  .landing-main .landing-hero-dressing { left: 7%; bottom: 11%; width: 20%; }
+}
+
+@media (max-width: 800px) {
+  .landing-main .landing-hero-organic-background { top: -6%; left: -9%; width: 138%; height: 119%; }
+  .landing-main .landing-hero-bowl-layer { top: 14%; right: 7%; width: 67%; }
+  .landing-main .landing-hero-tableware-layer { top: 14%; right: auto; left: 74%; width: 32%; }
+  .landing-main .landing-hero-orbit { right: 16%; width: 67%; }
+  .landing-main .landing-hero-microgreens { top: 16%; left: 10%; width: 21%; }
+  .landing-main .landing-hero-dressing { left: 12%; bottom: 11%; width: 18%; }
+  .landing-main .landing-hero-loose-leaves { left: 3%; width: 97%; }
+  .landing-main .landing-hero-spices { left: 5%; width: 96%; }
+  .landing-main .landing-hero-leaf-accent-top { left: 36%; width: 54%; }
+  .landing-main .landing-hero-spice-accent-bottom { left: 32%; width: 65%; }
+}
+
+@media (max-width: 560px) {
+  .landing-main .landing-hero-organic-background { top: -5%; left: -13%; width: 154%; height: 117%; }
+  .landing-main .landing-hero-bowl-layer { top: 16%; right: 5%; width: 70%; }
+  .landing-main .landing-hero-tableware-layer { top: 16%; right: auto; left: 73.5%; width: 33%; }
+  .landing-main .landing-hero-orbit { right: 14%; width: 70%; }
+  .landing-main .landing-hero-microgreens { top: 14%; left: 4%; width: 24%; }
+  .landing-main .landing-hero-dressing { left: 7%; bottom: 10%; width: 21%; }
+  .landing-main .landing-hero-loose-leaves { top: 7%; left: -1%; width: 98%; opacity: .59; }
+  .landing-main .landing-hero-spices { top: 19%; left: 1%; width: 96%; opacity: .5; }
+  .landing-main .landing-hero-leaf-accent-top { top: -4%; left: 32%; width: 55%; opacity: .32; }
+  .landing-main .landing-hero-spice-accent-bottom { left: 28%; bottom: -3%; width: 67%; opacity: .28; }
+  .landing-main .landing-hero-steam { top: -10%; left: 30%; width: 40%; opacity: .12; }
 }
