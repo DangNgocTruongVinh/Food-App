@@ -1,8 +1,10 @@
+import { useGSAP } from "@gsap/react";
 import { useQuery } from "@tanstack/react-query";
 import { differenceInCalendarDays, format } from "date-fns";
 import { vi } from "date-fns/locale";
-import { ArrowRight, CalendarCheck, Check, Clock3, Flame, Heart, PackageCheck, PackageOpen, Search, Sparkles, TimerReset } from "lucide-react";
-import { useState, type FormEvent } from "react";
+import gsap from "gsap";
+import { AlertTriangle, ArrowRight, Bookmark, CalendarCheck, Check, Clock3, Droplet, Flame, Hand, Leaf, Moon, PackageOpen, Search, SlidersHorizontal, Sparkles, Sun, Sunrise } from "lucide-react";
+import { useRef, useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { api } from "../api/client";
 import { LoadingState } from "../components/States";
@@ -19,61 +21,191 @@ const mealImage = (name: string) => {
   return "/assets/nutrition-hero.jpg";
 };
 
-const foodEmoji = (name: string) => {
-  const normalized = name.toLowerCase();
-  if (normalized.includes("gà") || normalized.includes("thịt")) return "🍗";
-  if (normalized.includes("cá") || normalized.includes("tôm")) return "🐟";
-  if (normalized.includes("trứng")) return "🥚";
-  if (normalized.includes("khoai")) return "🍠";
-  return "🥦";
+const overviewMealTimes: Record<MealType, string> = {
+  BREAKFAST: "08:00",
+  LUNCH: "12:30",
+  DINNER: "19:00",
+  SNACK: "15:30",
+};
+
+const overviewFallbackRecipes: DashboardData["recommendedRecipes"] = [
+  { id: "fallback-quinoa", name: "Bowl ức gà quinoa sốt chanh dây", calories: 520, prepMinutes: 10, cookMinutes: 15, dietTags: [] },
+  { id: "fallback-penne", name: "Penne gà rau củ sốt pesto", calories: 480, prepMinutes: 8, cookMinutes: 12, dietTags: [] },
+  { id: "fallback-salad", name: "Salad ức gà bơ trứng", calories: 360, prepMinutes: 10, cookMinutes: 5, dietTags: [] },
+];
+
+const overviewSuggestionImages = [
+  "/assets/nutrition-hero.jpg",
+  "/assets/recipe-salmon.jpg",
+  "/assets/recipe-vegan-bowl.jpg",
+];
+
+const getMealIcon = (mealType: MealType) => {
+  if (mealType === "BREAKFAST") return Sunrise;
+  if (mealType === "DINNER") return Moon;
+  return Sun;
 };
 
 export default function DashboardPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const pageRef = useRef<HTMLDivElement>(null);
   const [search, setSearch] = useState("");
-  const { data, isLoading } = useQuery({ queryKey: ["dashboard"], queryFn: async () => (await api.get<DashboardData>("/dashboard")).data });
+  const [waterGlasses, setWaterGlasses] = useState(5);
+  const { data, isLoading } = useQuery({
+    queryKey: ["dashboard"],
+    queryFn: async () => (await api.get<DashboardData>("/dashboard")).data,
+  });
+
+  useGSAP(() => {
+    if (isLoading || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+    const intro = gsap.timeline({ defaults: { ease: "power3.out" } });
+    intro
+      .from(".overview-v2-hero-copy > *", { y: 18, autoAlpha: 0, duration: 0.62, stagger: 0.07 })
+      .from(".overview-v2-hero-bowl", { scale: 0.88, rotation: 5, autoAlpha: 0, duration: 0.92 }, 0.08)
+      .from(".overview-v2-hero-leaf, .overview-v2-lemon-cup", { y: 12, scale: 0.82, autoAlpha: 0, duration: 0.58, stagger: 0.06 }, 0.22)
+      .from(".overview-v2-metric", { y: 16, autoAlpha: 0, duration: 0.46, stagger: 0.06 }, 0.3)
+      .from(".overview-v2-insight, .overview-v2-panel, .overview-v2-water-strip", { y: 22, autoAlpha: 0, duration: 0.58, stagger: 0.08 }, 0.5);
+
+    return () => intro.kill();
+  }, { scope: pageRef, dependencies: [isLoading], revertOnUpdate: true });
+
   if (isLoading) return <LoadingState />;
 
   const submitSearch = (event: FormEvent) => {
     event.preventDefault();
     if (search.trim()) navigate(`/recipes?q=${encodeURIComponent(search.trim())}`);
   };
+
   const todayMeals = data?.todayMeals ?? [];
-  const recommendedRecipes = data?.recommendedRecipes ?? [];
+  const recommendedRecipes = data?.recommendedRecipes?.length
+    ? data.recommendedRecipes.slice(0, 3)
+    : overviewFallbackRecipes;
+  const expiringItems = data?.expiringItems ?? [];
   const hour = new Date().getHours();
   const greeting = hour < 11 ? "Chào buổi sáng" : hour < 18 ? "Chào buổi chiều" : "Chào buổi tối";
   const firstName = user?.name?.split(" ").at(-1) ?? "bạn";
+  const calorieTarget = data?.nutritionTargets?.calories ?? 2000;
+  const consumedCalories = todayMeals.filter((meal) => meal.completed).reduce((sum, meal) => sum + meal.calories, 0);
+  const calorieProgress = Math.min(100, Math.round((consumedCalories / Math.max(1, calorieTarget)) * 100));
+  const completedMeals = todayMeals.filter((meal) => meal.completed).length;
+  const mealProgress = todayMeals.length ? Math.round((completedMeals / todayMeals.length) * 100) : 0;
+  const insightItems = expiringItems.slice(0, 2);
+  const insightTitle = insightItems.length
+    ? insightItems.map((item) => `${item.name} (${Math.max(0, differenceInCalendarDays(new Date(item.expiryDate!), new Date()))} ngày)`).join(" và ")
+    : "Kho thực phẩm của bạn đang được cân bằng tốt";
+  const waterLiters = Number((waterGlasses * 0.25).toFixed(2));
 
-  return <div className="page reference-dashboard">
-    <section className="overview-welcome">
-      <div className="overview-hero-backgrounds" aria-hidden="true">
-        <div className="overview-hero-track">
-          <span className="overview-hero-slide nutrition" />
-          <span className="overview-hero-slide salmon" />
-          <span className="overview-hero-slide vegan" />
-          <span className="overview-hero-slide oats" />
-          <span className="overview-hero-slide nutrition" />
-        </div>
+  return <div className="page reference-dashboard overview-dashboard-v2" ref={pageRef}>
+    <section className="overview-v2-hero" aria-labelledby="overview-v2-title">
+      <div className="overview-v2-hero-copy">
+        <time dateTime={format(new Date(), "yyyy-MM-dd")}>{format(new Date(), "EEEE, dd 'tháng' M", { locale: vi })}</time>
+        <h1 id="overview-v2-title">{greeting},<br /><strong>{firstName}!</strong> <Hand aria-hidden="true" /></h1>
+        <p>Nouri luôn sẵn sàng đồng hành cùng bạn trên hành trình sống khỏe mỗi ngày.</p>
+        <form className="overview-v2-search" onSubmit={submitSearch}>
+          <Search aria-hidden="true" />
+          <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Tìm kiếm món ăn, nguyên liệu, công thức..." aria-label="Tìm kiếm món ăn, nguyên liệu hoặc công thức" />
+          <button type="submit" aria-label="Mở tìm kiếm nâng cao"><SlidersHorizontal /></button>
+        </form>
       </div>
-      <div className="overview-welcome-copy"><div className="overview-greeting-copy"><span className="eyebrow">{format(new Date(), "EEEE, dd 'tháng' M", { locale: vi })}</span><h1><span className="overview-greeting-fixed">{greeting},</span>{" "}<span className="overview-greeting-person"><strong>{firstName}!</strong> <span className="overview-wave" aria-hidden="true">👋</span></span></h1><p>Hôm nay bạn muốn nấu món gì ngon?</p></div><form className="overview-search" onSubmit={submitSearch}><Search /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Tìm kiếm món ăn, nguyên liệu..." aria-label="Tìm kiếm món ăn hoặc nguyên liệu" /><button aria-label="Tìm kiếm"><Sparkles /></button></form></div>
+
+      <div className="overview-v2-hero-visual" aria-hidden="true">
+        <Leaf className="overview-v2-hero-leaf leaf-one" />
+        <Leaf className="overview-v2-hero-leaf leaf-two" />
+        <Leaf className="overview-v2-hero-leaf leaf-three" />
+        <span className="overview-v2-lemon-cup"><i /></span>
+        <img className="overview-v2-hero-bowl" src="/assets/hero-bowl-clean-v3.png" alt="" />
+      </div>
     </section>
 
-    <section className="overview-metrics" aria-label="Thông tin tổng quan">
-      <article><span className="overview-metric-icon stock"><PackageOpen /></span><div><strong>{data?.pantryCount ?? 0}</strong><b>Thực phẩm</b><small>Trong kho</small></div></article>
-      <article><span className="overview-metric-icon soon"><TimerReset /></span><div><strong>{data?.expiringItems.length ?? 0}</strong><b>Sắp hết hạn</b><small>Cần dùng sớm</small></div></article>
-      <article><span className="overview-metric-icon expired"><PackageCheck /></span><div><strong>{data?.expiredCount ?? 0}</strong><b>Đã hết hạn</b><small>Kiểm tra ngay</small></div></article>
-      <article><span className="overview-metric-icon meals"><Heart /></span><div><strong>{todayMeals.length}</strong><b>Bữa hôm nay</b><small>Đã lên lịch</small></div></article>
+    <section className="overview-v2-today" aria-labelledby="overview-v2-today-title">
+      <header><h2 id="overview-v2-today-title">Hôm nay của bạn</h2><Leaf aria-hidden="true" /></header>
+      <div className="overview-v2-metrics">
+        <article className="overview-v2-metric urgent">
+          <span className="overview-v2-metric-icon"><AlertTriangle /></span>
+          <strong>{expiringItems.length}</strong>
+          <div><b>nguyên liệu</b><small>nên dùng sớm</small></div>
+          <Link to="/pantry">Xem chi tiết <ArrowRight /></Link>
+        </article>
+
+        <article className="overview-v2-metric">
+          <span className="overview-v2-metric-icon pantry"><PackageOpen /></span>
+          <strong>{data?.pantryCount ?? 0}</strong>
+          <div><b>nguyên liệu</b><small>trong kho</small></div>
+        </article>
+
+        <article className="overview-v2-metric">
+          <span className="overview-v2-metric-icon meals"><CalendarCheck /></span>
+          <strong>{todayMeals.length}</strong>
+          <div><b>bữa ăn</b><small>hôm nay</small></div>
+        </article>
+
+        <article className="overview-v2-metric calories">
+          <span className="overview-v2-metric-icon energy"><Flame /></span>
+          <div className="overview-v2-calorie-copy"><strong>{consumedCalories}</strong><b>/ {calorieTarget} kcal</b></div>
+          <div className="overview-v2-progress"><span style={{ width: `${calorieProgress}%` }} /></div>
+          <small>{calorieProgress}%</small>
+        </article>
+      </div>
     </section>
 
-    <section className="overview-panels">
-      <article className="overview-panel overview-expiry"><header><h2>Sắp hết hạn</h2><Link to="/pantry">Xem tất cả</Link></header>{data?.expiringItems.length ? <div>{data.expiringItems.slice(0, 4).map((item) => { const days = Math.max(0, differenceInCalendarDays(new Date(item.expiryDate!), new Date())); return <div className="overview-expiry-row" key={item.id}><span className="overview-food-thumb" aria-hidden="true">{foodEmoji(item.name)}</span><div><strong>{item.name}</strong><small>{item.quantity} {item.unit.toLowerCase()}</small></div><span>HSD: {format(new Date(item.expiryDate!), "dd/MM")}</span><b>{days} ngày</b></div>; })}</div> : <div className="overview-compact-empty"><PackageCheck /><p>Kho thực phẩm đang được kiểm soát tốt.</p></div>}</article>
-
-      <article className="overview-panel overview-recommendations"><header><h2>Gợi ý món ăn cho bạn</h2><Link to="/recipes">Xem tất cả</Link></header>{recommendedRecipes.length ? <div className="overview-recipe-grid">{recommendedRecipes.map((recipe) => <Link to="/recipes" className="overview-recipe-card" key={recipe.id}><div><img src={mealImage(recipe.name)} alt="" /><span><Clock3 /> {recipe.prepMinutes + recipe.cookMinutes} phút</span></div><h3>{recipe.name}</h3><footer><small>{recipe.dietTags.includes("VEGETARIAN") ? "Món chay" : "Cân bằng"}</small><span><Flame /> {recipe.calories} kcal</span></footer></Link>)}</div> : <div className="overview-compact-empty"><Sparkles /><p>Chưa có công thức để đề xuất.</p></div>}</article>
-
-      <article className="overview-panel overview-today"><header><div><h2>Kế hoạch hôm nay</h2><span>{format(new Date(), "EEEE, dd/MM", { locale: vi })}</span></div><CalendarCheck /></header>{todayMeals.length ? <div className="overview-today-list">{todayMeals.slice(0, 4).map((item) => <div className={item.completed ? "completed" : ""} key={item.id}><span className="overview-meal-time">{mealLabels[item.mealType]}</span><img src={mealImage(item.recipe.name)} alt="" /><div><strong>{item.recipe.name}</strong><small><Clock3 /> {item.recipe.prepMinutes + item.recipe.cookMinutes} phút</small></div><span className="overview-meal-check">{item.completed && <Check />}</span></div>)}</div> : <div className="overview-compact-empty"><CalendarCheck /><p>Chưa có bữa ăn cho hôm nay.</p></div>}<Link className="overview-outline-button" to="/meal-plans">Xem kế hoạch chi tiết <ArrowRight /></Link></article>
+    <section className="overview-v2-insight" aria-labelledby="overview-v2-insight-title">
+      <div className="overview-v2-insight-heading"><h2 id="overview-v2-insight-title">Nouri Insight</h2><Sparkles /></div>
+      <img className="overview-v2-insight-ingredients" src="/assets/hero-ingredients-clean-v3.png" alt="" />
+      <div className="overview-v2-insight-copy">
+        <span>Gợi ý thông minh cho bạn</span>
+        <h3>{insightTitle}</h3>
+        <p>{insightItems.length ? "sắp hết hạn. Nouri gợi ý món ngon sử dụng cả hai để tránh lãng phí nhé." : "Hãy tiếp tục duy trì thói quen sử dụng nguyên liệu tươi và lên kế hoạch bữa ăn đều đặn."}</p>
+        <Link to="/assistant">Xem gợi ý món <ArrowRight /></Link>
+      </div>
+      <div className="overview-v2-insight-dish"><img src="/assets/nutrition-hero.jpg" alt="Món ăn Nouri đề xuất" /></div>
     </section>
 
-    <section className="overview-ai-banner"><img className="overview-ai-mascot" src="/assets/ai-mascot.png" alt="Trợ lý dinh dưỡng NOURI AI" /><div><span className="eyebrow">AI gợi ý cho bạn <Sparkles /></span><h2>Bạn muốn ăn gì hôm nay?</h2><div className="overview-ai-prompts"><Link to="/assistant">Món dưới 30 phút</Link><Link to="/assistant">Món ít calo</Link><Link to="/assistant">Tận dụng thực phẩm sắp hết hạn</Link><Link to="/assistant">Thực đơn 3 ngày</Link></div></div><Link className="button primary" to="/assistant">Hỏi AI ngay <ArrowRight /></Link></section>
+    <section className="overview-v2-main-grid">
+      <article className="overview-v2-panel overview-v2-suggestions">
+        <header>
+          <div><h2>Gợi ý riêng cho bạn <Sparkles /></h2><p>Dựa trên nguyên liệu trong kho và khẩu vị của bạn</p></div>
+          <Link to="/recipes">Xem tất cả <ArrowRight /></Link>
+        </header>
+        <div className="overview-v2-recipe-grid">
+          {recommendedRecipes.map((recipe, index) => <article className="overview-v2-recipe-card" key={recipe.id}>
+            <Link className="overview-v2-recipe-image" to="/recipes"><img src={overviewSuggestionImages[index] ?? mealImage(recipe.name)} alt={recipe.name} /></Link>
+            <button type="button" aria-label={`Lưu ${recipe.name}`}><Bookmark /></button>
+            <div><Link to="/recipes"><h3>{recipe.name}</h3></Link><small><Leaf /> Dùng nguyên liệu trong kho</small><footer><span><Clock3 /> {recipe.prepMinutes + recipe.cookMinutes} phút</span><span><Flame /> {recipe.calories} kcal</span></footer></div>
+          </article>)}
+        </div>
+        <div className="overview-v2-dots" aria-hidden="true"><i className="active" /><i /><i /></div>
+      </article>
+
+      <article className="overview-v2-panel overview-v2-plan">
+        <header><div><h2>Kế hoạch hôm nay</h2><p>Hoàn thành {completedMeals}/{todayMeals.length || 3} bữa</p></div><CalendarCheck /></header>
+        <div className="overview-v2-plan-progress"><span style={{ width: `${mealProgress}%` }} /><small>{mealProgress}%</small></div>
+        {todayMeals.length ? <div className="overview-v2-meal-list">
+          {todayMeals.slice(0, 3).map((item) => {
+            const MealIcon = getMealIcon(item.mealType);
+            return <div className={item.completed ? "completed" : ""} key={item.id}>
+              <MealIcon className="overview-v2-meal-period" />
+              <time>{overviewMealTimes[item.mealType]}<small>{mealLabels[item.mealType]}</small></time>
+              <img src={mealImage(item.recipe.name)} alt="" />
+              <div><strong>{item.recipe.name}</strong><small>{item.recipe.prepMinutes + item.recipe.cookMinutes} phút</small></div>
+              <span className="overview-v2-meal-status">{item.completed && <Check />}</span>
+            </div>;
+          })}
+        </div> : <div className="overview-v2-meal-empty"><CalendarCheck /><p>Chưa có bữa ăn hôm nay. Hãy để Nouri lên lịch giúp bạn.</p></div>}
+        <Link className="overview-v2-plan-link" to="/meal-plans">Xem thực đơn đầy đủ <ArrowRight /></Link>
+      </article>
+    </section>
+
+    <section className="overview-v2-water-strip" aria-label="Theo dõi lượng nước">
+      <div className="overview-v2-tip">
+        <img src="/assets/ai-mascot.png" alt="Nouri" />
+        <div><h2>Nouri Tip <Sparkles /></h2><p>Uống đủ 1.5 – 2L nước mỗi ngày giúp cơ thể trao đổi chất tốt hơn và làn da khỏe đẹp.</p></div>
+      </div>
+      <div className="overview-v2-hydration">
+        <div><p>Bạn đã uống <strong>{waterLiters}L / 2L</strong></p><div className="overview-v2-drops">{Array.from({ length: 8 }, (_, index) => <Droplet className={index < waterGlasses ? "filled" : ""} key={index} />)}</div></div>
+        <button type="button" onClick={() => setWaterGlasses((value) => Math.min(8, value + 1))} disabled={waterGlasses >= 8}>Ghi nhận nước <ArrowRight /></button>
+      </div>
+    </section>
   </div>;
 }

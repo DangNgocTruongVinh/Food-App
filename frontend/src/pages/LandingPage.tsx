@@ -1,15 +1,16 @@
 import {
   ArrowLeft, ArrowRight, Bookmark, CalendarDays, Check, ChefHat, Clock3,
-  BookOpen, Bot, CircleHelp, Dumbbell, Facebook, FileText, Flame, Grid2X2, Heart,
+  BookOpen, Bot, CircleHelp, Dumbbell, Facebook, FileText, Grid2X2, Heart,
   HeartPulse, Instagram, Leaf, Lightbulb, Mail, Menu, MessageCircle, Play,
   Newspaper, Package, Salad, ShieldCheck, Sparkles, Star, Sunrise,
-  Target, TrendingUp, Trophy, UserRound, UsersRound, Utensils, X,
+  Target, Trophy, UserRound, UsersRound, Utensils, X,
 } from "lucide-react";
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
 import { Flip } from "gsap/Flip";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type MouseEvent as ReactMouseEvent, type PointerEvent as ReactPointerEvent } from "react";
+import { flushSync } from "react-dom";
 import { Link } from "react-router-dom";
 import Logo from "../components/Logo";
 import { useAuth } from "../contexts/AuthContext";
@@ -34,6 +35,34 @@ type RecipeSlide = {
   id: number;
   position: number;
   recipeIndex: number;
+};
+
+type RecipeDragState = {
+  pointerId: number;
+  startX: number;
+  lastX: number;
+  lastTime: number;
+  lastRenderTime: number;
+  velocity: number;
+  dragged: boolean;
+  progress: number;
+  targetProgress: number;
+  renderFrame: number | null;
+  stepDistance: number;
+  slides: RecipeDragSlideState[];
+};
+
+type RecipeDragVisualState = {
+  x: number;
+  opacity: number;
+};
+
+type RecipeDragSlideState = {
+  element: HTMLElement;
+  position: number;
+  base: RecipeDragVisualState;
+  previous: RecipeDragVisualState;
+  next: RecipeDragVisualState;
 };
 
 const wrapRecipeIndex = (index: number) => (index + recipes.length) % recipes.length;
@@ -62,6 +91,12 @@ const landingNavItems = [
 ] as const;
 
 type LandingNavSection = (typeof landingNavItems)[number]["id"];
+
+const aboutValues = [
+  { icon: BookOpen, title: "Khoa học", copy: "Kiến thức dinh dưỡng dựa trên nghiên cứu và chuyên môn." },
+  { icon: UserRound, title: "Cá nhân hóa", copy: "Kế hoạch được thiết kế riêng cho mục tiêu, sở thích và lối sống của bạn." },
+  { icon: CalendarDays, title: "Dễ duy trì", copy: "Thực tế, linh hoạt và ngon miệng để bạn gắn bó mỗi ngày." },
+];
 
 const communityHighlights = [
   { icon: UsersRound, title: "Chia sẻ hành trình", copy: "Đăng nhật ký, chia sẻ bữa ăn và hành trình cải thiện sức khỏe của bạn.", image: "/assets/community-card-journey.png" },
@@ -129,13 +164,19 @@ export default function LandingPage() {
   const landingNavRef = useRef<HTMLElement>(null);
   const landingNavIndicatorRef = useRef<HTMLSpanElement>(null);
   const navIndicatorReadyRef = useRef(false);
+  const navScrollTargetRef = useRef<LandingNavSection | null>(null);
+  const navScrollUnlockTimerRef = useRef<number | null>(null);
   const recipeCarouselRef = useRef<HTMLDivElement>(null);
   const activeRecipeIndexRef = useRef(1);
   const recipeAnimationRef = useRef(false);
   const recipeFlipStateRef = useRef<ReturnType<typeof Flip.getState> | null>(null);
-  const recipeStepRef = useRef<{ nextIndex: number; direction: -1 | 1 } | null>(null);
+  const recipeStepRef = useRef<{ nextIndex: number; direction: -1 | 1; fromDrag: boolean } | null>(null);
   const pendingRecipeTargetRef = useRef<{ index: number } | null>(null);
   const recipeContinuationFrameRef = useRef<number | null>(null);
+  const recipeDragRef = useRef<RecipeDragState | null>(null);
+  const recipeMotionTweenRef = useRef<ReturnType<typeof gsap.to> | null>(null);
+  const suppressRecipeClickRef = useRef(false);
+  const suppressRecipeClickTimerRef = useRef<number | null>(null);
   const appLink = user ? "/dashboard" : "/login";
 
   const getDirectionToRecipe = (fromIndex: number, targetIndex: number): -1 | 1 => {
@@ -144,30 +185,42 @@ export default function LandingPage() {
     return forwardDistance <= backwardDistance ? 1 : -1;
   };
 
-  const runRecipeStep = (direction: -1 | 1) => {
-    if (recipeAnimationRef.current) return;
+  const runRecipeStep = (direction: -1 | 1, fromDrag = false) => {
+    if (recipeAnimationRef.current && !fromDrag) return;
 
     const carousel = recipeCarouselRef.current;
     const motionTargets = carousel?.querySelectorAll<HTMLElement>(
-      ".landing-recipe-slide, .landing-recipe-media",
+      ".landing-recipe-slide, .landing-recipe-media, .landing-recipe-copy-stage",
     );
     if (!carousel || !motionTargets?.length) return;
 
     const nextIndex = wrapRecipeIndex(activeRecipeIndexRef.current + direction);
-    recipeAnimationRef.current = true;
-    setIsRecipeAnimating(true);
-    recipeStepRef.current = { nextIndex, direction };
+    if (!recipeAnimationRef.current) {
+      recipeAnimationRef.current = true;
+      setIsRecipeAnimating(true);
+    }
+    recipeStepRef.current = { nextIndex, direction, fromDrag };
     recipeFlipStateRef.current = Flip.getState(motionTargets, {
       props: "borderRadius,boxShadow,opacity",
     });
-    setRecipeSlides((slides) => slides.map((slide) => ({
+    const applyRecipeStep = () => setRecipeSlides((slides) => slides.map((slide) => ({
       ...slide,
       position: slide.position - direction,
     })));
+
+    if (fromDrag) {
+      gsap.set(carousel.querySelectorAll<HTMLElement>(".landing-recipe-slide"), {
+        clearProps: "width,height,transform,opacity,zIndex,transformOrigin",
+      });
+      recipeDragRef.current = null;
+      flushSync(applyRecipeStep);
+      return;
+    }
+    applyRecipeStep();
   };
 
   const requestRecipe = (targetIndex: number, categoryId: string) => {
-    if (recipeAnimationRef.current) return;
+    if (recipeAnimationRef.current || recipeDragRef.current) return;
 
     const normalizedTarget = wrapRecipeIndex(targetIndex);
     setActiveRecipeCategory(categoryId);
@@ -192,8 +245,295 @@ export default function LandingPage() {
     requestRecipe(recipeIndex, categoryId);
   };
 
+  const armRecipeClickSuppression = () => {
+    suppressRecipeClickRef.current = true;
+    if (suppressRecipeClickTimerRef.current !== null) {
+      window.clearTimeout(suppressRecipeClickTimerRef.current);
+    }
+    suppressRecipeClickTimerRef.current = window.setTimeout(() => {
+      suppressRecipeClickRef.current = false;
+      suppressRecipeClickTimerRef.current = null;
+    }, 450);
+  };
+
+  const renderRecipeDrag = (drag: RecipeDragState, signedProgress: number) => {
+    const direction: -1 | 1 = signedProgress < 0 ? -1 : 1;
+    const amount = Math.abs(signedProgress);
+
+    drag.progress = signedProgress;
+    drag.slides.forEach((slide) => {
+      const target = direction === 1 ? slide.next : slide.previous;
+      const targetPosition = slide.position - direction;
+      const movesToCenter = targetPosition === 0;
+      const leavesCenter = slide.position === 0;
+      const zIndex = movesToCenter && amount > 0.32
+        ? 6
+        : leavesCenter
+          ? 5
+          : Math.abs(targetPosition) <= 1 ? 3 : 1;
+
+      gsap.set(slide.element, {
+        x: gsap.utils.interpolate(slide.base.x, target.x, amount),
+        opacity: gsap.utils.clamp(0, 1, gsap.utils.interpolate(slide.base.opacity, target.opacity, amount)),
+        zIndex,
+        force3D: true,
+      });
+    });
+  };
+
+  const stopRecipeDragRenderLoop = (drag: RecipeDragState) => {
+    if (drag.renderFrame !== null) {
+      cancelAnimationFrame(drag.renderFrame);
+      drag.renderFrame = null;
+    }
+  };
+
+  const startRecipeDragRenderLoop = (drag: RecipeDragState) => {
+    if (drag.renderFrame !== null) return;
+
+    drag.lastRenderTime = performance.now();
+    const renderFrame = (time: number) => {
+      drag.renderFrame = null;
+      if (recipeDragRef.current !== drag || drag.pointerId < 0) return;
+
+      const elapsed = Math.min(34, Math.max(8, time - drag.lastRenderTime));
+      const followStrength = 1 - Math.exp(-elapsed / 18);
+      const distance = drag.targetProgress - drag.progress;
+      const nextProgress = Math.abs(distance) < 0.0005
+        ? drag.targetProgress
+        : drag.progress + (distance * followStrength);
+
+      drag.lastRenderTime = time;
+      renderRecipeDrag(drag, nextProgress);
+      if (Math.abs(drag.targetProgress - drag.progress) >= 0.0005) {
+        drag.renderFrame = requestAnimationFrame(renderFrame);
+      }
+    };
+
+    drag.renderFrame = requestAnimationFrame(renderFrame);
+  };
+
+  const clearRecipeDragStyles = (drag: RecipeDragState) => {
+    gsap.set(drag.slides.map(({ element }) => element), {
+      clearProps: "width,height,transform,opacity,zIndex",
+    });
+  };
+
+  const settleRecipeDragToOrigin = (carousel: HTMLDivElement, drag: RecipeDragState) => {
+    recipeAnimationRef.current = true;
+    setIsRecipeAnimating(true);
+    carousel.classList.add("is-settling");
+    const motion = { progress: drag.progress };
+
+    recipeMotionTweenRef.current?.kill();
+    recipeMotionTweenRef.current = gsap.to(motion, {
+      progress: 0,
+      duration: gsap.utils.clamp(0.3, 0.48, 0.3 + (Math.abs(drag.progress) * 0.2)),
+      ease: "power4.out",
+      overwrite: "auto",
+      onUpdate: () => renderRecipeDrag(drag, motion.progress),
+      onComplete: () => {
+        recipeMotionTweenRef.current = null;
+        recipeDragRef.current = null;
+        recipeAnimationRef.current = false;
+        setIsRecipeAnimating(false);
+        carousel.classList.remove("is-settling");
+        clearRecipeDragStyles(drag);
+      },
+    });
+  };
+
+  const handleRecipePointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (!event.isPrimary || event.button !== 0 || recipeAnimationRef.current) return;
+
+    const carousel = recipeCarouselRef.current;
+    if (!carousel) return;
+
+    recipeMotionTweenRef.current?.kill();
+    recipeMotionTweenRef.current = null;
+    const slideElements = Array.from(carousel.querySelectorAll<HTMLElement>(".landing-recipe-slide"));
+    const readNumber = (element: HTMLElement, property: string, fallback = 0) => {
+      const value = Number.parseFloat(String(gsap.getProperty(element, property)));
+      return Number.isFinite(value) ? value : fallback;
+    };
+    const slots = new Map<number, { rect: DOMRect; visual: RecipeDragVisualState }>();
+
+    slideElements.forEach((element) => {
+      const position = Number(element.dataset.recipePosition);
+      slots.set(position, {
+        rect: element.getBoundingClientRect(),
+        visual: {
+          x: readNumber(element, "x"),
+          opacity: readNumber(element, "opacity", 1),
+        },
+      });
+    });
+
+    // Freeze each card's box for the whole gesture so only its x position can change.
+    slideElements.forEach((element) => {
+      gsap.set(element, {
+        width: element.offsetWidth,
+        height: element.offsetHeight,
+      });
+    });
+
+    const createTarget = (position: number, targetPosition: number): RecipeDragVisualState => {
+      const source = slots.get(position);
+      if (!source) return { x: 0, opacity: 0 };
+
+      const target = slots.get(targetPosition);
+      if (target) {
+        const sourceCenterX = source.rect.left + (source.rect.width / 2);
+        const targetCenterX = target.rect.left + (target.rect.width / 2);
+        return {
+          x: source.visual.x + targetCenterX - sourceCenterX,
+          opacity: target.visual.opacity,
+        };
+      }
+
+      const edgePosition = targetPosition < 0 ? -2 : 2;
+      const insidePosition = targetPosition < 0 ? -1 : 1;
+      const edge = slots.get(edgePosition);
+      const inside = slots.get(insidePosition);
+      const stepX = edge && inside
+        ? (edge.rect.left + (edge.rect.width / 2)) - (inside.rect.left + (inside.rect.width / 2))
+        : (targetPosition < 0 ? -carousel.clientWidth * 0.3 : carousel.clientWidth * 0.3);
+      return {
+        x: source.visual.x + stepX,
+        opacity: 0,
+      };
+    };
+
+    const centerSlot = slots.get(0)?.rect;
+    const nextSlot = slots.get(1)?.rect;
+    const measuredStep = centerSlot && nextSlot
+      ? Math.abs((nextSlot.left + (nextSlot.width / 2)) - (centerSlot.left + (centerSlot.width / 2)))
+      : carousel.clientWidth * 0.38;
+    const stepDistance = Math.max(180, Math.min(measuredStep, carousel.clientWidth * 0.72));
+
+    recipeDragRef.current = {
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      lastX: event.clientX,
+      lastTime: event.timeStamp,
+      lastRenderTime: performance.now(),
+      velocity: 0,
+      dragged: false,
+      progress: 0,
+      targetProgress: 0,
+      renderFrame: null,
+      stepDistance,
+      slides: slideElements.map((element) => {
+        const position = Number(element.dataset.recipePosition);
+        const base = slots.get(position)?.visual ?? { x: 0, opacity: 1 };
+        return {
+          element,
+          position,
+          base,
+          previous: createTarget(position, position + 1),
+          next: createTarget(position, position - 1),
+        };
+      }),
+    };
+    carousel.setPointerCapture(event.pointerId);
+  };
+
+  const handleRecipePointerMove = (event: ReactPointerEvent<HTMLDivElement>) => {
+    const drag = recipeDragRef.current;
+    const carousel = recipeCarouselRef.current;
+    if (!drag || !carousel || drag.pointerId !== event.pointerId) return;
+
+    const deltaX = event.clientX - drag.startX;
+    const elapsed = Math.max(8, event.timeStamp - drag.lastTime);
+    const instantVelocity = (event.clientX - drag.lastX) / elapsed;
+    drag.velocity = (drag.velocity * 0.68) + (instantVelocity * 0.32);
+    drag.lastX = event.clientX;
+    drag.lastTime = event.timeStamp;
+
+    if (!drag.dragged && Math.abs(deltaX) >= 5) {
+      drag.dragged = true;
+      suppressRecipeClickRef.current = true;
+      carousel.classList.add("is-dragging");
+    }
+    if (!drag.dragged) return;
+
+    const rawProgress = -deltaX / drag.stepDistance;
+    const magnitude = Math.abs(rawProgress);
+    const dampedMagnitude = magnitude <= 1 ? magnitude : 1 + ((magnitude - 1) * 0.08);
+    const nextProgress = Math.sign(rawProgress || 1) * Math.min(1.02, dampedMagnitude);
+    drag.targetProgress = nextProgress;
+    startRecipeDragRenderLoop(drag);
+    event.preventDefault();
+  };
+
+  const finishRecipeDrag = (event: ReactPointerEvent<HTMLDivElement>, cancelled = false) => {
+    const drag = recipeDragRef.current;
+    const carousel = recipeCarouselRef.current;
+    if (!drag || !carousel || drag.pointerId !== event.pointerId) return;
+
+    carousel.classList.remove("is-dragging");
+    if (carousel.hasPointerCapture(event.pointerId)) carousel.releasePointerCapture(event.pointerId);
+    drag.pointerId = -1;
+    stopRecipeDragRenderLoop(drag);
+    if (!drag.dragged) {
+      recipeDragRef.current = null;
+      return;
+    }
+
+    armRecipeClickSuppression();
+    if (cancelled) {
+      settleRecipeDragToOrigin(carousel, drag);
+      return;
+    }
+
+    const projectedProgress = drag.progress - ((drag.velocity * 140) / drag.stepDistance);
+    const shouldAdvance = Math.abs(projectedProgress) >= 0.28 || Math.abs(drag.velocity) >= 0.42;
+    if (!shouldAdvance) {
+      settleRecipeDragToOrigin(carousel, drag);
+      return;
+    }
+
+    const direction: -1 | 1 = projectedProgress < 0 ? -1 : 1;
+    const motion = { progress: drag.progress };
+    const remainingDistance = Math.abs(direction - drag.progress);
+    const handoffDuration = gsap.utils.clamp(0.3, 0.52, 0.28 + (remainingDistance * 0.3));
+
+    pendingRecipeTargetRef.current = null;
+    setActiveRecipeCategory("all");
+    recipeAnimationRef.current = true;
+    setIsRecipeAnimating(true);
+    carousel.classList.add("is-settling");
+    recipeMotionTweenRef.current?.kill();
+    recipeMotionTweenRef.current = gsap.to(motion, {
+      progress: direction,
+      duration: handoffDuration,
+      ease: "power4.out",
+      overwrite: "auto",
+      onUpdate: () => renderRecipeDrag(drag, motion.progress),
+      onComplete: () => {
+        recipeMotionTweenRef.current = null;
+        runRecipeStep(direction, true);
+      },
+    });
+  };
+
+  const handleRecipeClickCapture = (event: ReactMouseEvent<HTMLDivElement>) => {
+    if (!suppressRecipeClickRef.current) return;
+    event.preventDefault();
+    event.stopPropagation();
+    suppressRecipeClickRef.current = false;
+    if (suppressRecipeClickTimerRef.current !== null) {
+      window.clearTimeout(suppressRecipeClickTimerRef.current);
+      suppressRecipeClickTimerRef.current = null;
+    }
+  };
+
   useEffect(() => () => {
     if (recipeContinuationFrameRef.current !== null) cancelAnimationFrame(recipeContinuationFrameRef.current);
+    const dragRenderFrame = recipeDragRef.current?.renderFrame;
+    if (dragRenderFrame !== null && dragRenderFrame !== undefined) cancelAnimationFrame(dragRenderFrame);
+    recipeMotionTweenRef.current?.kill();
+    if (suppressRecipeClickTimerRef.current !== null) window.clearTimeout(suppressRecipeClickTimerRef.current);
   }, []);
 
   useEffect(() => {
@@ -201,6 +541,12 @@ export default function LandingPage() {
 
     const syncActiveSection = () => {
       frameId = null;
+      const lockedSection = navScrollTargetRef.current;
+      if (lockedSection) {
+        setActiveNavSection((current) => current === lockedSection ? current : lockedSection);
+        return;
+      }
+
       const probeLine = Math.min(window.innerHeight * 0.32, 260);
       let nextSection: LandingNavSection = "home";
 
@@ -218,15 +564,30 @@ export default function LandingPage() {
     const scheduleSync = () => {
       if (frameId === null) frameId = window.requestAnimationFrame(syncActiveSection);
     };
+    const releaseScrollLock = () => {
+      if (!navScrollTargetRef.current) return;
+      navScrollTargetRef.current = null;
+      if (navScrollUnlockTimerRef.current !== null) {
+        window.clearTimeout(navScrollUnlockTimerRef.current);
+        navScrollUnlockTimerRef.current = null;
+      }
+      scheduleSync();
+    };
 
     syncActiveSection();
     window.addEventListener("scroll", scheduleSync, { passive: true });
+    window.addEventListener("scrollend", releaseScrollLock);
     window.addEventListener("resize", scheduleSync);
 
     return () => {
       window.removeEventListener("scroll", scheduleSync);
+      window.removeEventListener("scrollend", releaseScrollLock);
       window.removeEventListener("resize", scheduleSync);
       if (frameId !== null) window.cancelAnimationFrame(frameId);
+      if (navScrollUnlockTimerRef.current !== null) {
+        window.clearTimeout(navScrollUnlockTimerRef.current);
+        navScrollUnlockTimerRef.current = null;
+      }
     };
   }, []);
 
@@ -260,8 +621,9 @@ export default function LandingPage() {
 
       gsap.to(indicator, {
         ...properties,
-        duration: 0.48,
-        ease: "power3.out",
+        duration: 0.56,
+        ease: "power4.out",
+        force3D: true,
         overwrite: "auto",
       });
     };
@@ -520,43 +882,21 @@ export default function LandingPage() {
       },
     });
     planReveal
-      .from(".landing-plan-phone-wrap", { y: 64, scale: 0.86, opacity: 0, duration: 0.92, ease: "power3.out" })
-      .from(".landing-plan-note", {
-        y: 24,
-        scale: 0.9,
-        opacity: 0,
-        duration: 0.58,
-        stagger: 0.075,
-        ease: "back.out(1.18)",
-      }, "-=0.46")
-      .to(".landing-plan-connections path", {
-        strokeDashoffset: 0,
-        duration: 0.7,
-        stagger: 0.055,
-        ease: "power2.out",
-      }, "-=0.58")
+      .from(".landing-plan-journal-wrap", { y: 54, scale: 0.88, opacity: 0, duration: 1.05, ease: "power3.out" })
       .from(".landing-plan-copy > *", {
         y: 22,
         opacity: 0,
         duration: 0.58,
         stagger: 0.07,
         ease: "power3.out",
-      }, "-=0.82");
-
-    gsap.to(".landing-mascot-head", {
-      y: -4,
-      rotation: 2,
-      duration: 2.4,
-      repeat: -1,
-      yoyo: true,
-      ease: "sine.inOut",
-      scrollTrigger: {
-        trigger: ".landing-plan-card",
-        start: "top 82%",
-        end: "bottom top",
-        toggleActions: "play pause resume pause",
-      },
-    });
+      }, "-=0.78")
+      .from(".landing-plan-step", {
+        y: 28,
+        opacity: 0,
+        duration: 0.64,
+        stagger: 0.1,
+        ease: "power3.out",
+      }, "-=0.34");
 
     const communityReveal = gsap.timeline({
       scrollTrigger: {
@@ -665,6 +1005,67 @@ export default function LandingPage() {
       });
     }
 
+    gsap.fromTo(".landing-about-title > *", {
+      y: 24,
+      opacity: 0.14,
+    }, {
+      y: 0,
+      opacity: 1,
+      stagger: 0.16,
+      ease: "none",
+      scrollTrigger: {
+        trigger: ".landing-about-story",
+        start: "top 84%",
+        end: "top 34%",
+        scrub: 0.9,
+      },
+    });
+
+    gsap.fromTo(".landing-about-wordmark", {
+      xPercent: -5,
+      opacity: 0.08,
+    }, {
+      xPercent: 2,
+      opacity: 0.42,
+      ease: "none",
+      scrollTrigger: {
+        trigger: ".landing-about",
+        start: "top bottom",
+        end: "center center",
+        scrub: 1.1,
+      },
+    });
+
+    gsap.fromTo(".landing-about-visual > img", {
+      y: 48,
+      scale: 0.84,
+      opacity: 0.28,
+    }, {
+      y: 0,
+      scale: 1,
+      opacity: 1,
+      ease: "none",
+      scrollTrigger: {
+        trigger: ".landing-about-story",
+        start: "top 88%",
+        end: "center 52%",
+        scrub: 1,
+      },
+    });
+
+    gsap.from(".landing-about-copy > :not(.landing-about-title), .landing-about-value, .landing-about-companion", {
+      y: 28,
+      opacity: 0,
+      duration: 0.72,
+      stagger: 0.08,
+      ease: "power3.out",
+      scrollTrigger: {
+        trigger: ".landing-about",
+        start: "top 72%",
+        once: true,
+      },
+    });
+
     const footerReveal = gsap.timeline({
       scrollTrigger: {
         trigger: ".landing-footer",
@@ -714,7 +1115,7 @@ export default function LandingPage() {
     const carousel = recipeCarouselRef.current;
     if (!carousel) return;
 
-    const { direction } = completedStep;
+    const { direction, fromDrag } = completedStep;
     const incomingCard = carousel.querySelector<HTMLElement>('[data-recipe-position="0"]');
     const outgoingCard = carousel.querySelector<HTMLElement>(`[data-recipe-position="${-direction}"]`);
     const incomingPreview = incomingCard?.querySelector<HTMLElement>(".landing-recipe-preview-copy");
@@ -726,20 +1127,27 @@ export default function LandingPage() {
     const incomingBadge = incomingCard?.querySelector<HTMLElement>(".landing-featured-badge");
     const outgoingBadge = outgoingCard?.querySelector<HTMLElement>(".landing-featured-badge");
 
+    if (fromDrag) {
+      gsap.set(carousel.querySelectorAll(".landing-recipe-preview-copy, .landing-recipe-spotlight-copy, .landing-featured-badge"), {
+        clearProps: "opacity,visibility,transform",
+      });
+    }
     if (incomingPreview && incomingSpotlight) {
       gsap.set(incomingPreview, { autoAlpha: 1, y: 0 });
-      gsap.set(incomingSpotlight, { autoAlpha: 0, y: 12 });
+      gsap.set(incomingSpotlight, { autoAlpha: 0, y: fromDrag ? 5 : 12 });
     }
     if (outgoingPreview && outgoingSpotlight) {
-      gsap.set(outgoingPreview, { autoAlpha: 0, y: 9 });
+      gsap.set(outgoingPreview, { autoAlpha: 0, y: fromDrag ? 4 : 9 });
       gsap.set(outgoingSpotlight, { autoAlpha: 1, y: 0 });
     }
-    if (incomingBadge) gsap.set(incomingBadge, { autoAlpha: 0, y: -6, scale: 0.94 });
+    if (incomingBadge) gsap.set(incomingBadge, { autoAlpha: 0, y: -6, scale: fromDrag ? 0.98 : 0.94 });
     if (outgoingBadge) gsap.set(outgoingBadge, { autoAlpha: 1, y: 0, scale: 1 });
 
     const transition = gsap.timeline({
       defaults: { overwrite: "auto" },
       onComplete: () => {
+        carousel.classList.remove("is-settling");
+        gsap.set(carousel, { clearProps: "transform" });
         gsap.set(carousel.querySelectorAll(".landing-recipe-preview-copy, .landing-recipe-spotlight-copy, .landing-recipe-media img, .landing-featured-badge"), {
           clearProps: "opacity,visibility,transform",
         });
@@ -769,8 +1177,8 @@ export default function LandingPage() {
     });
 
     transition.add(Flip.from(flipState, {
-      duration: 0.84,
-      ease: "power3.inOut",
+      duration: fromDrag ? 0.38 : 0.84,
+      ease: fromDrag ? "power3.out" : "power3.inOut",
       nested: true,
       scale: false,
       prune: true,
@@ -778,22 +1186,42 @@ export default function LandingPage() {
 
     if (incomingPreview && incomingSpotlight) {
       transition
-        .to(incomingPreview, { autoAlpha: 0, y: -6, duration: 0.2, ease: "power2.in" }, 0.08)
-        .to(incomingSpotlight, { autoAlpha: 1, y: 0, duration: 0.34, ease: "power2.out" }, 0.35);
+        .to(incomingPreview, {
+          autoAlpha: 0,
+          y: fromDrag ? -3 : -6,
+          duration: fromDrag ? 0.14 : 0.2,
+          ease: "power2.in",
+        }, fromDrag ? 0 : 0.08)
+        .to(incomingSpotlight, {
+          autoAlpha: 1,
+          y: 0,
+          duration: fromDrag ? 0.26 : 0.34,
+          ease: "power2.out",
+        }, fromDrag ? 0.08 : 0.35);
     }
     if (outgoingPreview && outgoingSpotlight) {
       transition
-        .to(outgoingSpotlight, { autoAlpha: 0, y: -6, duration: 0.2, ease: "power2.in" }, 0.06)
-        .to(outgoingPreview, { autoAlpha: 1, y: 0, duration: 0.32, ease: "power2.out" }, 0.32);
+        .to(outgoingSpotlight, {
+          autoAlpha: 0,
+          y: fromDrag ? -3 : -6,
+          duration: fromDrag ? 0.14 : 0.2,
+          ease: "power2.in",
+        }, fromDrag ? 0 : 0.06)
+        .to(outgoingPreview, {
+          autoAlpha: 1,
+          y: 0,
+          duration: fromDrag ? 0.24 : 0.32,
+          ease: "power2.out",
+        }, fromDrag ? 0.07 : 0.32);
     }
-    if (incomingImage) {
+    if (!fromDrag && incomingImage) {
       transition.fromTo(incomingImage,
         { scale: 1.025, xPercent: direction * 1.4 },
         { scale: 1, xPercent: 0, duration: 0.76, ease: "power2.out" },
         0.04,
       );
     }
-    if (outgoingImage) {
+    if (!fromDrag && outgoingImage) {
       transition.fromTo(outgoingImage,
         { scale: 1, xPercent: 0 },
         { scale: 1.012, xPercent: direction * -0.8, duration: 0.72, ease: "power2.inOut" },
@@ -801,10 +1229,22 @@ export default function LandingPage() {
       );
     }
     if (incomingBadge) {
-      transition.to(incomingBadge, { autoAlpha: 1, y: 0, scale: 1, duration: 0.3, ease: "power2.out" }, 0.42);
+      transition.to(incomingBadge, {
+        autoAlpha: 1,
+        y: 0,
+        scale: 1,
+        duration: fromDrag ? 0.22 : 0.3,
+        ease: "power2.out",
+      }, fromDrag ? 0.1 : 0.42);
     }
     if (outgoingBadge) {
-      transition.to(outgoingBadge, { autoAlpha: 0, y: -5, scale: 0.96, duration: 0.18, ease: "power2.in" }, 0.06);
+      transition.to(outgoingBadge, {
+        autoAlpha: 0,
+        y: -5,
+        scale: 0.96,
+        duration: fromDrag ? 0.12 : 0.18,
+        ease: "power2.in",
+      }, fromDrag ? 0 : 0.06);
     }
 
     return () => transition.kill();
@@ -833,6 +1273,14 @@ export default function LandingPage() {
             href={`#${id}`}
             data-nav-section={id}
             onClick={() => {
+              navScrollTargetRef.current = id;
+              if (navScrollUnlockTimerRef.current !== null) {
+                window.clearTimeout(navScrollUnlockTimerRef.current);
+              }
+              navScrollUnlockTimerRef.current = window.setTimeout(() => {
+                navScrollTargetRef.current = null;
+                navScrollUnlockTimerRef.current = null;
+              }, 1400);
               setActiveNavSection(id);
               setMenuOpen(false);
             }}
@@ -928,7 +1376,17 @@ export default function LandingPage() {
 
           <div className="landing-recipe-carousel-shell">
             <button className="landing-recipe-control previous" type="button" onClick={() => moveRecipe(-1)} aria-label="Xem công thức trước" disabled={isRecipeAnimating}><ArrowLeft /></button>
-            <div className={`landing-recipe-carousel${isRecipeAnimating ? " is-transitioning" : ""}`} ref={recipeCarouselRef} aria-live="polite">
+            <div
+              className={`landing-recipe-carousel${isRecipeAnimating ? " is-transitioning" : ""}`}
+              ref={recipeCarouselRef}
+              aria-live="polite"
+              onPointerDown={handleRecipePointerDown}
+              onPointerMove={handleRecipePointerMove}
+              onPointerUp={(event) => finishRecipeDrag(event)}
+              onPointerCancel={(event) => finishRecipeDrag(event, true)}
+              onClickCapture={handleRecipeClickCapture}
+              onDragStart={(event) => event.preventDefault()}
+            >
               {recipeSlides.map((slide) => {
                 const recipe = recipes[slide.recipeIndex];
                 const isSpotlight = slide.position === 0;
@@ -942,7 +1400,7 @@ export default function LandingPage() {
                   key={slide.id}
                 >
                   <div className="landing-recipe-media">
-                    <img src={recipe.image} alt={recipe.name} />
+                    <img src={recipe.image} alt={recipe.name} draggable="false" />
                     <span className="landing-featured-badge"><Star /> Nổi bật</span>
                     <button type="button" aria-label={`Lưu ${recipe.name}`} tabIndex={isOutside ? -1 : 0}><Bookmark /></button>
                   </div>
@@ -980,62 +1438,36 @@ export default function LandingPage() {
       <section className="landing-section landing-plan-section" id="plan">
         <div className="landing-container landing-plan-card">
           <div className="landing-plan-copy">
-            <div className="landing-plan-mascot" aria-hidden="true">
-              <div className="landing-mascot-head"><ChefHat /><span><Bot /></span></div>
-              <div className="landing-mascot-tray"><Leaf /><Salad /></div>
-              <Sparkles className="landing-mascot-sparkle" />
-            </div>
-            <h2>Kế hoạch ăn uống<br />được tạo riêng cho<br />bạn bởi <strong>AI.</strong></h2>
-            <p>Nouri phân tích mục tiêu, thói quen và nhu cầu dinh dưỡng của bạn để tạo nên thực đơn phù hợp, khoa học và dễ thực hiện.</p>
-            <ul>
-              <li><span><Target /></span>Phù hợp mục tiêu cá nhân</li>
-              <li><span><HeartPulse /></span>Cân bằng dinh dưỡng</li>
-              <li><span><Clock3 /></span>Tiết kiệm thời gian</li>
-            </ul>
+            <span className="landing-plan-kicker"><CalendarDays /> Kế hoạch ăn uống</span>
+            <h2>Nouri lên kế hoạch<br />cả tuần, bạn chỉ việc<br /><strong>tận hưởng.</strong></h2>
+            <p>Dựa trên mục tiêu, sở thích và lịch trình của bạn, Nouri AI tạo ra kế hoạch ăn uống cân bằng, đa dạng và dễ thực hiện.</p>
             <div className="landing-plan-action">
-              <Link to={appLink}>Tạo kế hoạch của tôi <ArrowRight /></Link>
-              <span><Sparkles /> Dành riêng cho bạn</span>
+              <Link to={appLink}><Sparkles /> Tạo kế hoạch của tôi <ArrowRight /></Link>
+              <a href="#landing-plan-process">Tìm hiểu cách Nouri hoạt động <ArrowRight /></a>
             </div>
           </div>
 
           <div className="landing-plan-visual">
-            <div className="landing-plan-organic-shape" aria-hidden="true" />
-            <svg className="landing-plan-connections" viewBox="0 0 760 720" preserveAspectRatio="none" aria-hidden="true">
-              <path pathLength="1" d="M275 160 C330 160 326 215 365 236" />
-              <path pathLength="1" d="M248 353 C303 350 312 370 357 378" />
-              <path pathLength="1" d="M276 580 C325 565 329 520 365 503" />
-              <path pathLength="1" d="M488 148 C438 157 442 216 411 236" />
-              <path pathLength="1" d="M514 353 C462 350 454 374 414 381" />
-              <path pathLength="1" d="M486 583 C441 565 443 524 410 506" />
-            </svg>
-
-            <div className="landing-plan-phone-wrap">
-              <div className="landing-phone" aria-label="Xem trước kế hoạch ăn uống">
-                <div className="landing-phone-notch" />
-                <header><strong>Kế hoạch của bạn</strong><small>19 – 25 Tháng 5, 2025</small></header>
-                <nav><b>T2<small>19</small></b><span>T3<small>20</small></span><span>T4<small>21</small></span><span>T5<small>22</small></span><span>T6<small>23</small></span><span>T7<small>24</small></span><span>CN<small>25</small></span></nav>
-                <section>
-                  <span>Bữa sáng <small>525 kcal</small></span>
-                  <article><img src="/assets/recipe-oats.jpg" alt="" /><div><strong>Yến mạch trái cây & hạt</strong><small>1 khẩu phần</small></div></article>
-                  <span>Bữa trưa <small>650 kcal</small></span>
-                  <article><img src="/assets/recipe-salmon.jpg" alt="" /><div><strong>Cơm gạo lứt, cá áp chảo</strong><small>Khẩu phần cân bằng</small></div></article>
-                  <span>Bữa tối <small>560 kcal</small></span>
-                  <article><img src="/assets/recipe-vegan-bowl.jpg" alt="" /><div><strong>Salad ức gà sốt chanh dây</strong><small>1 khẩu phần</small></div></article>
-                </section>
-                <footer className="landing-phone-tabs"><span><CalendarDays />Kế hoạch</span><span><Utensils />Công thức</span><span><UsersRound />Cộng đồng</span></footer>
+            <div className="landing-plan-journal-wrap">
+              <span className="landing-plan-journal-glow" aria-hidden="true" />
+              <img src="/assets/landing-meal-planner-journal-transparent-v2.png" alt="Sổ kế hoạch ăn uống tuần với lá xanh và nước chanh" />
+              <div className="landing-plan-journal-copy" aria-hidden="true">
+                <small>Kế hoạch tuần này</small>
+                <span><Check /> Ăn uống cân bằng</span>
+                <span><Check /> Đủ dinh dưỡng</span>
+                <span><Check /> Dễ duy trì</span>
               </div>
             </div>
+          </div>
 
-            <div className="landing-plan-notes">
-              <article className="landing-plan-note note-goal"><i className="landing-note-clip" /><span><Target /></span><div><small>Mục tiêu của bạn</small><strong>Giảm cân</strong><em>-0.6 kg/tuần</em><b className="landing-note-bar"><i style={{ width: "69%" }} /></b></div></article>
-              <article className="landing-plan-note note-energy"><span><Flame /></span><div><small>Năng lượng mỗi ngày</small><strong>1.650 kcal</strong><em>Đạt 80% mục tiêu</em><b className="landing-note-bar energy"><i style={{ width: "80%" }} /></b></div></article>
-              <article className="landing-plan-note note-preference"><i className="landing-note-clip" /><span><Salad /></span><div><small>Ưu tiên của bạn</small><strong>Eat clean</strong><em>Ít dầu mỡ, nhiều rau xanh</em></div></article>
-              <article className="landing-plan-note note-body"><span><HeartPulse /></span><div><small>Chỉ số cơ thể</small><p>Cân nặng <b>60 kg</b></p><p>BMI <b>21.5</b></p><p>Tỷ lệ mỡ <b>22%</b></p></div></article>
-              <article className="landing-plan-note note-ratio"><i className="landing-note-clip" /><span><Dumbbell /></span><div><small>Tỷ lệ dinh dưỡng</small><p>Protein <b>30%</b></p><p>Carb <b>45%</b></p><p>Fat <b>25%</b></p><b className="landing-note-ratio-bar"><i /><i /><i /></b></div></article>
-              <article className="landing-plan-note note-progress"><span><TrendingUp /></span><div><small>Tiến độ mục tiêu</small><strong>68%</strong><em>Cố lên, bạn đang làm tốt</em><b className="landing-note-bar"><i style={{ width: "68%" }} /></b></div></article>
+          <div className="landing-plan-process" id="landing-plan-process">
+            <header><span>Quy trình Nouri AI</span><h3>Lên kế hoạch cho bạn</h3></header>
+            <div className="landing-plan-process-list">
+              <article className="landing-plan-step"><span><Target /></span><small>01</small><h4>Bạn đặt mục tiêu</h4><p>Chọn mục tiêu và nhu cầu dinh dưỡng.</p></article>
+              <article className="landing-plan-step"><span><Bot /></span><small>02</small><h4>Nouri AI phân tích</h4><p>Hiểu thói quen, sở thích và lịch trình.</p></article>
+              <article className="landing-plan-step"><span><CalendarDays /></span><small>03</small><h4>Lên kế hoạch</h4><p>Tạo thực đơn đa dạng và cân bằng.</p></article>
+              <article className="landing-plan-step"><span><Utensils /></span><small>04</small><h4>Bạn tận hưởng</h4><p>Ăn ngon mỗi ngày, dễ đạt mục tiêu.</p></article>
             </div>
-            <Leaf className="landing-plan-leaf leaf-a" aria-hidden="true" />
-            <Leaf className="landing-plan-leaf leaf-b" aria-hidden="true" />
           </div>
         </div>
       </section>
@@ -1099,9 +1531,53 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
+
+      <section className="landing-about" id="about">
+        <div className="landing-container landing-about-shell">
+          <div className="landing-about-story">
+            <span className="landing-about-wordmark" aria-hidden="true">NOURI</span>
+
+            <div className="landing-about-copy">
+              <span className="landing-about-kicker"><Leaf aria-hidden="true" /> Về Nouri</span>
+              <h2 className="landing-about-title">
+                <span>Nouri ra đời để việc</span>
+                <span>ăn uống lành mạnh</span>
+                <em>trở nên đơn giản và vui vẻ.</em>
+              </h2>
+              <span className="landing-about-rule" aria-hidden="true" />
+              <p>Chúng tôi tin rằng mỗi người đều xứng đáng có một lối sống khỏe mạnh mà không phải đánh đổi sự bận rộn. Nouri đồng hành cùng bạn bằng công nghệ và kiến thức dinh dưỡng, biến kế hoạch ăn uống khoa học thành thói quen dễ duy trì mỗi ngày.</p>
+              <a className="landing-about-cta" href="#about-values">Tìm hiểu về Nouri <ArrowRight /></a>
+            </div>
+
+            <figure className="landing-about-visual">
+              <span className="landing-about-visual-glow" aria-hidden="true" />
+              <img src="/assets/landing-meal-planner-journal-transparent-v2.png" alt="Sổ kế hoạch cùng lá xanh và nước chanh đại diện cho lối sống lành mạnh" />
+              <figcaption className="landing-about-journal-note" aria-hidden="true">
+                <span>Good food</span>
+                <span>Good life</span>
+                <strong>Better you</strong>
+                <Leaf />
+              </figcaption>
+            </figure>
+          </div>
+
+          <div className="landing-about-values" id="about-values">
+            {aboutValues.map(({ icon: Icon, title, copy }) => <article className="landing-about-value" key={title}>
+              <span><Icon aria-hidden="true" /><Leaf aria-hidden="true" /></span>
+              <div><h3>{title}</h3><p>{copy}</p><i aria-hidden="true" /></div>
+            </article>)}
+          </div>
+
+          <div className="landing-about-companion">
+            <HeartPulse aria-hidden="true" />
+            <p>Nouri không chỉ là một ứng dụng, đó là <strong>người bạn đồng hành</strong> trên hành trình sống khỏe của bạn.</p>
+            <Leaf aria-hidden="true" />
+          </div>
+        </div>
+      </section>
     </main>
 
-    <footer className="landing-footer" id="about">
+    <footer className="landing-footer">
       <FooterBotanical side="left" />
       <FooterBotanical side="right" />
 
