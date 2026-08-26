@@ -35,9 +35,9 @@ const overviewFallbackRecipes: DashboardData["recommendedRecipes"] = [
 ];
 
 const overviewSuggestionImages = [
-  "/assets/nutrition-hero.jpg",
-  "/assets/recipe-salmon.jpg",
-  "/assets/recipe-vegan-bowl.jpg",
+  "/assets/dashboard-recipe-chicken-quinoa-v4.jpg",
+  "/assets/dashboard-recipe-chicken-pesto-v4.jpg",
+  "/assets/dashboard-recipe-chicken-salad-v4.jpg",
 ];
 
 const getMealIcon = (mealType: MealType) => {
@@ -115,7 +115,7 @@ export default function DashboardPage() {
         <Leaf className="overview-v2-hero-leaf leaf-two" />
         <Leaf className="overview-v2-hero-leaf leaf-three" />
         <span className="overview-v2-lemon-cup"><i /></span>
-        <img className="overview-v2-hero-bowl" src="/assets/hero-bowl-clean-v3.png" alt="" />
+        <img className="overview-v2-hero-bowl" src="/assets/dashboard-hero-salmon-bowl-v4.png" alt="" />
       </div>
     </section>
 
@@ -152,14 +152,14 @@ export default function DashboardPage() {
 
     <section className="overview-v2-insight" aria-labelledby="overview-v2-insight-title">
       <div className="overview-v2-insight-heading"><h2 id="overview-v2-insight-title">Nouri Insight</h2><Sparkles /></div>
-      <img className="overview-v2-insight-ingredients" src="/assets/hero-ingredients-clean-v3.png" alt="" />
+      <img className="overview-v2-insight-ingredients" src="/assets/dashboard-insight-ingredients-v4.png" alt="" />
       <div className="overview-v2-insight-copy">
         <span>Gợi ý thông minh cho bạn</span>
         <h3>{insightTitle}</h3>
         <p>{insightItems.length ? "sắp hết hạn. Nouri gợi ý món ngon sử dụng cả hai để tránh lãng phí nhé." : "Hãy tiếp tục duy trì thói quen sử dụng nguyên liệu tươi và lên kế hoạch bữa ăn đều đặn."}</p>
         <Link to="/assistant">Xem gợi ý món <ArrowRight /></Link>
       </div>
-      <div className="overview-v2-insight-dish"><img src="/assets/nutrition-hero.jpg" alt="Món ăn Nouri đề xuất" /></div>
+      <div className="overview-v2-insight-dish"><img src="/assets/dashboard-insight-chicken-bowl-v4.jpg" alt="Bowl gà quinoa Nouri đề xuất" /></div>
     </section>
 
     <section className="overview-v2-main-grid">
