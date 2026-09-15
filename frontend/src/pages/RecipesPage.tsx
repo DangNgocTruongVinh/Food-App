@@ -2,41 +2,12 @@ import { useQuery } from "@tanstack/react-query";
 import { Beef, ChevronLeft, ChevronRight, Clock3, Flame, Grid2X2, Heart, Leaf, List, Search, SlidersHorizontal, Wheat } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { api } from "../api/client";
 import { EmptyState, LoadingState } from "../components/States";
-import type { Recipe } from "../types";
-
-const recipeImage = (name: string) => {
-  const normalized = name.toLowerCase();
-  if (normalized.includes("yến mạch") || normalized.includes("sữa chua") || normalized.includes("chuối")) return "/assets/recipe-oats.jpg";
-  if (normalized.includes("cá") || normalized.includes("tôm") || normalized.includes("ngừ")) return "/assets/recipe-salmon.jpg";
-  if (normalized.includes("đậu") || normalized.includes("rau") || normalized.includes("nấm") || normalized.includes("bowl")) return "/assets/recipe-vegan-bowl.jpg";
-  return "/assets/nutrition-hero.jpg";
-};
-
-type RecipeCategory = "all" | "vietnamese" | "international" | "breakfast" | "healthy" | "low-carb" | "vegetarian";
-type RecipeSort = "newest" | "quickest" | "calories" | "protein";
-
-const categories: Array<{ id: RecipeCategory; label: string; icon: string }> = [
-  { id: "all", label: "Tất cả", icon: "▦" },
-  { id: "vietnamese", label: "Việt Nam", icon: "🍲" },
-  { id: "international", label: "Quốc tế", icon: "🌍" },
-  { id: "breakfast", label: "Ăn sáng", icon: "☀️" },
-  { id: "healthy", label: "Healthy", icon: "🌿" },
-  { id: "low-carb", label: "Low Carb", icon: "🥗" },
-  { id: "vegetarian", label: "Món chay", icon: "🥬" },
-];
-
-const matchesCategory = (recipe: Recipe, category: RecipeCategory) => {
-  if (category === "all") return true;
-  if (category === "vietnamese") return recipe.cuisine.toLowerCase().includes("việt");
-  if (category === "international") return recipe.cuisine.toLowerCase().includes("quốc tế");
-  if (category === "healthy") return recipe.dietTags.includes("BALANCED");
-  if (category === "low-carb") return recipe.dietTags.includes("LOW_CARB");
-  if (category === "vegetarian") return recipe.dietTags.some((tag) => tag === "VEGETARIAN" || tag === "VEGAN");
-  const copy = `${recipe.name} ${recipe.description}`.toLowerCase();
-  return copy.includes("sáng") || copy.includes("yến mạch") || copy.includes("trứng") || copy.includes("sữa chua");
-};
+import {
+  filterAndSortRecipes, paginateRecipes, recipeCategories, recipeImage,
+  type RecipeCategory, type RecipeSort,
+} from "../features/recipes/recipes.logic";
+import { recipeQueries } from "../features/recipes/recipes.queries";
 
 export default function RecipesPage() {
   const [searchParams] = useSearchParams();
@@ -47,25 +18,14 @@ export default function RecipesPage() {
   const [filtersExpanded, setFiltersExpanded] = useState(true);
   const [pageIndex, setPageIndex] = useState(1);
   const [favorites, setFavorites] = useState<Set<string>>(() => new Set());
-  const { data = [], isLoading } = useQuery({ queryKey: ["recipes"], queryFn: async () => (await api.get<Recipe[]>("/recipes")).data });
-  const recipes = useMemo(() => {
-    const query = search.trim().toLowerCase();
-    const filtered = data.filter((recipe) => {
-      const searchCopy = `${recipe.name} ${recipe.cuisine} ${recipe.ingredients.map((ingredient) => ingredient.name).join(" ")}`.toLowerCase();
-      return (!query || searchCopy.includes(query)) && matchesCategory(recipe, category);
-    });
-    return [...filtered].sort((a, b) => {
-      if (sort === "quickest") return (a.prepMinutes + a.cookMinutes) - (b.prepMinutes + b.cookMinutes);
-      if (sort === "calories") return a.calories - b.calories;
-      if (sort === "protein") return b.proteinG - a.proteinG;
-      return data.indexOf(a) - data.indexOf(b);
-    });
-  }, [category, data, search, sort]);
+  const { data = [], isLoading } = useQuery(recipeQueries.list());
+  const recipes = useMemo(
+    () => filterAndSortRecipes(data, { search, category, sort }),
+    [category, data, search, sort],
+  );
   if (isLoading) return <LoadingState />;
   const pageSize = 8;
-  const totalPages = Math.max(1, Math.ceil(recipes.length / pageSize));
-  const currentPage = Math.min(pageIndex, totalPages);
-  const visibleRecipes = recipes.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+  const { totalPages, currentPage, visibleRecipes } = paginateRecipes(recipes, pageIndex, pageSize);
   const updateCategory = (nextCategory: RecipeCategory) => { setCategory(nextCategory); setPageIndex(1); };
   const toggleFavorite = (id: string) => setFavorites((current) => {
     const next = new Set(current);
@@ -81,7 +41,7 @@ export default function RecipesPage() {
 
     <section className="recipes-discovery" aria-label="Tìm kiếm và lọc công thức">
       <div className="recipes-search-row"><label className="recipes-search-box"><Search /><input value={search} onChange={(event) => { setSearch(event.target.value); setPageIndex(1); }} placeholder="Tìm món ăn hoặc nguyên liệu..." /></label><button className="recipes-filter-toggle" onClick={() => setFiltersExpanded((current) => !current)} aria-expanded={filtersExpanded}><SlidersHorizontal /> Bộ lọc</button></div>
-      <nav className={`recipes-category-pills${filtersExpanded ? "" : " collapsed"}`} aria-label="Danh mục công thức">{categories.map((item) => <button key={item.id} className={category === item.id ? "active" : ""} onClick={() => updateCategory(item.id)} aria-pressed={category === item.id}><span aria-hidden="true">{item.icon}</span>{item.label}</button>)}</nav>
+      <nav className={`recipes-category-pills${filtersExpanded ? "" : " collapsed"}`} aria-label="Danh mục công thức">{recipeCategories.map((item) => <button key={item.id} className={category === item.id ? "active" : ""} onClick={() => updateCategory(item.id)} aria-pressed={category === item.id}><span aria-hidden="true">{item.icon}</span>{item.label}</button>)}</nav>
     </section>
 
     <div className="recipes-results-toolbar"><strong>{recipes.length} công thức phù hợp</strong><div><button className={view === "grid" ? "active" : ""} onClick={() => setView("grid")} aria-label="Hiển thị dạng lưới" aria-pressed={view === "grid"}><Grid2X2 /></button><button className={view === "list" ? "active" : ""} onClick={() => setView("list")} aria-label="Hiển thị dạng danh sách" aria-pressed={view === "list"}><List /></button><label><select aria-label="Sắp xếp công thức" value={sort} onChange={(event) => { setSort(event.target.value as RecipeSort); setPageIndex(1); }}><option value="newest">Mới nhất</option><option value="quickest">Nhanh nhất</option><option value="calories">Ít calo</option><option value="protein">Nhiều protein</option></select></label></div></div>

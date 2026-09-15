@@ -9,9 +9,10 @@ import MealPlansPage from "./pages/MealPlansPage";
 import PantryPage from "./pages/PantryPage";
 import ProfilePage from "./pages/ProfilePage";
 import RecipesPage from "./pages/RecipesPage";
+import { getAuthToken } from "./features/auth/auth.storage";
 
 function ProtectedRoute() {
-  return localStorage.getItem("nutriplan_token") ? <Outlet /> : <Navigate to="/login" replace />;
+  return getAuthToken() ? <Outlet /> : <Navigate to="/login" replace />;
 }
 
 export default function App() {

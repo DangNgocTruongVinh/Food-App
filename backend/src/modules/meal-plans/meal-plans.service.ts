@@ -1,8 +1,8 @@
-import type { FoodUnit, MealType, Recipe } from "@prisma/client";
-import { prisma } from "../lib/prisma.js";
-import { HttpError } from "../utils/http-error.js";
-import { generatePlanWithAI, type GeneratedPlan } from "./ai.service.js";
-import { calculateNutritionTargets } from "./nutrition.service.js";
+import type { FoodUnit, MealType, PlanStatus, Recipe } from "@prisma/client";
+import { prisma } from "../../lib/prisma.js";
+import { calculateNutritionTargets } from "../../services/nutrition.service.js";
+import { HttpError } from "../../utils/http-error.js";
+import { generatePlanWithAI, type GeneratedPlan } from "../ai/ai.service.js";
 
 type RecipeWithIngredients = Recipe & { ingredients: Array<{ name: string; quantity: number; unit: FoodUnit }> };
 
@@ -129,3 +129,56 @@ export const planInclude = {
   days: { orderBy: { date: "asc" as const }, include: { items: { include: { recipe: { include: { ingredients: true } } } } } },
   shoppingItems: { orderBy: [{ purchased: "asc" as const }, { name: "asc" as const }] },
 };
+
+export function listMealPlans(userId: string) {
+  return prisma.mealPlan.findMany({
+    where: { userId },
+    include: planInclude,
+    orderBy: { startDate: "desc" },
+  });
+}
+
+export async function getMealPlan(userId: string, id: string) {
+  const plan = await prisma.mealPlan.findFirst({ where: { id, userId }, include: planInclude });
+  if (!plan) throw new HttpError(404, "Không tìm thấy thực đơn.");
+  return plan;
+}
+
+export async function updateMealPlanStatus(userId: string, id: string, status: PlanStatus) {
+  return prisma.$transaction(async (transaction) => {
+    const result = await transaction.mealPlan.updateMany({ where: { id, userId }, data: { status } });
+    if (!result.count) throw new HttpError(404, "Không tìm thấy thực đơn.");
+    return transaction.mealPlan.findUnique({ where: { id }, include: planInclude });
+  });
+}
+
+export async function updateMealCompletion(userId: string, id: string, completed: boolean) {
+  return prisma.$transaction(async (transaction) => {
+    const result = await transaction.mealPlanItem.updateMany({
+      where: { id, day: { mealPlan: { userId } } },
+      data: { completed },
+    });
+    if (!result.count) throw new HttpError(404, "Không tìm thấy bữa ăn.");
+    const item = await transaction.mealPlanItem.findUnique({ where: { id } });
+    if (!item) throw new HttpError(404, "Không tìm thấy bữa ăn.");
+    return item;
+  });
+}
+
+export async function updateShoppingPurchased(userId: string, id: string, purchased: boolean) {
+  return prisma.$transaction(async (transaction) => {
+    const result = await transaction.shoppingItem.updateMany({
+      where: { id, mealPlan: { userId } },
+      data: { purchased },
+    });
+    if (!result.count) throw new HttpError(404, "Không tìm thấy nguyên liệu mua sắm.");
+    const item = await transaction.shoppingItem.findUnique({ where: { id } });
+    if (!item) throw new HttpError(404, "Không tìm thấy nguyên liệu mua sắm.");
+    return item;
+  });
+}
+
+export async function deleteMealPlan(userId: string, id: string) {
+  const result = await prisma.mealPlan.deleteMany({ where: { id, userId } });
+  if (!result.count) throw new HttpError(404, "Không tìm thấy thực đơn.");
+}

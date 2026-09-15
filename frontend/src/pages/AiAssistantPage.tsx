@@ -1,38 +1,28 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowRight, Bot, CalendarDays, Check, ChefHat, ChevronDown, Flame, Heart, History, Lightbulb, Mic, PackageOpen, Paperclip, Send, Sparkles, Target, UserRound, Utensils } from "lucide-react";
 import { useEffect, useRef, useState, type FormEvent } from "react";
-import { api, getApiError } from "../api/client";
+import { getApiError } from "../api/client";
 import { LoadingState } from "../components/States";
-import type { ChatMessage, DashboardData, ProfileResponse } from "../types";
+import {
+  assistantDietLabel, assistantFallbackHistory, assistantPromptPills, assistantQuickActions,
+  assistantSuggestions, normalizeChatMessage, recentUserHistory,
+} from "../features/ai/ai.logic";
+import { aiMutations, aiQueries, invalidateAIHistory } from "../features/ai/ai.queries";
+import { profileQueries } from "../features/profile/profile.queries";
 
-const suggestions = ["Gợi ý bữa tối từ thực phẩm sắp hết hạn", "Làm sao để đạt đủ protein hôm nay?", "Tôi nên chuẩn bị gì cho bữa sáng nhanh?"];
-
-const dietLabels: Record<string, string> = {
-  BALANCED: "Ăn cân bằng",
-  VEGETARIAN: "Ăn chay",
-  VEGAN: "Thuần chay",
-  LOW_CARB: "Low Carb",
-  HIGH_PROTEIN: "Giàu protein",
-};
+const quickActionIcons = { meal: <Utensils />, plan: <CalendarDays />, pantry: <PackageOpen />, recipe: <ChefHat /> };
 
 export default function AiAssistantPage() {
   const queryClient = useQueryClient(); const [message, setMessage] = useState(""); const [error, setError] = useState(""); const bottomRef = useRef<HTMLDivElement>(null);
-  const { data = [], isLoading } = useQuery({ queryKey: ["chat-history"], queryFn: async () => (await api.get<ChatMessage[]>("/ai/history")).data });
-  const { data: dashboard } = useQuery({ queryKey: ["dashboard"], queryFn: async () => (await api.get<DashboardData>("/dashboard")).data });
-  const { data: profileData } = useQuery({ queryKey: ["profile"], queryFn: async () => (await api.get<ProfileResponse>("/profile")).data });
-  const chat = useMutation({ mutationFn: async (content: string) => (await api.post<{ answer: string }>("/ai/chat", { message: content })).data, onSuccess: () => { setMessage(""); setError(""); queryClient.invalidateQueries({ queryKey: ["chat-history"] }); }, onError: (err) => setError(getApiError(err)) });
+  const { data = [], isLoading } = useQuery(aiQueries.history());
+  const { data: dashboard } = useQuery(aiQueries.dashboard());
+  const { data: profileData } = useQuery(profileQueries.detail());
+  const chat = useMutation({ ...aiMutations.chat(), onSuccess: () => { setMessage(""); setError(""); invalidateAIHistory(queryClient); }, onError: (err) => setError(getApiError(err)) });
   useEffect(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), [data, chat.isPending]);
-  const submit = (event: FormEvent) => { event.preventDefault(); if (message.trim()) chat.mutate(message.trim()); };
+  const submit = (event: FormEvent) => { event.preventDefault(); const content = normalizeChatMessage(message); if (content) chat.mutate(content); };
   if (isLoading) return <LoadingState />;
   const profile = profileData?.profile;
-  const quickActions = [
-    { title: "Gợi ý bữa ăn", copy: "Theo mục tiêu dinh dưỡng của bạn", prompt: "Gợi ý bữa ăn phù hợp với mục tiêu dinh dưỡng hôm nay", icon: <Utensils />, tone: "meal" },
-    { title: "Lập thực đơn", copy: "Kế hoạch 1–7 ngày phù hợp thể trạng", prompt: "Hãy lập cho tôi một thực đơn lành mạnh trong 7 ngày", icon: <CalendarDays />, tone: "plan" },
-    { title: "Nấu từ thực phẩm trong kho", copy: "Tận dụng nguyên liệu sẵn có", prompt: "Gợi ý món ăn từ thực phẩm hiện có trong kho của tôi", icon: <PackageOpen />, tone: "pantry" },
-    { title: "Gợi ý công thức", copy: "Món ngon, lành mạnh và dễ làm", prompt: "Gợi ý cho tôi một công thức lành mạnh và dễ làm", icon: <ChefHat />, tone: "recipe" },
-  ];
-  const fallbackHistory = ["Gợi ý bữa tối giàu protein", "Thực đơn giảm cân 3 ngày", "Dùng thực phẩm trong kho", "Giá trị dinh dưỡng của ức gà"];
-  const historyItems = data.filter((item) => item.role === "user").slice(-4).reverse().map((item) => item.content);
+  const historyItems = recentUserHistory(data);
 
   return <div className="assistant-page assistant-dashboard-page">
     <header className="assistant-header assistant-dashboard-hero">
@@ -44,9 +34,9 @@ export default function AiAssistantPage() {
     <section className="assistant-context-bar" aria-label="Thông tin cá nhân hóa cho trợ lý">
       <div><span><PackageOpen /></span><b>{dashboard?.pantryCount ?? "—"}</b><small>thực phẩm trong kho</small></div>
       <div><span><Flame /></span><b>{profile?.dailyCalorieTarget ?? dashboard?.nutritionTargets?.calories ?? "—"} kcal/ngày</b><small>mức năng lượng</small></div>
-      <div><span><Target /></span><b>{dietLabels[profile?.dietType ?? ""] ?? "Ăn lành mạnh"}</b><small>mục tiêu</small></div>
+      <div><span><Target /></span><b>{assistantDietLabel(profile?.dietType)}</b><small>mục tiêu</small></div>
       <div><span><CalendarDays /></span><b>{dashboard?.todayMeals.length ? `${dashboard.todayMeals.length} bữa` : "Chưa có"}</b><small>kế hoạch hôm nay</small></div>
-      <button onClick={() => setMessage(suggestions[0])}><Sparkles /> Gợi ý nhanh <ChevronDown /></button>
+      <button onClick={() => setMessage(assistantSuggestions[0])}><Sparkles /> Gợi ý nhanh <ChevronDown /></button>
     </section>
 
     <div className="assistant-workspace">
@@ -58,9 +48,9 @@ export default function AiAssistantPage() {
               <span className="assistant-welcome-hello">Xin chào! 👋</span>
               <h2>Hôm nay mình có thể giúp gì cho bạn?</h2>
               <p>Hãy hỏi về dinh dưỡng, thực đơn, công thức hoặc sử dụng thực phẩm trong kho.</p>
-              <div className="assistant-action-grid">{quickActions.map((action) => <button className={action.tone} key={action.title} onClick={() => setMessage(action.prompt)}><span>{action.icon}</span><strong>{action.title}</strong><small>{action.copy}</small><i><ArrowRight /></i></button>)}</div>
+              <div className="assistant-action-grid">{assistantQuickActions.map((action) => <button className={action.tone} key={action.title} onClick={() => setMessage(action.prompt)}><span>{quickActionIcons[action.id]}</span><strong>{action.title}</strong><small>{action.copy}</small><i><ArrowRight /></i></button>)}</div>
               <div className="assistant-prompt-divider"><span>Hoặc thử hỏi</span></div>
-              <div className="assistant-prompt-pills">{["Món dưới 30 phút", "Món ít calo", "Tăng cơ, nhiều protein", "Ăn chay", "Giảm cân"].map((text) => <button key={text} onClick={() => setMessage(text)}>{text}</button>)}</div>
+              <div className="assistant-prompt-pills">{assistantPromptPills.map((text) => <button key={text} onClick={() => setMessage(text)}>{text}</button>)}</div>
             </section>}
             {data.map((item) => <div className={`message ${item.role}`} key={item.id}><span>{item.role === "assistant" ? <Bot /> : <UserRound />}</span><div>{item.content}</div></div>)}
             {chat.isPending && <div className="message assistant"><span><Bot /></span><div className="typing"><i /><i /><i /></div></div>}<div ref={bottomRef} />
@@ -75,7 +65,7 @@ export default function AiAssistantPage() {
       <aside className="assistant-insights">
         <section className="assistant-tip-card"><header><Lightbulb /><h2>Mẹo dinh dưỡng hôm nay</h2></header><p>Bổ sung nhiều rau xanh và uống đủ nước giúp cơ thể khỏe mạnh hơn!</p><span className="assistant-tip-visual" aria-hidden="true">🥬</span></section>
         <section className="assistant-features-card"><header><Bot /><h2>Tính năng AI</h2></header><ul><li><Check /> Gợi ý thực đơn thông minh</li><li><Check /> Phân tích dinh dưỡng chi tiết</li><li><Check /> Tư vấn theo mục tiêu cá nhân</li><li><Check /> Tận dụng thực phẩm trong kho</li><li><Check /> Nhắc nhở thói quen lành mạnh</li></ul></section>
-        <section className="assistant-history-card"><header><div><History /><h2>Lịch sử trò chuyện</h2></div><button>Xem tất cả</button></header><ul>{(historyItems.length ? historyItems : fallbackHistory).map((item, index) => <li key={`${item}-${index}`}><span>{item}</span><time>{index === 0 ? "10:23" : index === 1 ? "Hôm qua" : `${index} ngày trước`}</time></li>)}</ul></section>
+        <section className="assistant-history-card"><header><div><History /><h2>Lịch sử trò chuyện</h2></div><button>Xem tất cả</button></header><ul>{(historyItems.length ? historyItems : assistantFallbackHistory).map((item, index) => <li key={`${item}-${index}`}><span>{item}</span><time>{index === 0 ? "10:23" : index === 1 ? "Hôm qua" : `${index} ngày trước`}</time></li>)}</ul></section>
       </aside>
     </div>
   </div>;

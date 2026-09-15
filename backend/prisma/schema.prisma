@@ -45,6 +45,12 @@ enum FoodUnit {
   PACKAGE
 }
 
+enum StorageLocation {
+  REFRIGERATOR
+  FREEZER
+  DRY_STORAGE
+}
+
 enum MealType {
   BREAKFAST
   LUNCH
@@ -179,6 +185,7 @@ model PantryItem {
   category     String
   quantity     Float
   unit         FoodUnit
+  storageLocation StorageLocation @default(REFRIGERATOR)
   expiryDate   DateTime?
   purchasedAt  DateTime  @default(now())
   minimumStock Float     @default(0)

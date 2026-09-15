@@ -8,32 +8,19 @@ import {
 } from "lucide-react";
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { api, getApiError } from "../api/client";
+import { getApiError } from "../api/client";
 import { EmptyState, LoadingState } from "../components/States";
-import type { MealPlan, MealPlanItem, MealType, ProfileResponse } from "../types";
+import {
+  alternativeMeals, featuredMealTypes, hasBalancedCalories, mealImage, mealLabels,
+  mealPlanTargets, mealShortLabels, mealTag, mealTimes, percentage, recipeSearchPath,
+  selectMealPlan, selectMealPlanDay, summarizeMealPlan,
+} from "../features/meal-plans/meal-plans.logic";
+import {
+  invalidateMealPlanQueries, mealPlanMutations, mealPlanQueries,
+} from "../features/meal-plans/meal-plans.queries";
+import { profileQueries } from "../features/profile/profile.queries";
 
-const mealLabels: Record<MealType, string> = { BREAKFAST: "Bữa sáng", LUNCH: "Bữa trưa", DINNER: "Bữa tối", SNACK: "Bữa phụ" };
-const mealShortLabels: Record<MealType, string> = { BREAKFAST: "Sáng", LUNCH: "Trưa", DINNER: "Tối", SNACK: "Bữa phụ" };
-const mealTimes: Record<MealType, string> = { BREAKFAST: "07:00 – 09:00", LUNCH: "11:30 – 13:30", DINNER: "18:00 – 19:30", SNACK: "15:00 – 16:00" };
 const mealIcons = { BREAKFAST: SunMedium, LUNCH: Soup, DINNER: MoonStar, SNACK: Apple };
-const featuredMealTypes: MealType[] = ["BREAKFAST", "LUNCH", "DINNER"];
-const recipeImages = ["/assets/recipe-oats.jpg", "/assets/recipe-vegan-bowl.jpg", "/assets/recipe-salmon.jpg"];
-
-function mealImage(type: MealType, index = 0) {
-  const base = type === "BREAKFAST" ? 0 : type === "LUNCH" ? 1 : type === "DINNER" ? 2 : 0;
-  return recipeImages[(base + index) % recipeImages.length];
-}
-
-function mealTag(item: MealPlanItem) {
-  if (item.recipe.dietTags[0]) return item.recipe.dietTags[0].replaceAll("_", " ");
-  if (item.recipe.proteinG >= 25) return "Giàu protein";
-  if (item.recipe.fatG <= 15) return "Ít chất béo";
-  return "Cân bằng";
-}
-
-function percentage(value: number, target: number) {
-  return Math.min(100, Math.round(value / Math.max(target, 1) * 100));
-}
 
 export default function MealPlansPage() {
   const queryClient = useQueryClient();
@@ -44,52 +31,25 @@ export default function MealPlansPage() {
   const [search, setSearch] = useState("");
   const [error, setError] = useState("");
 
-  const { data = [], isLoading } = useQuery({ queryKey: ["meal-plans"], queryFn: async () => (await api.get<MealPlan[]>("/meal-plans")).data });
-  const { data: profileData } = useQuery({ queryKey: ["profile"], queryFn: async () => (await api.get<ProfileResponse>("/profile")).data });
+  const { data = [], isLoading } = useQuery(mealPlanQueries.list());
+  const { data: profileData } = useQuery(profileQueries.detail());
 
   useEffect(() => { if (!selectedId && data.length) setSelectedId(data[0].id); }, [data, selectedId]);
   useEffect(() => setSelectedDayIndex(0), [selectedId]);
 
-  const selected = data.find((plan) => plan.id === selectedId) ?? data[0];
-  const selectedDay = selected?.days[selectedDayIndex] ?? selected?.days[0];
-  const planMeals = useMemo(() => selected?.days.flatMap((day) => day.items) ?? [], [selected]);
-  const completedMeals = planMeals.filter((item) => item.completed).length;
-  const purchasedItems = selected?.shoppingItems.filter((item) => item.purchased).length ?? 0;
-
-  const nutrition = useMemo(() => {
-    const dayCount = Math.max(selected?.days.length ?? 0, 1);
-    return planMeals.reduce((totals, item) => ({
-      calories: totals.calories + item.calories,
-      protein: totals.protein + item.recipe.proteinG,
-      carbs: totals.carbs + item.recipe.carbsG,
-      fat: totals.fat + item.recipe.fatG,
-      fiber: totals.fiber + item.recipe.fiberG,
-      dayCount: totals.dayCount,
-    }), { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0, dayCount });
-  }, [planMeals, selected?.days.length]);
-
-  const averages = {
-    calories: Math.round(nutrition.calories / nutrition.dayCount),
-    protein: Math.round(nutrition.protein / nutrition.dayCount),
-    carbs: Math.round(nutrition.carbs / nutrition.dayCount),
-    fat: Math.round(nutrition.fat / nutrition.dayCount),
-    fiber: Math.round(nutrition.fiber / nutrition.dayCount),
-  };
-  const targets = {
-    calories: profileData?.profile?.dailyCalorieTarget ?? selected?.calorieTarget ?? 2000,
-    protein: profileData?.profile?.proteinTargetG ?? 80,
-    carbs: profileData?.profile?.carbTargetG ?? 250,
-    fat: profileData?.profile?.fatTargetG ?? 65,
-    fiber: 30,
-  };
-  const completionRate = Math.round(completedMeals / Math.max(planMeals.length, 1) * 100);
-  const nutritionScore = Math.abs(averages.calories - targets.calories) <= targets.calories * .15;
+  const selected = selectMealPlan(data, selectedId);
+  const selectedDay = selectMealPlanDay(selected, selectedDayIndex);
+  const { planMeals, purchasedItems, nutrition, averages, completionRate } = useMemo(
+    () => summarizeMealPlan(selected),
+    [selected],
+  );
+  const targets = mealPlanTargets(profileData?.profile, selected);
+  const nutritionScore = hasBalancedCalories(averages.calories, targets.calories);
 
   const generate = useMutation({
-    mutationFn: async () => (await api.post<MealPlan>("/meal-plans/generate", { startDate })).data,
+    ...mealPlanMutations.generate(startDate),
     onSuccess: (plan) => {
-      queryClient.invalidateQueries({ queryKey: ["meal-plans"] });
-      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+      invalidateMealPlanQueries(queryClient, true);
       setSelectedId(plan.id);
       setError("");
     },
@@ -97,32 +57,23 @@ export default function MealPlansPage() {
   });
 
   const toggleMeal = useMutation({
-    mutationFn: ({ id, completed }: { id: string; completed: boolean }) => api.patch(`/meal-plans/items/${id}`, { completed }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["meal-plans"] });
-      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
-    },
+    ...mealPlanMutations.updateMeal(),
+    onSuccess: () => invalidateMealPlanQueries(queryClient, true),
   });
 
   const toggleShop = useMutation({
-    mutationFn: ({ id, purchased }: { id: string; purchased: boolean }) => api.patch(`/meal-plans/shopping/${id}`, { purchased }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["meal-plans"] }),
+    ...mealPlanMutations.updateShopping(),
+    onSuccess: () => invalidateMealPlanQueries(queryClient, false),
   });
 
   const activate = useMutation({
-    mutationFn: () => {
-      if (!selected) throw new Error("Chưa chọn thực đơn");
-      return api.patch(`/meal-plans/${selected.id}/status`, { status: "ACTIVE" });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["meal-plans"] });
-      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
-    },
+    ...mealPlanMutations.updateStatus(),
+    onSuccess: () => invalidateMealPlanQueries(queryClient, true),
   });
 
   const submitSearch = (event: FormEvent) => {
     event.preventDefault();
-    navigate(`/recipes${search.trim() ? `?q=${encodeURIComponent(search.trim())}` : ""}`);
+    navigate(recipeSearchPath(search));
   };
 
   if (isLoading) return <LoadingState />;
@@ -158,7 +109,7 @@ export default function MealPlansPage() {
             <div className="menu-week-nav"><button onClick={() => setSelectedDayIndex((value) => Math.max(0, value - 1))} disabled={selectedDayIndex === 0} aria-label="Ngày trước"><ChevronLeft /></button><button onClick={() => setSelectedDayIndex((value) => Math.min(selected.days.length - 1, value + 1))} disabled={selectedDayIndex === selected.days.length - 1} aria-label="Ngày sau"><ChevronRight /></button></div>
             <label className="menu-plan-select"><CalendarDays /><select value={selected.id} onChange={(event) => setSelectedId(event.target.value)}>{data.map((plan) => <option key={plan.id} value={plan.id}>{plan.name}</option>)}</select><ChevronDown /></label>
             <strong>{format(new Date(selected.startDate), "dd")} – {format(new Date(selected.endDate), "dd/MM/yyyy")}</strong>
-            <div className="menu-toolbar-actions"><span className={`menu-plan-status ${selected.status.toLowerCase()}`}>{selected.status === "ACTIVE" ? "Đang áp dụng" : selected.status === "COMPLETED" ? "Đã hoàn thành" : "Bản nháp"}</span>{selected.status === "DRAFT" && <button className="menu-activate-button" onClick={() => activate.mutate()} disabled={activate.isPending}><Check /> Áp dụng</button>}<Link to="/recipes"><Plus /> Thêm món</Link></div>
+            <div className="menu-toolbar-actions"><span className={`menu-plan-status ${selected.status.toLowerCase()}`}>{selected.status === "ACTIVE" ? "Đang áp dụng" : selected.status === "COMPLETED" ? "Đã hoàn thành" : "Bản nháp"}</span>{selected.status === "DRAFT" && <button className="menu-activate-button" onClick={() => activate.mutate({ id: selected.id, status: "ACTIVE" })} disabled={activate.isPending}><Check /> Áp dụng</button>}<Link to="/recipes"><Plus /> Thêm món</Link></div>
           </header>
 
           <nav className="menu-day-tabs" aria-label="Chọn ngày trong tuần">{selected.days.map((day, index) => {
@@ -170,7 +121,7 @@ export default function MealPlansPage() {
           <div className="menu-meal-columns">{featuredMealTypes.map((mealType, typeIndex) => {
             const MealIcon = mealIcons[mealType];
             const primary = selectedDay?.items.find((item) => item.mealType === mealType);
-            const alternatives = selected.days.flatMap((day) => day.items).filter((item) => item.mealType === mealType && item.id !== primary?.id).slice(0, 2);
+            const alternatives = alternativeMeals(selected, mealType, primary?.id);
             return <article className={`menu-meal-column menu-${mealType.toLowerCase()}`} key={mealType}>
               <header><span><MealIcon /></span><div><strong>{mealShortLabels[mealType]}</strong><small>{mealTimes[mealType]}</small></div><ChevronRight /></header>
               {primary ? <>

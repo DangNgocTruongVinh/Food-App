@@ -1,8 +1,12 @@
 export type FoodUnit = "G" | "KG" | "ML" | "L" | "ITEM" | "PACKAGE";
+export type StorageLocation = "REFRIGERATOR" | "FREEZER" | "DRY_STORAGE";
 export type MealType = "BREAKFAST" | "LUNCH" | "DINNER" | "SNACK";
+export type MealPlanStatus = "DRAFT" | "ACTIVE" | "COMPLETED";
 
 export interface User { id: string; name: string; email: string }
 export interface AuthResponse { token: string; user: User }
+export interface LoginInput { email: string; password: string }
+export interface RegisterInput extends LoginInput { name: string }
 
 export interface CommunityAuthor { id: string; name: string }
 export interface CommunityComment {
@@ -49,10 +53,28 @@ export interface NutritionProfile {
 
 export interface ProfileResponse extends User { profile: NutritionProfile | null }
 
+export type ProfileUpdateInput = Partial<Pick<NutritionProfile,
+  "activityLevel" | "goal" | "dietType" | "allergies" | "dislikedFoods" | "preferredCuisines" | "mealsPerDay"
+>> & {
+  name?: string;
+  age?: number | null;
+  gender?: NutritionProfile["gender"] | null;
+  heightCm?: number | null;
+  weightKg?: number | null;
+  targetWeightKg?: number | null;
+};
+
 export interface PantryItem {
   id: string; name: string; category: string; quantity: number; unit: FoodUnit;
-  expiryDate: string | null; minimumStock: number; note?: string;
+  storageLocation: StorageLocation; expiryDate: string | null; minimumStock: number; note?: string | null;
 }
+
+export interface PantryInput {
+  name: string; category: string; quantity: number; unit: FoodUnit;
+  storageLocation: StorageLocation; expiryDate?: string | null; minimumStock: number; note?: string | null;
+}
+
+export type PantryUpdateInput = Partial<PantryInput>;
 
 export interface Ingredient { id: string; name: string; quantity: number; unit: FoodUnit; optional: boolean }
 export interface Recipe {
@@ -65,7 +87,7 @@ export interface MealPlanItem { id: string; mealType: MealType; servings: number
 export interface MealPlanDay { id: string; date: string; items: MealPlanItem[] }
 export interface ShoppingItem { id: string; name: string; quantity: number; unit: FoodUnit; purchased: boolean }
 export interface MealPlan {
-  id: string; name: string; startDate: string; endDate: string; status: "DRAFT" | "ACTIVE" | "COMPLETED";
+  id: string; name: string; startDate: string; endDate: string; status: MealPlanStatus;
   calorieTarget: number; aiGenerated: boolean; summary?: string; days: MealPlanDay[]; shoppingItems: ShoppingItem[];
 }
 

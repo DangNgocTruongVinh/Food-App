@@ -6,12 +6,12 @@ import {
 } from "lucide-react";
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
-import { api, getApiError } from "../api/client";
+import { getApiError } from "../api/client";
 import { LoadingState } from "../components/States";
-import type { ProfileResponse } from "../types";
+import { useAuth } from "../contexts/AuthContext";
+import { invalidateProfileQueries, profileMutations, profileQueries } from "../features/profile/profile.queries";
 
 const join = (items?: string[]) => items?.join(", ") ?? "";
-const split = (value: string) => value.split(",").map((item) => item.trim()).filter(Boolean);
 
 const goalLabels: Record<string, string> = {
   LOSE_WEIGHT: "Giảm cân",
@@ -46,14 +46,12 @@ const initialForm = {
 
 export default function ProfilePage() {
   const queryClient = useQueryClient();
+  const { syncUser } = useAuth();
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState("");
   const [form, setForm] = useState(initialForm);
 
-  const { data, isLoading } = useQuery({
-    queryKey: ["profile"],
-    queryFn: async () => (await api.get<ProfileResponse>("/profile")).data,
-  });
+  const { data, isLoading } = useQuery(profileQueries.detail());
 
   useEffect(() => {
     if (!data) return;
@@ -75,22 +73,12 @@ export default function ProfilePage() {
   }, [data]);
 
   const save = useMutation({
-    mutationFn: () => api.put("/profile", {
-      ...form,
-      age: form.age ? Number(form.age) : null,
-      heightCm: form.heightCm ? Number(form.heightCm) : null,
-      weightKg: form.weightKg ? Number(form.weightKg) : null,
-      targetWeightKg: form.targetWeightKg ? Number(form.targetWeightKg) : null,
-      mealsPerDay: Number(form.mealsPerDay),
-      allergies: split(form.allergies),
-      dislikedFoods: split(form.dislikedFoods),
-      preferredCuisines: split(form.preferredCuisines),
-    }),
-    onSuccess: () => {
+    ...profileMutations.update(form),
+    onSuccess: (updatedProfile) => {
+      syncUser({ id: updatedProfile.id, name: updatedProfile.name, email: updatedProfile.email });
       setSuccess(true);
       setError("");
-      queryClient.invalidateQueries({ queryKey: ["profile"] });
-      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+      invalidateProfileQueries(queryClient);
       window.setTimeout(() => setSuccess(false), 2500);
     },
     onError: (err) => setError(getApiError(err)),
