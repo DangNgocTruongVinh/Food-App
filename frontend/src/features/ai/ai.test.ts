@@ -7,7 +7,7 @@ import type { ChatMessage, DashboardData } from "../../types";
 import { getAssistantDashboard, getChatHistory, sendChatMessage } from "./ai.api";
 import {
   assistantDietLabel, assistantFallbackHistory, assistantPromptPills, assistantQuickActions,
-  assistantSuggestions, normalizeChatMessage, recentUserHistory,
+  assistantSuggestions, chatHistoryTime, normalizeChatMessage, recentUserHistory,
 } from "./ai.logic";
 import { aiMutations, aiQueries, invalidateAIHistory } from "./ai.queries";
 
@@ -27,6 +27,7 @@ let client: QueryClient;
 beforeEach(() => {
   client = createAppQueryClient();
   vi.stubGlobal("localStorage", { getItem: () => null });
+  vi.stubGlobal("sessionStorage", { getItem: () => null });
 });
 
 afterEach(() => {
@@ -111,7 +112,22 @@ describe("AI assistant page business logic", () => {
       { id: "e", role: "user" as const, content: "Câu 4", createdAt: "" },
       { id: "f", role: "user" as const, content: "Câu 5", createdAt: "" },
     ];
-    expect(recentUserHistory(extended)).toEqual(["Câu 5", "Câu 4", "Câu 3", "Câu hỏi mới"]);
+    expect(recentUserHistory(extended).map((item) => item.content)).toEqual(["Câu 5", "Câu 4", "Câu 3", "Câu hỏi mới"]);
+  });
+
+  it("returns every loaded user message, newest first, when expanded", () => {
+    const extended = [...messages, { id: "d", role: "user" as const, content: "Câu 3", createdAt: "" }];
+    const all = recentUserHistory(extended, null);
+    expect(all.every((item) => item.role === "user")).toBe(true);
+    expect(all[0].content).toBe("Câu 3");
+    expect(all).toHaveLength(extended.filter((item) => item.role === "user").length);
+  });
+
+  it("formats chat history time from the real createdAt", () => {
+    const now = new Date(2026, 9, 28, 15, 0);
+    expect(chatHistoryTime(new Date(2026, 9, 28, 10, 23).toISOString(), now)).toBe("10:23");
+    expect(chatHistoryTime(new Date(2026, 9, 27, 23, 59).toISOString(), now)).toBe("Hôm qua");
+    expect(chatHistoryTime(new Date(2026, 9, 24, 8, 0).toISOString(), now)).toBe("4 ngày trước");
   });
 
   it("keeps the existing diet labels and default", () => {

@@ -1,12 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  BarChart3,
   Bookmark,
-  BookOpen,
   Check,
   Hash,
   Heart,
-  ImageIcon,
   Leaf,
   MessageCircle,
   MoreHorizontal,
@@ -137,11 +134,6 @@ export default function CommunityPage() {
                 placeholder="Hôm nay bạn đã nấu món gì, học được mẹo nào hay?"
               />
               <footer className="community-composer-footer">
-                <div className="community-composer-tools" aria-label="Loại nội dung">
-                  <button type="button" title="Đính kèm ảnh"><ImageIcon /> <span>Ảnh</span></button>
-                  <button type="button" title="Chia sẻ công thức"><BookOpen /> <span>Công thức</span></button>
-                  <button type="button" title="Tạo thăm dò"><BarChart3 /> <span>Thăm dò ý kiến</span></button>
-                </div>
                 <div className="community-publish-row">
                   <small>{postContent.length}/2000</small>
                   <button className="community-publish" disabled={!postContent.trim() || publish.isPending}>

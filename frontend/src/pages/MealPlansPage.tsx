@@ -9,6 +9,7 @@ import {
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { getApiError } from "../api/client";
+import DateInput from "../components/DateInput";
 import { EmptyState, LoadingState } from "../components/States";
 import {
   alternativeMeals, featuredMealTypes, hasBalancedCalories, mealImage, mealLabels,
@@ -19,6 +20,7 @@ import {
   invalidateMealPlanQueries, mealPlanMutations, mealPlanQueries,
 } from "../features/meal-plans/meal-plans.queries";
 import { profileQueries } from "../features/profile/profile.queries";
+import { formatDayMonth, formatDisplayDate } from "../utils/date";
 
 const mealIcons = { BREAKFAST: SunMedium, LUNCH: Soup, DINNER: MoonStar, SNACK: Apple };
 
@@ -81,19 +83,19 @@ export default function MealPlansPage() {
   return <div className="page reference-menu-page">
     <div className="menu-search-row">
       <form className="menu-global-search" onSubmit={submitSearch}><Search /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Tìm kiếm món ăn, thực đơn..." /><kbd>⌘ K</kbd></form>
-      <div className="menu-generate-controls"><input aria-label="Ngày bắt đầu" type="date" value={startDate} onChange={(event) => setStartDate(event.target.value)} /><button onClick={() => generate.mutate()} disabled={generate.isPending}>{generate.isPending ? <LoaderCircle className="spin" /> : <Sparkles />}{generate.isPending ? "AI đang tạo..." : "Tạo thực đơn AI"}</button></div>
+      <div className="menu-generate-controls"><DateInput aria-label="Ngày bắt đầu" value={startDate} onChange={setStartDate} /><button onClick={() => generate.mutate()} disabled={generate.isPending || !startDate}>{generate.isPending ? <LoaderCircle className="spin" /> : <Sparkles />}{generate.isPending ? "AI đang tạo..." : "Tạo thực đơn AI"}</button></div>
     </div>
 
     {error && <div className="form-error menu-page-error">{error}</div>}
 
-    {!selected ? <div className="menu-empty-shell"><section className="menu-hero menu-hero-empty"><div><span className="eyebrow"><Leaf /> Kế hoạch ăn uống thông minh</span><h1>Thực đơn</h1><p>Lên kế hoạch bữa ăn khoa học, tiết kiệm thời gian và dinh dưỡng mỗi ngày.</p><button onClick={() => generate.mutate()} disabled={generate.isPending}><Sparkles /> Tạo thực đơn đầu tiên</button></div></section><EmptyState title="Chưa có thực đơn nào">Chọn ngày bắt đầu và để AI xây dựng kế hoạch ăn uống 7 ngày đầu tiên.</EmptyState></div> : <>
+    {!selected ? <div className="menu-empty-shell"><section className="menu-hero menu-hero-empty"><div><span className="eyebrow"><Leaf /> Kế hoạch ăn uống thông minh</span><h1>Thực đơn</h1><p>Lên kế hoạch bữa ăn khoa học, tiết kiệm thời gian và dinh dưỡng mỗi ngày.</p><button onClick={() => generate.mutate()} disabled={generate.isPending || !startDate}><Sparkles /> Tạo thực đơn đầu tiên</button></div></section><EmptyState title="Chưa có thực đơn nào">Chọn ngày bắt đầu và để AI xây dựng kế hoạch ăn uống 7 ngày đầu tiên.</EmptyState></div> : <>
       <div className="menu-top-grid">
         <section className="menu-hero">
           <div><span className="eyebrow"><Leaf /> Kế hoạch ăn uống thông minh</span><h1>Thực đơn</h1><p>Lên kế hoạch bữa ăn khoa học, tiết kiệm thời gian<br />và dinh dưỡng mỗi ngày.</p><span className="menu-plan-note"><Sparkles /> {selected.summary || "Thực đơn được cá nhân hóa dựa trên mục tiêu của bạn."}</span></div>
         </section>
 
         <aside className="menu-week-summary">
-          <header><div><span>Tổng quan tuần</span><h2>{format(new Date(selected.startDate), "dd/MM")} – {format(new Date(selected.endDate), "dd/MM/yyyy")}</h2></div><BadgeCheck /></header>
+          <header><div><span>Tổng quan tuần</span><h2>{formatDayMonth(selected.startDate)} – {formatDisplayDate(selected.endDate)}</h2></div><BadgeCheck /></header>
           <div className="menu-summary-grid">
             <article><span className="meals"><Utensils /></span><div><strong>{planMeals.length}</strong><small>Món ăn</small></div></article>
             <article><span className="calories"><Flame /></span><div><strong>{nutrition.calories.toLocaleString("vi-VN")}</strong><small>kcal</small></div></article>
@@ -108,14 +110,14 @@ export default function MealPlansPage() {
           <header className="menu-week-toolbar">
             <div className="menu-week-nav"><button onClick={() => setSelectedDayIndex((value) => Math.max(0, value - 1))} disabled={selectedDayIndex === 0} aria-label="Ngày trước"><ChevronLeft /></button><button onClick={() => setSelectedDayIndex((value) => Math.min(selected.days.length - 1, value + 1))} disabled={selectedDayIndex === selected.days.length - 1} aria-label="Ngày sau"><ChevronRight /></button></div>
             <label className="menu-plan-select"><CalendarDays /><select value={selected.id} onChange={(event) => setSelectedId(event.target.value)}>{data.map((plan) => <option key={plan.id} value={plan.id}>{plan.name}</option>)}</select><ChevronDown /></label>
-            <strong>{format(new Date(selected.startDate), "dd")} – {format(new Date(selected.endDate), "dd/MM/yyyy")}</strong>
+            <strong>{formatDayMonth(selected.startDate)} – {formatDisplayDate(selected.endDate)}</strong>
             <div className="menu-toolbar-actions"><span className={`menu-plan-status ${selected.status.toLowerCase()}`}>{selected.status === "ACTIVE" ? "Đang áp dụng" : selected.status === "COMPLETED" ? "Đã hoàn thành" : "Bản nháp"}</span>{selected.status === "DRAFT" && <button className="menu-activate-button" onClick={() => activate.mutate({ id: selected.id, status: "ACTIVE" })} disabled={activate.isPending}><Check /> Áp dụng</button>}<Link to="/recipes"><Plus /> Thêm món</Link></div>
           </header>
 
           <nav className="menu-day-tabs" aria-label="Chọn ngày trong tuần">{selected.days.map((day, index) => {
             const dayDate = new Date(day.date);
             const isWeekend = index >= 5;
-            return <button key={day.id} className={`${selectedDayIndex === index ? "active" : ""} ${isWeekend ? "weekend" : ""}`} onClick={() => setSelectedDayIndex(index)}><strong>{format(dayDate, "EEEEEE", { locale: vi }).toUpperCase()}</strong><span>{format(dayDate, "dd/MM")}</span></button>;
+            return <button key={day.id} className={`${selectedDayIndex === index ? "active" : ""} ${isWeekend ? "weekend" : ""}`} onClick={() => setSelectedDayIndex(index)}><strong>{format(dayDate, "EEEEEE", { locale: vi }).toUpperCase()}</strong><span>{formatDayMonth(dayDate)}</span></button>;
           })}</nav>
 
           <div className="menu-meal-columns">{featuredMealTypes.map((mealType, typeIndex) => {

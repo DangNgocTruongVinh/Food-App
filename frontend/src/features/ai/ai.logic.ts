@@ -1,3 +1,4 @@
+import { differenceInCalendarDays, format } from "date-fns";
 import type { ChatMessage } from "../../types";
 
 export const assistantSuggestions = [
@@ -28,8 +29,20 @@ export function assistantDietLabel(dietType?: string) {
   return dietLabels[dietType ?? ""] ?? "Ăn lành mạnh";
 }
 
-export function recentUserHistory(messages: ChatMessage[]) {
-  return messages.filter((item) => item.role === "user").slice(-4).reverse().map((item) => item.content);
+export const RECENT_HISTORY_LIMIT = 4;
+
+// Câu hỏi của người dùng, mới nhất trước; limit = null để lấy toàn bộ lịch sử đã tải.
+export function recentUserHistory(messages: ChatMessage[], limit: number | null = RECENT_HISTORY_LIMIT) {
+  const questions = messages.filter((item) => item.role === "user").reverse();
+  return limit === null ? questions : questions.slice(0, limit);
+}
+
+export function chatHistoryTime(createdAt: string, now = new Date()) {
+  const date = new Date(createdAt);
+  const days = differenceInCalendarDays(now, date);
+  if (days <= 0) return format(date, "HH:mm");
+  if (days === 1) return "Hôm qua";
+  return `${days} ngày trước`;
 }
 
 export function normalizeChatMessage(message: string) {

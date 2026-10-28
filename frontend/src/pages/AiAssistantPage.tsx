@@ -1,11 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowRight, Bot, CalendarDays, Check, ChefHat, ChevronDown, Flame, Heart, History, Lightbulb, Mic, PackageOpen, Paperclip, Send, Sparkles, Target, UserRound, Utensils } from "lucide-react";
+import { ArrowRight, Bot, CalendarDays, Check, ChefHat, ChevronDown, Flame, Heart, History, Lightbulb, PackageOpen, Send, Sparkles, Target, UserRound, Utensils } from "lucide-react";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { getApiError } from "../api/client";
 import { LoadingState } from "../components/States";
 import {
   assistantDietLabel, assistantFallbackHistory, assistantPromptPills, assistantQuickActions,
-  assistantSuggestions, normalizeChatMessage, recentUserHistory,
+  assistantSuggestions, chatHistoryTime, normalizeChatMessage, RECENT_HISTORY_LIMIT, recentUserHistory,
 } from "../features/ai/ai.logic";
 import { aiMutations, aiQueries, invalidateAIHistory } from "../features/ai/ai.queries";
 import { profileQueries } from "../features/profile/profile.queries";
@@ -14,6 +14,7 @@ const quickActionIcons = { meal: <Utensils />, plan: <CalendarDays />, pantry: <
 
 export default function AiAssistantPage() {
   const queryClient = useQueryClient(); const [message, setMessage] = useState(""); const [error, setError] = useState(""); const bottomRef = useRef<HTMLDivElement>(null);
+  const [showAllHistory, setShowAllHistory] = useState(false);
   const { data = [], isLoading } = useQuery(aiQueries.history());
   const { data: dashboard } = useQuery(aiQueries.dashboard());
   const { data: profileData } = useQuery(profileQueries.detail());
@@ -22,7 +23,8 @@ export default function AiAssistantPage() {
   const submit = (event: FormEvent) => { event.preventDefault(); const content = normalizeChatMessage(message); if (content) chat.mutate(content); };
   if (isLoading) return <LoadingState />;
   const profile = profileData?.profile;
-  const historyItems = recentUserHistory(data);
+  const historyItems = recentUserHistory(data, showAllHistory ? null : RECENT_HISTORY_LIMIT);
+  const hasMoreHistory = recentUserHistory(data, null).length > RECENT_HISTORY_LIMIT;
 
   return <div className="assistant-page assistant-dashboard-page">
     <header className="assistant-header assistant-dashboard-hero">
@@ -58,14 +60,14 @@ export default function AiAssistantPage() {
         </section>
 
         {error && <div className="form-error">{error}</div>}
-        <form className="chat-input" onSubmit={submit}><span className="assistant-input-mark"><Sparkles /></span><div className="assistant-composer"><textarea rows={1} value={message} onChange={(event) => setMessage(event.target.value)} placeholder="Hỏi về bữa ăn, dinh dưỡng hoặc nguyên liệu..." onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); event.currentTarget.form?.requestSubmit(); } }} /><div><button type="button"><Paperclip /> Đính kèm thực phẩm</button><button type="button"><Mic /> Giọng nói</button></div></div><button className="assistant-send" aria-label="Gửi câu hỏi" disabled={!message.trim() || chat.isPending}><Send /></button></form>
+        <form className="chat-input" onSubmit={submit}><span className="assistant-input-mark"><Sparkles /></span><div className="assistant-composer"><textarea rows={1} value={message} onChange={(event) => setMessage(event.target.value)} placeholder="Hỏi về bữa ăn, dinh dưỡng hoặc nguyên liệu..." onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); event.currentTarget.form?.requestSubmit(); } }} /></div><button className="assistant-send" aria-label="Gửi câu hỏi" disabled={!message.trim() || chat.isPending}><Send /></button></form>
         <p className="ai-disclaimer">AI có thể mắc lỗi và không thay thế chuyên gia y tế.</p>
       </main>
 
       <aside className="assistant-insights">
         <section className="assistant-tip-card"><header><Lightbulb /><h2>Mẹo dinh dưỡng hôm nay</h2></header><p>Bổ sung nhiều rau xanh và uống đủ nước giúp cơ thể khỏe mạnh hơn!</p><span className="assistant-tip-visual" aria-hidden="true">🥬</span></section>
         <section className="assistant-features-card"><header><Bot /><h2>Tính năng AI</h2></header><ul><li><Check /> Gợi ý thực đơn thông minh</li><li><Check /> Phân tích dinh dưỡng chi tiết</li><li><Check /> Tư vấn theo mục tiêu cá nhân</li><li><Check /> Tận dụng thực phẩm trong kho</li><li><Check /> Nhắc nhở thói quen lành mạnh</li></ul></section>
-        <section className="assistant-history-card"><header><div><History /><h2>Lịch sử trò chuyện</h2></div><button>Xem tất cả</button></header><ul>{(historyItems.length ? historyItems : assistantFallbackHistory).map((item, index) => <li key={`${item}-${index}`}><span>{item}</span><time>{index === 0 ? "10:23" : index === 1 ? "Hôm qua" : `${index} ngày trước`}</time></li>)}</ul></section>
+        <section className="assistant-history-card"><header><div><History /><h2>Lịch sử trò chuyện</h2></div>{hasMoreHistory && <button type="button" aria-expanded={showAllHistory} onClick={() => setShowAllHistory((value) => !value)}>{showAllHistory ? "Thu gọn" : "Xem tất cả"}</button>}</header><ul>{historyItems.length ? historyItems.map((item) => <li key={item.id}><span>{item.content}</span><time dateTime={item.createdAt}>{chatHistoryTime(item.createdAt)}</time></li>) : assistantFallbackHistory.map((item) => <li key={item}><span>{item}</span></li>)}</ul></section>
       </aside>
     </div>
   </div>;

@@ -18,6 +18,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { getApiError } from "../api/client";
 import Logo from "../components/Logo";
 import { useAuth } from "../contexts/AuthContext";
+import { getRememberLoginPreference } from "../features/auth/auth.storage";
 
 const authBenefits = [
   { icon: Sprout, text: "Ưu tiên thực phẩm sạch, lành mạnh" },
@@ -33,7 +34,7 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [rememberLogin, setRememberLogin] = useState(true);
+  const [rememberLogin, setRememberLogin] = useState(getRememberLoginPreference);
   const auth = useAuth();
 
   useGSAP(() => {
@@ -57,7 +58,7 @@ export default function LoginPage() {
       if (registerMode) {
         await auth.register(form.name, form.email, form.password);
       } else {
-        await auth.login(form.email, form.password);
+        await auth.login(form.email, form.password, rememberLogin);
       }
       navigate("/dashboard", { replace: true });
     } catch (err) {

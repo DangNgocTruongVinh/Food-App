@@ -17,6 +17,7 @@ let client: QueryClient;
 beforeEach(() => {
   client = createAppQueryClient();
   vi.stubGlobal("localStorage", { getItem: () => null });
+  vi.stubGlobal("sessionStorage", { getItem: () => null });
 });
 afterEach(() => { client.clear(); api.defaults.adapter = originalAdapter; vi.unstubAllGlobals(); });
 

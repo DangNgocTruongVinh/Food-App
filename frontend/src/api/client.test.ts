@@ -5,12 +5,14 @@ import { getAuthToken, saveAuthSession } from "../features/auth/auth.storage";
 
 const originalAdapter = api.defaults.adapter;
 beforeEach(() => {
-  const stored = new Map<string, string>();
-  vi.stubGlobal("localStorage", {
-    getItem: (key: string) => stored.get(key) ?? null,
-    setItem: (key: string, value: string) => { stored.set(key, value); },
-    removeItem: (key: string) => { stored.delete(key); },
-  });
+  for (const name of ["localStorage", "sessionStorage"]) {
+    const stored = new Map<string, string>();
+    vi.stubGlobal(name, {
+      getItem: (key: string) => stored.get(key) ?? null,
+      setItem: (key: string, value: string) => { stored.set(key, value); },
+      removeItem: (key: string) => { stored.delete(key); },
+    });
+  }
   vi.stubGlobal("location", { pathname: "/profile", href: "/profile" });
 });
 afterEach(() => { api.defaults.adapter = originalAdapter; vi.unstubAllGlobals(); });
@@ -36,6 +38,16 @@ describe("HTTP client compatibility (no network)", () => {
     await expect(api.get("/profile")).rejects.toMatchObject({ response: { status: 401 } });
     expect(getAuthToken()).toBeNull(); expect(localStorage.getItem("nutriplan_user")).toBeNull();
     expect(location.href).toBe(path.startsWith("/login") ? path : "/login");
+  });
+
+  it("attaches and clears a non-remembered session on 401", async () => {
+    saveAuthSession({ token: "tab-token", user: { id: "a", name: "A", email: "a@nouri.vn" } }, false);
+    api.defaults.adapter = async (config) => {
+      expect(config.headers.get("Authorization")).toBe("Bearer tab-token");
+      throw new AxiosError("Unauthorized", "ERR_BAD_REQUEST", config, undefined, { config, data: {}, status: 401, statusText: "Unauthorized", headers: {} });
+    };
+    await expect(api.get("/profile")).rejects.toMatchObject({ response: { status: 401 } });
+    expect(getAuthToken()).toBeNull(); expect(sessionStorage.getItem("nutriplan_user")).toBeNull();
   });
 
   it("retains the session and original error for non-401 failures", async () => {

@@ -1,6 +1,6 @@
 import { useGSAP } from "@gsap/react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { differenceInCalendarDays, format } from "date-fns";
+import { differenceInCalendarDays } from "date-fns";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import {
@@ -9,12 +9,15 @@ import {
   PackageOpen, PackagePlus, Search, SlidersHorizontal, Snowflake, Trash2, Wheat, X,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { getApiError } from "../api/client";
+import DateInput from "../components/DateInput";
 import { EmptyState, LoadingState } from "../components/States";
 import { toPantryFormValues } from "../features/pantry/pantry.api";
+import { pantryItemPage } from "../features/pantry/pantry.logic";
 import { invalidatePantryQueries, pantryMutations, pantryQueries } from "../features/pantry/pantry.queries";
 import type { FoodUnit, PantryItem, StorageLocation } from "../types";
+import { formatDisplayDate } from "../utils/date";
 
 type PantryStatus = "all" | "good" | "expiring" | "expired";
 type PantryView = "list" | "grid";
@@ -56,7 +59,7 @@ function CategoryIcon({ category }: { category: string }) {
 function expiryCopy(item: PantryItem) {
   const days = getDaysLeft(item);
   if (days === null) return { date: "Không thời hạn", relative: "—" };
-  const date = format(new Date(item.expiryDate!), "dd/MM/yyyy");
+  const date = formatDisplayDate(item.expiryDate!);
   if (days < 0) return { date, relative: `Quá ${Math.abs(days)} ngày` };
   if (days === 0) return { date, relative: "Hôm nay" };
   return { date, relative: `${days} ngày` };
@@ -77,6 +80,14 @@ export default function PantryPage() {
   const [form, setForm] = useState(initialForm);
   const [formError, setFormError] = useState("");
   const [deleteError, setDeleteError] = useState("");
+  const [expiryDateInvalid, setExpiryDateInvalid] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const focusParam = searchParams.get("item");
+  const [focusedItemId, setFocusedItemId] = useState<string | null>(null);
+  const [focusMissing, setFocusMissing] = useState(false);
+  const [focusRequest, setFocusRequest] = useState(0);
+  const pendingPageFocus = useRef<string | null>(null);
+  const pendingScroll = useRef<string | null>(null);
 
   const { data = [], isLoading } = useQuery(pantryQueries.list());
 
@@ -111,7 +122,7 @@ export default function PantryPage() {
   }, [category, data, search, sortBy, status, storage]);
 
   const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-  const visibleItems = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const visibleItems = useMemo(() => filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE), [filtered, page]);
 
   const addItem = useMutation({
     ...pantryMutations.create(form),
@@ -144,8 +155,43 @@ export default function PantryPage() {
     onError: (err) => setDeleteError(getApiError(err)),
   });
 
+  // Liên kết từ thông báo (/pantry?item=...): bỏ bộ lọc để item chắc chắn hiện ra, rồi xóa tham số khỏi URL.
+  useEffect(() => {
+    if (!focusParam || isLoading) return;
+    if (data.some((item) => item.id === focusParam)) {
+      setSearch(""); setStatus("all"); setCategory("all"); setStorage("all");
+      setFocusedItemId(focusParam);
+      setFocusMissing(false);
+      pendingPageFocus.current = focusParam;
+      setFocusRequest((value) => value + 1);
+    } else {
+      setFocusedItemId(null);
+      setFocusMissing(true);
+    }
+    setSearchParams((params) => { params.delete("item"); return params; }, { replace: true });
+  }, [data, focusParam, isLoading, setSearchParams]);
+
   useEffect(() => setPage(1), [category, search, sortBy, status, storage]);
+  // Đặt sau effect về trang 1 để trang của item được focus là giá trị cuối cùng trong cùng lần commit.
+  useEffect(() => {
+    const itemId = pendingPageFocus.current;
+    if (!itemId) return;
+    const targetPage = pantryItemPage(filtered, itemId, PAGE_SIZE);
+    if (targetPage === null) return;
+    pendingPageFocus.current = null;
+    pendingScroll.current = itemId;
+    setPage(targetPage);
+  }, [filtered, focusRequest]);
   useEffect(() => { if (page > pageCount) setPage(pageCount); }, [page, pageCount]);
+  useEffect(() => {
+    const itemId = pendingScroll.current;
+    if (!itemId || !visibleItems.some((item) => item.id === itemId)) return;
+    pendingScroll.current = null;
+    const frame = requestAnimationFrame(() => {
+      document.getElementById(`pantry-item-${itemId}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [visibleItems]);
   useEffect(() => {
     if (!showForm) return;
     const closeOnEscape = (event: KeyboardEvent) => { if (event.key === "Escape") setShowForm(false); };
@@ -183,11 +229,13 @@ export default function PantryPage() {
   }, { scope: pageRef, dependencies: [isLoading], revertOnUpdate: true });
 
   const closeForm = () => { setShowForm(false); setEditingItem(null); setFormError(""); };
-  const openAddForm = () => { setEditingItem(null); setForm(initialForm); setFormError(""); setShowForm(true); };
-  const openEditForm = (item: PantryItem) => { setEditingItem(item); setForm(toPantryFormValues(item)); setFormError(""); setShowForm(true); };
+  const openAddForm = () => { setEditingItem(null); setForm(initialForm); setFormError(""); setExpiryDateInvalid(false); setShowForm(true); };
+  const openEditForm = (item: PantryItem) => { setEditingItem(item); setForm(toPantryFormValues(item)); setFormError(""); setExpiryDateInvalid(false); setShowForm(true); };
   const submit = (event: FormEvent) => {
     event.preventDefault();
     setFormError("");
+    // Ô trống = không có hạn dùng (gửi null, kể cả khi sửa để xóa hạn cũ); nhập sai thì không được lưu.
+    if (expiryDateInvalid) { setFormError("Hạn sử dụng chưa hợp lệ. Nhập theo dạng dd/mm/yyyy hoặc để trống."); return; }
     if (editingItem) updateItem.mutate({ id: editingItem.id, form });
     else addItem.mutate();
   };
@@ -213,6 +261,7 @@ export default function PantryPage() {
     </header>
 
     {deleteError && <div className="form-error" role="alert">{deleteError}</div>}
+    {focusMissing && <div className="form-notice pantry-focus-missing" role="status"><span>Thực phẩm này không còn trong kho.</span><button type="button" onClick={() => setFocusMissing(false)} aria-label="Đóng thông báo"><X /></button></div>}
 
     <section className="pantry-v2-summary" aria-label="Tổng quan kho thực phẩm">
       <div className="pantry-v2-hero-media"><img src="/assets/pantry-hero.png" alt="Tủ lạnh được sắp xếp gọn gàng với thực phẩm tươi" /></div>
@@ -249,11 +298,11 @@ export default function PantryPage() {
           <div className="pantry-table pantry-table-head"><span>Thực phẩm</span><span>Danh mục</span><span>Số lượng</span><span>Hạn sử dụng</span><span>Nơi bảo quản</span><span>Tình trạng</span><span /></div>
           {visibleItems.map((item) => {
             const itemStatus = getStatus(item); const expiry = expiryCopy(item);
-            return <article className="pantry-table pantry-table-row" key={item.id}>
+            return <article id={`pantry-item-${item.id}`} className={`pantry-table pantry-table-row${focusedItemId === item.id ? " notification-target" : ""}`} key={item.id}>
               <div className="pantry-food-name"><span aria-hidden="true"><CategoryIcon category={item.category} /></span><strong>{item.name}</strong></div><span data-label="Danh mục">{item.category}</span><strong data-label="Số lượng">{item.quantity} {unitLabel[item.unit]}</strong><div className={`pantry-expiry ${itemStatus}`} data-label="Hạn sử dụng"><span>{expiry.date}</span><small>{expiry.relative}</small></div><span data-label="Nơi bảo quản">{storageLabel[item.storageLocation]}</span><span data-label="Tình trạng" className={`pantry-status ${itemStatus}`}>{itemStatus === "good" ? "Còn tốt" : itemStatus === "expiring" ? "Sắp hết hạn" : "Đã hết hạn"}</span><div className="pantry-row-actions"><button onClick={() => openEditForm(item)} aria-label={`Sửa ${item.name}`} title="Sửa thực phẩm"><EllipsisVertical /></button><button className="danger" disabled={removeItem.isPending} onClick={() => confirmRemove(item)} aria-label={`Xóa ${item.name}`} title="Xóa thực phẩm"><Trash2 /></button></div>
             </article>;
           })}
-        </div> : <div className="pantry-card-grid">{visibleItems.map((item) => { const itemStatus = getStatus(item); const expiry = expiryCopy(item); return <article className="pantry-item-card" key={item.id}><header><span aria-hidden="true"><CategoryIcon category={item.category} /></span><div className="pantry-row-actions"><button onClick={() => openEditForm(item)} aria-label={`Sửa ${item.name}`} title="Sửa thực phẩm"><EllipsisVertical /></button><button className="danger" onClick={() => confirmRemove(item)} aria-label={`Xóa ${item.name}`}><Trash2 /></button></div></header><small>{item.category}</small><h3>{item.name}</h3><b>{item.quantity} {unitLabel[item.unit]}</b><footer><span className={`pantry-status ${itemStatus}`}>{itemStatus === "good" ? "Còn tốt" : itemStatus === "expiring" ? "Sắp hết hạn" : "Đã hết hạn"}</span><em>{expiry.relative}</em></footer></article>; })}</div> : <EmptyState title="Không tìm thấy thực phẩm">Thử thay đổi từ khóa hoặc bộ lọc để xem thêm thực phẩm.</EmptyState>}
+        </div> : <div className="pantry-card-grid">{visibleItems.map((item) => { const itemStatus = getStatus(item); const expiry = expiryCopy(item); return <article id={`pantry-item-${item.id}`} className={`pantry-item-card${focusedItemId === item.id ? " notification-target" : ""}`} key={item.id}><header><span aria-hidden="true"><CategoryIcon category={item.category} /></span><div className="pantry-row-actions"><button onClick={() => openEditForm(item)} aria-label={`Sửa ${item.name}`} title="Sửa thực phẩm"><EllipsisVertical /></button><button className="danger" onClick={() => confirmRemove(item)} aria-label={`Xóa ${item.name}`}><Trash2 /></button></div></header><small>{item.category}</small><h3>{item.name}</h3><b>{item.quantity} {unitLabel[item.unit]}</b><footer><span className={`pantry-status ${itemStatus}`}>{itemStatus === "good" ? "Còn tốt" : itemStatus === "expiring" ? "Sắp hết hạn" : "Đã hết hạn"}</span><em>{expiry.relative}</em></footer></article>; })}</div> : <EmptyState title="Không tìm thấy thực phẩm">Thử thay đổi từ khóa hoặc bộ lọc để xem thêm thực phẩm.</EmptyState>}
 
         {filtered.length > 0 && <footer className="pantry-pagination"><span>Hiển thị {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, filtered.length)} trong {filtered.length} thực phẩm</span><nav aria-label="Phân trang"><button disabled={page === 1} onClick={() => setPage((value) => value - 1)}><ChevronLeft /></button>{Array.from({ length: pageCount }, (_, index) => index + 1).map((number) => <button key={number} className={page === number ? "active" : ""} onClick={() => setPage(number)}>{number}</button>)}<button disabled={page === pageCount} onClick={() => setPage((value) => value + 1)}><ChevronRight /></button></nav></footer>}
       </main>
@@ -274,7 +323,7 @@ export default function PantryPage() {
         <div className="form-grid">
           <label className="span-2">Tên thực phẩm<input autoFocus required value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} placeholder="Ví dụ: Ức gà" /></label>
           <label>Nhóm<select value={form.category} onChange={(event) => setForm({ ...form, category: event.target.value })}><option>Rau củ</option><option>Thịt & cá</option><option>Trứng & sữa</option><option>Ngũ cốc</option><option>Trái cây</option><option>Gia vị</option><option>Khác</option></select></label>
-          <label>Hạn sử dụng<input type="date" value={form.expiryDate} onChange={(event) => setForm({ ...form, expiryDate: event.target.value })} /></label>
+          <label>Hạn sử dụng<DateInput value={form.expiryDate} onChange={(expiryDate, status) => { setForm({ ...form, expiryDate }); setExpiryDateInvalid(status === "invalid"); }} /></label>
           <label>Số lượng<input required type="number" min="0.1" step="0.1" value={form.quantity} onChange={(event) => setForm({ ...form, quantity: Number(event.target.value) })} /></label>
           <label>Đơn vị<select value={form.unit} onChange={(event) => setForm({ ...form, unit: event.target.value as FoodUnit })}><option value="G">gram</option><option value="KG">kg</option><option value="ML">ml</option><option value="L">lít</option><option value="ITEM">cái</option><option value="PACKAGE">gói</option></select></label>
           <label>Tồn kho tối thiểu<input required type="number" min="0" step="0.1" value={form.minimumStock} onChange={(event) => setForm({ ...form, minimumStock: Number(event.target.value) })} /></label>

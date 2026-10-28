@@ -4,18 +4,27 @@ import { api } from "../../api/client";
 import { createAppQueryClient } from "../../api/query-client";
 import { login, register } from "./auth.api";
 import { acceptAuthSession, endAuthSession, updateAuthUser } from "./auth.session";
-import { clearAuthSession, getAuthToken, getStoredUser, saveAuthSession } from "./auth.storage";
+import {
+  clearAuthSession, getAuthToken, getRememberLoginPreference, getStoredUser, isSessionRemembered, saveAuthSession,
+  saveRememberLoginPreference,
+} from "./auth.storage";
 
 const session = { token: "existing-v1-token", user: { id: "user-a", name: "Minh Anh", email: "demo@nouri.vn" } };
 const originalAdapter = api.defaults.adapter;
 let stored: Map<string, string>;
+let tabStored: Map<string, string>;
+function stubStorage(map: Map<string, string>) {
+  return {
+    getItem: (key: string) => map.get(key) ?? null,
+    setItem: (key: string, value: string) => { map.set(key, value); },
+    removeItem: (key: string) => { map.delete(key); },
+  };
+}
 beforeEach(() => {
   stored = new Map();
-  vi.stubGlobal("localStorage", {
-    getItem: (key: string) => stored.get(key) ?? null,
-    setItem: (key: string, value: string) => { stored.set(key, value); },
-    removeItem: (key: string) => { stored.delete(key); },
-  });
+  tabStored = new Map();
+  vi.stubGlobal("localStorage", stubStorage(stored));
+  vi.stubGlobal("sessionStorage", stubStorage(tabStored));
 });
 afterEach(() => { api.defaults.adapter = originalAdapter; vi.unstubAllGlobals(); });
 
@@ -36,6 +45,39 @@ describe("V1 auth storage", () => {
     stored.set("unrelated", "keep"); saveAuthSession(session);
     clearAuthSession(); clearAuthSession();
     expect(Object.fromEntries(stored)).toEqual({ unrelated: "keep" });
+  });
+  it("keeps a non-remembered session only in sessionStorage", () => {
+    saveAuthSession(session, false);
+    expect(Object.fromEntries(stored)).toEqual({});
+    expect(Object.fromEntries(tabStored)).toEqual({ nutriplan_token: session.token, nutriplan_user: JSON.stringify(session.user) });
+    expect(getAuthToken()).toBe(session.token); expect(getStoredUser()).toEqual(session.user);
+    expect(isSessionRemembered()).toBe(false);
+  });
+  it.each([true, false])("removes the session left in the other storage when saving (remember=%s)", (remember) => {
+    saveAuthSession({ ...session, token: "old-token" }, !remember);
+    saveAuthSession(session, remember);
+    expect(Object.fromEntries(remember ? tabStored : stored)).toEqual({});
+    expect(getAuthToken()).toBe(session.token);
+    expect(isSessionRemembered()).toBe(remember);
+  });
+  it("clears the session from both storages", () => {
+    stored.set("nutriplan_token", "a"); tabStored.set("nutriplan_token", "b");
+    tabStored.set("nutriplan_user", JSON.stringify(session.user));
+    clearAuthSession();
+    expect(Object.fromEntries(stored)).toEqual({}); expect(Object.fromEntries(tabStored)).toEqual({});
+  });
+  it("defaults the remember-login checkbox to checked before any choice", () => {
+    expect(getRememberLoginPreference()).toBe(true);
+  });
+  it.each([true, false])("remembers the last remember-login choice (%s) without storing a token", (remember) => {
+    saveRememberLoginPreference(remember);
+    expect(getRememberLoginPreference()).toBe(remember);
+    expect(getAuthToken()).toBeNull();
+  });
+  it("keeps the remember-login choice after logout", () => {
+    saveRememberLoginPreference(false); saveAuthSession(session, false);
+    clearAuthSession();
+    expect(getRememberLoginPreference()).toBe(false);
   });
   it("clears a corrupt stored session without throwing", () => {
     stored.set("nutriplan_token", session.token);
@@ -72,6 +114,18 @@ describe("Auth session and query cache", () => {
     expect(queryClient.getQueryCache().getAll()).toHaveLength(0);
     expect(getAuthToken()).toBeNull();
     expect(getStoredUser()).toBeNull();
+  });
+  it("stores the session in sessionStorage when login is not remembered", () => {
+    acceptAuthSession(queryClient, session, false);
+    expect(tabStored.get("nutriplan_token")).toBe(session.token);
+    expect(stored.size).toBe(0);
+  });
+  it("updates the user in the storage that holds a non-remembered session", () => {
+    saveAuthSession(session, false);
+    const updatedUser = { ...session.user, name: "Tên mới" };
+    updateAuthUser(updatedUser);
+    expect(stored.size).toBe(0);
+    expect(getStoredUser()).toEqual(updatedUser);
   });
   it("updates the stored public user without replacing the token", () => {
     saveAuthSession(session);

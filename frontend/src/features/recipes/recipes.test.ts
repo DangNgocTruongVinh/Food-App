@@ -50,6 +50,7 @@ let client: QueryClient;
 beforeEach(() => {
   client = createAppQueryClient();
   vi.stubGlobal("localStorage", { getItem: () => null });
+  vi.stubGlobal("sessionStorage", { getItem: () => null });
 });
 
 afterEach(() => {

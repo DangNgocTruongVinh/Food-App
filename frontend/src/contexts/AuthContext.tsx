@@ -3,11 +3,11 @@ import { createContext, useContext, useMemo, useState, type PropsWithChildren } 
 import { useNavigate } from "react-router-dom";
 import * as authApi from "../features/auth/auth.api";
 import { acceptAuthSession, endAuthSession, updateAuthUser } from "../features/auth/auth.session";
-import { getStoredUser } from "../features/auth/auth.storage";
+import { getStoredUser, saveRememberLoginPreference } from "../features/auth/auth.storage";
 import type { User } from "../types";
 
 type AuthContextValue = {
-  user: User | null; login: (email: string, password: string) => Promise<void>;
+  user: User | null; login: (email: string, password: string, remember?: boolean) => Promise<void>;
   register: (name: string, email: string, password: string) => Promise<void>; logout: () => void;
   syncUser: (user: User) => void;
 };
@@ -20,7 +20,10 @@ export function AuthProvider({ children }: PropsWithChildren) {
   const [user, setUser] = useState<User | null>(getStoredUser);
   const value = useMemo<AuthContextValue>(() => ({
     user,
-    login: async (email, password) => setUser(acceptAuthSession(queryClient, await authApi.login({ email, password }))),
+    login: async (email, password, remember = true) => {
+      setUser(acceptAuthSession(queryClient, await authApi.login({ email, password }), remember));
+      saveRememberLoginPreference(remember);
+    },
     register: async (name, email, password) => setUser(acceptAuthSession(queryClient, await authApi.register({ name, email, password }))),
     logout: () => {
       endAuthSession(queryClient);

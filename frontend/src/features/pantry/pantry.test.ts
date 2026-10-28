@@ -9,6 +9,7 @@ import {
   type PantryFormValues,
 } from "./pantry.api";
 import { invalidatePantryQueries, pantryMutations, pantryQueries } from "./pantry.queries";
+import { pantryItemPage } from "./pantry.logic";
 
 const form: PantryFormValues = {
   name: "Ức gà", category: "Thịt & cá", quantity: 500, unit: "G",
@@ -26,6 +27,7 @@ let client: QueryClient;
 beforeEach(() => {
   client = createAppQueryClient();
   vi.stubGlobal("localStorage", { getItem: () => null });
+  vi.stubGlobal("sessionStorage", { getItem: () => null });
 });
 afterEach(() => {
   client.clear();
@@ -122,5 +124,32 @@ describe("Pantry query and mutation definitions", () => {
       ["post", "/pantry"], ["put", `/pantry/${item.id}`], ["delete", `/pantry/${item.id}`],
     ]);
     expect(JSON.parse(adapter.mock.calls[1][0].data)).toMatchObject({ minimumStock: 150, storageLocation: "DRY_STORAGE" });
+  });
+
+  it("clears an existing expiry date when the edit form's date is left empty", async () => {
+    const adapter = vi.fn(async (config) => ({ config, data: item, status: 200, statusText: "OK", headers: {} }));
+    api.defaults.adapter = adapter;
+    const editForm = toPantryFormValues(item);
+    expect(editForm.expiryDate).toBe(form.expiryDate);
+    await new MutationObserver(client, pantryMutations.update()).mutate({ id: item.id, form: { ...editForm, expiryDate: "" } });
+    expect(JSON.parse(adapter.mock.calls[0][0].data)).toMatchObject({ expiryDate: null });
+  });
+
+  it("creates an item without an expiry date when the date is left empty", async () => {
+    const adapter = vi.fn(async (config) => ({ config, data: item, status: 201, statusText: "OK", headers: {} }));
+    api.defaults.adapter = adapter;
+    await new MutationObserver(client, pantryMutations.create({ ...form, expiryDate: "" })).mutate();
+    expect(JSON.parse(adapter.mock.calls[0][0].data)).toMatchObject({ expiryDate: null });
+  });
+});
+
+describe("Pantry notification focus", () => {
+  const items = Array.from({ length: 17 }, (_, index) => ({ id: `item-${index}` }));
+  it.each([["item-0", 1], ["item-7", 1], ["item-8", 2], ["item-16", 3]] as const)("finds %s on page %i", (id, page) => {
+    expect(pantryItemPage(items, id, 8)).toBe(page);
+  });
+  it("returns null for an item that is not in the list", () => {
+    expect(pantryItemPage(items, "deleted-item", 8)).toBeNull();
+    expect(pantryItemPage([], "item-0", 8)).toBeNull();
   });
 });
