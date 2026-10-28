@@ -1,8 +1,12 @@
 import type { PantryItem, Prisma } from "@prisma/client";
-import { prisma } from "../lib/prisma.js";
+import { prisma } from "../../lib/prisma.js";
+import { HttpError } from "../../utils/http-error.js";
+import type { NotificationListQuery } from "./notifications.schema.js";
 
 const DAY_MS = 86_400_000;
 const EXPIRY_WINDOW_DAYS = 3;
+const DEFAULT_NOTIFICATION_LIMIT = 100;
+const MAX_NOTIFICATION_LIMIT = 200;
 
 type PantryNotificationItem = Pick<
   PantryItem,
@@ -22,7 +26,19 @@ function isoDay(value: Date) {
   return value.toISOString().slice(0, 10);
 }
 
-export function buildPantryNotificationCandidates(items: PantryNotificationItem[], now = new Date()): NotificationCandidate[] {
+export function normalizeNotificationListQuery(query: NotificationListQuery) {
+  const unreadOnly = query.filter === "unread";
+  const requestedLimit = Number(query.limit ?? DEFAULT_NOTIFICATION_LIMIT);
+  const limit = Number.isFinite(requestedLimit)
+    ? Math.min(Math.max(Math.trunc(requestedLimit), 1), MAX_NOTIFICATION_LIMIT)
+    : DEFAULT_NOTIFICATION_LIMIT;
+  return { unreadOnly, limit };
+}
+
+export function buildPantryNotificationCandidates(
+  items: PantryNotificationItem[],
+  now = new Date(),
+): NotificationCandidate[] {
   const today = startOfUtcDay(now);
   const expiryLimit = new Date(today.getTime() + EXPIRY_WINDOW_DAYS * DAY_MS);
   const candidates: NotificationCandidate[] = [];
@@ -102,4 +118,35 @@ export async function syncPantryNotifications(userId: string, now = new Date()) 
   if (!data.length) return 0;
   const result = await prisma.notification.createMany({ data, skipDuplicates: true });
   return result.count;
+}
+
+export async function listNotifications(userId: string, query: NotificationListQuery) {
+  await syncPantryNotifications(userId);
+  const { unreadOnly, limit } = normalizeNotificationListQuery(query);
+  return prisma.notification.findMany({
+    where: { userId, ...(unreadOnly ? { isRead: false } : {}) },
+    orderBy: { createdAt: "desc" },
+    take: limit,
+  });
+}
+
+export async function getUnreadNotificationCount(userId: string) {
+  await syncPantryNotifications(userId);
+  return prisma.notification.count({ where: { userId, isRead: false } });
+}
+
+export async function markAllNotificationsRead(userId: string) {
+  const result = await prisma.notification.updateMany({
+    where: { userId, isRead: false },
+    data: { isRead: true },
+  });
+  return result.count;
+}
+
+export async function markNotificationRead(userId: string, id: string) {
+  const notification = await prisma.notification.findFirst({ where: { id, userId } });
+  if (!notification) throw new HttpError(404, "Không tìm thấy thông báo.");
+  return notification.isRead
+    ? notification
+    : prisma.notification.update({ where: { id }, data: { isRead: true } });
 }

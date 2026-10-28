@@ -1,26 +1,7 @@
-import { isToday, isYesterday } from "date-fns";
 import { Bell } from "lucide-react";
+import { groupNotifications } from "../../features/notifications/notifications.logic";
 import type { AppNotification } from "../../types";
 import NotificationItem from "./NotificationItem";
-
-type NotificationGroup = { label: string; items: AppNotification[] };
-
-function groupNotifications(notifications: AppNotification[]): NotificationGroup[] {
-  const groups: NotificationGroup[] = [
-    { label: "Hôm nay", items: [] },
-    { label: "Hôm qua", items: [] },
-    { label: "Trước đó", items: [] },
-  ];
-
-  notifications.forEach((notification) => {
-    const date = new Date(notification.createdAt);
-    if (isToday(date)) groups[0].items.push(notification);
-    else if (isYesterday(date)) groups[1].items.push(notification);
-    else groups[2].items.push(notification);
-  });
-
-  return groups.filter((group) => group.items.length > 0);
-}
 
 export default function NotificationList({
   notifications,

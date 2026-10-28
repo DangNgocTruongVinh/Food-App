@@ -1,50 +1,24 @@
 import { useGSAP } from "@gsap/react";
 import { useQuery } from "@tanstack/react-query";
-import { differenceInCalendarDays, format } from "date-fns";
+import { format } from "date-fns";
 import { vi } from "date-fns/locale";
 import gsap from "gsap";
-import { AlertTriangle, ArrowRight, Bookmark, CalendarCheck, Check, Clock3, Droplet, Flame, Hand, Leaf, Moon, PackageOpen, Search, SlidersHorizontal, Sparkles, Sun, Sunrise } from "lucide-react";
+import { AlertTriangle, ArrowRight, Bookmark, CalendarCheck, Check, Clock3, Droplet, Flame, Hand, Leaf, PackageOpen, Search, SlidersHorizontal, Sparkles } from "lucide-react";
 import { useRef, useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { api } from "../api/client";
 import { LoadingState } from "../components/States";
 import { useAuth } from "../contexts/AuthContext";
-import type { DashboardData, MealType } from "../types";
-
-const mealLabels: Record<MealType, string> = { BREAKFAST: "Sáng", LUNCH: "Trưa", DINNER: "Tối", SNACK: "Bữa phụ" };
-
-const mealImage = (name: string) => {
-  const normalized = name.toLowerCase();
-  if (normalized.includes("yến mạch") || normalized.includes("sữa chua") || normalized.includes("chuối")) return "/assets/recipe-oats.jpg";
-  if (normalized.includes("cá") || normalized.includes("tôm") || normalized.includes("ngừ")) return "/assets/recipe-salmon.jpg";
-  if (normalized.includes("đậu") || normalized.includes("rau") || normalized.includes("nấm") || normalized.includes("bowl")) return "/assets/recipe-vegan-bowl.jpg";
-  return "/assets/nutrition-hero.jpg";
-};
-
-const overviewMealTimes: Record<MealType, string> = {
-  BREAKFAST: "08:00",
-  LUNCH: "12:30",
-  DINNER: "19:00",
-  SNACK: "15:30",
-};
-
-const overviewFallbackRecipes: DashboardData["recommendedRecipes"] = [
-  { id: "fallback-quinoa", name: "Bowl ức gà quinoa sốt chanh dây", calories: 520, prepMinutes: 10, cookMinutes: 15, dietTags: [] },
-  { id: "fallback-penne", name: "Penne gà rau củ sốt pesto", calories: 480, prepMinutes: 8, cookMinutes: 12, dietTags: [] },
-  { id: "fallback-salad", name: "Salad ức gà bơ trứng", calories: 360, prepMinutes: 10, cookMinutes: 5, dietTags: [] },
-];
-
-const overviewSuggestionImages = [
-  "/assets/dashboard-recipe-chicken-quinoa-v4.jpg",
-  "/assets/dashboard-recipe-chicken-pesto-v4.jpg",
-  "/assets/dashboard-recipe-chicken-salad-v4.jpg",
-];
-
-const getMealIcon = (mealType: MealType) => {
-  if (mealType === "BREAKFAST") return Sunrise;
-  if (mealType === "DINNER") return Moon;
-  return Sun;
-};
+import {
+  buildDashboardViewModel,
+  dashboardMealIcon as getMealIcon,
+  dashboardMealImage as mealImage,
+  dashboardMealLabels as mealLabels,
+  dashboardMealTimes as overviewMealTimes,
+  dashboardRecipeSearchPath,
+  dashboardSuggestionImages as overviewSuggestionImages,
+  dashboardWaterLiters,
+} from "../features/dashboard/dashboard.logic";
+import { dashboardQueries } from "../features/dashboard/dashboard.queries";
 
 export default function DashboardPage() {
   const { user } = useAuth();
@@ -52,10 +26,7 @@ export default function DashboardPage() {
   const pageRef = useRef<HTMLDivElement>(null);
   const [search, setSearch] = useState("");
   const [waterGlasses, setWaterGlasses] = useState(5);
-  const { data, isLoading } = useQuery({
-    queryKey: ["dashboard"],
-    queryFn: async () => (await api.get<DashboardData>("/dashboard")).data,
-  });
+  const { data, isLoading } = useQuery(dashboardQueries.overview());
 
   useGSAP(() => {
     if (isLoading || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
@@ -75,27 +46,25 @@ export default function DashboardPage() {
 
   const submitSearch = (event: FormEvent) => {
     event.preventDefault();
-    if (search.trim()) navigate(`/recipes?q=${encodeURIComponent(search.trim())}`);
+    const path = dashboardRecipeSearchPath(search);
+    if (path) navigate(path);
   };
 
-  const todayMeals = data?.todayMeals ?? [];
-  const recommendedRecipes = data?.recommendedRecipes?.length
-    ? data.recommendedRecipes.slice(0, 3)
-    : overviewFallbackRecipes;
-  const expiringItems = data?.expiringItems ?? [];
-  const hour = new Date().getHours();
-  const greeting = hour < 11 ? "Chào buổi sáng" : hour < 18 ? "Chào buổi chiều" : "Chào buổi tối";
-  const firstName = user?.name?.split(" ").at(-1) ?? "bạn";
-  const calorieTarget = data?.nutritionTargets?.calories ?? 2000;
-  const consumedCalories = todayMeals.filter((meal) => meal.completed).reduce((sum, meal) => sum + meal.calories, 0);
-  const calorieProgress = Math.min(100, Math.round((consumedCalories / Math.max(1, calorieTarget)) * 100));
-  const completedMeals = todayMeals.filter((meal) => meal.completed).length;
-  const mealProgress = todayMeals.length ? Math.round((completedMeals / todayMeals.length) * 100) : 0;
-  const insightItems = expiringItems.slice(0, 2);
-  const insightTitle = insightItems.length
-    ? insightItems.map((item) => `${item.name} (${Math.max(0, differenceInCalendarDays(new Date(item.expiryDate!), new Date()))} ngày)`).join(" và ")
-    : "Kho thực phẩm của bạn đang được cân bằng tốt";
-  const waterLiters = Number((waterGlasses * 0.25).toFixed(2));
+  const {
+    todayMeals,
+    recommendedRecipes,
+    expiringItems,
+    greeting,
+    firstName,
+    calorieTarget,
+    consumedCalories,
+    calorieProgress,
+    completedMeals,
+    mealProgress,
+    insightItems,
+    insightTitle,
+  } = buildDashboardViewModel(data, user?.name);
+  const waterLiters = dashboardWaterLiters(waterGlasses);
 
   return <div className="page reference-dashboard overview-dashboard-v2" ref={pageRef}>
     <section className="overview-v2-hero" aria-labelledby="overview-v2-title">

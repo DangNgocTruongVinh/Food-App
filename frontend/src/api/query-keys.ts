@@ -17,4 +17,14 @@ export const queryKeys = {
     all: ["ai"] as const,
     history: ["ai", "history"] as const,
   },
+  community: {
+    all: ["community"] as const,
+    feed: () => ["community", "feed"] as const,
+  },
+  notifications: {
+    all: ["notifications"] as const,
+    lists: ["notifications", "list"] as const,
+    list: (params: { filter: "all" | "unread"; limit: number }) => ["notifications", "list", params] as const,
+    unreadCount: ["notifications", "unread-count"] as const,
+  },
 } as const;

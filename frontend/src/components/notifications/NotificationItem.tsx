@@ -1,5 +1,3 @@
-import { formatDistanceToNow } from "date-fns";
-import { vi } from "date-fns/locale";
 import {
   AlertTriangle,
   Bot,
@@ -15,6 +13,10 @@ import {
   UserPlus,
   type LucideIcon,
 } from "lucide-react";
+import {
+  notificationRelativeTime,
+  notificationTone,
+} from "../../features/notifications/notifications.logic";
 import type { AppNotification, NotificationType } from "../../types";
 
 const iconByType: Record<NotificationType, LucideIcon> = {
@@ -33,13 +35,6 @@ const iconByType: Record<NotificationType, LucideIcon> = {
   AI_NUTRITION_SUGGESTION: Bot,
 };
 
-function notificationTone(type: NotificationType) {
-  if (type.startsWith("PANTRY_")) return "pantry";
-  if (type.startsWith("COMMUNITY_")) return "community";
-  if (type.startsWith("AI_")) return "ai";
-  return "meal";
-}
-
 export default function NotificationItem({
   notification,
   onSelect,
@@ -48,7 +43,7 @@ export default function NotificationItem({
   onSelect: (notification: AppNotification) => void;
 }) {
   const Icon = iconByType[notification.type];
-  const time = formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true, locale: vi });
+  const time = notificationRelativeTime(notification.createdAt);
 
   return (
     <button

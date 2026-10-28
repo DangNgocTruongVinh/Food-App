@@ -1,5 +1,5 @@
 import { prisma } from "../../lib/prisma.js";
-import { syncPantryNotifications } from "../../services/notification.service.js";
+import { syncPantryNotifications } from "../notifications/notifications.service.js";
 import { HttpError } from "../../utils/http-error.js";
 import type { CreatePantryInput, UpdatePantryInput } from "./pantry.schema.js";
 

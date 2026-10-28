@@ -1,6 +1,4 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { formatDistanceToNow } from "date-fns";
-import { vi } from "date-fns/locale";
 import {
   BarChart3,
   Bookmark,
@@ -20,32 +18,25 @@ import {
 } from "lucide-react";
 import { useEffect, useState, type FormEvent } from "react";
 import { useSearchParams } from "react-router-dom";
-import { api, getApiError } from "../api/client";
+import { getApiError } from "../api/client";
 import { LoadingState } from "../components/States";
 import { useAuth } from "../contexts/AuthContext";
-import type { CommunityComment, CommunityPost } from "../types";
-
-const communityKey = ["community"] as const;
-
-const suggestedTopics = [
-  { label: "Bữa ăn hôm nay", count: 128 },
-  { label: "Mẹo bảo quản", count: 86 },
-  { label: "Công thức lành mạnh", count: 256 },
-  { label: "Hành trình của tôi", count: 112 },
-];
-
-const featuredMembers = [
-  { name: "Linh Nhi", role: "Chuyên gia dinh dưỡng" },
-  { name: "Minh An", role: "Thành viên tích cực" },
-];
-
-function initials(name: string) {
-  return name.trim().split(/\s+/).slice(-2).map((part) => part.charAt(0).toUpperCase()).join("");
-}
-
-function relativeTime(value: string) {
-  return formatDistanceToNow(new Date(value), { addSuffix: true, locale: vi });
-}
+import {
+  communityInitials as initials,
+  communityRelativeTime as relativeTime,
+  featuredMembers,
+  normalizeCommunityContent,
+  shareCommunityPost,
+  suggestedTopics,
+  toggleCommunitySelection,
+} from "../features/community/community.logic";
+import {
+  appendCommunityComment,
+  communityMutations,
+  communityQueries,
+  prependCommunityPost,
+  updateCommunityLike,
+} from "../features/community/community.queries";
 
 export default function CommunityPage() {
   const { user } = useAuth();
@@ -58,10 +49,7 @@ export default function CommunityPage() {
   const [followedMembers, setFollowedMembers] = useState<Set<string>>(() => new Set());
   const [error, setError] = useState("");
 
-  const feed = useQuery({
-    queryKey: communityKey,
-    queryFn: async () => (await api.get<CommunityPost[]>("/community")).data,
-  });
+  const feed = useQuery(communityQueries.feed());
 
   useEffect(() => {
     if (!focusedPostId || !feed.data) return;
@@ -72,9 +60,9 @@ export default function CommunityPage() {
   }, [feed.data, focusedPostId]);
 
   const publish = useMutation({
-    mutationFn: async (content: string) => (await api.post<CommunityPost>("/community", { content })).data,
+    ...communityMutations.publish(),
     onSuccess: (post) => {
-      queryClient.setQueryData<CommunityPost[]>(communityKey, (posts = []) => [post, ...posts]);
+      prependCommunityPost(queryClient, post);
       setPostContent("");
       setError("");
     },
@@ -82,23 +70,15 @@ export default function CommunityPage() {
   });
 
   const toggleLike = useMutation({
-    mutationFn: async (postId: string) => (await api.post<{ liked: boolean; likeCount: number }>(`/community/${postId}/like`)).data,
-    onSuccess: (result, postId) => queryClient.setQueryData<CommunityPost[]>(communityKey, (posts = []) => posts.map((post) => (
-      post.id === postId ? { ...post, likedByMe: result.liked, likeCount: result.likeCount } : post
-    ))),
+    ...communityMutations.toggleLike(),
+    onSuccess: (result, postId) => updateCommunityLike(queryClient, postId, result),
     onError: (likeError) => setError(getApiError(likeError)),
   });
 
   const addComment = useMutation({
-    mutationFn: async ({ postId, content }: { postId: string; content: string }) => (
-      await api.post<CommunityComment>(`/community/${postId}/comments`, { content })
-    ).data,
+    ...communityMutations.addComment(),
     onSuccess: (comment, { postId }) => {
-      queryClient.setQueryData<CommunityPost[]>(communityKey, (posts = []) => posts.map((post) => (
-        post.id === postId
-          ? { ...post, comments: [...post.comments, comment], commentCount: post.commentCount + 1 }
-          : post
-      )));
+      appendCommunityComment(queryClient, postId, comment);
       setCommentDrafts((drafts) => ({ ...drafts, [postId]: "" }));
       setError("");
     },
@@ -107,44 +87,22 @@ export default function CommunityPage() {
 
   const submitPost = (event: FormEvent) => {
     event.preventDefault();
-    const content = postContent.trim();
+    const content = normalizeCommunityContent(postContent);
     if (content) publish.mutate(content);
   };
 
   const submitComment = (event: FormEvent, postId: string) => {
     event.preventDefault();
-    const content = commentDrafts[postId]?.trim();
+    const content = normalizeCommunityContent(commentDrafts[postId] ?? "");
     if (content) addComment.mutate({ postId, content });
   };
 
   const toggleSaved = (postId: string) => {
-    setSavedPosts((current) => {
-      const next = new Set(current);
-      if (next.has(postId)) next.delete(postId);
-      else next.add(postId);
-      return next;
-    });
+    setSavedPosts((current) => toggleCommunitySelection(current, postId));
   };
 
   const toggleFollow = (name: string) => {
-    setFollowedMembers((current) => {
-      const next = new Set(current);
-      if (next.has(name)) next.delete(name);
-      else next.add(name);
-      return next;
-    });
-  };
-
-  const sharePost = async (post: CommunityPost) => {
-    try {
-      if (navigator.share) {
-        await navigator.share({ title: `Bài viết của ${post.author.name}`, text: post.content });
-      } else {
-        await navigator.clipboard?.writeText(post.content);
-      }
-    } catch {
-      // Người dùng có thể đóng hộp thoại chia sẻ mà không thực hiện hành động.
-    }
+    setFollowedMembers((current) => toggleCommunitySelection(current, name));
   };
 
   return (
@@ -235,7 +193,7 @@ export default function CommunityPage() {
                   <Heart /> {post.likedByMe ? "Đã thích" : "Thích"}
                 </button>
                 <button type="button" onClick={() => document.getElementById(`comment-${post.id}`)?.focus()}><MessageCircle /> Bình luận</button>
-                <button type="button" onClick={() => void sharePost(post)}><Share2 /> Chia sẻ</button>
+                <button type="button" onClick={() => void shareCommunityPost(post)}><Share2 /> Chia sẻ</button>
                 <button type="button" className={savedPosts.has(post.id) ? "saved" : ""} aria-pressed={savedPosts.has(post.id)} onClick={() => toggleSaved(post.id)}>
                   <Bookmark /> {savedPosts.has(post.id) ? "Đã lưu" : "Lưu"}
                 </button>

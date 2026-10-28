@@ -2,14 +2,21 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Bell, CheckCheck, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { api, getApiError } from "../../api/client";
+import { getApiError } from "../../api/client";
+import {
+  notificationActionPath,
+  notificationListLimit,
+  shouldMarkNotificationRead,
+  unreadBadgeLabel,
+} from "../../features/notifications/notifications.logic";
+import {
+  invalidateNotificationQueries,
+  notificationMutations,
+  notificationQueries,
+} from "../../features/notifications/notifications.queries";
 import type { AppNotification } from "../../types";
 import NotificationList from "./NotificationList";
-import { unreadBadgeLabel } from "./notification-utils";
-
-type NotificationFilter = "all" | "unread";
-
-const notificationCountKey = ["notifications", "unread-count"] as const;
+import type { NotificationFilter } from "../../features/notifications/notifications.api";
 
 function NotificationTabs({ filter, onChange }: { filter: NotificationFilter; onChange: (filter: NotificationFilter) => void }) {
   return (
@@ -28,36 +35,21 @@ export default function NotificationCenter() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [filter, setFilter] = useState<NotificationFilter>("all");
 
-  const countQuery = useQuery({
-    queryKey: notificationCountKey,
-    queryFn: async () => (await api.get<{ count: number }>("/notifications/unread-count")).data,
-    staleTime: 15_000,
-    refetchInterval: 60_000,
-    refetchOnWindowFocus: true,
-  });
+  const countQuery = useQuery(notificationQueries.unreadCount());
 
   const notificationsQuery = useQuery({
-    queryKey: ["notifications", "list", filter],
-    queryFn: async () => (await api.get<AppNotification[]>("/notifications", { params: { filter, limit: drawerOpen ? 200 : 100 } })).data,
+    ...notificationQueries.list({ filter, limit: notificationListLimit(drawerOpen) }),
     enabled: dropdownOpen || drawerOpen,
-    staleTime: 10_000,
   });
 
-  const refreshNotifications = async () => {
-    await Promise.all([
-      queryClient.invalidateQueries({ queryKey: ["notifications", "list"] }),
-      queryClient.invalidateQueries({ queryKey: notificationCountKey }),
-    ]);
-  };
-
   const markRead = useMutation({
-    mutationFn: async (id: string) => (await api.patch<AppNotification>(`/notifications/${id}/read`)).data,
-    onSuccess: refreshNotifications,
+    ...notificationMutations.markRead(),
+    onSuccess: () => invalidateNotificationQueries(queryClient),
   });
 
   const markAllRead = useMutation({
-    mutationFn: async () => (await api.patch<{ count: number }>("/notifications/read-all")).data,
-    onSuccess: refreshNotifications,
+    ...notificationMutations.markAllRead(),
+    onSuccess: () => invalidateNotificationQueries(queryClient),
   });
 
   useEffect(() => {
@@ -91,7 +83,7 @@ export default function NotificationCenter() {
   const notifications = notificationsQuery.data ?? [];
 
   const selectNotification = async (notification: AppNotification) => {
-    if (!notification.isRead) {
+    if (shouldMarkNotificationRead(notification)) {
       try {
         await markRead.mutateAsync(notification.id);
       } catch {
@@ -100,7 +92,8 @@ export default function NotificationCenter() {
     }
     setDropdownOpen(false);
     setDrawerOpen(false);
-    if (notification.actionUrl?.startsWith("/")) navigate(notification.actionUrl);
+    const actionPath = notificationActionPath(notification.actionUrl);
+    if (actionPath) navigate(actionPath);
   };
 
   const openDrawer = () => {

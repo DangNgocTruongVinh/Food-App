@@ -11,7 +11,7 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock("../../config/env.js", () => ({ env: { JWT_SECRET: mocks.secret } }));
-vi.mock("../../services/notification.service.js", () => ({
+vi.mock("../notifications/notifications.service.js", () => ({
   syncPantryNotifications: mocks.syncNotifications,
 }));
 vi.mock("../../lib/prisma.js", () => ({ prisma: {
