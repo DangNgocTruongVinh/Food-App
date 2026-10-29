@@ -1,7 +1,7 @@
 import type { QueryClient } from "@tanstack/react-query";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { api } from "../../api/client";
-import { createAppQueryClient } from "../../api/query-client";
+import { createAppQueryClient, retryUnlessClientError } from "../../api/query-client";
 import { queryKeys } from "../../api/query-keys";
 import type { MealPlan, MealPlanItem, NutritionProfile, Recipe } from "../../types";
 import {
@@ -9,8 +9,9 @@ import {
   updateMealPlanStatus, updateShoppingPurchased,
 } from "./meal-plans.api";
 import {
-  alternativeMeals, hasBalancedCalories, mealImage, mealPlanTargets, mealTag,
-  percentage, recipeSearchPath, selectMealPlan, selectMealPlanDay, summarizeMealPlan,
+  alternativeMeals, hasBalancedCalories, mealImage, mealPlanDeleteConfirmMessage, mealPlanPath, mealPlanTargets,
+  mealTag, nextMealPlanIdAfterDelete, percentage, recipeSearchPath, selectMealPlan, selectMealPlanDay,
+  summarizeMealPlan,
 } from "./meal-plans.logic";
 import { invalidateMealPlanQueries, mealPlanQueries } from "./meal-plans.queries";
 
@@ -203,5 +204,29 @@ describe("Meal Plan and Shopping page business logic", () => {
   it("keeps the existing Recipes search navigation", () => {
     expect(recipeSearchPath("  ức gà  ")).toBe("/recipes?q=%E1%BB%A9c%20g%C3%A0");
     expect(recipeSearchPath("   ")).toBe("/recipes");
+  });
+});
+
+describe("Meal plan route and delete helpers", () => {
+  it("builds the plan route, or the list route when there is no plan", () => {
+    expect(mealPlanPath("plan-a")).toBe("/meal-plans/plan-a");
+    expect(mealPlanPath(null)).toBe("/meal-plans");
+    expect(mealPlanPath(undefined)).toBe("/meal-plans");
+  });
+  it("selects the newest remaining plan after deleting one", () => {
+    const plans = [{ id: "newest" }, { id: "middle" }, { id: "oldest" }];
+    expect(nextMealPlanIdAfterDelete(plans, "middle")).toBe("newest");
+    expect(nextMealPlanIdAfterDelete(plans, "newest")).toBe("middle");
+    expect(nextMealPlanIdAfterDelete([{ id: "only" }], "only")).toBeNull();
+    expect(nextMealPlanIdAfterDelete([], "missing")).toBeNull();
+  });
+  it("names the plan in the delete confirmation and warns when it is active", () => {
+    const draft = mealPlanDeleteConfirmMessage({ name: "Tuần 1", status: "DRAFT" });
+    expect(draft).toContain("“Tuần 1”");
+    expect(draft).not.toContain("đang được áp dụng");
+    expect(mealPlanDeleteConfirmMessage({ name: "Tuần 2", status: "ACTIVE" })).toContain("Thực đơn này đang được áp dụng.");
+  });
+  it("does not retry plan details for client errors such as 404", () => {
+    expect(mealPlanQueries.detail("plan-a").retry).toBe(retryUnlessClientError);
   });
 });

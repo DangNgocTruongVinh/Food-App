@@ -90,3 +90,17 @@ export function recipeSearchPath(search: string) {
   const normalized = search.trim();
   return `/recipes${normalized ? `?q=${encodeURIComponent(normalized)}` : ""}`;
 }
+
+export function mealPlanPath(id?: string | null) {
+  return id ? `/meal-plans/${encodeURIComponent(id)}` : "/meal-plans";
+}
+
+// Danh sách đã sắp xếp mới nhất trước, nên thực đơn còn lại đầu tiên là thực đơn mới nhất.
+export function nextMealPlanIdAfterDelete(plans: Pick<MealPlan, "id">[], deletedId: string) {
+  return plans.find((plan) => plan.id !== deletedId)?.id ?? null;
+}
+
+export function mealPlanDeleteConfirmMessage(plan: Pick<MealPlan, "name" | "status">) {
+  const activeWarning = plan.status === "ACTIVE" ? " Thực đơn này đang được áp dụng." : "";
+  return `Xóa thực đơn “${plan.name}”?${activeWarning} Toàn bộ bữa ăn và danh sách mua sắm của thực đơn sẽ bị xóa và không thể khôi phục.`;
+}

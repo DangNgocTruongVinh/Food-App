@@ -80,7 +80,7 @@ export interface Ingredient { id: string; name: string; quantity: number; unit: 
 export interface Recipe {
   id: string; name: string; description: string; instructions: string[]; prepMinutes: number; cookMinutes: number;
   servings: number; calories: number; proteinG: number; carbsG: number; fatG: number; fiberG: number;
-  cuisine: string; dietTags: string[]; ingredients: Ingredient[];
+  cuisine: string; dietTags: string[]; imageUrl?: string | null; ingredients: Ingredient[];
 }
 
 export interface MealPlanItem { id: string; mealType: MealType; servings: number; calories: number; completed: boolean; recipe: Recipe }

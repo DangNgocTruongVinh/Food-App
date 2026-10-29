@@ -1,4 +1,5 @@
 import { mutationOptions, queryOptions, type QueryClient } from "@tanstack/react-query";
+import { retryUnlessClientError } from "../../api/query-client";
 import { queryKeys } from "../../api/query-keys";
 import {
   deleteMealPlan, generateMealPlan, getMealPlan, listMealPlans,
@@ -10,6 +11,7 @@ export const mealPlanQueries = {
   detail: (id: string) => queryOptions({
     queryKey: queryKeys.mealPlans.detail(id),
     queryFn: () => getMealPlan(id),
+    retry: retryUnlessClientError,
   }),
 };
 

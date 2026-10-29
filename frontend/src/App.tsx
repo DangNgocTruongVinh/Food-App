@@ -8,6 +8,7 @@ import LoginPage from "./pages/LoginPage";
 import MealPlansPage from "./pages/MealPlansPage";
 import PantryPage from "./pages/PantryPage";
 import ProfilePage from "./pages/ProfilePage";
+import RecipeDetailPage from "./pages/RecipeDetailPage";
 import RecipesPage from "./pages/RecipesPage";
 import { getAuthToken } from "./features/auth/auth.storage";
 
@@ -24,7 +25,9 @@ export default function App() {
         <Route path="dashboard" element={<DashboardPage />} />
         <Route path="pantry" element={<PantryPage />} />
         <Route path="meal-plans" element={<MealPlansPage />} />
+        <Route path="meal-plans/:id" element={<MealPlansPage />} />
         <Route path="recipes" element={<RecipesPage />} />
+        <Route path="recipes/:id" element={<RecipeDetailPage />} />
         <Route path="community" element={<CommunityPage />} />
         <Route path="assistant" element={<AiAssistantPage />} />
         <Route path="profile" element={<ProfilePage />} />

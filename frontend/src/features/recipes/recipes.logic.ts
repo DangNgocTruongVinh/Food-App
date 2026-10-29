@@ -1,4 +1,5 @@
-import type { Recipe } from "../../types";
+import type { Ingredient, Recipe } from "../../types";
+import { foodUnitLabel } from "../../utils/units";
 
 export type RecipeCategory = "all" | "vietnamese" | "international" | "breakfast" | "healthy" | "low-carb" | "vegetarian";
 export type RecipeSort = "newest" | "quickest" | "calories" | "protein";
@@ -58,4 +59,25 @@ export function paginateRecipes(recipes: Recipe[], pageIndex: number, pageSize: 
     currentPage,
     visibleRecipes: recipes.slice((currentPage - 1) * pageSize, currentPage * pageSize),
   };
+}
+
+// Ảnh do Admin upload (imageUrl) được ưu tiên; chưa có thì dùng ảnh minh họa local theo tên món.
+export function recipeImageSrc(recipe: Pick<Recipe, "name" | "imageUrl">) {
+  return recipe.imageUrl || recipeImage(recipe.name);
+}
+
+export function recipeDetailPath(id: string) {
+  return `/recipes/${encodeURIComponent(id)}`;
+}
+
+export function recipeTotalMinutes(recipe: Pick<Recipe, "prepMinutes" | "cookMinutes">) {
+  return recipe.prepMinutes + recipe.cookMinutes;
+}
+
+export function formatIngredientAmount(ingredient: Pick<Ingredient, "quantity" | "unit">) {
+  return `${new Intl.NumberFormat("vi-VN", { maximumFractionDigits: 2 }).format(ingredient.quantity)} ${foodUnitLabel[ingredient.unit]}`;
+}
+
+export function recipeDietLabel(tag: string) {
+  return tag.replaceAll("_", " ");
 }

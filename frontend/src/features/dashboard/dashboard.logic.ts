@@ -57,8 +57,10 @@ export function buildDashboardViewModel(
   now = new Date(),
 ) {
   const todayMeals = data?.todayMeals ?? [];
-  const recommendedRecipes = data?.recommendedRecipes?.length
-    ? data.recommendedRecipes.slice(0, 3)
+  // Công thức mẫu dự phòng không có trong DB nên không được liên kết tới trang chi tiết.
+  const hasRealRecommendedRecipes = Boolean(data?.recommendedRecipes?.length);
+  const recommendedRecipes = hasRealRecommendedRecipes
+    ? data!.recommendedRecipes.slice(0, 3)
     : dashboardFallbackRecipes;
   const expiringItems = data?.expiringItems ?? [];
   const hour = now.getHours();
@@ -81,6 +83,7 @@ export function buildDashboardViewModel(
   return {
     todayMeals,
     recommendedRecipes,
+    hasRealRecommendedRecipes,
     expiringItems,
     greeting,
     firstName,

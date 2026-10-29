@@ -1,12 +1,13 @@
 import type { QueryClient } from "@tanstack/react-query";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { api } from "../../api/client";
-import { createAppQueryClient } from "../../api/query-client";
+import { createAppQueryClient, retryUnlessClientError } from "../../api/query-client";
 import { queryKeys } from "../../api/query-keys";
 import type { Recipe } from "../../types";
 import { getRecipe, listRecipes, normalizeRecipeListParams } from "./recipes.api";
 import {
-  filterAndSortRecipes, matchesRecipeCategory, paginateRecipes, recipeImage,
+  filterAndSortRecipes, formatIngredientAmount, matchesRecipeCategory, paginateRecipes, recipeDetailPath,
+  recipeDietLabel, recipeImage, recipeImageSrc, recipeTotalMinutes,
 } from "./recipes.logic";
 import { recipeQueries } from "./recipes.queries";
 
@@ -158,5 +159,31 @@ describe("Recipes page business logic", () => {
     expect(recipeImage("Cá ngừ")).toBe("/assets/recipe-salmon.jpg");
     expect(recipeImage("Bowl rau nấm")).toBe("/assets/recipe-vegan-bowl.jpg");
     expect(recipeImage("Ức gà")).toBe("/assets/nutrition-hero.jpg");
+  });
+});
+
+describe("Recipe detail helpers", () => {
+  it("prefers an uploaded imageUrl and falls back to the local image by name", () => {
+    expect(recipeImageSrc({ name: "Cá ngừ", imageUrl: "https://cdn.example/ca-ngu.jpg" })).toBe("https://cdn.example/ca-ngu.jpg");
+    expect(recipeImageSrc({ name: "Cá ngừ", imageUrl: null })).toBe("/assets/recipe-salmon.jpg");
+    expect(recipeImageSrc({ name: "Cá ngừ", imageUrl: "" })).toBe("/assets/recipe-salmon.jpg");
+    expect(recipeImageSrc({ name: "Cá ngừ" })).toBe("/assets/recipe-salmon.jpg");
+  });
+  it("builds the detail path and summary values", () => {
+    expect(recipeDetailPath("recipe-a")).toBe("/recipes/recipe-a");
+    expect(recipeTotalMinutes(recipe())).toBe(30);
+    expect(recipeDietLabel("HIGH_PROTEIN")).toBe("HIGH PROTEIN");
+  });
+  it.each([
+    [{ quantity: 200, unit: "G" }, "200 g"],
+    [{ quantity: 1.5, unit: "KG" }, "1,5 kg"],
+    [{ quantity: 0.333, unit: "L" }, "0,33 lít"],
+    [{ quantity: 2, unit: "ITEM" }, "2 cái"],
+    [{ quantity: 1, unit: "PACKAGE" }, "1 gói"],
+  ] as const)("formats ingredient amount %o as %s", (ingredient, text) => {
+    expect(formatIngredientAmount(ingredient)).toBe(text);
+  });
+  it("does not retry recipe details for client errors such as 404", () => {
+    expect(recipeQueries.detail("recipe-a").retry).toBe(retryUnlessClientError);
   });
 });

@@ -19,6 +19,7 @@ import {
   dashboardWaterLiters,
 } from "../features/dashboard/dashboard.logic";
 import { dashboardQueries } from "../features/dashboard/dashboard.queries";
+import { recipeDetailPath } from "../features/recipes/recipes.logic";
 
 export default function DashboardPage() {
   const { user } = useAuth();
@@ -53,6 +54,7 @@ export default function DashboardPage() {
   const {
     todayMeals,
     recommendedRecipes,
+    hasRealRecommendedRecipes,
     expiringItems,
     greeting,
     firstName,
@@ -138,11 +140,11 @@ export default function DashboardPage() {
           <Link to="/recipes">Xem tất cả <ArrowRight /></Link>
         </header>
         <div className="overview-v2-recipe-grid">
-          {recommendedRecipes.map((recipe, index) => <article className="overview-v2-recipe-card" key={recipe.id}>
-            <Link className="overview-v2-recipe-image" to="/recipes"><img src={overviewSuggestionImages[index] ?? mealImage(recipe.name)} alt={recipe.name} /></Link>
+          {recommendedRecipes.map((recipe, index) => { const recipePath = hasRealRecommendedRecipes ? recipeDetailPath(recipe.id) : "/recipes"; return <article className="overview-v2-recipe-card" key={recipe.id}>
+            <Link className="overview-v2-recipe-image" to={recipePath}><img src={overviewSuggestionImages[index] ?? mealImage(recipe.name)} alt={recipe.name} /></Link>
             <button type="button" aria-label={`Lưu ${recipe.name}`}><Bookmark /></button>
-            <div><Link to="/recipes"><h3>{recipe.name}</h3></Link><small><Leaf /> Dùng nguyên liệu trong kho</small><footer><span><Clock3 /> {recipe.prepMinutes + recipe.cookMinutes} phút</span><span><Flame /> {recipe.calories} kcal</span></footer></div>
-          </article>)}
+            <div><Link to={recipePath}><h3>{recipe.name}</h3></Link><small><Leaf /> Dùng nguyên liệu trong kho</small><footer><span><Clock3 /> {recipe.prepMinutes + recipe.cookMinutes} phút</span><span><Flame /> {recipe.calories} kcal</span></footer></div>
+          </article>; })}
         </div>
         <div className="overview-v2-dots" aria-hidden="true"><i className="active" /><i /><i /></div>
       </article>

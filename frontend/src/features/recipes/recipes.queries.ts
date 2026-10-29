@@ -1,4 +1,5 @@
 import { queryOptions } from "@tanstack/react-query";
+import { retryUnlessClientError } from "../../api/query-client";
 import { queryKeys } from "../../api/query-keys";
 import { getRecipe, listRecipes, normalizeRecipeListParams, type RecipeListParams } from "./recipes.api";
 
@@ -13,5 +14,6 @@ export const recipeQueries = {
   detail: (id: string) => queryOptions({
     queryKey: queryKeys.recipes.detail(id),
     queryFn: () => getRecipe(id),
+    retry: retryUnlessClientError,
   }),
 };

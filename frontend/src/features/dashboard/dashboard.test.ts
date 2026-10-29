@@ -116,6 +116,7 @@ describe("Dashboard derived view data", () => {
     const view = buildDashboardViewModel(dashboard, "Nguyễn Minh An", new Date("2026-09-15T09:00:00.000Z"));
     expect(view.todayMeals).toBe(dashboard.todayMeals);
     expect(view.recommendedRecipes).toEqual(recommendedRecipes.slice(0, 3));
+    expect(view.hasRealRecommendedRecipes).toBe(true);
     expect(view.expiringItems).toBe(dashboard.expiringItems);
     expect(view.firstName).toBe("An");
     expect(view.calorieTarget).toBe(2000);
@@ -136,6 +137,7 @@ describe("Dashboard derived view data", () => {
     expect(view).toMatchObject({
       todayMeals: [],
       recommendedRecipes: dashboardFallbackRecipes,
+      hasRealRecommendedRecipes: false,
       expiringItems: [],
       greeting: "Chào buổi sáng",
       firstName: "bạn",
@@ -153,6 +155,11 @@ describe("Dashboard derived view data", () => {
     expect(buildDashboardViewModel({ ...dashboard, recommendedRecipes: [] }, "An").recommendedRecipes)
       .toBe(dashboardFallbackRecipes);
     expect(buildDashboardViewModel(dashboard, "An").recommendedRecipes).toHaveLength(3);
+  });
+
+  it("marks fallback recipes so they are not linked to a recipe detail page", () => {
+    expect(buildDashboardViewModel({ ...dashboard, recommendedRecipes: [] }, "An").hasRealRecommendedRecipes).toBe(false);
+    expect(buildDashboardViewModel(dashboard, "An").hasRealRecommendedRecipes).toBe(true);
   });
 
   it.each([
