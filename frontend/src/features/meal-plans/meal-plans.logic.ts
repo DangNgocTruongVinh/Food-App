@@ -28,10 +28,6 @@ export function percentage(value: number, target: number) {
   return Math.min(100, Math.round(value / Math.max(target, 1) * 100));
 }
 
-export function selectMealPlan(plans: MealPlan[], selectedId: string) {
-  return plans.find((plan) => plan.id === selectedId) ?? plans[0];
-}
-
 export function selectMealPlanDay(plan: MealPlan | undefined, selectedDayIndex: number) {
   return plan?.days[selectedDayIndex] ?? plan?.days[0];
 }

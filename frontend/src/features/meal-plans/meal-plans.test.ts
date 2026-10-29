@@ -10,7 +10,7 @@ import {
 } from "./meal-plans.api";
 import {
   alternativeMeals, hasBalancedCalories, mealItemImage, mealPlanDeleteConfirmMessage, mealPlanPath, mealPlanTargets,
-  generateMealPlanLabel, latestMealPlanId, mealPlanSourceLabel, mealPlanSuggestions, mealTag, nextMealPlanIdAfterDelete, percentage, recipeSearchPath, selectMealPlan, selectMealPlanDay,
+  generateMealPlanLabel, latestMealPlanId, mealPlanSourceLabel, mealPlanSuggestions, mealTag, nextMealPlanIdAfterDelete, percentage, recipeSearchPath, selectMealPlanDay,
   summarizeMealPlan,
 } from "./meal-plans.logic";
 import { invalidateMealPlanQueries, mealPlanQueries, removeDeletedMealPlan, removeMealPlanDetail } from "./meal-plans.queries";
@@ -158,10 +158,7 @@ describe("Meal Plan query definitions", () => {
 });
 
 describe("Meal Plan and Shopping page business logic", () => {
-  it("selects the requested plan and falls back to the first plan/day", () => {
-    const another = { ...plan, id: "plan-b" };
-    expect(selectMealPlan([plan, another], "plan-b")).toBe(another);
-    expect(selectMealPlan([plan, another], "missing")).toBe(plan);
+  it("falls back to the first day when the requested day does not exist", () => {
     expect(selectMealPlanDay(plan, 20)).toBe(plan.days[0]);
   });
 
