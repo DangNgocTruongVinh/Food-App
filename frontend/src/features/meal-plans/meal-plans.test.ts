@@ -13,7 +13,7 @@ import {
   latestMealPlanId, mealPlanSuggestions, mealTag, nextMealPlanIdAfterDelete, percentage, recipeSearchPath, selectMealPlan, selectMealPlanDay,
   summarizeMealPlan,
 } from "./meal-plans.logic";
-import { invalidateMealPlanQueries, mealPlanQueries } from "./meal-plans.queries";
+import { invalidateMealPlanQueries, mealPlanQueries, removeDeletedMealPlan, removeMealPlanDetail } from "./meal-plans.queries";
 
 const recipe = (overrides: Partial<Recipe> = {}): Recipe => ({
   id: "recipe-a", name: "Ức gà", description: "Món cân bằng", instructions: ["Áp chảo"],
@@ -288,5 +288,32 @@ describe("Meal plan suggestions respect the profile", () => {
     expect(fiber.text).toContain("rau xanh");
     expect(fat.key).toBe("fat-reduce");
     expect(fat.image).not.toContain("salmon");
+  });
+});
+
+describe("Deleting a meal plan updates the cache before navigation", () => {
+  it("drops the plan from the list and refreshes list and dashboard, but never refetches the deleted detail", () => {
+    const queryClient = createAppQueryClient();
+    const other = { ...plan, id: "plan-b" };
+    queryClient.setQueryData(queryKeys.mealPlans.list(), [plan, other]);
+    queryClient.setQueryData(queryKeys.mealPlans.detail(plan.id), plan);
+    queryClient.setQueryData(queryKeys.dashboard, {});
+
+    removeDeletedMealPlan(queryClient, plan.id);
+    expect(queryClient.getQueryData<MealPlan[]>(queryKeys.mealPlans.list())?.map((item) => item.id)).toEqual(["plan-b"]);
+    expect(queryClient.getQueryState(queryKeys.mealPlans.list())?.isInvalidated).toBe(true);
+    expect(queryClient.getQueryState(queryKeys.dashboard)?.isInvalidated).toBe(true);
+    // Chi tiết của thực đơn đã xóa không bị đánh dấu làm mới (nếu không sẽ gọi lại API và nhận 404).
+    expect(queryClient.getQueryState(queryKeys.mealPlans.detail(plan.id))?.isInvalidated).toBe(false);
+
+    // Trang đã rời khỏi thực đơn: bỏ cache chi tiết.
+    removeMealPlanDetail(queryClient, plan.id);
+    expect(queryClient.getQueryData(queryKeys.mealPlans.detail(plan.id))).toBeUndefined();
+
+    // Xóa nốt thực đơn cuối: danh sách rỗng nên /meal-plans không còn thực đơn nào để mở lại.
+    removeDeletedMealPlan(queryClient, "plan-b");
+    expect(queryClient.getQueryData<MealPlan[]>(queryKeys.mealPlans.list())).toEqual([]);
+    expect(latestMealPlanId(queryClient.getQueryData<MealPlan[]>(queryKeys.mealPlans.list()) ?? [])).toBeNull();
+    queryClient.clear();
   });
 });

@@ -6,7 +6,7 @@ import {
   CircleCheck, Clock3, Flame, Leaf, ListChecks, LoaderCircle, MoonStar, Plus,
   Search, ShoppingBasket, Soup, Sparkles, SunMedium, Target, Trash2, Utensils,
 } from "lucide-react";
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 import { getApiError } from "../api/client";
@@ -19,7 +19,7 @@ import {
   nextMealPlanIdAfterDelete, percentage, recipeSearchPath, selectMealPlanDay, summarizeMealPlan,
 } from "../features/meal-plans/meal-plans.logic";
 import {
-  invalidateMealPlanQueries, mealPlanMutations, mealPlanQueries,
+  invalidateMealPlanQueries, mealPlanMutations, mealPlanQueries, removeDeletedMealPlan, removeMealPlanDetail,
 } from "../features/meal-plans/meal-plans.queries";
 import { profileQueries } from "../features/profile/profile.queries";
 import { recipeDetailPath } from "../features/recipes/recipes.logic";
@@ -66,6 +66,15 @@ export default function MealPlansPage() {
 
   useEffect(() => setSelectedDayIndex(0), [routeId]);
 
+  // Bỏ cache chi tiết của thực đơn vừa xóa khi trang đã rời khỏi nó (điều hướng của React Router chạy trong transition).
+  const deletedPlanId = useRef<string | null>(null);
+  useEffect(() => {
+    const id = deletedPlanId.current;
+    if (!id || routeId === id) return;
+    removeMealPlanDetail(queryClient, id);
+    deletedPlanId.current = null;
+  }, [queryClient, routeId]);
+
   const selected = routeId ? detail.data ?? data.find((plan) => plan.id === routeId) : undefined;
   const selectedDay = selectMealPlanDay(selected, selectedDayIndex);
   const { planMeals, purchasedItems, nutrition, averages, completionRate } = useMemo(
@@ -104,10 +113,10 @@ export default function MealPlansPage() {
   const remove = useMutation({
     ...mealPlanMutations.remove(),
     onSuccess: (_result, deletedId) => {
-      // Rời khỏi thực đơn đã xóa trước khi làm mới, để không gọi lại chi tiết của nó (sẽ 404).
-      queryClient.removeQueries({ queryKey: queryKeys.mealPlans.detail(deletedId) });
-      navigate(mealPlanPath(nextMealPlanIdAfterDelete(data, deletedId)), { replace: true });
-      invalidateMealPlanQueries(queryClient, true);
+      const nextId = nextMealPlanIdAfterDelete(data, deletedId);
+      removeDeletedMealPlan(queryClient, deletedId);
+      deletedPlanId.current = deletedId;
+      navigate(mealPlanPath(nextId), { replace: true });
       setError("");
     },
     onError: (err) => setError(getApiError(err)),
