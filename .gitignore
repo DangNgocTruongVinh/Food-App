@@ -15,3 +15,7 @@ backend/prisma/dev.db*
 # File sao lưu database (giữ lại migration của Prisma)
 *.sql
 !backend/prisma/migrations/**/*.sql
+
+# Cấu hình skill của công cụ AI (cục bộ, không thuộc mã nguồn dự án)
+.agents/
+skills-lock.json
