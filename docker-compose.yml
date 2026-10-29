@@ -1,10 +1,11 @@
+# Secret đọc từ file .env ở thư mục gốc (không commit); xem .env.example.
 services:
   postgres:
     image: postgres:16-alpine
     environment:
       POSTGRES_DB: nutriplan
       POSTGRES_USER: nutriplan
-      POSTGRES_PASSWORD: nutriplan
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Thiếu POSTGRES_PASSWORD trong file .env ở thư mục gốc}
     ports:
       - "5432:5432"
     volumes:
@@ -23,8 +24,8 @@ services:
       NODE_ENV: production
       PORT: 4000
       FRONTEND_URL: http://localhost:8080
-      DATABASE_URL: postgresql://nutriplan:nutriplan@postgres:5432/nutriplan?schema=public
-      JWT_SECRET: local-docker-secret-change-before-production-123456
+      DATABASE_URL: postgresql://nutriplan:${POSTGRES_PASSWORD}@postgres:5432/nutriplan?schema=public
+      JWT_SECRET: ${JWT_SECRET:?Thiếu JWT_SECRET trong file .env ở thư mục gốc}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       OPENAI_MODEL: ${OPENAI_MODEL:-gpt-5-mini}
     ports:

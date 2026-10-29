@@ -39,17 +39,20 @@ Food_App/
 
 ## Chạy dự án
 
-1. Sao chép `backend/.env.example` thành `backend/.env` và điền `OPENAI_API_KEY` nếu muốn dùng AI thật.
-2. Chạy PostgreSQL: `docker compose up -d postgres`.
-3. Cài dependencies tại thư mục gốc: `npm install`.
-4. Khởi tạo database: `npm run db:migrate && npm run db:seed`.
-5. Chạy cả frontend và backend: `npm run dev`.
+1. Sao chép `.env.example` (thư mục gốc) thành `.env` và điền `POSTGRES_PASSWORD`, `JWT_SECRET`; file này được `docker compose` đọc và không được commit.
+2. Sao chép `backend/.env.example` thành `backend/.env`; `DATABASE_URL` dùng cùng mật khẩu với `POSTGRES_PASSWORD`, điền `OPENAI_API_KEY` nếu muốn dùng AI thật.
+3. Chạy PostgreSQL: `docker compose up -d postgres`.
+4. Cài dependencies tại thư mục gốc: `npm install`.
+5. Khởi tạo database: `npm run db:migrate && npm run db:seed`.
+6. Chạy cả frontend và backend: `npm run dev`.
 
 Frontend mặc định ở `http://localhost:5173`, API ở `http://localhost:4000`. Nếu không có OpenAI key, hệ thống dùng bộ lập kế hoạch dự phòng theo quy tắc để vẫn demo được.
 
 Tài khoản dữ liệu mẫu sau khi chạy seed: `demo@nutriplan.vn` / `Demo@123`.
 
 ### Chạy hoàn toàn bằng Docker
+
+Cần file `.env` ở thư mục gốc (bước 1 ở trên); thiếu biến thì `docker compose` dừng và báo tên biến.
 
 ```bash
 docker compose up -d --build
