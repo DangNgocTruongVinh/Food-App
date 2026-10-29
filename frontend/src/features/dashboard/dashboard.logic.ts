@@ -17,9 +17,9 @@ export const dashboardMealTimes: Record<MealType, string> = {
 };
 
 export const dashboardFallbackRecipes: DashboardData["recommendedRecipes"] = [
-  { id: "fallback-quinoa", name: "Bowl ức gà quinoa sốt chanh dây", calories: 520, prepMinutes: 10, cookMinutes: 15, dietTags: [] },
-  { id: "fallback-penne", name: "Penne gà rau củ sốt pesto", calories: 480, prepMinutes: 8, cookMinutes: 12, dietTags: [] },
-  { id: "fallback-salad", name: "Salad ức gà bơ trứng", calories: 360, prepMinutes: 10, cookMinutes: 5, dietTags: [] },
+  { id: "fallback-ga-xao-sa-ot", name: "Gà xào sả ớt (kèm cơm)", calories: 600, prepMinutes: 15, cookMinutes: 15, dietTags: ["BALANCED", "HIGH_PROTEIN"] },
+  { id: "fallback-ga-teriyaki", name: "Gà teriyaki (kèm cơm)", calories: 620, prepMinutes: 10, cookMinutes: 20, dietTags: ["BALANCED", "HIGH_PROTEIN"] },
+  { id: "fallback-bo-xao-bong-cai", name: "Bò xào bông cải", calories: 360, prepMinutes: 15, cookMinutes: 10, dietTags: ["LOW_CARB", "HIGH_PROTEIN"] },
 ];
 
 export const dashboardSuggestionImages = [

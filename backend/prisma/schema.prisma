@@ -212,6 +212,7 @@ model Recipe {
   fatG         Float
   fiberG       Float              @default(0)
   dietTags     DietType[]
+  mealTypes    MealType[]         @default([])
   cuisine      String
   imageUrl     String?
   ingredients  RecipeIngredient[]

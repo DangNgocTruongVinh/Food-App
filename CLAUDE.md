@@ -98,11 +98,31 @@ Biến môi trường mới phải thêm vào `backend/src/config/env.ts` (Zod) 
 Đã gộp vào `main`.
 
 ### Giai đoạn 2 — UI cho API đã có
-- [ ] Trang chi tiết công thức `/recipes/:id` (dùng `GET /api/recipes/:id`). Link tới từ: thẻ công thức (Recipes), tên món trong thực đơn, công thức gợi ý ở Dashboard (chỉ dữ liệu thật, không gắn cho công thức mẫu dự phòng).
+- [x] Trang chi tiết công thức `/recipes/:id` (dùng `GET /api/recipes/:id`). Link tới từ: thẻ công thức (Recipes), tên món trong thực đơn, công thức gợi ý ở Dashboard (chỉ dữ liệu thật, không gắn cho công thức mẫu dự phòng).
   - Để sẵn chỗ trong bố cục cho nút "Thêm vào thực đơn" (làm ở GĐ5), chưa làm chức năng.
-- [ ] Thêm `imageUrl` vào kiểu `Recipe` (FE) + hàm chọn ảnh: `imageUrl` nếu có, ngược lại ảnh local theo tên.
-- [ ] Chi tiết thực đơn: route `/meal-plans/:id` trên cùng `MealPlansPage` (plan đang chọn lấy từ URL, tải bằng `GET /api/meal-plans/:id`); `/meal-plans` không id → thực đơn mới nhất; 404 → báo ngắn và về thực đơn mới nhất.
-- [ ] Nút xóa thực đơn có xác nhận (dùng `DELETE /api/meal-plans/:id`).
+- [x] Thêm `imageUrl` vào kiểu `Recipe` (FE) + hàm chọn ảnh: `imageUrl` nếu có, ngược lại ảnh local theo tên.
+- [x] Chi tiết thực đơn: route `/meal-plans/:id` trên cùng `MealPlansPage` (plan đang chọn lấy từ URL, tải bằng `GET /api/meal-plans/:id`); `/meal-plans` không id → thực đơn mới nhất; 404 → báo ngắn và về thực đơn mới nhất.
+- [x] Nút xóa thực đơn có xác nhận (dùng `DELETE /api/meal-plans/:id`).
+
+Đã thử trên trình duyệt. Commit `27eeb95` trên nhánh `giai-doan-2` (chưa gộp `main`).
+
+### Giai đoạn 2c — Bộ món mới, logic tạo thực đơn, trang chi tiết công thức
+Thứ tự: (b) → khảo sát dọn code → (a), (c), (d).
+- [ ] (b) Thay toàn bộ bộ món seed và sửa logic tạo thực đơn:
+  - Bộ 33 món (~80% Việt Nam, ~20% nước ngoài), đủ bữa sáng/trưa/tối/phụ và đủ món cho từng `DietType`; dữ liệu seed tách riêng `prisma/seed-data.ts`.
+  - Mỗi món 4–7 bước chi tiết, nguyên liệu khớp bước làm, đơn vị thuộc `FoodUnit`, tên nguyên liệu tiếng Việt thông dụng; tránh tên nhập nhằng ("Quả bơ", "Bơ lạt", không dùng "Bơ").
+  - `cuisine` thống nhất: "Việt Nam", "Nhật Bản", "Hàn Quốc", "Thái Lan", "Ý", "Hy Lạp", "Mỹ".
+  - Ảnh tạm theo 5 nhóm (ngũ cốc/sáng, cá & hải sản, món chay, thịt & gà, đồ uống/tráng miệng) lưu ở `imageUrl`; GĐ3 Admin upload ảnh thật.
+  - Schema: `Recipe.mealTypes MealType[]` + migration mới. `fallbackPlan` chọn món theo bữa và theo `mealsPerDay`.
+  - Chế độ ăn: VEGETARIAN/VEGAN lọc bắt buộc; LOW_CARB/HIGH_PROTEIN chỉ ưu tiên; BALANCED không lọc. Danh sách gửi OpenAI lọc như vậy.
+  - Dị ứng theo nhóm (bảng ánh xạ ở backend: Hải sản, Sữa, Trứng, Đậu phộng, Gluten), so khớp không phân biệt hoa thường/khoảng trắng.
+  - Test: ăn chay, thuần chay, dị ứng phổ biến vẫn có thực đơn 7 ngày hợp lệ; kiểm tra dữ liệu seed.
+  - Landing: đổi tên 4 món hardcode theo bộ mới (API thật vẫn để GĐ5). Dashboard: 3 món dự phòng lấy từ bộ mới.
+- [ ] Khảo sát dọn code sau (b).
+  - Xem xét xóa 10 ảnh trong `frontend/public/assets/` không còn được tham chiếu (đã không dùng từ trước GĐ2c): `hero-bowl-clean-v3.png`, `hero-composition-napkin.png`, `hero-ingredient-cluster-v2.png`, `hero-ingredient-trio-v2.png`, `hero-ingredients-clean-v3.png`, `hero-salmon-bowl-v2.png`, `landing-hero-robot.png`, `landing-meal-planner-journal.png`, `nouri-logo-minimal.png`, `nouri-logo.png`.
+- [ ] (a) Sửa tiêu đề trang chi tiết công thức bị thanh menu che.
+- [ ] (c) Khối "Dành cho bạn" trên trang chi tiết: số nguyên liệu đã có trong kho / tổng và nguyên liệu còn thiếu; % calo so với mục tiêu ngày; cảnh báo dị ứng/không thích (dùng lại logic backend).
+- [ ] (d) Tùy chọn: chỉnh số khẩu phần.
 
 ### Giai đoạn 2b — Đính kèm công thức vào bài viết
 - [ ] Schema: `CommunityPost.recipeId` tùy chọn (FK tới `Recipe`), migration mới.
@@ -115,6 +135,7 @@ Biến môi trường mới phải thêm vào `backend/src/config/env.ts` (Zod) 
 - [ ] Upload ảnh Cloudinary.
 - [ ] Đăng ảnh trong bài viết (làm ngay sau hạ tầng upload): lưu URL ảnh vào bài viết, hiện lại nút "Ảnh".
 - [ ] Admin: CRUD công thức, quản lý user (khóa/mở), kiểm duyệt community, thống kê.
+  - Công thức: Admin thêm/sửa món và upload ảnh thật (thay ảnh tạm theo nhóm món của seed). Công thức **đã được dùng trong meal plan** (có `MealPlanItem` tham chiếu) thì chỉ **ẩn**, không xóa hẳn: cần trường đánh dấu ẩn (migration mới); món ẩn không hiện ở danh sách/tạo thực đơn mới nhưng thực đơn cũ vẫn hiển thị đúng. Món chưa từng được dùng thì được xóa hẳn.
   - Kiểm duyệt community: Admin xóa **bất kỳ** bài/bình luận vi phạm. Dùng chung service xóa bài với "Xóa bài của tôi" (GĐ5); chỉ khác điều kiện quyền (`requireAdmin` thay vì `authorId === userId`).
 - [ ] Route/page Admin ở frontend, guard theo role.
 
@@ -150,6 +171,8 @@ Biến môi trường mới phải thêm vào `backend/src/config/env.ts` (Zod) 
 - [ ] Sửa lỗi định dạng bảng mục 6.2, 6.8, 6.10 (tiêu đề 9 cột nhưng dòng phân cách chỉ 8 cột).
 - [ ] Mục 3: bổ sung route `*` (redirect về `/`) vào danh sách route.
 - [ ] Hướng phát triển: người dùng tự tạo công thức riêng để chia sẻ.
+- [ ] Hạn chế: dinh dưỡng của bộ món seed là **số liệu ước tính**, tham khảo *Bảng thành phần thực phẩm Việt Nam* (Viện Dinh dưỡng, NXB Y học, 2007).
+- [ ] Hạn chế: so khớp dị ứng dựa trên tên nguyên liệu và bảng nhóm dị ứng cố định; nguyên liệu có thành phần ẩn (vd. nước tương có lúa mì) có thể không bị phát hiện.
 - [ ] Hạn chế: ngày từ server (hạn sử dụng, ngày thực đơn) hiển thị theo múi giờ máy người dùng; ở múi giờ âm (vd. châu Mỹ) có thể lệch về ngày hôm trước.
 
 ## Lưu ý khi demo

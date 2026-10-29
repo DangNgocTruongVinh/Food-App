@@ -210,7 +210,11 @@ describe("Dashboard hardcoded presentation rules", () => {
   it("keeps the exact fallback recommendation data and fixed local images", () => {
     expect(dashboardFallbackRecipes).toHaveLength(3);
     expect(dashboardFallbackRecipes.map((recipe) => recipe.id)).toEqual([
-      "fallback-quinoa", "fallback-penne", "fallback-salad",
+      "fallback-ga-xao-sa-ot", "fallback-ga-teriyaki", "fallback-bo-xao-bong-cai",
+    ]);
+    // Tên trùng với món trong bộ seed (backend/prisma/seed-data.ts).
+    expect(dashboardFallbackRecipes.map((recipe) => recipe.name)).toEqual([
+      "Gà xào sả ớt (kèm cơm)", "Gà teriyaki (kèm cơm)", "Bò xào bông cải",
     ]);
     expect(dashboardSuggestionImages).toEqual([
       "/assets/dashboard-recipe-chicken-quinoa-v4.jpg",

@@ -24,11 +24,13 @@ export function recipeImage(name: string) {
 
 export function matchesRecipeCategory(recipe: Recipe, category: RecipeCategory) {
   if (category === "all") return true;
+  // cuisine thống nhất "Việt Nam"; mọi nền ẩm thực khác ("Ý", "Nhật Bản"...) là quốc tế.
   if (category === "vietnamese") return recipe.cuisine.toLowerCase().includes("việt");
-  if (category === "international") return recipe.cuisine.toLowerCase().includes("quốc tế");
+  if (category === "international") return !recipe.cuisine.toLowerCase().includes("việt");
   if (category === "healthy") return recipe.dietTags.includes("BALANCED");
   if (category === "low-carb") return recipe.dietTags.includes("LOW_CARB");
   if (category === "vegetarian") return recipe.dietTags.some((tag) => tag === "VEGETARIAN" || tag === "VEGAN");
+  if (recipe.mealTypes?.length) return recipe.mealTypes.includes("BREAKFAST");
   const copy = `${recipe.name} ${recipe.description}`.toLowerCase();
   return copy.includes("sáng") || copy.includes("yến mạch") || copy.includes("trứng") || copy.includes("sữa chua");
 }

@@ -136,6 +136,17 @@ describe("Recipes page business logic", () => {
       .toEqual(expectedIds);
   });
 
+  it("treats every non-Vietnamese cuisine as international", () => {
+    expect(matchesRecipeCategory(recipe({ cuisine: "Ý" }), "international")).toBe(true);
+    expect(matchesRecipeCategory(recipe({ cuisine: "Nhật Bản" }), "international")).toBe(true);
+    expect(matchesRecipeCategory(recipe({ cuisine: "Việt Nam" }), "international")).toBe(false);
+  });
+
+  it("uses mealTypes for the breakfast category when the recipe declares them", () => {
+    expect(matchesRecipeCategory(recipe({ name: "Phở bò", mealTypes: ["BREAKFAST", "LUNCH"] }), "breakfast")).toBe(true);
+    expect(matchesRecipeCategory(recipe({ name: "Trứng sáng", mealTypes: ["DINNER"] }), "breakfast")).toBe(false);
+  });
+
   it("keeps all four existing sort orders", () => {
     const ids = (sort: "newest" | "quickest" | "calories" | "protein") =>
       filterAndSortRecipes(recipes, { search: "", category: "all", sort }).map((item) => item.id);

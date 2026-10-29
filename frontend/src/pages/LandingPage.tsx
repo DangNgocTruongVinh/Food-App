@@ -24,11 +24,12 @@ const features = [
   { icon: UsersRound, title: "Cộng đồng truyền cảm hứng", copy: "Chia sẻ món ngon, mẹo hay và hành trình lành mạnh.", href: "#community", image: "/assets/feature-community.png" },
 ];
 
+// Tạm khớp tên với bộ món seed; GĐ5 Landing chuyển sang endpoint công thức công khai.
 const recipes = [
-  { image: "/assets/recipe-vegan-bowl.jpg", name: "Salad ức gà sốt chanh dây", description: "Ức gà mềm mọng cùng rau xanh và sốt chanh dây thanh nhẹ, giàu đạm nhưng vẫn tươi mát.", tags: ["Giàu protein", "Eat clean"], time: "20 phút", level: "Dễ", servings: "2 phần" },
-  { image: "/assets/recipe-salmon.jpg", name: "Cá hồi áp chảo sốt bơ tỏi", description: "Cá hồi áp chảo vàng cạnh, kết hợp sốt bơ tỏi thơm dịu và rau củ nướng cân bằng.", tags: ["Giàu protein", "Ít carb"], time: "25 phút", level: "Trung bình", servings: "2 phần" },
-  { image: "/assets/nutrition-hero.jpg", name: "Bowl quinoa rau củ nướng", description: "Quinoa bùi nhẹ, rau củ theo mùa và quả bơ tạo nên một bữa ăn nhiều chất xơ, đủ năng lượng.", tags: ["Nhiều chất xơ", "Eat clean"], time: "30 phút", level: "Dễ", servings: "2 phần" },
-  { image: "/assets/recipe-oats.jpg", name: "Yến mạch trái cây bổ dưỡng", description: "Yến mạch mềm mịn với trái cây, hạt rang và sữa chua cho bữa sáng nhẹ nhàng, no lâu.", tags: ["Bữa sáng", "Thuần chay"], time: "15 phút", level: "Dễ", servings: "1 phần" },
+  { image: "/assets/recipe-vegan-bowl.jpg", name: "Đậu hũ sốt cà chua", description: "Đậu hũ chiên vàng sốt cà chua chua ngọt, nêm nước tương, ăn cùng cơm nóng; món thuần chay dễ nấu.", tags: ["Thuần chay", "Món Việt"], time: "25 phút", level: "Dễ", servings: "1 phần" },
+  { image: "/assets/recipe-salmon.jpg", name: "Cá hấp gừng hành", description: "Cá diêu hồng hấp gừng hành, rưới nước tương, ăn kèm cải ngọt luộc; nhiều đạm, ít tinh bột.", tags: ["Giàu protein", "Ít tinh bột"], time: "35 phút", level: "Dễ", servings: "1 phần" },
+  { image: "/assets/nutrition-hero.jpg", name: "Gà xào sả ớt", description: "Đùi gà xào sả ớt thơm cay, săn chắc, đưa cơm cho bữa trưa hoặc bữa tối gia đình.", tags: ["Giàu protein", "Món Việt"], time: "30 phút", level: "Dễ", servings: "1 phần" },
+  { image: "/assets/recipe-oats.jpg", name: "Yến mạch qua đêm sữa chua chuối", description: "Yến mạch ngâm sữa chua và sữa tươi từ tối hôm trước, sáng ra thêm chuối là có bữa sáng no lâu.", tags: ["Bữa sáng", "Nhiều chất xơ"], time: "8 phút", level: "Dễ", servings: "1 phần" },
 ];
 
 type RecipeSlide = {

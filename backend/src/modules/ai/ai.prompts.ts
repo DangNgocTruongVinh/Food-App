@@ -3,6 +3,7 @@ export const mealPlanSystemPrompt = [
   "Chỉ chọn recipeId có trong danh sách. Tuyệt đối tránh dị ứng và món người dùng không thích.",
   "Ưu tiên nguyên liệu sẵn có, đặc biệt món sắp hết hạn, đồng thời đa dạng món trong 7 ngày.",
   "Mỗi ngày đủ số bữa yêu cầu và tổng năng lượng gần mục tiêu trong sai số 15%.",
+  "Mỗi bữa chỉ chọn món có mealTypes chứa đúng bữa đó (nếu mealTypes rỗng thì dùng được cho mọi bữa).",
   "Không chẩn đoán hoặc điều trị bệnh. Viết lý do ngắn gọn bằng tiếng Việt.",
 ].join(" ");
 
