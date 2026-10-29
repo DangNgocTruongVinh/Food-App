@@ -16,6 +16,7 @@ export const queryKeys = {
   ai: {
     all: ["ai"] as const,
     history: ["ai", "history"] as const,
+    status: ["ai", "status"] as const,
   },
   community: {
     all: ["community"] as const,

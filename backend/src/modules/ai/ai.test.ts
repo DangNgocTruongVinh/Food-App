@@ -13,6 +13,7 @@ const mocks = vi.hoisted(() => ({
   createMessages: vi.fn(),
   requestMealPlan: vi.fn(),
   requestNutritionAnswer: vi.fn(),
+  isAIConfigured: vi.fn(),
 }));
 
 vi.mock("../../config/env.js", () => ({ env: { JWT_SECRET: mocks.secret } }));
@@ -26,6 +27,7 @@ vi.mock("../../lib/prisma.js", () => ({
 vi.mock("./openai.service.js", () => ({
   requestMealPlan: mocks.requestMealPlan,
   requestNutritionAnswer: mocks.requestNutritionAnswer,
+  isAIConfigured: mocks.isAIConfigured,
 }));
 
 const app = testApp("/api/ai", aiRoutes);
@@ -90,6 +92,7 @@ describe("AI chat HTTP contract (no database or OpenAI request)", () => {
   it.each([
     ["GET", "/api/ai/history", undefined],
     ["POST", "/api/ai/chat", { message: "Câu hỏi" }],
+    ["GET", "/api/ai/status", undefined],
   ])("requires authentication for %s %s", async (method, path, body) => {
     expect(await request(app, path, { method, body })).toEqual({
       status: 401, body: { message: "Bạn cần đăng nhập để tiếp tục." },
@@ -128,6 +131,13 @@ describe("AI chat HTTP contract (no database or OpenAI request)", () => {
     })).toEqual({ status: 500, body: { message: "Máy chủ gặp lỗi. Vui lòng thử lại." } });
     expect(mocks.createMessages).not.toHaveBeenCalled();
     expect(consoleError).toHaveBeenCalledWith(expect.any(Error));
+  });
+});
+
+describe("AI status", () => {
+  it.each([true, false])("reports only whether OpenAI is configured (%s), never the key", async (available) => {
+    mocks.isAIConfigured.mockReturnValue(available);
+    expect(await request(app, "/api/ai/status", { token: token() })).toEqual({ status: 200, body: { available } });
   });
 });
 

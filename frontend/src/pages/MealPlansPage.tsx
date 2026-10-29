@@ -15,12 +15,13 @@ import DateInput from "../components/DateInput";
 import { EmptyState, LoadingState } from "../components/States";
 import {
   alternativeMeals, featuredMealTypes, hasBalancedCalories, mealItemImage, mealLabels,
-  latestMealPlanId, mealPlanDeleteConfirmMessage, mealPlanPath, mealPlanSuggestions, mealPlanTargets, mealShortLabels, mealTag, mealTimes,
+  generateMealPlanLabel, latestMealPlanId, mealPlanDeleteConfirmMessage, mealPlanSourceLabel, mealPlanPath, mealPlanSuggestions, mealPlanTargets, mealShortLabels, mealTag, mealTimes,
   nextMealPlanIdAfterDelete, percentage, recipeSearchPath, selectMealPlanDay, summarizeMealPlan,
 } from "../features/meal-plans/meal-plans.logic";
 import {
   invalidateMealPlanQueries, mealPlanMutations, mealPlanQueries, removeDeletedMealPlan, removeMealPlanDetail,
 } from "../features/meal-plans/meal-plans.queries";
+import { aiQueries } from "../features/ai/ai.queries";
 import { profileQueries } from "../features/profile/profile.queries";
 import { recipeDetailPath } from "../features/recipes/recipes.logic";
 import type { MealPlan } from "../types";
@@ -43,6 +44,7 @@ export default function MealPlansPage() {
 
   const { data = [], isLoading } = useQuery(mealPlanQueries.list());
   const { data: profileData } = useQuery(profileQueries.detail());
+  const { data: aiStatus } = useQuery(aiQueries.status());
   // Thực đơn đang chọn lấy từ URL và tải bằng GET /meal-plans/:id; dữ liệu đã có trong danh sách dùng làm dữ liệu ban đầu.
   const detail = useQuery({
     ...mealPlanQueries.detail(routeId ?? ""),
@@ -136,7 +138,7 @@ export default function MealPlansPage() {
   return <div className="page reference-menu-page">
     <div className="menu-search-row">
       <form className="menu-global-search" onSubmit={submitSearch}><Search /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Tìm kiếm món ăn, thực đơn..." /><kbd>⌘ K</kbd></form>
-      <div className="menu-generate-controls"><DateInput aria-label="Ngày bắt đầu" value={startDate} onChange={setStartDate} /><button onClick={() => generate.mutate()} disabled={generate.isPending || !startDate}>{generate.isPending ? <LoaderCircle className="spin" /> : <Sparkles />}{generate.isPending ? "AI đang tạo..." : "Tạo thực đơn AI"}</button></div>
+      <div className="menu-generate-controls"><DateInput aria-label="Ngày bắt đầu" value={startDate} onChange={setStartDate} /><button onClick={() => generate.mutate()} disabled={generate.isPending || !startDate}>{generate.isPending ? <LoaderCircle className="spin" /> : <Sparkles />}{generateMealPlanLabel(aiStatus?.available, generate.isPending)}</button></div>
     </div>
 
     {error && <div className="form-error menu-page-error">{error}</div>}
@@ -165,7 +167,7 @@ export default function MealPlansPage() {
             <div className="menu-week-nav"><button onClick={() => setSelectedDayIndex((value) => Math.max(0, value - 1))} disabled={selectedDayIndex === 0} aria-label="Ngày trước"><ChevronLeft /></button><button onClick={() => setSelectedDayIndex((value) => Math.min(selected.days.length - 1, value + 1))} disabled={selectedDayIndex === selected.days.length - 1} aria-label="Ngày sau"><ChevronRight /></button></div>
             <label className="menu-plan-select"><CalendarDays /><select value={selected.id} onChange={(event) => navigate(mealPlanPath(event.target.value))}>{data.map((plan) => <option key={plan.id} value={plan.id}>{plan.name}</option>)}</select><ChevronDown /></label>
             <strong>{formatDayMonth(selected.startDate)} – {formatDisplayDate(selected.endDate)}</strong>
-            <div className="menu-toolbar-actions"><span className={`menu-plan-status ${selected.status.toLowerCase()}`}>{selected.status === "ACTIVE" ? "Đang áp dụng" : selected.status === "COMPLETED" ? "Đã hoàn thành" : "Bản nháp"}</span>{selected.status === "DRAFT" && <button className="menu-activate-button" onClick={() => activate.mutate({ id: selected.id, status: "ACTIVE" })} disabled={activate.isPending}><Check /> Áp dụng</button>}<Link to="/recipes"><Plus /> Thêm món</Link><button type="button" className="menu-delete-button" onClick={() => confirmRemove(selected)} disabled={remove.isPending}><Trash2 /> {remove.isPending ? "Đang xóa..." : "Xóa thực đơn"}</button></div>
+            <div className="menu-toolbar-actions"><span className={`menu-plan-status ${selected.status.toLowerCase()}`}>{selected.status === "ACTIVE" ? "Đang áp dụng" : selected.status === "COMPLETED" ? "Đã hoàn thành" : "Bản nháp"}</span><span className={`menu-plan-source${selected.aiGenerated ? " ai" : ""}`}>{mealPlanSourceLabel(selected.aiGenerated)}</span>{selected.status === "DRAFT" && <button className="menu-activate-button" onClick={() => activate.mutate({ id: selected.id, status: "ACTIVE" })} disabled={activate.isPending}><Check /> Áp dụng</button>}<Link to="/recipes"><Plus /> Thêm món</Link><button type="button" className="menu-delete-button" onClick={() => confirmRemove(selected)} disabled={remove.isPending}><Trash2 /> {remove.isPending ? "Đang xóa..." : "Xóa thực đơn"}</button></div>
           </header>
 
           <nav className="menu-day-tabs" aria-label="Chọn ngày trong tuần">{selected.days.map((day, index) => {

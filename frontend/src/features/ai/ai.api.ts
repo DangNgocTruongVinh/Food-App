@@ -2,6 +2,12 @@ import { api } from "../../api/client";
 import type { ChatMessage, DashboardData } from "../../types";
 
 export interface ChatResponse { answer: string }
+/** Backend chỉ cho biết đã cấu hình OpenAI hay chưa. */
+export interface AIStatus { available: boolean }
+
+export async function getAIStatus() {
+  return (await api.get<AIStatus>("/ai/status")).data;
+}
 
 export async function getChatHistory() {
   return (await api.get<ChatMessage[]>("/ai/history")).data;

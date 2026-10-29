@@ -2002,6 +2002,8 @@ body { background: #f8faf6; }
 .menu-plan-status { padding: 6px 8px; border-radius: 99px; color: #7a6640; background: #f6efdc; font-size: .6875rem; font-weight: 700; white-space: nowrap; }
 .menu-plan-status.active { color: #438f36; background: #eaf6e5; }
 .menu-plan-status.completed { color: #597069; background: #edf1ee; }
+.menu-plan-source { padding: 6px 8px; border-radius: 99px; color: #5c6862; background: #eef2ee; font-size: .6875rem; font-weight: 700; white-space: nowrap; }
+.menu-plan-source.ai { color: #6b4fb3; background: #f0ebfb; }
 .menu-activate-button { min-height: 34px; padding: 7px 9px; border: 0; border-radius: 8px; color: #397f32; background: #eaf5e5; display: flex; align-items: center; gap: 5px; font-size: .6875rem; font-weight: 700; }
 .menu-activate-button svg { width: 12px; }
 .menu-toolbar-actions > a { min-height: 38px; padding: 8px 12px; border-radius: 9px; color: white; background: linear-gradient(135deg, #62bb38, #439d2c); display: flex; align-items: center; gap: 6px; font-size: .75rem; font-weight: 700; white-space: nowrap; }

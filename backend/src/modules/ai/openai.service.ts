@@ -39,6 +39,8 @@ export function createOpenAIService(client: OpenAI | null, model: string) {
 const client = env.OPENAI_API_KEY ? new OpenAI({ apiKey: env.OPENAI_API_KEY }) : null;
 const openAIService = createOpenAIService(client, env.OPENAI_MODEL);
 
+/** Chỉ cho biết đã cấu hình OpenAI hay chưa; không bao giờ trả về key. */
+export const isAIConfigured = () => client !== null;
 export const requestMealPlan = (context: unknown) => openAIService.generatePlan(context);
 export const requestNutritionAnswer = (context: unknown, question: string) =>
   openAIService.answerNutritionQuestion(context, question);

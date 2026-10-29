@@ -4,7 +4,7 @@ import { api } from "../../api/client";
 import { createAppQueryClient } from "../../api/query-client";
 import { queryKeys } from "../../api/query-keys";
 import type { ChatMessage, DashboardData } from "../../types";
-import { getAssistantDashboard, getChatHistory, sendChatMessage } from "./ai.api";
+import { getAIStatus, getAssistantDashboard, getChatHistory, sendChatMessage } from "./ai.api";
 import {
   assistantDietLabel, assistantFallbackHistory, assistantPromptPills, assistantQuickActions,
   assistantSuggestions, chatHistoryTime, normalizeChatMessage, recentUserHistory,
@@ -42,6 +42,13 @@ describe("AI frontend API adapters (no network)", () => {
     api.defaults.adapter = adapter;
     expect(await getChatHistory()).toEqual(messages);
     expect(adapter.mock.calls[0][0]).toMatchObject({ method: "get", url: "/ai/history" });
+  });
+
+  it("reads whether AI is configured from the status endpoint", async () => {
+    const adapter = vi.fn(async (config) => ({ config, data: { available: false }, status: 200, statusText: "OK", headers: {} }));
+    api.defaults.adapter = adapter;
+    expect(await getAIStatus()).toEqual({ available: false });
+    expect(adapter.mock.calls[0][0]).toMatchObject({ method: "get", url: "/ai/status" });
   });
 
   it("loads the unchanged Dashboard context used by the assistant page", async () => {

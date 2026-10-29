@@ -18,6 +18,7 @@ export const generatedPlanSchema = z.object({
 });
 
 export const listChatHistorySchema = z.object({ body: empty, params: empty, query: empty });
+export const aiStatusSchema = z.object({ body: empty, params: empty, query: empty });
 export const chatSchema = z.object({
   body: z.object({ message: z.string().min(2).max(1000) }),
   params: empty,

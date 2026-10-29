@@ -1,9 +1,11 @@
 import { mutationOptions, queryOptions, type QueryClient } from "@tanstack/react-query";
 import { queryKeys } from "../../api/query-keys";
-import { getAssistantDashboard, getChatHistory, sendChatMessage } from "./ai.api";
+import { getAIStatus, getAssistantDashboard, getChatHistory, sendChatMessage } from "./ai.api";
 
 export const aiQueries = {
   history: () => queryOptions({ queryKey: queryKeys.ai.history, queryFn: getChatHistory }),
+  // Cấu hình OpenAI ít khi đổi khi đang chạy.
+  status: () => queryOptions({ queryKey: queryKeys.ai.status, queryFn: getAIStatus, staleTime: 5 * 60_000 }),
   dashboard: () => queryOptions({ queryKey: queryKeys.dashboard, queryFn: getAssistantDashboard }),
 };
 

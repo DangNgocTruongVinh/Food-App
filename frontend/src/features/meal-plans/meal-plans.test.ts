@@ -10,7 +10,7 @@ import {
 } from "./meal-plans.api";
 import {
   alternativeMeals, hasBalancedCalories, mealItemImage, mealPlanDeleteConfirmMessage, mealPlanPath, mealPlanTargets,
-  latestMealPlanId, mealPlanSuggestions, mealTag, nextMealPlanIdAfterDelete, percentage, recipeSearchPath, selectMealPlan, selectMealPlanDay,
+  generateMealPlanLabel, latestMealPlanId, mealPlanSourceLabel, mealPlanSuggestions, mealTag, nextMealPlanIdAfterDelete, percentage, recipeSearchPath, selectMealPlan, selectMealPlanDay,
   summarizeMealPlan,
 } from "./meal-plans.logic";
 import { invalidateMealPlanQueries, mealPlanQueries, removeDeletedMealPlan, removeMealPlanDetail } from "./meal-plans.queries";
@@ -315,5 +315,19 @@ describe("Deleting a meal plan updates the cache before navigation", () => {
     expect(queryClient.getQueryData<MealPlan[]>(queryKeys.mealPlans.list())).toEqual([]);
     expect(latestMealPlanId(queryClient.getQueryData<MealPlan[]>(queryKeys.mealPlans.list()) ?? [])).toBeNull();
     queryClient.clear();
+  });
+});
+
+describe("Honest meal plan labels", () => {
+  it("labels the plan by how it was actually generated", () => {
+    expect(mealPlanSourceLabel(true)).toBe("Tạo bởi AI");
+    expect(mealPlanSourceLabel(false)).toBe("Thuật toán gợi ý");
+  });
+  it.each([
+    [true, false, "Tạo thực đơn AI"], [true, true, "AI đang tạo..."],
+    [false, false, "Tạo thực đơn"], [false, true, "Đang tạo..."],
+    [undefined, false, "Tạo thực đơn"], [undefined, true, "Đang tạo..."],
+  ] as const)("mentions AI only when the backend reports it is configured (available=%s, pending=%s)", (available, pending, label) => {
+    expect(generateMealPlanLabel(available, pending)).toBe(label);
   });
 });

@@ -163,3 +163,14 @@ export function mealPlanSuggestions(
     : fatCandidates.find((candidate) => !conflictsWithProfile(candidate, profile))!;
   return [fiber, fat].map(({ key, image, alt, text }) => ({ key, image, alt, text }));
 }
+
+/** Nhãn trung thực cho nguồn tạo thực đơn. */
+export function mealPlanSourceLabel(aiGenerated: boolean) {
+  return aiGenerated ? "Tạo bởi AI" : "Thuật toán gợi ý";
+}
+
+/** Chỉ nhắc tới AI khi backend xác nhận đã cấu hình OpenAI; chưa biết thì coi như chưa có. */
+export function generateMealPlanLabel(aiAvailable: boolean | undefined, pending: boolean) {
+  if (pending) return aiAvailable ? "AI đang tạo..." : "Đang tạo...";
+  return aiAvailable ? "Tạo thực đơn AI" : "Tạo thực đơn";
+}
