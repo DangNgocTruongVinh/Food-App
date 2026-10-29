@@ -25,7 +25,7 @@
 
 \* Giá trị ô "Dị ứng thực phẩm" không được lưu trong snapshot của Playwright; dị ứng "Hải sản" ghi theo kịch bản kiểm thử.
 
-## Phát hiện khác (chưa sửa)
+## Phát hiện khác
 
-- **Ảnh minh họa không theo món:** ảnh lớn của bữa tối trong ca 2–4 là ảnh cá hồi dù món là "Nấm kho tiêu", "Canh chua chay" hoặc "Gà teriyaki". Trang Thực đơn chọn ảnh theo bữa (`mealImage`) chứ chưa dùng `imageUrl` của công thức.
-- **Lỗi console:** `TypeError: K is not a function` khi chuyển từ trang Công thức sang Hồ sơ. Image frontend trong Docker dùng React 19.3.0, còn bản local dùng 19.2.8, vì Dockerfile chạy `npm install` mà không có lockfile.
+- **Ảnh minh họa không theo món:** ảnh lớn của bữa tối trong ca 2–4 là ảnh cá hồi dù món là "Nấm kho tiêu", "Canh chua chay" hoặc "Gà teriyaki". Trang Thực đơn chọn ảnh theo bữa (`mealImage`) chứ chưa dùng `imageUrl` của công thức. **Đã sửa** (`mealItemImage` dùng ảnh của chính công thức), cần chụp lại.
+- **Lỗi console:** `TypeError: K is not a function` khi chuyển từ trang Công thức sang Hồ sơ. Image frontend trong Docker dùng React 19.3.0, còn bản local dùng 19.2.8, vì Dockerfile chạy `npm install` mà không có lockfile. **Đã sửa cấu hình build** (`npm ci` với lockfile ở thư mục gốc; image mới dùng React 19.2.8). Còn chờ kiểm tra lại trên trình duyệt.

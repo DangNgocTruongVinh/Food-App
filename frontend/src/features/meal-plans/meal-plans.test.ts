@@ -9,7 +9,7 @@ import {
   updateMealPlanStatus, updateShoppingPurchased,
 } from "./meal-plans.api";
 import {
-  alternativeMeals, hasBalancedCalories, mealImage, mealPlanDeleteConfirmMessage, mealPlanPath, mealPlanTargets,
+  alternativeMeals, hasBalancedCalories, mealItemImage, mealPlanDeleteConfirmMessage, mealPlanPath, mealPlanTargets,
   latestMealPlanId, mealPlanSuggestions, mealTag, nextMealPlanIdAfterDelete, percentage, recipeSearchPath, selectMealPlan, selectMealPlanDay,
   summarizeMealPlan,
 } from "./meal-plans.logic";
@@ -189,12 +189,20 @@ describe("Meal Plan and Shopping page business logic", () => {
     expect(hasBalancedCalories(1699, 2000)).toBe(false);
   });
 
-  it("keeps meal tag priority and local image selection", () => {
+  it("keeps meal tag priority", () => {
     expect(mealTag(plan.days[0].items[0])).toBe("BALANCED");
     expect(mealTag(meal({ recipe: recipe({ dietTags: [], proteinG: 25 }) }))).toBe("Giàu protein");
     expect(mealTag(meal({ recipe: recipe({ dietTags: [], proteinG: 10, fatG: 15 }) }))).toBe("Ít chất béo");
-    expect(mealImage("BREAKFAST")).toBe("/assets/recipe-oats.jpg");
-    expect(mealImage("LUNCH")).toBe("/assets/recipe-vegan-bowl.jpg");
+  });
+
+  it("shows each meal with its own recipe image, not an image chosen by meal type", () => {
+    const veganDinner = meal({ mealType: "DINNER", recipe: recipe({ name: "Nấm kho tiêu", imageUrl: "/assets/recipe-vegan-bowl.jpg" }) });
+    const fishDinner = meal({ mealType: "DINNER", recipe: recipe({ name: "Cá kho tộ", imageUrl: "/assets/recipe-salmon.jpg" }) });
+    expect(mealItemImage(veganDinner)).toBe("/assets/recipe-vegan-bowl.jpg");
+    expect(mealItemImage(fishDinner)).toBe("/assets/recipe-salmon.jpg");
+    // Công thức chưa có imageUrl dùng ảnh tạm theo tên món.
+    expect(mealItemImage(meal({ recipe: recipe({ name: "Yến mạch chuối", imageUrl: null }) }))).toBe("/assets/recipe-oats.jpg");
+    expect(mealItemImage(meal({ recipe: recipe({ name: "Cháo gà", imageUrl: "https://cdn.example/chao.jpg" }) }))).toBe("https://cdn.example/chao.jpg");
   });
 
   it("keeps the first two alternative meals and excludes the primary item", () => {

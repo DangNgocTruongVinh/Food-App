@@ -14,7 +14,7 @@ import { queryKeys } from "../api/query-keys";
 import DateInput from "../components/DateInput";
 import { EmptyState, LoadingState } from "../components/States";
 import {
-  alternativeMeals, featuredMealTypes, hasBalancedCalories, mealImage, mealLabels,
+  alternativeMeals, featuredMealTypes, hasBalancedCalories, mealItemImage, mealLabels,
   latestMealPlanId, mealPlanDeleteConfirmMessage, mealPlanPath, mealPlanSuggestions, mealPlanTargets, mealShortLabels, mealTag, mealTimes,
   nextMealPlanIdAfterDelete, percentage, recipeSearchPath, selectMealPlanDay, summarizeMealPlan,
 } from "../features/meal-plans/meal-plans.logic";
@@ -172,9 +172,9 @@ export default function MealPlansPage() {
             return <article className={`menu-meal-column menu-${mealType.toLowerCase()}`} key={mealType}>
               <header><span><MealIcon /></span><div><strong>{mealShortLabels[mealType]}</strong><small>{mealTimes[mealType]}</small></div><ChevronRight /></header>
               {primary ? <>
-                <div className="menu-featured-image"><img src={mealImage(mealType)} alt={primary.recipe.name} /><button className={primary.completed ? "completed" : ""} onClick={() => toggleMeal.mutate({ id: primary.id, completed: !primary.completed })} aria-label={primary.completed ? `Đánh dấu ${primary.recipe.name} chưa hoàn thành` : `Đánh dấu ${primary.recipe.name} hoàn thành`}><Check /></button></div>
+                <div className="menu-featured-image"><img src={mealItemImage(primary)} alt={primary.recipe.name} /><button className={primary.completed ? "completed" : ""} onClick={() => toggleMeal.mutate({ id: primary.id, completed: !primary.completed })} aria-label={primary.completed ? `Đánh dấu ${primary.recipe.name} chưa hoàn thành` : `Đánh dấu ${primary.recipe.name} hoàn thành`}><Check /></button></div>
                 <div className="menu-featured-copy"><h2><Link to={recipeDetailPath(primary.recipe.id)}>{primary.recipe.name}</Link></h2><span><Clock3 /> {primary.recipe.prepMinutes + primary.recipe.cookMinutes} phút <i /> {primary.calories} kcal</span><div><b>{mealTag(primary)}</b><b className="secondary">{primary.completed ? "Đã dùng bữa" : "Dễ thực hiện"}</b></div></div>
-                <div className="menu-alternative-list">{alternatives.map((item, index) => <button key={item.id} className={item.completed ? "completed" : ""} onClick={() => toggleMeal.mutate({ id: item.id, completed: !item.completed })}><img src={mealImage(mealType, index + 1)} alt="" /><span><strong>{item.recipe.name}</strong><small><Clock3 /> {item.recipe.prepMinutes + item.recipe.cookMinutes} phút · {item.calories} kcal</small></span><i>{item.completed && <Check />}</i></button>)}</div>
+                <div className="menu-alternative-list">{alternatives.map((item, index) => <button key={item.id} className={item.completed ? "completed" : ""} onClick={() => toggleMeal.mutate({ id: item.id, completed: !item.completed })}><img src={mealItemImage(item)} alt="" /><span><strong>{item.recipe.name}</strong><small><Clock3 /> {item.recipe.prepMinutes + item.recipe.cookMinutes} phút · {item.calories} kcal</small></span><i>{item.completed && <Check />}</i></button>)}</div>
               </> : <div className="menu-missing-meal"><Utensils /><p>Chưa có món cho {mealLabels[mealType].toLowerCase()}.</p><Link to="/recipes">Chọn món</Link></div>}
             </article>;
           })}</div>

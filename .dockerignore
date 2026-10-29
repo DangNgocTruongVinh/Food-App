@@ -1,0 +1,13 @@
+# Context build là thư mục gốc (npm workspaces); chỉ gửi những gì Dockerfile cần.
+**/node_modules
+**/dist
+**/coverage
+.git
+.playwright-mcp
+docs
+output
+*.sql
+*.log
+**/.env
+**/.env.*
+!**/.env.example
