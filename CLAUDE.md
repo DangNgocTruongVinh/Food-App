@@ -108,7 +108,7 @@ Biến môi trường mới phải thêm vào `backend/src/config/env.ts` (Zod) 
 
 ### Giai đoạn 2c — Bộ món mới, logic tạo thực đơn, trang chi tiết công thức
 Thứ tự: (b) → khảo sát dọn code → (a), (c), (d).
-- [ ] (b) Thay toàn bộ bộ món seed và sửa logic tạo thực đơn:
+- [x] (b) Thay toàn bộ bộ món seed và sửa logic tạo thực đơn:
   - Bộ 33 món (~80% Việt Nam, ~20% nước ngoài), đủ bữa sáng/trưa/tối/phụ và đủ món cho từng `DietType`; dữ liệu seed tách riêng `prisma/seed-data.ts`.
   - Mỗi món 4–7 bước chi tiết, nguyên liệu khớp bước làm, đơn vị thuộc `FoodUnit`, tên nguyên liệu tiếng Việt thông dụng; tránh tên nhập nhằng ("Quả bơ", "Bơ lạt", không dùng "Bơ").
   - `cuisine` thống nhất: "Việt Nam", "Nhật Bản", "Hàn Quốc", "Thái Lan", "Ý", "Hy Lạp", "Mỹ".
@@ -116,9 +116,12 @@ Thứ tự: (b) → khảo sát dọn code → (a), (c), (d).
   - Schema: `Recipe.mealTypes MealType[]` + migration mới. `fallbackPlan` chọn món theo bữa và theo `mealsPerDay`.
   - Chế độ ăn: VEGETARIAN/VEGAN lọc bắt buộc; LOW_CARB/HIGH_PROTEIN chỉ ưu tiên; BALANCED không lọc. Danh sách gửi OpenAI lọc như vậy.
   - Dị ứng theo nhóm (bảng ánh xạ ở backend: Hải sản, Sữa, Trứng, Đậu phộng, Gluten), so khớp không phân biệt hoa thường/khoảng trắng.
-  - Test: ăn chay, thuần chay, dị ứng phổ biến vẫn có thực đơn 7 ngày hợp lệ; kiểm tra dữ liệu seed.
+  - Test: 140 tổ hợp (5 chế độ ăn × 7 bộ dị ứng × 3–4 bữa × kho trống/kho demo) vẫn có thực đơn 7 ngày hợp lệ; kiểm tra dữ liệu seed.
+  - Giảm lặp món (quy tắc ưu tiên, không bắt buộc): tránh món bữa tối hôm trước ở bữa sáng/trưa hôm sau, phân bổ đều số lần mỗi món trong tuần; "không lặp trong cùng ngày" giữ nguyên. Áp dụng cho `fallbackPlan` và phần thay món của `reconcileAIPlan`.
   - Kiểm tra kết quả OpenAI (`reconcileAIPlan`): món ngoài danh sách đã lọc, sai bữa theo `mealTypes`, lặp trong ngày hoặc bữa bị thiếu → thay bằng món chọn theo logic fallback; thiếu ngày hoặc quá 50% bữa vi phạm → dùng `fallbackPlan` cho cả thực đơn. `aiGenerated` phản ánh nguồn thực tế (false khi phải dùng fallback).
   - Landing: đổi tên 4 món hardcode theo bộ mới (API thật vẫn để GĐ5). Dashboard: 3 món dự phòng lấy từ bộ mới.
+  - Kèm theo: chỉ tiêu seed tính bằng `calculateNutritionTargets`; gợi ý trang Thực đơn theo hồ sơ; ảnh món theo công thức; sửa xóa thực đơn cuối; Docker build bằng lockfile (`npm ci`).
+  - Đã kiểm thử trên trình duyệt (`docs/test-evidence/`) và gộp vào `main`.
 - [ ] Khảo sát dọn code sau (b).
   - Xem xét xóa 10 ảnh trong `frontend/public/assets/` không còn được tham chiếu (đã không dùng từ trước GĐ2c): `hero-bowl-clean-v3.png`, `hero-composition-napkin.png`, `hero-ingredient-cluster-v2.png`, `hero-ingredient-trio-v2.png`, `hero-ingredients-clean-v3.png`, `hero-salmon-bowl-v2.png`, `landing-hero-robot.png`, `landing-meal-planner-journal.png`, `nouri-logo-minimal.png`, `nouri-logo.png`.
 - [ ] (a) Sửa tiêu đề trang chi tiết công thức bị thanh menu che.
