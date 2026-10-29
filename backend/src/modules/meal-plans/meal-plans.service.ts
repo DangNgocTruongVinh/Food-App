@@ -1,13 +1,12 @@
 import type { DietType, FoodUnit, MealType, PlanStatus, Recipe } from "@prisma/client";
 import { prisma } from "../../lib/prisma.js";
-import { filterRecipesForProfile, prefersDiet } from "../../services/dietary.service.js";
+import { filterRecipesForProfile, normalizeFoodText, prefersDiet } from "../../services/dietary.service.js";
 import { calculateNutritionTargets } from "../../services/nutrition.service.js";
 import { HttpError } from "../../utils/http-error.js";
 import { generatePlanWithAI, type GeneratedPlan } from "../ai/ai.service.js";
 
 type RecipeWithIngredients = Recipe & { ingredients: Array<{ name: string; quantity: number; unit: FoodUnit }> };
 
-const normalize = (value: string) => value.trim().toLocaleLowerCase("vi");
 
 /** Các bữa trong ngày theo hồ sơ (profile cho phép 3–4 bữa). */
 export function mealSlots(mealsPerDay: number): MealType[] {
@@ -19,7 +18,7 @@ function rankRecipes(recipes: RecipeWithIngredients[], pantryNames: Set<string>,
   return recipes
     .map((recipe) => ({
       recipe,
-      score: recipe.ingredients.filter((ingredient) => pantryNames.has(normalize(ingredient.name))).length
+      score: recipe.ingredients.filter((ingredient) => pantryNames.has(normalizeFoodText(ingredient.name))).length
         + (prefersDiet(recipe, dietType) ? 2 : 0),
     }))
     .sort((a, b) => b.score - a.score || a.recipe.calories - b.recipe.calories)
@@ -172,7 +171,7 @@ export async function generateWeeklyPlan(userId: string, startDateInput: string)
   // Lọc chung cho cả OpenAI và thuật toán dự phòng: chay/thuần chay bắt buộc, dị ứng theo nhóm, món không thích.
   const recipes = filterRecipesForProfile(allRecipes, profile);
   const dietType = profile?.dietType ?? "BALANCED";
-  const pantryNames = new Set(pantry.map((item) => normalize(item.name)));
+  const pantryNames = new Set(pantry.map((item) => normalizeFoodText(item.name)));
   const mealsPerDay = profile?.mealsPerDay ?? 3;
   const aiContext = {
     nutritionTargets: targets,
@@ -221,10 +220,10 @@ export async function generateWeeklyPlan(userId: string, startDateInput: string)
     }),
   }));
 
-  const pantryByKey = new Map(pantry.map((item) => [`${normalize(item.name)}:${item.unit}`, item.quantity]));
+  const pantryByKey = new Map(pantry.map((item) => [`${normalizeFoodText(item.name)}:${item.unit}`, item.quantity]));
   const required = new Map<string, { name: string; quantity: number; unit: FoodUnit }>();
   for (const item of selectedIngredients) {
-    const key = `${normalize(item.name)}:${item.unit}`;
+    const key = `${normalizeFoodText(item.name)}:${item.unit}`;
     const current = required.get(key);
     required.set(key, { ...item, quantity: (current?.quantity ?? 0) + item.quantity });
   }
