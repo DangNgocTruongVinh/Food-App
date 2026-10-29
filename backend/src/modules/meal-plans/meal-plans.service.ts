@@ -14,14 +14,9 @@ export function mealSlots(mealsPerDay: number): MealType[] {
   return mealsPerDay >= 4 ? ["BREAKFAST", "LUNCH", "DINNER", "SNACK"] : ["BREAKFAST", "LUNCH", "DINNER"];
 }
 
-export function fallbackPlan(
-  recipes: RecipeWithIngredients[],
-  pantryNames: Set<string>,
-  mealsPerDay: number,
-  dietType: DietType = "BALANCED",
-): GeneratedPlan {
-  // Điểm = số nguyên liệu đã có trong kho, cộng thêm khi món hợp chế độ ăn được ưu tiên (LOW_CARB/HIGH_PROTEIN).
-  const ranked = recipes
+// Điểm = số nguyên liệu đã có trong kho, cộng thêm khi món hợp chế độ ăn được ưu tiên (LOW_CARB/HIGH_PROTEIN).
+function rankRecipes(recipes: RecipeWithIngredients[], pantryNames: Set<string>, dietType: DietType) {
+  return recipes
     .map((recipe) => ({
       recipe,
       score: recipe.ingredients.filter((ingredient) => pantryNames.has(normalize(ingredient.name))).length
@@ -29,14 +24,31 @@ export function fallbackPlan(
     }))
     .sort((a, b) => b.score - a.score || a.recipe.calories - b.recipe.calories)
     .map(({ recipe }) => recipe);
+}
+
+// Món chưa khai báo bữa (mealTypes rỗng) dùng được cho mọi bữa.
+function fitsMeal(recipe: RecipeWithIngredients, mealType: MealType) {
+  return !recipe.mealTypes?.length || recipe.mealTypes.includes(mealType);
+}
+
+// Xoay vòng theo ngày để đa dạng; tránh lặp một món trong cùng ngày nếu còn lựa chọn khác.
+function pickRecipeForMeal(ranked: RecipeWithIngredients[], mealType: MealType, dayIndex: number, usedToday: Set<string>) {
+  const declared = ranked.filter((recipe) => recipe.mealTypes?.includes(mealType));
+  const candidates = declared.length ? declared : ranked;
+  return Array.from({ length: candidates.length }, (_, offset) => candidates[(dayIndex + offset) % candidates.length])
+    .find((recipe) => !usedToday.has(recipe.id)) ?? candidates[dayIndex % candidates.length];
+}
+
+const fallbackReason = "Phù hợp bữa ăn, kho thực phẩm và mục tiêu năng lượng.";
+
+export function fallbackPlan(
+  recipes: RecipeWithIngredients[],
+  pantryNames: Set<string>,
+  mealsPerDay: number,
+  dietType: DietType = "BALANCED",
+): GeneratedPlan {
+  const ranked = rankRecipes(recipes, pantryNames, dietType);
   if (!ranked.length) throw new HttpError(422, "Chưa có công thức phù hợp để tạo thực đơn.");
-
-  // Món chưa khai báo bữa (mealTypes rỗng) vẫn được dùng khi một bữa không có món riêng.
-  const candidatesFor = (mealType: MealType) => {
-    const fit = ranked.filter((recipe) => recipe.mealTypes?.includes(mealType));
-    return fit.length ? fit : ranked;
-  };
-
   return {
     summary: "Thực đơn được tạo bằng thuật toán ưu tiên thực phẩm sẵn có, đúng bữa và phù hợp chế độ ăn.",
     days: Array.from({ length: 7 }, (_, dayIndex) => {
@@ -44,16 +56,61 @@ export function fallbackPlan(
       return {
         dayIndex,
         meals: mealSlots(mealsPerDay).map((mealType) => {
-          const candidates = candidatesFor(mealType);
-          // Xoay vòng theo ngày để đa dạng; tránh lặp một món trong cùng ngày nếu còn lựa chọn khác.
-          const recipe = Array.from({ length: candidates.length }, (_, offset) => candidates[(dayIndex + offset) % candidates.length])
-            .find((item) => !usedToday.has(item.id)) ?? candidates[dayIndex % candidates.length];
+          const recipe = pickRecipeForMeal(ranked, mealType, dayIndex, usedToday);
           usedToday.add(recipe.id);
-          return { mealType, recipeId: recipe.id, servings: 1, reason: "Phù hợp bữa ăn, kho thực phẩm và mục tiêu năng lượng." };
+          return { mealType, recipeId: recipe.id, servings: 1, reason: fallbackReason };
         }),
       };
     }),
   };
+}
+
+/** Quá nửa số bữa AI trả về không dùng được thì coi là lỗi nặng và dùng fallbackPlan cho cả thực đơn. */
+const MAX_INVALID_AI_MEAL_RATIO = 0.5;
+
+/**
+ * Kiểm tra thực đơn OpenAI trả về: mỗi bữa phải dùng món trong danh sách đã lọc (chế độ ăn, dị ứng, món không thích)
+ * và đúng bữa theo mealTypes. Bữa vi phạm hoặc bị thiếu được thay bằng món chọn theo logic fallback.
+ */
+export function reconcileAIPlan(
+  aiPlan: GeneratedPlan,
+  recipes: RecipeWithIngredients[],
+  pantryNames: Set<string>,
+  mealsPerDay: number,
+  dietType: DietType = "BALANCED",
+): { plan: GeneratedPlan; source: "ai" | "ai-corrected" | "fallback"; replacedMeals: number } {
+  const fallback = () => ({ plan: fallbackPlan(recipes, pantryNames, mealsPerDay, dietType), source: "fallback" as const });
+  const ranked = rankRecipes(recipes, pantryNames, dietType);
+  const allowed = new Map(recipes.map((recipe) => [recipe.id, recipe]));
+  const slots = mealSlots(mealsPerDay);
+  const aiDays = new Map(aiPlan.days.map((day) => [day.dayIndex, day]));
+  // Lỗi nặng: thiếu ngày nào trong 7 ngày.
+  if (!ranked.length || Array.from({ length: 7 }, (_, dayIndex) => aiDays.has(dayIndex)).includes(false)) {
+    return { ...fallback(), replacedMeals: slots.length * 7 };
+  }
+
+  let replacedMeals = 0;
+  const days = Array.from({ length: 7 }, (_, dayIndex) => {
+    const aiMeals = [...aiDays.get(dayIndex)!.meals];
+    const usedToday = new Set<string>();
+    const meals = slots.map((mealType) => {
+      const index = aiMeals.findIndex((meal) => meal.mealType === mealType);
+      const aiMeal = index >= 0 ? aiMeals.splice(index, 1)[0] : undefined;
+      const recipe = aiMeal ? allowed.get(aiMeal.recipeId) : undefined;
+      if (aiMeal && recipe && fitsMeal(recipe, mealType) && !usedToday.has(recipe.id)) {
+        usedToday.add(recipe.id);
+        return aiMeal;
+      }
+      replacedMeals += 1;
+      const replacement = pickRecipeForMeal(ranked, mealType, dayIndex, usedToday);
+      usedToday.add(replacement.id);
+      return { mealType, recipeId: replacement.id, servings: aiMeal?.servings ?? 1, reason: fallbackReason };
+    });
+    return { dayIndex, meals };
+  });
+
+  if (replacedMeals / (slots.length * 7) > MAX_INVALID_AI_MEAL_RATIO) return { ...fallback(), replacedMeals };
+  return { plan: { summary: aiPlan.summary, days }, source: replacedMeals ? "ai-corrected" : "ai", replacedMeals };
 }
 
 export async function generateWeeklyPlan(userId: string, startDateInput: string) {
@@ -84,7 +141,10 @@ export async function generateWeeklyPlan(userId: string, startDateInput: string)
     })),
   };
 
-  const rawPlan = (await generatePlanWithAI(aiContext)) ?? fallbackPlan(recipes, pantryNames, mealsPerDay, dietType);
+  const aiPlan = await generatePlanWithAI(aiContext);
+  const { plan: rawPlan, source } = aiPlan
+    ? reconcileAIPlan(aiPlan, recipes, pantryNames, mealsPerDay, dietType)
+    : { plan: fallbackPlan(recipes, pantryNames, mealsPerDay, dietType), source: "fallback" as const };
   const recipeById = new Map(recipes.map((recipe) => [recipe.id, recipe]));
   const validDays = rawPlan.days
     .filter((day) => day.dayIndex >= 0 && day.dayIndex <= 6)
@@ -133,17 +193,13 @@ export async function generateWeeklyPlan(userId: string, startDateInput: string)
       startDate,
       endDate,
       calorieTarget: profile?.dailyCalorieTarget ?? targets.calories,
-      aiGenerated: Boolean(envHasAI()),
+      aiGenerated: source !== "fallback",
       summary: rawPlan.summary,
       days: { create: days.map((day) => ({ date: day.date, items: { create: day.items } })) },
       shoppingItems: { create: shoppingItems },
     },
     include: planInclude,
   });
-}
-
-function envHasAI() {
-  return Boolean(process.env.OPENAI_API_KEY);
 }
 
 export const planInclude = {

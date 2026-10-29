@@ -1,7 +1,10 @@
 import jwt from "jsonwebtoken";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { request, testApp } from "../../test/http-test-utils.js";
+import { seedRecipes } from "../../../prisma/seed-data.js";
 import mealPlanRoutes from "./meal-plans.routes.js";
+import { filterRecipesForProfile } from "../../services/dietary.service.js";
+import { fallbackPlan } from "./meal-plans.service.js";
 
 const mocks = vi.hoisted(() => ({
   secret: "nouri-test-only-secret-at-least-32-characters",
@@ -160,6 +163,43 @@ describe("Meal Plan and Shopping HTTP contract (no database)", () => {
     });
     expect(data.days.create).toHaveLength(7);
     expect(data.days.create.every((day: { items: { create: unknown[] } }) => day.items.create.length === 3)).toBe(true);
+  });
+
+  it("corrects an OpenAI plan with a wrong-meal dish and an allergen before saving", async () => {
+    const seedAsDb = seedRecipes.map((item) => ({
+      ...item, id: item.slug, servings: 1, createdAt: new Date(0), updatedAt: new Date(0),
+      ingredients: item.ingredients.map((ingredient, index) => ({ id: `${item.slug}-${index}`, recipeId: item.slug, optional: false, ...ingredient })),
+    }));
+    mocks.findUser.mockResolvedValue({
+      id: userId,
+      profile: { dietType: "BALANCED", allergies: ["Hải sản"], dislikedFoods: [], preferredCuisines: [], mealsPerDay: 3, dailyCalorieTarget: 2000 },
+    });
+    mocks.listRecipes.mockResolvedValue(seedAsDb);
+    mocks.listPantry.mockResolvedValue([]);
+    // OpenAI (mock) đề xuất món chè vào bữa trưa và món cá cho người dị ứng hải sản.
+    const aiPlan = { ...fallbackPlan(filterRecipesForProfile(seedAsDb, { allergies: ["Hải sản"] }), new Set(), 3), summary: "AI" };
+    aiPlan.days[0].meals[1] = { ...aiPlan.days[0].meals[1], recipeId: "che-dau-den" };
+    aiPlan.days[1].meals[2] = { ...aiPlan.days[1].meals[2], recipeId: "ca-kho-to" };
+    mocks.generatePlanWithAI.mockResolvedValue(aiPlan);
+
+    const response = await request(app, "/api/meal-plans/generate", { method: "POST", token: token(), body: { startDate: "2026-10-01" } });
+    expect(response.status).toBe(201);
+    const sentRecipeIds = mocks.generatePlanWithAI.mock.calls[0][0].recipes.map((item: { id: string }) => item.id);
+    expect(sentRecipeIds).not.toContain("ca-kho-to");
+    const data = mocks.createPlan.mock.calls[0][0].data;
+    expect(data.aiGenerated).toBe(true);
+    const saved = data.days.create.map((day: { items: { create: Array<{ recipeId: string; mealType: string }> } }) => day.items.create);
+    expect(saved[0][1]).toMatchObject({ mealType: "LUNCH" });
+    expect(saved[0][1].recipeId).not.toBe("che-dau-den");
+    expect(saved[1][2]).toMatchObject({ mealType: "DINNER" });
+    expect(saved[1][2].recipeId).not.toBe("ca-kho-to");
+    for (const items of saved) {
+      for (const item of items) {
+        const recipe = seedAsDb.find((candidate) => candidate.id === item.recipeId)!;
+        expect(recipe.mealTypes).toContain(item.mealType);
+        expect(recipe.ingredients.map((ingredient) => ingredient.name)).not.toContain("Nước mắm");
+      }
+    }
   });
 
   it("updates plan status by id and owner in one transaction", async () => {

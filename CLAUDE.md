@@ -117,6 +117,7 @@ Thứ tự: (b) → khảo sát dọn code → (a), (c), (d).
   - Chế độ ăn: VEGETARIAN/VEGAN lọc bắt buộc; LOW_CARB/HIGH_PROTEIN chỉ ưu tiên; BALANCED không lọc. Danh sách gửi OpenAI lọc như vậy.
   - Dị ứng theo nhóm (bảng ánh xạ ở backend: Hải sản, Sữa, Trứng, Đậu phộng, Gluten), so khớp không phân biệt hoa thường/khoảng trắng.
   - Test: ăn chay, thuần chay, dị ứng phổ biến vẫn có thực đơn 7 ngày hợp lệ; kiểm tra dữ liệu seed.
+  - Kiểm tra kết quả OpenAI (`reconcileAIPlan`): món ngoài danh sách đã lọc, sai bữa theo `mealTypes`, lặp trong ngày hoặc bữa bị thiếu → thay bằng món chọn theo logic fallback; thiếu ngày hoặc quá 50% bữa vi phạm → dùng `fallbackPlan` cho cả thực đơn. `aiGenerated` phản ánh nguồn thực tế (false khi phải dùng fallback).
   - Landing: đổi tên 4 món hardcode theo bộ mới (API thật vẫn để GĐ5). Dashboard: 3 món dự phòng lấy từ bộ mới.
 - [ ] Khảo sát dọn code sau (b).
   - Xem xét xóa 10 ảnh trong `frontend/public/assets/` không còn được tham chiếu (đã không dùng từ trước GĐ2c): `hero-bowl-clean-v3.png`, `hero-composition-napkin.png`, `hero-ingredient-cluster-v2.png`, `hero-ingredient-trio-v2.png`, `hero-ingredients-clean-v3.png`, `hero-salmon-bowl-v2.png`, `landing-hero-robot.png`, `landing-meal-planner-journal.png`, `nouri-logo-minimal.png`, `nouri-logo.png`.

@@ -2,7 +2,7 @@ import type { DietType } from "@prisma/client";
 import { describe, expect, it, vi } from "vitest";
 import { seedRecipes } from "../../../prisma/seed-data.js";
 import { expandRestrictedTerms, filterRecipesForProfile, findRestrictedTerms, matchesRequiredDiet } from "../../services/dietary.service.js";
-import { fallbackPlan, mealSlots } from "./meal-plans.service.js";
+import { fallbackPlan, mealSlots, reconcileAIPlan } from "./meal-plans.service.js";
 
 vi.mock("../../lib/prisma.js", () => ({ prisma: {} }));
 vi.mock("../ai/ai.service.js", () => ({ generatePlanWithAI: vi.fn() }));
@@ -69,5 +69,70 @@ describe("fallbackPlan on the seed recipes", () => {
     const lunch = byId.get(plan.days[0].meals.find((meal) => meal.mealType === "LUNCH")!.recipeId)!;
     const pantryMatches = lunch.ingredients.filter((ingredient) => pantry.has(ingredient.name.toLocaleLowerCase("vi"))).length;
     expect(pantryMatches).toBe(3);
+  });
+});
+
+describe("reconcileAIPlan (kiểm tra kết quả OpenAI)", () => {
+  const seafoodFree = filterRecipesForProfile(recipes, { dietType: "BALANCED", allergies: ["Hải sản"] });
+  const noPantry = new Set<string>();
+  // Thực đơn AI hợp lệ làm nền, mỗi test chèn một kiểu vi phạm.
+  const validAIPlan = () => ({ ...fallbackPlan(seafoodFree, noPantry, 3), summary: "Thực đơn do AI đề xuất" });
+  const mealOf = (plan: ReturnType<typeof validAIPlan>, dayIndex: number, mealType: string) =>
+    plan.days.find((day) => day.dayIndex === dayIndex)!.meals.find((meal) => meal.mealType === mealType)!;
+
+  it("keeps a valid AI plan unchanged", () => {
+    const aiPlan = validAIPlan();
+    const result = reconcileAIPlan(aiPlan, seafoodFree, noPantry, 3);
+    expect(result).toMatchObject({ source: "ai", replacedMeals: 0 });
+    expect(result.plan).toEqual(aiPlan);
+  });
+
+  it("replaces a dish served at the wrong meal with a valid dish for that meal", () => {
+    const aiPlan = validAIPlan();
+    mealOf(aiPlan, 0, "LUNCH").recipeId = "che-dau-den"; // chè chỉ dành cho bữa phụ
+    const result = reconcileAIPlan(aiPlan, seafoodFree, noPantry, 3);
+    const lunch = byId.get(mealOf(result.plan, 0, "LUNCH").recipeId)!;
+    expect(result).toMatchObject({ source: "ai-corrected", replacedMeals: 1 });
+    expect(lunch.mealTypes).toContain("LUNCH");
+    expect(mealOf(result.plan, 0, "BREAKFAST")).toEqual(mealOf(aiPlan, 0, "BREAKFAST"));
+    expect(result.plan.summary).toBe("Thực đơn do AI đề xuất");
+  });
+
+  it("replaces a dish containing an allergen or missing from the filtered list", () => {
+    const aiPlan = validAIPlan();
+    mealOf(aiPlan, 2, "DINNER").recipeId = "ca-kho-to"; // chứa cá và nước mắm, người dùng dị ứng hải sản
+    mealOf(aiPlan, 3, "LUNCH").recipeId = "recipe-does-not-exist";
+    const result = reconcileAIPlan(aiPlan, seafoodFree, noPantry, 3);
+    expect(result).toMatchObject({ source: "ai-corrected", replacedMeals: 2 });
+    for (const [dayIndex, mealType] of [[2, "DINNER"], [3, "LUNCH"]] as const) {
+      const recipe = byId.get(mealOf(result.plan, dayIndex, mealType).recipeId)!;
+      expect(findRestrictedTerms(recipe, expandRestrictedTerms(["Hải sản"]))).toEqual([]);
+      expect(recipe.mealTypes).toContain(mealType);
+    }
+  });
+
+  it("fills a missing meal and replaces a dish repeated within the same day", () => {
+    const aiPlan = validAIPlan();
+    const day = aiPlan.days[1];
+    day.meals = day.meals.filter((meal) => meal.mealType !== "DINNER");
+    mealOf(aiPlan, 4, "DINNER").recipeId = mealOf(aiPlan, 4, "LUNCH").recipeId;
+    const result = reconcileAIPlan(aiPlan, seafoodFree, noPantry, 3);
+    expect(result.replacedMeals).toBe(2);
+    expect(result.plan.days[1].meals.map((meal) => meal.mealType)).toEqual(mealSlots(3));
+    expect(new Set(result.plan.days[4].meals.map((meal) => meal.recipeId)).size).toBe(3);
+  });
+
+  it("falls back to the whole fallback plan when a day is missing", () => {
+    const aiPlan = validAIPlan();
+    aiPlan.days = aiPlan.days.filter((day) => day.dayIndex !== 6);
+    const result = reconcileAIPlan(aiPlan, seafoodFree, noPantry, 3);
+    expect(result.source).toBe("fallback");
+    expect(result.plan).toEqual(fallbackPlan(seafoodFree, noPantry, 3));
+  });
+
+  it("falls back to the whole fallback plan when more than half of the meals are invalid", () => {
+    const aiPlan = validAIPlan();
+    aiPlan.days.slice(0, 4).forEach((day) => day.meals.forEach((meal) => { meal.recipeId = "ca-kho-to"; }));
+    expect(reconcileAIPlan(aiPlan, seafoodFree, noPantry, 3).source).toBe("fallback");
   });
 });
