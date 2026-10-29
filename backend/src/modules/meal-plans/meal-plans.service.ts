@@ -211,7 +211,8 @@ export function listMealPlans(userId: string) {
   return prisma.mealPlan.findMany({
     where: { userId },
     include: planInclude,
-    orderBy: { startDate: "desc" },
+    // Mới nhất trước; trùng ngày bắt đầu thì thực đơn tạo sau đứng trước.
+    orderBy: [{ startDate: "desc" }, { createdAt: "desc" }],
   });
 }
 

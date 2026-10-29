@@ -1,5 +1,6 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, type Prisma } from "@prisma/client";
 import bcrypt from "bcryptjs";
+import { nutritionTargetFields } from "../src/services/nutrition.service.js";
 import { seedRecipes } from "./seed-data.js";
 
 const prisma = new PrismaClient();
@@ -18,14 +19,22 @@ async function main() {
   await prisma.recipe.deleteMany({ where: { slug: { notIn: seedRecipes.map((recipe) => recipe.slug) }, mealItems: { none: {} } } });
 
   const email = "demo@nutriplan.vn";
+  const demoProfile = {
+    age: 24, gender: "FEMALE", heightCm: 162, weightKg: 55, targetWeightKg: 53, activityLevel: "MODERATE", goal: "MAINTAIN",
+    dietType: "BALANCED", allergies: [], dislikedFoods: ["Cần tây"], preferredCuisines: ["Việt Nam", "Nhật Bản"], mealsPerDay: 3,
+  } satisfies Prisma.NutritionProfileCreateWithoutUserInput;
   const user = await prisma.user.upsert({
     where: { email },
     update: {},
     create: {
       email, name: "Minh Anh", passwordHash: await bcrypt.hash("Demo@123", 12),
-      profile: { create: { age: 24, gender: "FEMALE", heightCm: 162, weightKg: 55, targetWeightKg: 53, activityLevel: "MODERATE", goal: "MAINTAIN", dietType: "BALANCED", allergies: [], dislikedFoods: ["Cần tây"], preferredCuisines: ["Việt Nam", "Nhật Bản"], mealsPerDay: 3, dailyCalorieTarget: 1880, proteinTargetG: 118, carbTargetG: 221, fatTargetG: 58 } },
+      profile: { create: { ...demoProfile, ...nutritionTargetFields(demoProfile) } },
     },
   });
+  // Chạy lại seed: không ghi đè lựa chọn người dùng đã đổi trong hồ sơ, chỉ tính lại 4 chỉ tiêu từ chính hồ sơ đó.
+  const profile = await prisma.nutritionProfile.findUnique({ where: { userId: user.id } });
+  if (profile) await prisma.nutritionProfile.update({ where: { userId: user.id }, data: nutritionTargetFields(profile) });
+  else await prisma.nutritionProfile.create({ data: { userId: user.id, ...demoProfile, ...nutritionTargetFields(demoProfile) } });
   if (!(await prisma.pantryItem.count({ where: { userId: user.id } }))) {
     const day = 86_400_000;
     await prisma.pantryItem.createMany({ data: [

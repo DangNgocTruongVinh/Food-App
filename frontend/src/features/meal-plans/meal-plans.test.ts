@@ -10,7 +10,7 @@ import {
 } from "./meal-plans.api";
 import {
   alternativeMeals, hasBalancedCalories, mealImage, mealPlanDeleteConfirmMessage, mealPlanPath, mealPlanTargets,
-  mealTag, nextMealPlanIdAfterDelete, percentage, recipeSearchPath, selectMealPlan, selectMealPlanDay,
+  latestMealPlanId, mealPlanSuggestions, mealTag, nextMealPlanIdAfterDelete, percentage, recipeSearchPath, selectMealPlan, selectMealPlanDay,
   summarizeMealPlan,
 } from "./meal-plans.logic";
 import { invalidateMealPlanQueries, mealPlanQueries } from "./meal-plans.queries";
@@ -214,11 +214,23 @@ describe("Meal plan route and delete helpers", () => {
     expect(mealPlanPath(undefined)).toBe("/meal-plans");
   });
   it("selects the newest remaining plan after deleting one", () => {
-    const plans = [{ id: "newest" }, { id: "middle" }, { id: "oldest" }];
+    const plans = [
+      { id: "oldest", startDate: "2026-10-01T00:00:00.000Z" },
+      { id: "newest", startDate: "2026-10-15T00:00:00.000Z" },
+      { id: "middle", startDate: "2026-10-08T00:00:00.000Z" },
+    ];
     expect(nextMealPlanIdAfterDelete(plans, "middle")).toBe("newest");
     expect(nextMealPlanIdAfterDelete(plans, "newest")).toBe("middle");
-    expect(nextMealPlanIdAfterDelete([{ id: "only" }], "only")).toBeNull();
+    expect(nextMealPlanIdAfterDelete([{ id: "only", startDate: "2026-10-01" }], "only")).toBeNull();
     expect(nextMealPlanIdAfterDelete([], "missing")).toBeNull();
+  });
+  it("opens the newest plan by start date, then by creation time when start dates match", () => {
+    expect(latestMealPlanId([
+      { id: "earlier-start", startDate: "2026-10-01T00:00:00.000Z", createdAt: "2026-10-20T10:00:00.000Z" },
+      { id: "same-start-created-first", startDate: "2026-10-08T00:00:00.000Z", createdAt: "2026-10-01T09:00:00.000Z" },
+      { id: "same-start-created-last", startDate: "2026-10-08T00:00:00.000Z", createdAt: "2026-10-01T11:00:00.000Z" },
+    ])).toBe("same-start-created-last");
+    expect(latestMealPlanId([])).toBeNull();
   });
   it("names the plan in the delete confirmation and warns when it is active", () => {
     const draft = mealPlanDeleteConfirmMessage({ name: "Tuần 1", status: "DRAFT" });
@@ -228,5 +240,45 @@ describe("Meal plan route and delete helpers", () => {
   });
   it("does not retry plan details for client errors such as 404", () => {
     expect(mealPlanQueries.detail("plan-a").retry).toBe(retryUnlessClientError);
+  });
+});
+
+describe("Meal plan suggestions respect the profile", () => {
+  const profile = (overrides: Partial<NutritionProfile> = {}): NutritionProfile => ({
+    activityLevel: "MODERATE", goal: "MAINTAIN", dietType: "BALANCED", allergies: [], dislikedFoods: [],
+    preferredCuisines: [], mealsPerDay: 3, ...overrides,
+  });
+  const fatSuggestion = (value: NutritionProfile | null | undefined) =>
+    mealPlanSuggestions(value, { fiber: 30, fat: 40 }, { fiber: 30, fat: 60 })[1];
+
+  it("suggests oily fish only when nothing in the profile rules it out", () => {
+    expect(fatSuggestion(profile()).key).toBe("omega3-fish");
+    expect(fatSuggestion(undefined).key).toBe("omega3-fish");
+  });
+  it.each([
+    ["vegetarian", profile({ dietType: "VEGETARIAN" })],
+    ["vegan", profile({ dietType: "VEGAN" })],
+    ["seafood allergy", profile({ allergies: ["Hải sản"] })],
+    ["fish allergy written differently", profile({ allergies: ["  CÁ  hồi "] })],
+    ["disliked fish", profile({ dislikedFoods: ["cá"] })],
+  ])("never suggests fish for %s", (_label, value) => {
+    const suggestion = fatSuggestion(value);
+    expect(suggestion.key).toBe("omega3-plant");
+    expect(suggestion.text).not.toMatch(/\bcá\b|cá béo|cá hồi/i);
+    expect(suggestion.image).not.toContain("salmon");
+  });
+  it("falls back to a neutral suggestion when plant sources are also restricted", () => {
+    const suggestion = fatSuggestion(profile({ dietType: "VEGAN", allergies: ["Đậu nành"] }));
+    expect(suggestion.key).toBe("fat-plant-oil");
+    expect(suggestion.text).not.toMatch(/cá|đậu nành|óc chó/i);
+  });
+  it("does not mistake an unrelated allergy for fish", () => {
+    expect(fatSuggestion(profile({ allergies: ["Cà chua", "Đậu phộng"] })).key).toBe("omega3-fish");
+  });
+  it("keeps the fiber suggestion and the reduce-fat advice free of fish", () => {
+    const [fiber, fat] = mealPlanSuggestions(profile({ dietType: "VEGAN" }), { fiber: 10, fat: 80 }, { fiber: 30, fat: 60 });
+    expect(fiber.text).toContain("rau xanh");
+    expect(fat.key).toBe("fat-reduce");
+    expect(fat.image).not.toContain("salmon");
   });
 });

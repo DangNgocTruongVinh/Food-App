@@ -138,6 +138,7 @@ Thứ tự: (b) → khảo sát dọn code → (a), (c), (d).
 - [ ] Admin: CRUD công thức, quản lý user (khóa/mở), kiểm duyệt community, thống kê.
   - Công thức: Admin thêm/sửa món và upload ảnh thật (thay ảnh tạm theo nhóm món của seed). Công thức **đã được dùng trong meal plan** (có `MealPlanItem` tham chiếu) thì chỉ **ẩn**, không xóa hẳn: cần trường đánh dấu ẩn (migration mới); món ẩn không hiện ở danh sách/tạo thực đơn mới nhưng thực đơn cũ vẫn hiển thị đúng. Món chưa từng được dùng thì được xóa hẳn.
   - Kiểm duyệt community: Admin xóa **bất kỳ** bài/bình luận vi phạm. Dùng chung service xóa bài với "Xóa bài của tôi" (GĐ5); chỉ khác điều kiện quyền (`requireAdmin` thay vì `authorId === userId`).
+  - Khi Admin tạo/sửa món có nhãn `VEGETARIAN` hoặc `VEGAN`, backend kiểm tra nguyên liệu bằng logic trong `backend/src/services/dietary.service.ts` (cùng bộ từ khóa thịt/cá/hải sản và nhóm Sữa/Trứng như test dữ liệu seed) và **từ chối** (422) nếu có thành phần không hợp lệ với nhãn.
 - [ ] Route/page Admin ở frontend, guard theo role.
 
 ### Giai đoạn 4 — Bảo mật tài khoản
@@ -179,6 +180,7 @@ Thứ tự: (b) → khảo sát dọn code → (a), (c), (d).
 ## Lưu ý khi demo
 - Phải có `OPENAI_API_KEY` hợp lệ, nếu không meal plan/chat chạy fallback (không phải AI thật).
 - Chuẩn bị tài khoản Admin và User mẫu bằng seed.
+- Khi đã có `OPENAI_API_KEY`, phải **kiểm thử lại luồng AI** (kịch bản 2–5 trong `docs/test-evidence/README.md`: thực đơn ăn chay, thuần chay, dị ứng hải sản, 4 bữa/ngày) vì các lần thử hiện tại chạy nhánh fallback; kiểm tra thêm `reconcileAIPlan` có phải thay món nào không.
 
 ## Còn chờ người dùng xác nhận
 - Hạn nộp/ngày bảo vệ (để cắt bớt từ giai đoạn 6 ngược lên nếu gấp).

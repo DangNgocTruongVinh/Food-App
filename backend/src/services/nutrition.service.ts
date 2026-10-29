@@ -33,3 +33,14 @@ export function calculateNutritionTargets(profile: NutritionInput) {
     fatG: Math.round((calories * fatRatio) / 9),
   };
 }
+
+/** 4 chỉ tiêu lưu trong NutritionProfile; dùng chung cho cập nhật hồ sơ và seed. */
+export function nutritionTargetFields(profile: NutritionInput) {
+  const targets = calculateNutritionTargets(profile);
+  return {
+    dailyCalorieTarget: targets.calories,
+    proteinTargetG: targets.proteinG,
+    carbTargetG: targets.carbsG,
+    fatTargetG: targets.fatG,
+  };
+}

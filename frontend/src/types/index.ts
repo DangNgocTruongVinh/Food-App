@@ -89,6 +89,7 @@ export interface ShoppingItem { id: string; name: string; quantity: number; unit
 export interface MealPlan {
   id: string; name: string; startDate: string; endDate: string; status: MealPlanStatus;
   calorieTarget: number; aiGenerated: boolean; summary?: string; days: MealPlanDay[]; shoppingItems: ShoppingItem[];
+  createdAt?: string;
 }
 
 export interface DashboardData {

@@ -11,3 +11,7 @@ backend/prisma/dev.db*
 
 # File tạm của Playwright MCP
 .playwright-mcp/
+
+# File sao lưu database (giữ lại migration của Prisma)
+*.sql
+!backend/prisma/migrations/**/*.sql

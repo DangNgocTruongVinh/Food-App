@@ -95,12 +95,72 @@ export function mealPlanPath(id?: string | null) {
   return id ? `/meal-plans/${encodeURIComponent(id)}` : "/meal-plans";
 }
 
-// Danh sách đã sắp xếp mới nhất trước, nên thực đơn còn lại đầu tiên là thực đơn mới nhất.
-export function nextMealPlanIdAfterDelete(plans: Pick<MealPlan, "id">[], deletedId: string) {
-  return plans.find((plan) => plan.id !== deletedId)?.id ?? null;
+type PlanOrderFields = Pick<MealPlan, "id" | "startDate" | "createdAt">;
+
+// Mới nhất theo ngày bắt đầu; trùng ngày thì thực đơn tạo sau (createdAt) đứng trước.
+function compareNewestFirst(a: PlanOrderFields, b: PlanOrderFields) {
+  return new Date(b.startDate).getTime() - new Date(a.startDate).getTime()
+    || new Date(b.createdAt ?? 0).getTime() - new Date(a.createdAt ?? 0).getTime();
+}
+
+/** Thực đơn mở khi vào /meal-plans không kèm id. */
+export function latestMealPlanId(plans: PlanOrderFields[], excludeId?: string) {
+  return [...plans].filter((plan) => plan.id !== excludeId).sort(compareNewestFirst)[0]?.id ?? null;
+}
+
+export function nextMealPlanIdAfterDelete(plans: PlanOrderFields[], deletedId: string) {
+  return latestMealPlanId(plans, deletedId);
 }
 
 export function mealPlanDeleteConfirmMessage(plan: Pick<MealPlan, "name" | "status">) {
   const activeWarning = plan.status === "ACTIVE" ? " Thực đơn này đang được áp dụng." : "";
   return `Xóa thực đơn “${plan.name}”?${activeWarning} Toàn bộ bữa ăn và danh sách mua sắm của thực đơn sẽ bị xóa và không thể khôi phục.`;
+}
+
+export type MealPlanSuggestion = { key: string; image: string; alt: string; text: string };
+type SuggestionCandidate = MealPlanSuggestion & { excludedDiets?: string[]; conflicts?: string[] };
+
+const asWords = (value: string) => ` ${value.trim().toLocaleLowerCase("vi").replace(/[^\p{L}\p{N}]+/gu, " ").trim()} `;
+
+// Gợi ý không được mâu thuẫn với chế độ ăn, dị ứng hoặc món không thích (vd. "cá hồi" ↔ "cá", "Hải sản").
+function conflictsWithProfile(candidate: SuggestionCandidate, profile: NutritionProfile | null | undefined) {
+  if (!profile) return false;
+  if (candidate.excludedDiets?.includes(profile.dietType)) return true;
+  const restrictions = [...(profile.allergies ?? []), ...(profile.dislikedFoods ?? [])].map(asWords).filter((item) => item.trim());
+  return (candidate.conflicts ?? []).map(asWords).some((term) => restrictions.some((item) => item.includes(term) || term.includes(item)));
+}
+
+const fatCandidates: SuggestionCandidate[] = [
+  {
+    key: "omega3-fish", image: "/assets/recipe-salmon.jpg", alt: "Cá hồi",
+    text: "Bổ sung cá béo như cá hồi, cá thu giúp đa dạng nguồn Omega-3 trong tuần.",
+    excludedDiets: ["VEGETARIAN", "VEGAN"], conflicts: ["hải sản", "thủy sản", "đồ biển", "seafood", "cá"],
+  },
+  {
+    key: "omega3-plant", image: "/assets/recipe-vegan-bowl.jpg", alt: "Món chay từ đậu",
+    text: "Bổ sung Omega-3 từ thực vật như đậu nành, đậu hũ hoặc hạt óc chó.",
+    conflicts: ["đậu nành", "đậu hũ", "óc chó", "các loại hạt"],
+  },
+  {
+    key: "fat-plant-oil", image: "/assets/recipe-vegan-bowl.jpg", alt: "Rau củ",
+    text: "Ưu tiên dầu thực vật khi nấu và giữ lượng chất béo vừa phải trong tuần.",
+  },
+];
+
+/** Hai gợi ý ở trang Thực đơn: chất xơ và chất béo, đã loại các gợi ý mâu thuẫn với hồ sơ. */
+export function mealPlanSuggestions(
+  profile: NutritionProfile | null | undefined,
+  averages: { fiber: number; fat: number },
+  targets: { fiber: number; fat: number },
+): MealPlanSuggestion[] {
+  const fiber: MealPlanSuggestion = {
+    key: "fiber", image: "/assets/recipe-vegan-bowl.jpg", alt: "Rau xanh",
+    text: averages.fiber < targets.fiber
+      ? "Thêm 1–2 khẩu phần rau xanh mỗi ngày để cân bằng dinh dưỡng."
+      : "Lượng chất xơ tuần này đang ở mức cân bằng tốt.",
+  };
+  const fat: MealPlanSuggestion = averages.fat > targets.fat
+    ? { key: "fat-reduce", image: "/assets/recipe-vegan-bowl.jpg", alt: "Rau củ", text: "Ưu tiên chất béo tốt và giảm các món chiên trong những ngày tới." }
+    : fatCandidates.find((candidate) => !conflictsWithProfile(candidate, profile))!;
+  return [fiber, fat].map(({ key, image, alt, text }) => ({ key, image, alt, text }));
 }

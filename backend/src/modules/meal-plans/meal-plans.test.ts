@@ -123,7 +123,7 @@ describe("Meal Plan and Shopping HTTP contract (no database)", () => {
         days: { orderBy: { date: "asc" }, include: { items: { include: { recipe: { include: { ingredients: true } } } } } },
         shoppingItems: { orderBy: [{ purchased: "asc" }, { name: "asc" }] },
       },
-      orderBy: { startDate: "desc" },
+      orderBy: [{ startDate: "desc" }, { createdAt: "desc" }],
     });
   });
 

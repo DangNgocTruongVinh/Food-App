@@ -15,7 +15,7 @@ import DateInput from "../components/DateInput";
 import { EmptyState, LoadingState } from "../components/States";
 import {
   alternativeMeals, featuredMealTypes, hasBalancedCalories, mealImage, mealLabels,
-  mealPlanDeleteConfirmMessage, mealPlanPath, mealPlanTargets, mealShortLabels, mealTag, mealTimes,
+  latestMealPlanId, mealPlanDeleteConfirmMessage, mealPlanPath, mealPlanSuggestions, mealPlanTargets, mealShortLabels, mealTag, mealTimes,
   nextMealPlanIdAfterDelete, percentage, recipeSearchPath, selectMealPlanDay, summarizeMealPlan,
 } from "../features/meal-plans/meal-plans.logic";
 import {
@@ -54,7 +54,7 @@ export default function MealPlansPage() {
 
   // /meal-plans không kèm id → mở thực đơn mới nhất.
   useEffect(() => {
-    if (!routeId && data.length) navigate(mealPlanPath(data[0].id), { replace: true, state: location.state });
+    if (!routeId && data.length) navigate(mealPlanPath(latestMealPlanId(data)), { replace: true, state: location.state });
   }, [data, location.state, navigate, routeId]);
 
   // Thực đơn không tồn tại hoặc không thuộc người dùng → báo ngắn và về thực đơn mới nhất còn lại.
@@ -198,8 +198,7 @@ export default function MealPlansPage() {
 
           <section className="menu-suggestion-card">
             <header><Sparkles /><h2>Gợi ý cho bạn</h2></header>
-            <article><img src="/assets/recipe-vegan-bowl.jpg" alt="Rau xanh" /><p>{averages.fiber < targets.fiber ? "Thêm 1–2 khẩu phần rau xanh mỗi ngày để cân bằng dinh dưỡng." : "Lượng chất xơ tuần này đang ở mức cân bằng tốt."}</p></article>
-            <article><img src="/assets/recipe-salmon.jpg" alt="Cá hồi" /><p>{averages.fat > targets.fat ? "Ưu tiên chất béo tốt và giảm các món chiên trong những ngày tới." : "Bổ sung cá béo giúp đa dạng nguồn Omega-3 trong tuần."}</p></article>
+            {mealPlanSuggestions(profileData?.profile, averages, targets).map((suggestion) => <article key={suggestion.key}><img src={suggestion.image} alt={suggestion.alt} /><p>{suggestion.text}</p></article>)}
           </section>
 
           <section className="menu-shopping-card">
