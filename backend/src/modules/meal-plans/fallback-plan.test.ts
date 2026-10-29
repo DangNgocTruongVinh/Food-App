@@ -1,23 +1,13 @@
 import type { DietType } from "@prisma/client";
 import { describe, expect, it, vi } from "vitest";
-import { seedRecipes } from "../../../prisma/seed-data.js";
+import { seedRecipesAsRecords } from "../../test/seed-recipes.js";
 import { expandRestrictedTerms, filterRecipesForProfile, findRestrictedTerms, matchesRequiredDiet } from "../../services/dietary.service.js";
 import { fallbackPlan, mealSlots, reconcileAIPlan } from "./meal-plans.service.js";
 
 vi.mock("../../lib/prisma.js", () => ({ prisma: {} }));
 vi.mock("../ai/ai.service.js", () => ({ generatePlanWithAI: vi.fn() }));
 
-// Bộ món seed thật, gán id theo slug như sau khi đã lưu DB.
-const recipes = seedRecipes.map((recipe) => ({
-  ...recipe,
-  id: recipe.slug,
-  servings: 1,
-  createdAt: new Date(0),
-  updatedAt: new Date(0),
-  ingredients: recipe.ingredients.map((ingredient, ingredientIndex) => ({
-    id: `${recipe.slug}-${ingredientIndex}`, recipeId: recipe.slug, optional: false, ...ingredient,
-  })),
-}));
+const recipes = seedRecipesAsRecords();
 const byId = new Map(recipes.map((recipe) => [recipe.id, recipe]));
 
 const dietTypes: DietType[] = ["BALANCED", "VEGETARIAN", "VEGAN", "LOW_CARB", "HIGH_PROTEIN"];

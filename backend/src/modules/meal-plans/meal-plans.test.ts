@@ -1,7 +1,7 @@
 import jwt from "jsonwebtoken";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { request, testApp } from "../../test/http-test-utils.js";
-import { seedRecipes } from "../../../prisma/seed-data.js";
+import { seedRecipesAsRecords } from "../../test/seed-recipes.js";
 import mealPlanRoutes from "./meal-plans.routes.js";
 import { filterRecipesForProfile } from "../../services/dietary.service.js";
 import { fallbackPlan } from "./meal-plans.service.js";
@@ -166,10 +166,7 @@ describe("Meal Plan and Shopping HTTP contract (no database)", () => {
   });
 
   it("corrects an OpenAI plan with a wrong-meal dish and an allergen before saving", async () => {
-    const seedAsDb = seedRecipes.map((item) => ({
-      ...item, id: item.slug, servings: 1, createdAt: new Date(0), updatedAt: new Date(0),
-      ingredients: item.ingredients.map((ingredient, index) => ({ id: `${item.slug}-${index}`, recipeId: item.slug, optional: false, ...ingredient })),
-    }));
+    const seedAsDb = seedRecipesAsRecords();
     mocks.findUser.mockResolvedValue({
       id: userId,
       profile: { dietType: "BALANCED", allergies: ["Hải sản"], dislikedFoods: [], preferredCuisines: [], mealsPerDay: 3, dailyCalorieTarget: 2000 },
