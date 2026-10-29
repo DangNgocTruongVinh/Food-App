@@ -36,7 +36,7 @@ describe("HTTP client compatibility (no network)", () => {
       throw error;
     };
     await expect(api.get("/profile")).rejects.toMatchObject({ response: { status: 401 } });
-    expect(getAuthToken()).toBeNull(); expect(localStorage.getItem("nutriplan_user")).toBeNull();
+    expect(getAuthToken()).toBeNull(); expect(localStorage.getItem("nouri_user")).toBeNull();
     expect(location.href).toBe(path.startsWith("/login") ? path : "/login");
   });
 
@@ -47,7 +47,7 @@ describe("HTTP client compatibility (no network)", () => {
       throw new AxiosError("Unauthorized", "ERR_BAD_REQUEST", config, undefined, { config, data: {}, status: 401, statusText: "Unauthorized", headers: {} });
     };
     await expect(api.get("/profile")).rejects.toMatchObject({ response: { status: 401 } });
-    expect(getAuthToken()).toBeNull(); expect(sessionStorage.getItem("nutriplan_user")).toBeNull();
+    expect(getAuthToken()).toBeNull(); expect(sessionStorage.getItem("nouri_user")).toBeNull();
   });
 
   it("retains the session and original error for non-401 failures", async () => {

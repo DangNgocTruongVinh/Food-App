@@ -48,7 +48,7 @@ Food_App/
 
 Frontend mặc định ở `http://localhost:5173`, API ở `http://localhost:4000`. Nếu không có OpenAI key, hệ thống dùng bộ lập kế hoạch dự phòng theo quy tắc để vẫn demo được.
 
-Tài khoản dữ liệu mẫu sau khi chạy seed: `demo@nutriplan.vn` / `Demo@123`.
+Tài khoản dữ liệu mẫu sau khi chạy seed: `demo@nouri.vn` / `Demo@123`.
 
 ### Chạy hoàn toàn bằng Docker
 

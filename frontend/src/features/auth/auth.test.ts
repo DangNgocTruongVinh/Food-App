@@ -33,13 +33,13 @@ describe("V1 auth storage", () => {
     expect(getAuthToken()).toBeNull(); expect(getStoredUser()).toBeNull();
   });
   it("reads sessions already stored by V1 without renaming keys", () => {
-    stored.set("nutriplan_token", session.token);
-    stored.set("nutriplan_user", JSON.stringify(session.user));
+    stored.set("nouri_token", session.token);
+    stored.set("nouri_user", JSON.stringify(session.user));
     expect(getAuthToken()).toBe(session.token); expect(getStoredUser()).toEqual(session.user);
   });
   it("persists precisely the token and public user returned by the API", () => {
     saveAuthSession(session);
-    expect(Object.fromEntries(stored)).toEqual({ nutriplan_token: session.token, nutriplan_user: JSON.stringify(session.user) });
+    expect(Object.fromEntries(stored)).toEqual({ nouri_token: session.token, nouri_user: JSON.stringify(session.user) });
   });
   it("clears only auth keys and is safe to repeat", () => {
     stored.set("unrelated", "keep"); saveAuthSession(session);
@@ -49,7 +49,7 @@ describe("V1 auth storage", () => {
   it("keeps a non-remembered session only in sessionStorage", () => {
     saveAuthSession(session, false);
     expect(Object.fromEntries(stored)).toEqual({});
-    expect(Object.fromEntries(tabStored)).toEqual({ nutriplan_token: session.token, nutriplan_user: JSON.stringify(session.user) });
+    expect(Object.fromEntries(tabStored)).toEqual({ nouri_token: session.token, nouri_user: JSON.stringify(session.user) });
     expect(getAuthToken()).toBe(session.token); expect(getStoredUser()).toEqual(session.user);
     expect(isSessionRemembered()).toBe(false);
   });
@@ -61,8 +61,8 @@ describe("V1 auth storage", () => {
     expect(isSessionRemembered()).toBe(remember);
   });
   it("clears the session from both storages", () => {
-    stored.set("nutriplan_token", "a"); tabStored.set("nutriplan_token", "b");
-    tabStored.set("nutriplan_user", JSON.stringify(session.user));
+    stored.set("nouri_token", "a"); tabStored.set("nouri_token", "b");
+    tabStored.set("nouri_user", JSON.stringify(session.user));
     clearAuthSession();
     expect(Object.fromEntries(stored)).toEqual({}); expect(Object.fromEntries(tabStored)).toEqual({});
   });
@@ -79,15 +79,34 @@ describe("V1 auth storage", () => {
     clearAuthSession();
     expect(getRememberLoginPreference()).toBe(false);
   });
+  it.each([
+    ["remembered", () => stored, () => tabStored],
+    ["not remembered", () => tabStored, () => stored],
+  ] as const)("moves a %s session stored under the old nutriplan_* keys to the new keys without logging out", (_label, own, other) => {
+    own().set("nutriplan_token", session.token);
+    own().set("nutriplan_user", JSON.stringify(session.user));
+    expect(getAuthToken()).toBe(session.token);
+    expect(getStoredUser()).toEqual(session.user);
+    expect(Object.fromEntries(own())).toEqual({ nouri_token: session.token, nouri_user: JSON.stringify(session.user) });
+    expect(other().size).toBe(0);
+  });
+  it("moves the old remember-login choice and never overwrites a newer value", () => {
+    stored.set("nutriplan_remember_login", "false");
+    expect(getRememberLoginPreference()).toBe(false);
+    expect(stored.has("nutriplan_remember_login")).toBe(false);
+    stored.set("nouri_token", "new-token"); stored.set("nutriplan_token", "old-token");
+    expect(getAuthToken()).toBe("new-token");
+    expect(stored.has("nutriplan_token")).toBe(false);
+  });
   it("clears a corrupt stored session without throwing", () => {
-    stored.set("nutriplan_token", session.token);
-    stored.set("nutriplan_user", "bad-json");
+    stored.set("nouri_token", session.token);
+    stored.set("nouri_user", "bad-json");
     expect(getStoredUser()).toBeNull();
     expect(Object.fromEntries(stored)).toEqual({});
   });
   it.each(["null", "{}", JSON.stringify({ id: "user-a", name: 123, email: "demo@nouri.vn" })])("clears invalid user JSON shape %s", (value) => {
-    stored.set("nutriplan_token", session.token);
-    stored.set("nutriplan_user", value);
+    stored.set("nouri_token", session.token);
+    stored.set("nouri_user", value);
     expect(getStoredUser()).toBeNull();
     expect(Object.fromEntries(stored)).toEqual({});
   });
@@ -117,7 +136,7 @@ describe("Auth session and query cache", () => {
   });
   it("stores the session in sessionStorage when login is not remembered", () => {
     acceptAuthSession(queryClient, session, false);
-    expect(tabStored.get("nutriplan_token")).toBe(session.token);
+    expect(tabStored.get("nouri_token")).toBe(session.token);
     expect(stored.size).toBe(0);
   });
   it("updates the user in the storage that holds a non-remembered session", () => {

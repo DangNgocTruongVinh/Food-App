@@ -18,7 +18,12 @@ async function main() {
   // (Công thức đã nằm trong thực đơn được giữ lại; reset database để bỏ hẳn dữ liệu cũ.)
   await prisma.recipe.deleteMany({ where: { slug: { notIn: seedRecipes.map((recipe) => recipe.slug) }, mealItems: { none: {} } } });
 
-  const email = "demo@nutriplan.vn";
+  const email = "demo@nouri.vn";
+  // Đổi tên nutriplan → nouri: chuyển tài khoản demo cũ sang email mới thay vì tạo thêm tài khoản thứ hai.
+  const legacyEmail = "demo@nutriplan.vn";
+  if (!(await prisma.user.findUnique({ where: { email } })) && (await prisma.user.findUnique({ where: { email: legacyEmail } }))) {
+    await prisma.user.update({ where: { email: legacyEmail }, data: { email } });
+  }
   const demoProfile = {
     age: 24, gender: "FEMALE", heightCm: 162, weightKg: 55, targetWeightKg: 53, activityLevel: "MODERATE", goal: "MAINTAIN",
     dietType: "BALANCED", allergies: [], dislikedFoods: ["Cần tây"], preferredCuisines: ["Việt Nam", "Nhật Bản"], mealsPerDay: 3,
@@ -45,7 +50,7 @@ async function main() {
       { userId: user.id, name: "Gạo", category: "Ngũ cốc", quantity: 1000, unit: "G", expiryDate: new Date(Date.now() + 60 * day) },
     ] });
   }
-  console.log("Seed hoàn tất. Demo: demo@nutriplan.vn / Demo@123");
+  console.log(`Seed hoàn tất. Demo: ${email} / Demo@123`);
 }
 
 main().finally(() => prisma.$disconnect());

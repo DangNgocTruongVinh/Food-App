@@ -1,11 +1,30 @@
 import type { AuthResponse, User } from "../../types";
 
-const tokenKey = "nutriplan_token";
-const userKey = "nutriplan_user";
+const tokenKey = "nouri_token";
+const userKey = "nouri_user";
 // Chỉ lưu lựa chọn của checkbox "Nhớ đăng nhập"; không chứa token và không bị xóa khi đăng xuất.
-const rememberPreferenceKey = "nutriplan_remember_login";
+const rememberPreferenceKey = "nouri_remember_login";
+
+// Key trước khi đổi tên nutriplan → nouri. Đọc rồi chuyển sang key mới để người dùng đang đăng nhập không bị đăng xuất.
+const legacyKeys: Record<string, string> = {
+  [tokenKey]: "nutriplan_token",
+  [userKey]: "nutriplan_user",
+  [rememberPreferenceKey]: "nutriplan_remember_login",
+};
+
+function migrateLegacyKeys() {
+  for (const storage of [localStorage, sessionStorage]) {
+    for (const [key, legacyKey] of Object.entries(legacyKeys)) {
+      const value = storage.getItem(legacyKey);
+      if (value === null) continue;
+      if (storage.getItem(key) === null) storage.setItem(key, value);
+      storage.removeItem(legacyKey);
+    }
+  }
+}
 
 export function getRememberLoginPreference() {
+  migrateLegacyKeys();
   return localStorage.getItem(rememberPreferenceKey) !== "false";
 }
 
@@ -20,6 +39,7 @@ function storageFor(remember: boolean) {
 
 // Kho đang giữ phiên; sessionStorage ưu tiên vì nó chỉ có khi người dùng chủ động không nhớ đăng nhập.
 function activeStorage() {
+  migrateLegacyKeys();
   if (sessionStorage.getItem(tokenKey)) return sessionStorage;
   if (localStorage.getItem(tokenKey)) return localStorage;
   return null;
