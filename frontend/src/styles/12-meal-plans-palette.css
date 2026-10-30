@@ -1,0 +1,160 @@
+/* Thực đơn: bảng màu peach/coral. Tách nguyên văn từ styles.css cũ; thứ tự import trong styles.css quyết định thứ tự áp dụng. */
+
+/* Meal planner — Peach / Coral food-lifestyle palette */
+.reference-menu-page {
+  --menu-primary: #ff9f66;
+  --menu-secondary: #f27a54;
+  --menu-soft: #ffd7c2;
+  --menu-background: #fff5ee;
+  color: #4e342c;
+  background:
+    radial-gradient(circle at 78% 4%, rgba(255,159,102,.18), transparent 27rem),
+    linear-gradient(135deg, #fff5ee 0%, #fff0e7 54%, #ffe4d5 100%);
+}
+.reference-menu-page .menu-global-search,
+.reference-menu-page .menu-generate-controls input {
+  color: #72564d;
+  border-color: #ffd7c2;
+  background: rgba(255,255,255,.9);
+}
+.reference-menu-page .menu-global-search:focus-within,
+.reference-menu-page .menu-generate-controls input:focus {
+  color: #d96543;
+  border-color: #ff9f66;
+  box-shadow: 0 0 0 4px rgba(242,122,84,.1);
+}
+.reference-menu-page .menu-global-search input { color: #51372f; }
+.reference-menu-page .menu-global-search kbd { color: #9b7467; background: #fff1e9; }
+.reference-menu-page .menu-generate-controls > button,
+.reference-menu-page .menu-hero-empty button,
+.reference-menu-page .menu-toolbar-actions > a,
+.reference-menu-page .menu-optimize-card a {
+  color: white;
+  background: linear-gradient(135deg, #ff9f66, #f27a54);
+  box-shadow: 0 8px 20px rgba(242,122,84,.2);
+}
+.reference-menu-page .menu-generate-controls > button:hover,
+.reference-menu-page .menu-hero-empty button:hover,
+.reference-menu-page .menu-toolbar-actions > a:hover,
+.reference-menu-page .menu-optimize-card a:hover { background: #df6745; }
+
+.reference-menu-page .menu-hero {
+  border-color: #ffd2ba;
+  background-color: #fff4e9;
+}
+.reference-menu-page .menu-hero::before {
+  background: linear-gradient(90deg, rgba(255,248,242,.99) 0%, rgba(255,235,222,.94) 44%, rgba(255,215,194,.2) 73%, transparent);
+}
+.reference-menu-page .menu-hero::after { background: rgba(255,159,102,.14); }
+.reference-menu-page .menu-hero .eyebrow,
+.reference-menu-page .menu-plan-note svg { color: #f27a54; }
+.reference-menu-page .menu-hero h1 { color: #512f25; }
+.reference-menu-page .menu-hero p { color: #7d6258; }
+.reference-menu-page .menu-plan-note { color: #895d4e; }
+.reference-menu-page .menu-empty-shell .state { border-color: #f4d6c5; background: rgba(255,255,255,.9); }
+
+.reference-menu-page .menu-week-summary,
+.reference-menu-page .menu-side-column > section {
+  border-color: #f3d8c9;
+  background: rgba(255,255,255,.94);
+  box-shadow: 0 9px 28px rgba(164,83,57,.055);
+}
+.reference-menu-page .menu-week-summary > header span,
+.reference-menu-page .menu-nutrition-card > header h2,
+.reference-menu-page .menu-shopping-card > header h2,
+.reference-menu-page .menu-suggestion-card > header h2 { color: #51372e; }
+.reference-menu-page .menu-week-summary > header svg,
+.reference-menu-page .menu-nutrition-card > header svg,
+.reference-menu-page .menu-shopping-card > header svg,
+.reference-menu-page .menu-optimize-card > svg { color: #f27a54; }
+.reference-menu-page .menu-summary-grid article { background: #fff3eb; }
+.reference-menu-page .menu-summary-grid article:nth-child(2) { background: #fff0e5; }
+.reference-menu-page .menu-summary-grid article:nth-child(3) { background: #ffece3; }
+.reference-menu-page .menu-summary-grid article:nth-child(4) { background: #fff1ee; }
+.reference-menu-page .menu-summary-grid article > span { color: #e66d49; background: #ffe0cf; }
+.reference-menu-page .menu-summary-grid article > span.calories { color: #e66d49; background: #ffdfca; }
+.reference-menu-page .menu-summary-grid article > span.balanced { color: #c95f43; background: #ffe5d8; }
+.reference-menu-page .menu-summary-grid article > span.progress { color: #b9665a; background: #fbe1dc; }
+
+.reference-menu-page .menu-schedule-card {
+  border-color: #f1c9b4;
+  background:
+    radial-gradient(circle at 18% 12%, rgba(255,255,255,.48), transparent 19rem),
+    linear-gradient(145deg, #fff4e9 0%, #ffe4d5 100%);
+  box-shadow: 0 12px 34px rgba(174,86,56,.085);
+}
+.reference-menu-page .menu-week-toolbar { background: rgba(255,255,255,.38); }
+.reference-menu-page .menu-week-nav button,
+.reference-menu-page .menu-plan-select {
+  color: #d86a49;
+  border-color: rgba(242,178,146,.9);
+  background: rgba(255,255,255,.8);
+}
+.reference-menu-page .menu-week-nav button:hover:not(:disabled) {
+  color: #c85c3e;
+  border-color: #ff9f66;
+  background: #fff3ec;
+}
+.reference-menu-page .menu-plan-select select { color: #b95b41; }
+.reference-menu-page .menu-plan-status.active,
+.reference-menu-page .menu-activate-button { color: #b95135; background: #ffe0d0; }
+.reference-menu-page .menu-activate-button:hover { color: white; background: #f27a54; }
+
+.reference-menu-page .menu-day-tabs {
+  border-color: rgba(242,183,153,.92);
+  background: rgba(255,255,255,.44);
+  box-shadow: inset 0 1px rgba(255,255,255,.65);
+}
+.reference-menu-page .menu-day-tabs button { border-right-color: rgba(242,190,163,.75); }
+.reference-menu-page .menu-day-tabs button:hover { color: #d56545; background: rgba(255,255,255,.68); }
+.reference-menu-page .menu-day-tabs button.active {
+  color: #c95839;
+  background: linear-gradient(145deg, #ffd7c2, #ffeadf);
+  box-shadow: 0 4px 14px rgba(206,95,60,.11);
+}
+
+.reference-menu-page .menu-meal-column {
+  border-color: rgba(239,193,168,.96);
+  background: linear-gradient(155deg, rgba(255,255,255,.84), rgba(255,246,240,.76));
+  box-shadow: 0 8px 22px rgba(151,79,54,.045);
+}
+.reference-menu-page .menu-meal-column > header > span { color: #df794e; background: #fff0df; }
+.reference-menu-page .menu-lunch > header > span { color: #e56d4d; background: #ffe4d4; }
+.reference-menu-page .menu-dinner > header > span { color: #bd6255; background: #fbe4df; }
+.reference-menu-page .menu-featured-image button:hover { color: #f27a54; }
+.reference-menu-page .menu-featured-image button.completed,
+.reference-menu-page .menu-alternative-list button > i,
+.reference-menu-page .menu-shopping-card label.checked > span {
+  color: white;
+  border-color: #f27a54;
+  background: #f27a54;
+}
+.reference-menu-page .menu-featured-copy,
+.reference-menu-page .menu-alternative-list button { border-color: rgba(238,202,184,.82); }
+.reference-menu-page .menu-featured-copy b { color: #bf5e42; background: #ffe4d5; }
+.reference-menu-page .menu-featured-copy b.secondary { color: #d66d44; background: #fff0df; }
+.reference-menu-page .menu-alternative-list button:hover,
+.reference-menu-page .menu-suggestion-card article,
+.reference-menu-page .menu-shopping-card label:hover { background: #fff3ec; }
+.reference-menu-page .menu-missing-meal > svg,
+.reference-menu-page .menu-missing-meal a { color: #e17851; }
+.reference-menu-page .menu-snack-strip { border-color: #f0cbb8; background: rgba(255,255,255,.58); }
+.reference-menu-page .menu-add-meal { color: #9b5c49; border-color: #e7ad8f; background: rgba(255,255,255,.22); }
+.reference-menu-page .menu-add-meal:hover { color: #c95839; border-color: #f27a54; background: rgba(255,255,255,.62); }
+
+.reference-menu-page .menu-nutrition-bars > div > div { background: #f4e7df; }
+.reference-menu-page .menu-nutrition-bars .energy { background: #f27a54; }
+.reference-menu-page .menu-nutrition-bars .protein { background: #dd8469; }
+.reference-menu-page .menu-nutrition-bars .carbs { background: #ff9f66; }
+.reference-menu-page .menu-nutrition-bars .fat { background: #c8776c; }
+.reference-menu-page .menu-nutrition-bars .fiber { background: #e9a17d; }
+.reference-menu-page .menu-nutrition-card > a { color: #cf6040; border-color: #f1bea4; }
+.reference-menu-page .menu-nutrition-card > a:hover { color: white; border-color: #f27a54; background: #f27a54; }
+.reference-menu-page .menu-suggestion-card > header svg { color: #ff9f66; }
+.reference-menu-page .menu-shopping-card > div { scrollbar-color: #e9b69c transparent; }
+
+@media (max-width: 760px) {
+  .reference-menu-page .menu-hero::before {
+    background: linear-gradient(180deg, rgba(255,248,242,.99) 0%, rgba(255,232,217,.94) 52%, rgba(255,215,194,.1) 84%);
+  }
+}

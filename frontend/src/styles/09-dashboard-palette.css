@@ -1,0 +1,184 @@
+/* Dashboard: bảng màu teal và thư viện ảnh chào mừng. Tách nguyên văn từ styles.css cũ; thứ tự import trong styles.css quyết định thứ tự áp dụng. */
+
+/* Teal dashboard palette + complementary dark sidebar */
+:root {
+  --dashboard-lime: #8cd546;
+  --dashboard-green: #29c660;
+  --dashboard-emerald: #00b37a;
+  --dashboard-teal: #009f91;
+  --dashboard-cyan: #0089a1;
+  --dashboard-blue: #0072a7;
+}
+
+.reference-dashboard {
+  min-height: 100vh;
+  color: #173d3c;
+  background:
+    radial-gradient(circle at 82% 4%, rgba(0,137,161,.13), transparent 28rem),
+    radial-gradient(circle at 15% 85%, rgba(140,213,70,.1), transparent 24rem),
+    linear-gradient(135deg, #f7fcfa 0%, #effaf7 52%, #f1f9fb 100%);
+}
+.reference-dashboard .overview-welcome {
+  border-color: #d2ebe6;
+  background-color: #e6f7f3;
+  box-shadow: 0 10px 30px rgba(0,120,114,.06);
+}
+.reference-dashboard .overview-welcome::before {
+  background: linear-gradient(90deg, rgba(238,250,247,.99) 0%, rgba(218,246,239,.94) 43%, rgba(193,238,228,.16) 73%, transparent);
+}
+.reference-dashboard .overview-welcome .eyebrow { color: #008a70; }
+.reference-dashboard .overview-welcome h1 { color: #103b39; }
+.reference-dashboard .overview-welcome p { color: #55716e; }
+.reference-dashboard .overview-search {
+  border-color: rgba(188,226,219,.95);
+  background: rgba(255,255,255,.92);
+  box-shadow: 0 8px 22px rgba(0,117,107,.08);
+}
+.reference-dashboard .overview-search:focus-within {
+  border-color: #58bdb0;
+  box-shadow: 0 0 0 4px rgba(0,159,145,.1);
+}
+.reference-dashboard .overview-search button {
+  color: white;
+  background: linear-gradient(135deg, var(--dashboard-teal), var(--dashboard-cyan));
+}
+.reference-dashboard .overview-search button:hover { background: linear-gradient(135deg, #008b80, #00788f); }
+
+.reference-dashboard .overview-metrics {
+  border-color: #dcece9;
+  background: rgba(255,255,255,.94);
+  box-shadow: 0 8px 26px rgba(14,91,85,.045);
+}
+.reference-dashboard .overview-metrics > article { border-color: #e4efed; }
+.reference-dashboard .overview-metric-icon.stock { color: #148f55; background: #dcf6df; }
+.reference-dashboard .overview-metric-icon.soon { color: #629f16; background: #ecf8cc; }
+.reference-dashboard .overview-metric-icon.expired { color: #008c89; background: #d9f3ef; }
+.reference-dashboard .overview-metric-icon.meals { color: #007f9c; background: #d9f0f4; }
+.reference-dashboard .overview-metrics strong { color: #123a38; }
+.reference-dashboard .overview-metrics article > div > b { color: #365b57; }
+
+.reference-dashboard .overview-panel {
+  border-color: #dcebe8;
+  background: rgba(255,255,255,.94);
+  box-shadow: 0 8px 26px rgba(13,91,84,.04);
+}
+.reference-dashboard .overview-panel > header h2 { color: #163e3b; }
+.reference-dashboard .overview-panel > header > a { color: #008f82; }
+.reference-dashboard .overview-panel > header > a:hover { color: #006f70; }
+.reference-dashboard .overview-food-thumb { background: #e5f6ec; }
+.reference-dashboard .overview-outline-button { color: #008d83; border-color: #70c9bd; }
+.reference-dashboard .overview-outline-button:hover { color: white; border-color: var(--dashboard-teal); background: var(--dashboard-teal); }
+.reference-dashboard .overview-recipe-card footer small { color: #129a65; }
+.reference-dashboard .overview-today > header > svg { color: var(--dashboard-teal); }
+.reference-dashboard .completed .overview-meal-check { border-color: var(--dashboard-teal); background: var(--dashboard-teal); }
+.reference-dashboard .overview-compact-empty svg { color: var(--dashboard-teal); }
+
+.reference-dashboard .overview-ai-banner {
+  border-color: #cbeae4;
+  background: linear-gradient(105deg, #dcf7e9 0%, #e8faf4 53%, #def3f5 100%);
+  box-shadow: 0 9px 28px rgba(0,133,121,.055);
+}
+.reference-dashboard .overview-ai-banner::before { background: radial-gradient(circle, rgba(140,213,70,.32), transparent 68%); }
+.reference-dashboard .overview-ai-banner::after { border-color: rgba(0,137,161,.13); }
+.reference-dashboard .overview-ai-banner .eyebrow { color: #008d74; }
+.reference-dashboard .overview-ai-banner h2 { color: #163d3a; }
+.reference-dashboard .overview-ai-prompts a { color: #4e6d68; border-color: #cee6e1; background: rgba(255,255,255,.86); }
+.reference-dashboard .overview-ai-prompts a:hover { color: #007f78; border-color: #67beb2; }
+.reference-dashboard .overview-ai-banner > .button {
+  color: white;
+  background: linear-gradient(135deg, var(--dashboard-teal), var(--dashboard-cyan));
+  box-shadow: 0 8px 20px rgba(0,137,151,.18);
+}
+.reference-dashboard .overview-ai-banner > .button:hover { background: linear-gradient(135deg, #008b80, #00758f); }
+
+/* Sidebar uses the dark end of the same spectrum, not the dashboard surface color. */
+
+@media (max-width: 620px) {
+  .reference-dashboard .overview-welcome::before {
+    background: linear-gradient(180deg, rgba(238,250,247,.99) 0%, rgba(218,246,239,.94) 52%, rgba(193,238,228,.1) 86%);
+  }
+}
+
+/* Sliding food gallery for the dashboard welcome hero */
+.reference-dashboard .overview-welcome {
+  isolation: isolate;
+  min-height: 520px;
+  padding: 68px 64px;
+  background-image: none;
+}
+.reference-dashboard .overview-welcome::before { z-index: 1; pointer-events: none; }
+.overview-hero-backgrounds {
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  overflow: hidden;
+  border-radius: inherit;
+}
+.overview-hero-track {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  animation: food-hero-slides 24s cubic-bezier(.72, 0, .2, 1) infinite;
+  will-change: transform;
+}
+.overview-hero-slide {
+  width: 100%;
+  height: 100%;
+  flex: 0 0 100%;
+  background-position: center right;
+  background-size: cover;
+}
+.overview-hero-slide.nutrition { background-image: url("/assets/nutrition-hero.jpg"); }
+.overview-hero-slide.salmon { background-image: url("/assets/recipe-salmon.jpg"); }
+.overview-hero-slide.vegan { background-image: url("/assets/recipe-vegan-bowl.jpg"); }
+.overview-hero-slide.oats { background-image: url("/assets/recipe-oats.jpg"); }
+.reference-dashboard .overview-welcome-copy { z-index: 2; }
+.overview-greeting-person {
+  display: inline-block;
+  white-space: nowrap;
+  will-change: transform, opacity;
+  animation: overview-name-cycle 7.6s cubic-bezier(.16,.82,.28,1) infinite both;
+}
+.overview-greeting-person > strong { color: #2f7d32; font-weight: 700; }
+.overview-wave {
+  display: inline-block;
+  transform-origin: 70% 72%;
+  will-change: transform;
+  animation: overview-wave-cycle 7.6s ease-in-out infinite both;
+}
+@keyframes food-hero-slides {
+  0%, 18% { transform: translate3d(0, 0, 0); }
+  25%, 43% { transform: translate3d(-100%, 0, 0); }
+  50%, 68% { transform: translate3d(-200%, 0, 0); }
+  75%, 93% { transform: translate3d(-300%, 0, 0); }
+  100% { transform: translate3d(-400%, 0, 0); }
+}
+
+@keyframes overview-name-cycle {
+  0% { opacity: .7; transform: translate3d(-12px, 0, 0); }
+  9.5%, 94% { opacity: 1; transform: translate3d(0, 0, 0); }
+  97% { opacity: .9; transform: translate3d(-4px, 0, 0); }
+  100% { opacity: .7; transform: translate3d(-12px, 0, 0); }
+}
+
+@keyframes overview-wave-cycle {
+  0%, 10%, 27%, 100% { transform: rotate(0deg); }
+  12%, 16%, 20%, 24% { transform: rotate(16deg); }
+  14%, 18%, 22%, 26% { transform: rotate(-8deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .overview-hero-track { transform: none; animation: none; }
+  .overview-greeting-person,
+  .overview-wave { opacity: 1; transform: none; animation: none; }
+}
+
+@media (max-width: 620px) {
+  .reference-dashboard .overview-welcome {
+    min-height: 650px;
+    padding: 46px 22px 270px;
+  }
+  .overview-hero-slide { background-position: 62% center; }
+}
+
+/* Route-aware sidebar: each page receives a matching color family. */

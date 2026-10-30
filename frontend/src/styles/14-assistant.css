@@ -1,0 +1,126 @@
+/* Trợ lý AI: không gian teal–xanh dương. Tách nguyên văn từ styles.css cũ; thứ tự import trong styles.css quyết định thứ tự áp dụng. */
+
+/* AI Assistant — Teal to Blue workspace */
+.main-content.main-theme-assistant { background: #edf8fb; }
+.main-theme-assistant .assistant-page {
+  max-width: 1180px;
+  padding-inline: clamp(24px, 4vw, 58px);
+  background:
+    radial-gradient(circle at 82% 16%, rgba(0,137,161,.08), transparent 25rem),
+    #edf8fb;
+}
+.main-theme-assistant .assistant-header {
+  position: relative;
+  isolation: isolate;
+  min-height: 118px;
+  padding: 23px 26px;
+  border: 0;
+  border-radius: 22px;
+  color: white;
+  background: linear-gradient(135deg, #00b37a 0%, #009f91 35%, #0089a1 70%, #0072a7 100%);
+  overflow: hidden;
+  box-shadow: 0 16px 38px rgba(0,137,161,.12);
+}
+.main-theme-assistant .assistant-header::before,
+.main-theme-assistant .assistant-header::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  border: 1px solid rgba(255,255,255,.16);
+  border-radius: 50%;
+  pointer-events: none;
+}
+.main-theme-assistant .assistant-header::before { width: 230px; height: 230px; top: -154px; right: 8%; box-shadow: 0 0 0 42px rgba(255,255,255,.035); }
+.main-theme-assistant .assistant-header::after { width: 92px; height: 92px; right: 29%; bottom: -68px; }
+.main-theme-assistant .assistant-avatar {
+  width: 62px;
+  height: 62px;
+  flex: 0 0 62px;
+  border: 1px solid rgba(255,255,255,.34);
+  border-radius: 20px 20px 20px 7px;
+  color: white;
+  background: rgba(255,255,255,.15);
+  backdrop-filter: blur(9px);
+  box-shadow: 0 10px 28px rgba(0,89,117,.16);
+}
+.main-theme-assistant .assistant-avatar::after { border-color: #00899d; background: #a8f3d5; }
+.main-theme-assistant .assistant-header h1 { color: white; font-size: 1.4rem; }
+.main-theme-assistant .assistant-header p { color: rgba(255,255,255,.82); font-size: .75rem; }
+.main-theme-assistant .online { color: #d7fff1; font-size: .625rem; }
+.main-theme-assistant .online i { background: #a8f3d5; box-shadow: 0 0 0 4px rgba(168,243,213,.12); }
+
+.main-theme-assistant .chat-window {
+  margin: 14px 0 12px;
+  padding: 26px;
+  border: 1px solid #d5e9ee;
+  border-radius: 23px;
+  background: rgba(255,255,255,.7);
+  scrollbar-color: #abd5df transparent;
+  box-shadow: 0 12px 34px rgba(0,137,161,.065);
+}
+.main-theme-assistant .chat-welcome > span {
+  color: white;
+  background: linear-gradient(135deg, #00b37a, #009f91 48%, #0072a7);
+  box-shadow: 0 13px 30px rgba(0,137,161,.12);
+}
+.main-theme-assistant .chat-welcome h2 { color: #173f4a; }
+.main-theme-assistant .chat-welcome p { color: #68818a; }
+.main-theme-assistant .chat-welcome button {
+  color: #426874;
+  border-color: #d7e8ec;
+  background: rgba(255,255,255,.94);
+  box-shadow: 0 5px 16px rgba(0,113,145,.045);
+}
+.main-theme-assistant .chat-welcome button:hover {
+  color: #007b91;
+  border-color: #8bcbd5;
+  background: #f4fcfd;
+}
+.main-theme-assistant .message > span {
+  color: white;
+  background: linear-gradient(145deg, #009f91, #0072a7);
+  box-shadow: 0 5px 14px rgba(0,137,161,.1);
+}
+.main-theme-assistant .message > div {
+  color: #294a53;
+  border-color: #dcebed;
+  background: #fff;
+  box-shadow: 0 5px 16px rgba(0,102,132,.04);
+}
+.main-theme-assistant .message.user > span {
+  color: #0072a7;
+  border: 1px solid #d5e8ed;
+  background: #eaf4f7;
+  box-shadow: none;
+}
+.main-theme-assistant .message.user > div {
+  color: #294851;
+  border-color: #d7e8ec;
+  background: #f2f7f9;
+}
+.main-theme-assistant .typing i { background: #4fa8b8; }
+
+.main-theme-assistant .chat-input {
+  border-color: #c9e2e8;
+  background: rgba(255,255,255,.96);
+  box-shadow: 0 11px 32px rgba(0,137,161,.1);
+}
+.main-theme-assistant .chat-input:focus-within {
+  border-color: #0089a1;
+  box-shadow: 0 0 0 4px rgba(0,137,161,.12), 0 13px 34px rgba(0,137,161,.1);
+}
+.main-theme-assistant .chat-input textarea { color: #21434d; }
+.main-theme-assistant .chat-input textarea::placeholder { color: #839ca3; }
+.main-theme-assistant .chat-input button { color: white; background: #0072a7; }
+.main-theme-assistant .chat-input button:hover:not(:disabled) { background: #005f8c; }
+.main-theme-assistant .ai-disclaimer { color: #779098; }
+.main-theme-assistant .form-error { border-color: #f0c9c5; background: #fff4f2; }
+
+@media (max-width: 620px) {
+  .main-content.main-theme-assistant { background: #edf8fb; }
+  .main-theme-assistant .assistant-page { padding: 12px 12px 9px; }
+  .main-theme-assistant .assistant-header { min-height: 104px; padding: 18px; border-radius: 17px; }
+  .main-theme-assistant .assistant-avatar { width: 52px; height: 52px; flex-basis: 52px; border-radius: 17px 17px 17px 6px; }
+  .main-theme-assistant .assistant-header h1 { font-size: 1.125rem; }
+  .main-theme-assistant .chat-window { padding: 17px 10px; border-radius: 18px; }
+}

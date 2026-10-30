@@ -1,0 +1,59 @@
+/* Logo NOURI dùng chung. Tách nguyên văn từ styles.css cũ; thứ tự import trong styles.css quyết định thứ tự áp dụng. */
+
+/* Clean NOURI wordmark shared by the sidebar, mobile header and auth screens. */
+.logo.logo-wordmark {
+  width: fit-content;
+  min-width: 0;
+  color: #2d3d35;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 19px;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: .22em;
+}
+.logo-symbol {
+  position: relative;
+  width: 40px;
+  height: 40px;
+  flex: 0 0 40px;
+  border: 1px solid #d5e6ca;
+  border-radius: 50%;
+  color: #579d3a;
+  background: #f2f8ed;
+  display: grid;
+  place-items: center;
+}
+.logo-symbol::before {
+  content: "";
+  position: absolute;
+  inset: 6px;
+  border: 1px solid rgba(87,157,58,.24);
+  border-top-color: transparent;
+  border-radius: 50%;
+  transform: rotate(-28deg);
+}
+.logo-symbol::after {
+  content: "";
+  position: absolute;
+  right: 5px;
+  top: 6px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #89c660;
+}
+.logo-symbol svg { position: relative; z-index: 1; width: 20px; height: 20px; stroke-width: 2; transform: rotate(-10deg); }
+.logo-word { white-space: nowrap; }
+
+.mobile-header .logo.logo-wordmark { gap: 9px; font-size: 16px; letter-spacing: .18em; }
+.mobile-header .logo-symbol { width: 34px; height: 34px; flex-basis: 34px; }
+.mobile-header .logo-symbol svg { width: 17px; height: 17px; }
+.auth-story .logo.logo-wordmark { color: #fff; font-size: 22px; }
+.auth-story .logo-symbol { border-color: rgba(255,255,255,.2); color: #a9dc72; background: rgba(255,255,255,.08); }
+.auth-mobile-logo .logo.logo-wordmark { margin: 0 auto; justify-content: center; }
+
+@media (max-width: 620px) {
+  .mobile-header .logo.logo-wordmark { font-size: 15px; }
+}

@@ -1,0 +1,141 @@
+/* Kho thực phẩm: bảng màu xanh. Tách nguyên văn từ styles.css cũ; thứ tự import trong styles.css quyết định thứ tự áp dụng. */
+
+/* Pantry-only blue palette — scoped so no other page is affected */
+.pantry-page {
+  min-height: 100vh;
+  color: #29445e;
+  background:
+    radial-gradient(circle at 78% 5%, rgba(121, 196, 244, .2), transparent 27rem),
+    linear-gradient(135deg, #f4faff 0%, #eaf6ff 55%, #f1f9ff 100%);
+}
+.pantry-page .pantry-title { color: #183a5a; }
+.pantry-page .pantry-title > svg { color: #2684ca; }
+.pantry-page .pantry-title h1 { color: #173756; }
+.pantry-page .pantry-global-search {
+  color: #5a9bd0;
+  border-color: #d4e9f8;
+  background: rgba(255,255,255,.9);
+  box-shadow: 0 5px 18px rgba(45,126,188,.05);
+}
+.pantry-page .pantry-global-search:focus-within {
+  color: #2182ca;
+  border-color: #78bce8;
+  box-shadow: 0 0 0 3px rgba(49,145,211,.1);
+}
+.pantry-page .pantry-global-search input { color: #274b69; }
+.pantry-page .pantry-global-search kbd { color: #6d91ac; background: #edf6fc; }
+.pantry-page .pantry-add-button {
+  color: white;
+  background: linear-gradient(135deg, #2998e5, #1478c5);
+  box-shadow: 0 9px 22px rgba(27,126,198,.22);
+}
+.pantry-page .pantry-add-button:hover { color: white; background: linear-gradient(135deg, #218bd5, #106ab1); }
+
+.pantry-page .pantry-hero {
+  border-color: #cfe7f7;
+  background-color: #dff2ff;
+  box-shadow: 0 9px 28px rgba(65,140,193,.07);
+}
+.pantry-page .pantry-hero::before {
+  background: linear-gradient(90deg, rgba(235,247,255,.99) 0%, rgba(218,240,255,.95) 46%, rgba(202,232,251,.28) 72%, rgba(195,228,249,.08));
+}
+.pantry-page .pantry-hero-copy .eyebrow { color: #2382c4; }
+.pantry-page .pantry-hero-copy h2 { color: #163954; }
+.pantry-page .pantry-hero-copy p { color: #56748b; }
+.pantry-page .pantry-hero-stats article {
+  border-color: rgba(207,229,244,.96);
+  background: rgba(255,255,255,.92);
+  box-shadow: 0 8px 24px rgba(42,119,172,.07);
+}
+.pantry-page .pantry-stat-icon.total { color: #2b9bce; background: #e4f5fc; }
+.pantry-page .pantry-stat-icon.cold { color: #267dd6; background: #e7f1ff; }
+.pantry-page .pantry-hero-stats strong { color: #163650; }
+.pantry-page .pantry-hero-stats b { color: #3e5c73; }
+.pantry-page .pantry-hero-stats small { color: #7892a5; }
+
+.pantry-page .pantry-filter-panel,
+.pantry-page .pantry-inventory-panel,
+.pantry-page .pantry-insights > section {
+  border-color: #d5e8f5;
+  background: rgba(255,255,255,.9);
+  box-shadow: 0 8px 24px rgba(53,123,171,.045);
+}
+.pantry-page .pantry-filter-panel section + section,
+.pantry-page .pantry-inventory-toolbar,
+.pantry-page .pantry-table-head,
+.pantry-page .pantry-table-row { border-color: #dfedf6; }
+.pantry-page .pantry-filter-panel h2,
+.pantry-page .pantry-inventory-panel h2,
+.pantry-page .pantry-insights h2 { color: #1c3b55; }
+.pantry-page .pantry-filter-panel button { color: #536f84; }
+.pantry-page .pantry-filter-panel button:hover { color: #1e81c6; background: #eef8ff; }
+.pantry-page .pantry-filter-panel button.active {
+  color: #197fc5;
+  background: linear-gradient(90deg, #e1f3ff, #eef8ff);
+}
+.pantry-page .pantry-filter-panel button span svg,
+.pantry-page .pantry-filter-panel button.active span svg { color: #2b91d3; }
+.pantry-page .pantry-filter-panel button b { color: #367eae; }
+.pantry-page .pantry-filters label { color: #405f77; }
+.pantry-page .pantry-filters select {
+  color: #47677f;
+  border-color: #d5e7f3;
+  background: #fafdff;
+}
+.pantry-page .pantry-filters select:focus {
+  border-color: #78b8e2;
+  box-shadow: 0 0 0 3px rgba(40,139,204,.09);
+}
+
+.pantry-page .pantry-inventory-toolbar { background: rgba(248,252,255,.6); }
+.pantry-page .pantry-tabs button { color: #5a7183; }
+.pantry-page .pantry-tabs button:hover { color: #1d83c8; background: #edf8ff; }
+.pantry-page .pantry-tabs button.active {
+  color: #147dc4;
+  border-color: #9ed1f1;
+  background: #e4f4ff;
+}
+.pantry-page .pantry-view-toggle { border-color: #d8e9f4; background: #f8fcff; }
+.pantry-page .pantry-view-toggle button { color: #7895a8; }
+.pantry-page .pantry-view-toggle button:hover,
+.pantry-page .pantry-view-toggle button.active { color: #167fc7; background: #e4f3fd; }
+.pantry-page .pantry-table-head { color: #6e879a; background: rgba(237,247,253,.55); }
+.pantry-page .pantry-table-row { color: #4f6a7e; }
+.pantry-page .pantry-table-row:hover { background: #f2f9fe; }
+.pantry-page .pantry-table-row > strong,
+.pantry-page .pantry-food-name strong { color: #25465f; }
+.pantry-page .pantry-expiry span { color: #46657c; }
+.pantry-page .pantry-row-actions button:hover { color: #1881c8; background: #e9f5fd; }
+
+.pantry-page .pantry-overview-card .pantry-donut::after { background: #fff; }
+.pantry-page .pantry-donut strong { color: #193d59; }
+.pantry-page .pantry-donut small,
+.pantry-page .pantry-overview-card li,
+.pantry-page .pantry-overview-card li b { color: #58758b; }
+.pantry-page .pantry-tips-card {
+  background: linear-gradient(145deg, #f8fcff, #edf8ff) !important;
+}
+.pantry-page .pantry-tips-card b { color: #35566e; }
+.pantry-page .pantry-tips-card small,
+.pantry-page .pantry-scan-card p { color: #658196; }
+.pantry-page .pantry-scan-card .pantry-scan-icon { color: #80bfe8; }
+.pantry-page .pantry-scan-card button {
+  background: linear-gradient(135deg, #2a99e1, #177ac2);
+}
+.pantry-page .pantry-scan-card button:hover { background: #126eaf; }
+.pantry-page .pantry-pagination { color: #678297; }
+.pantry-page .pantry-pagination button { color: #58758b; }
+.pantry-page .pantry-pagination button:hover:not(:disabled) { background: #eaf6fd; }
+.pantry-page .pantry-pagination button.active {
+  color: #147ec5;
+  border-color: #9bceed;
+  background: #e3f3fd;
+}
+.pantry-page .pantry-item-card { border-color: #d9eaf5; background: rgba(255,255,255,.92); }
+.pantry-page .pantry-item-card:hover { box-shadow: 0 12px 28px rgba(41,120,175,.08); }
+
+@media (max-width: 760px) {
+  .pantry-page .pantry-hero::before {
+    background: linear-gradient(180deg, rgba(235,247,255,.99) 0%, rgba(216,239,254,.93) 40%, rgba(198,230,250,.16) 72%);
+  }
+}

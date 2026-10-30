@@ -1,0 +1,132 @@
+/* Kho thực phẩm: bảng màu mint–teal cuối. Tách nguyên văn từ styles.css cũ; thứ tự import trong styles.css quyết định thứ tự áp dụng. */
+
+/* Final pantry mint–teal palette from the supplied reference */
+.pantry-page {
+  color: #284f4d;
+  background:
+    radial-gradient(circle at 82% 4%, rgba(55,198,190,.16), transparent 28rem),
+    radial-gradient(circle at 16% 91%, rgba(116,218,190,.11), transparent 24rem),
+    linear-gradient(135deg, #f8fdfc 0%, #eefaf8 55%, #f3fbfa 100%);
+}
+.pantry-page .pantry-title { color: #173f3d; }
+.pantry-page .pantry-title > svg { color: #0da7a1; }
+.pantry-page .pantry-title h1 { color: #173e3c; }
+.pantry-page .pantry-global-search {
+  color: #38a69f;
+  border-color: #d2ebe7;
+  background: rgba(255,255,255,.92);
+  box-shadow: 0 5px 18px rgba(0,132,124,.045);
+}
+.pantry-page .pantry-global-search:focus-within {
+  color: #008f89;
+  border-color: #67c8c0;
+  box-shadow: 0 0 0 3px rgba(0,159,145,.1);
+}
+.pantry-page .pantry-global-search input { color: #28524e; }
+.pantry-page .pantry-global-search kbd { color: #668f8a; background: #eef8f7; }
+.pantry-page .pantry-add-button {
+  color: white;
+  background: linear-gradient(135deg, #18b8ae, #008f88);
+  box-shadow: 0 9px 22px rgba(0,143,136,.21);
+}
+.pantry-page .pantry-add-button:hover { color: white; background: linear-gradient(135deg, #0ca59d, #007d78); }
+
+.pantry-page .pantry-hero {
+  border-color: #cce9e4;
+  background-color: #e1f6f2;
+  box-shadow: 0 9px 28px rgba(0,133,124,.06);
+}
+.pantry-page .pantry-hero::before {
+  background: linear-gradient(90deg, rgba(235,249,247,.99) 0%, rgba(213,244,238,.95) 46%, rgba(191,235,226,.25) 72%, rgba(183,229,223,.06));
+}
+.pantry-page .pantry-hero-copy .eyebrow { color: #008f88; }
+.pantry-page .pantry-hero-copy h2 { color: #124640; }
+.pantry-page .pantry-hero-copy p { color: #567771; }
+.pantry-page .pantry-hero-stats article {
+  border-color: rgba(203,232,227,.96);
+  background: rgba(255,255,255,.93);
+  box-shadow: 0 8px 24px rgba(0,113,106,.06);
+}
+.pantry-page .pantry-stat-icon.total { color: #009f91; background: #def5ef; }
+.pantry-page .pantry-stat-icon.soon { color: #76a91c; background: #eef8d8; }
+.pantry-page .pantry-stat-icon.expired { color: #02a1a0; background: #dcf4f2; }
+.pantry-page .pantry-stat-icon.cold { color: #00a0ae; background: #def3f4; }
+.pantry-page .pantry-hero-stats strong { color: #153f3c; }
+.pantry-page .pantry-hero-stats b { color: #3d615d; }
+.pantry-page .pantry-hero-stats small { color: #78938f; }
+
+.pantry-page .pantry-filter-panel,
+.pantry-page .pantry-inventory-panel,
+.pantry-page .pantry-insights > section {
+  border-color: #d5eae7;
+  background: rgba(255,255,255,.92);
+  box-shadow: 0 8px 24px rgba(0,111,104,.04);
+}
+.pantry-page .pantry-filter-panel section + section,
+.pantry-page .pantry-inventory-toolbar,
+.pantry-page .pantry-table-head,
+.pantry-page .pantry-table-row { border-color: #dfefec; }
+.pantry-page .pantry-filter-panel h2,
+.pantry-page .pantry-inventory-panel h2,
+.pantry-page .pantry-insights h2 { color: #1b4441; }
+.pantry-page .pantry-filter-panel button { color: #536f6b; }
+.pantry-page .pantry-filter-panel button:hover { color: #008f88; background: #edf9f7; }
+.pantry-page .pantry-filter-panel button.active {
+  color: #008b84;
+  background: linear-gradient(90deg, #dff5f1, #edf9f7);
+}
+.pantry-page .pantry-filter-panel button span svg,
+.pantry-page .pantry-filter-panel button.active span svg { color: #0b9f98; }
+.pantry-page .pantry-filter-panel button b { color: #277f78; }
+.pantry-page .pantry-filters label { color: #405f5b; }
+.pantry-page .pantry-filters select {
+  color: #496964;
+  border-color: #d3e8e4;
+  background: #fbfefd;
+}
+.pantry-page .pantry-filters select:focus {
+  border-color: #6bc4bc;
+  box-shadow: 0 0 0 3px rgba(0,159,145,.09);
+}
+.pantry-page .pantry-inventory-toolbar { background: rgba(247,252,251,.65); }
+.pantry-page .pantry-tabs button { color: #5a716d; }
+.pantry-page .pantry-tabs button:hover { color: #008e87; background: #edf9f7; }
+.pantry-page .pantry-tabs button.active {
+  color: #008b84;
+  border-color: #91d4cd;
+  background: #e0f5f2;
+}
+.pantry-page .pantry-view-toggle { border-color: #d6eae7; background: #f8fcfb; }
+.pantry-page .pantry-view-toggle button { color: #779691; }
+.pantry-page .pantry-view-toggle button:hover,
+.pantry-page .pantry-view-toggle button.active { color: #008e87; background: #dff3f0; }
+.pantry-page .pantry-table-head { color: #6f8884; background: rgba(234,247,244,.62); }
+.pantry-page .pantry-table-row { color: #506c68; }
+.pantry-page .pantry-table-row:hover { background: #f1faf8; }
+.pantry-page .pantry-table-row > strong,
+.pantry-page .pantry-food-name strong { color: #284b47; }
+.pantry-page .pantry-expiry span { color: #486763; }
+.pantry-page .pantry-row-actions button:hover { color: #008f88; background: #e5f6f3; }
+.pantry-page .pantry-tips-card { background: linear-gradient(145deg, #f9fdfc, #edf9f7) !important; }
+.pantry-page .pantry-tips-card b { color: #355b56; }
+.pantry-page .pantry-tips-card small,
+.pantry-page .pantry-scan-card p { color: #66817d; }
+.pantry-page .pantry-scan-card .pantry-scan-icon { color: #70c9c1; }
+.pantry-page .pantry-scan-card button { background: linear-gradient(135deg, #18b5ac, #008f88); }
+.pantry-page .pantry-scan-card button:hover { background: #007d77; }
+.pantry-page .pantry-pagination { color: #67837f; }
+.pantry-page .pantry-pagination button { color: #587671; }
+.pantry-page .pantry-pagination button:hover:not(:disabled) { background: #e8f7f4; }
+.pantry-page .pantry-pagination button.active {
+  color: #008a83;
+  border-color: #8ed0ca;
+  background: #dff3f0;
+}
+.pantry-page .pantry-item-card { border-color: #d7eae6; background: rgba(255,255,255,.93); }
+.pantry-page .pantry-item-card:hover { box-shadow: 0 12px 28px rgba(0,118,109,.075); }
+
+@media (max-width: 760px) {
+  .pantry-page .pantry-hero::before {
+    background: linear-gradient(180deg, rgba(235,249,247,.99) 0%, rgba(212,243,238,.94) 40%, rgba(190,234,226,.14) 72%);
+  }
+}

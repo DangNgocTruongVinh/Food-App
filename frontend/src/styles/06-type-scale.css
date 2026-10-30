@@ -1,0 +1,250 @@
+/* Thang chữ cho Dashboard, Kho và Hồ sơ. Tách nguyên văn từ styles.css cũ; thứ tự import trong styles.css quyết định thứ tự áp dụng. */
+
+/* Readable type scale for Dashboard, Pantry and Profile */
+.reference-dashboard .overview-welcome .eyebrow { font-size: 10px; }
+.reference-dashboard .overview-welcome h1 { font-size: clamp(30px, 2.8vw, 40px); }
+.reference-dashboard .overview-welcome p { font-size: 14px; }
+.reference-dashboard .overview-search input { font-size: 13px; }
+.reference-dashboard .overview-metrics strong { font-size: 25px; }
+.reference-dashboard .overview-metrics article > div > b { font-size: 11px; }
+.reference-dashboard .overview-metrics article > div > small { font-size: 9px; }
+.reference-dashboard .overview-panel > header h2 { font-size: 17px; }
+.reference-dashboard .overview-panel > header > a { font-size: 10px; }
+.reference-dashboard .overview-expiry-row div strong { font-size: 11px; }
+.reference-dashboard .overview-expiry-row div small { font-size: 9px; }
+.reference-dashboard .overview-expiry-row > span:nth-child(3) { font-size: 8px; }
+.reference-dashboard .overview-expiry-row > b { font-size: 8px; }
+.reference-dashboard .overview-recipe-card > div > span { font-size: 8px; }
+.reference-dashboard .overview-recipe-card h3 { font-size: 12px; }
+.reference-dashboard .overview-recipe-card footer small,
+.reference-dashboard .overview-recipe-card footer span { font-size: 8px; }
+.reference-dashboard .overview-today > header > div > span,
+.reference-dashboard .overview-meal-time { font-size: 9px; }
+.reference-dashboard .overview-today-list div div strong { font-size: 10px; }
+.reference-dashboard .overview-today-list div div small { font-size: 8px; }
+.reference-dashboard .overview-outline-button,
+.reference-dashboard .overview-compact-empty p { font-size: 10px; }
+.reference-dashboard .overview-ai-banner .eyebrow { font-size: 10px; }
+.reference-dashboard .overview-ai-banner h2 { font-size: 16px; }
+.reference-dashboard .overview-ai-prompts a { font-size: 9px; }
+
+.pantry-page .pantry-title h1 { font-size: 21px; }
+.pantry-page .pantry-global-search input { font-size: 12px; }
+.pantry-page .pantry-add-button { font-size: 11px; }
+.pantry-page .pantry-hero-copy .eyebrow { font-size: 9px; }
+.pantry-page .pantry-hero-copy h2 { font-size: 22px; }
+.pantry-page .pantry-hero-copy p { font-size: 11px; }
+.pantry-page .pantry-hero-stats strong { font-size: 20px; }
+.pantry-page .pantry-hero-stats b { font-size: 10px; }
+.pantry-page .pantry-hero-stats small { font-size: 8px; }
+.pantry-page .pantry-filter-panel h2,
+.pantry-page .pantry-inventory-panel h2,
+.pantry-page .pantry-insights h2 { font-size: 12px; }
+.pantry-page .pantry-filter-panel button { font-size: 10px; }
+.pantry-page .pantry-filter-panel button b { font-size: 9px; }
+.pantry-page .pantry-filters label { font-size: 9px; }
+.pantry-page .pantry-filters select { font-size: 10px; }
+.pantry-page .pantry-tabs button { font-size: 9px; }
+.pantry-page .pantry-table { min-width: 735px; }
+.pantry-page .pantry-table-head { font-size: 8px; }
+.pantry-page .pantry-table-row,
+.pantry-page .pantry-table-row > strong { font-size: 9px; }
+.pantry-page .pantry-food-name strong { font-size: 10px; }
+.pantry-page .pantry-expiry small,
+.pantry-page .pantry-status { font-size: 8px; }
+.pantry-page .pantry-item-card > small,
+.pantry-page .pantry-item-card footer em { font-size: 8px; }
+.pantry-page .pantry-item-card h3 { font-size: 13px; }
+.pantry-page .pantry-item-card > b { font-size: 11px; }
+.pantry-page .pantry-pagination { font-size: 8px; }
+.pantry-page .pantry-pagination button { font-size: 9px; }
+.pantry-page .pantry-donut strong { font-size: 21px; }
+.pantry-page .pantry-donut small { font-size: 8px; }
+.pantry-page .pantry-overview-card li,
+.pantry-page .pantry-overview-card li b { font-size: 8px; }
+.pantry-page .pantry-tips-card b { font-size: 9px; }
+.pantry-page .pantry-tips-card small,
+.pantry-page .pantry-scan-card p { font-size: 8px; }
+.pantry-page .pantry-scan-card button { font-size: 9px; }
+
+.professional-profile-page .professional-profile-header .eyebrow { font-size: 10px; }
+.professional-profile-page .professional-profile-header p { font-size: 12px; }
+.professional-profile-page .profile-save-top,
+.professional-profile-page .profile-save-bottom { font-size: 11px; }
+.professional-profile-page .profile-identity-copy > span { font-size: 9px; }
+.professional-profile-page .profile-identity-copy h2 { font-size: 20px; }
+.professional-profile-page .profile-identity-copy p { font-size: 9px; }
+.professional-profile-page .profile-summary-tags span { font-size: 8px; }
+.professional-profile-page .profile-completion > div:first-child span { font-size: 9px; }
+.professional-profile-page .profile-completion > div:first-child b { font-size: 10px; }
+.professional-profile-page .profile-completion > small { font-size: 8px; }
+.professional-profile-page .profile-section-header small { font-size: 8px; }
+.professional-profile-page .profile-section-header h2 { font-size: 16px; }
+.professional-profile-page .profile-section-header p { font-size: 9px; }
+.professional-profile-page .profile-fields label { font-size: 10px; }
+.professional-profile-page .profile-fields label > small { font-size: 8px; }
+.professional-profile-page .profile-fields input,
+.professional-profile-page .profile-fields select { height: 44px; font-size: 11px; }
+.professional-profile-page .profile-fields label > div input + em { font-size: 9px; }
+.professional-profile-page .profile-form-actions > span { font-size: 9px; }
+.professional-profile-page .profile-target-card > header small { font-size: 8px; }
+.professional-profile-page .profile-target-card > header h2 { font-size: 14px; }
+.professional-profile-page .profile-calorie-ring strong { font-size: 32px; }
+.professional-profile-page .profile-calorie-ring span { font-size: 9px; }
+.professional-profile-page .profile-target-card > p { font-size: 9px; }
+.professional-profile-page .profile-macros header span { font-size: 9px; }
+.professional-profile-page .profile-macros header b { font-size: 10px; }
+.professional-profile-page .profile-disclaimer { font-size: 8px; }
+.professional-profile-page .profile-health-card > header > div > span { font-size: 9px; }
+.professional-profile-page .profile-health-card footer span { font-size: 9px; }
+.professional-profile-page .profile-health-card footer b { font-size: 8px; }
+.professional-profile-page .profile-ai-card small { font-size: 8px; }
+.professional-profile-page .profile-ai-card h2 { font-size: 11px; }
+.professional-profile-page .profile-ai-card p { font-size: 8px; }
+.professional-profile-page .profile-ai-card a { font-size: 9px; }
+
+@media (max-width: 620px) {
+  .pantry-page .pantry-add-button,
+  .professional-profile-page .profile-save-top { font-size: 0; }
+  .pantry-page .pantry-table-row > [data-label]::before { font-size: 8px; }
+}
+
+/* Standards-based accessible type scale: 12 / 14 / 16 / 20 / 24 / 40 */
+.reference-dashboard,
+.pantry-page,
+.professional-profile-page { font-size: 1rem; line-height: 1.5; }
+
+/* Dashboard */
+.reference-dashboard .overview-welcome .eyebrow { font-size: .75rem; line-height: 1.4; }
+.reference-dashboard .overview-welcome h1 { font-size: clamp(2rem, 3vw, 2.5rem); line-height: 1.15; }
+.reference-dashboard .overview-welcome p { font-size: 1rem; line-height: 1.6; }
+.reference-dashboard .overview-search input { font-size: 1rem; }
+.reference-dashboard .overview-metrics > article { min-height: 112px; }
+.reference-dashboard .overview-metrics strong { font-size: 1.625rem; }
+.reference-dashboard .overview-metrics article > div > b { font-size: .875rem; line-height: 1.35; }
+.reference-dashboard .overview-metrics article > div > small { font-size: .75rem; line-height: 1.4; }
+.reference-dashboard .overview-panel > header h2 { font-size: 1.125rem; line-height: 1.35; }
+.reference-dashboard .overview-panel > header > a { font-size: .8125rem; }
+.reference-dashboard .overview-expiry-row { min-height: 78px; }
+.reference-dashboard .overview-expiry-row div strong { font-size: .875rem; }
+.reference-dashboard .overview-expiry-row div small { font-size: .75rem; }
+.reference-dashboard .overview-expiry-row > span:nth-child(3) { font-size: .75rem; }
+.reference-dashboard .overview-expiry-row > b { font-size: .6875rem; }
+.reference-dashboard .overview-recipe-card > div > span { font-size: .75rem; }
+.reference-dashboard .overview-recipe-card h3 { font-size: .9375rem; line-height: 1.4; }
+.reference-dashboard .overview-recipe-card footer small,
+.reference-dashboard .overview-recipe-card footer span { font-size: .75rem; }
+.reference-dashboard .overview-today > header > div > span,
+.reference-dashboard .overview-meal-time { font-size: .75rem; }
+.reference-dashboard .overview-today-list > div { min-height: 70px; }
+.reference-dashboard .overview-today-list div div strong { font-size: .875rem; }
+.reference-dashboard .overview-today-list div div small { font-size: .75rem; }
+.reference-dashboard .overview-outline-button,
+.reference-dashboard .overview-compact-empty p { font-size: .875rem; }
+.reference-dashboard .overview-ai-banner .eyebrow { font-size: .75rem; }
+.reference-dashboard .overview-ai-banner h2 { font-size: 1.125rem; line-height: 1.4; }
+.reference-dashboard .overview-ai-prompts a { font-size: .8125rem; line-height: 1.35; }
+
+/* Pantry */
+.pantry-page .pantry-title h1 { font-size: 1.5rem; }
+.pantry-page .pantry-global-search { height: 46px; }
+.pantry-page .pantry-global-search input { font-size: 1rem; }
+.pantry-page .pantry-add-button { min-height: 44px; font-size: .875rem; }
+.pantry-page .pantry-hero { min-height: 225px; }
+.pantry-page .pantry-hero-copy .eyebrow { font-size: .75rem; }
+.pantry-page .pantry-hero-copy h2 { font-size: 1.5rem; line-height: 1.3; }
+.pantry-page .pantry-hero-copy p { font-size: .875rem; line-height: 1.5; }
+.pantry-page .pantry-hero-stats article { min-height: 88px; }
+.pantry-page .pantry-hero-stats strong { font-size: 1.5rem; }
+.pantry-page .pantry-hero-stats b { font-size: .875rem; }
+.pantry-page .pantry-hero-stats small { font-size: .75rem; }
+.pantry-page .pantry-layout { grid-template-columns: 205px minmax(0, 1fr) 270px; }
+.pantry-page .pantry-filter-panel h2,
+.pantry-page .pantry-inventory-panel h2,
+.pantry-page .pantry-insights h2 { font-size: 1rem; line-height: 1.4; }
+.pantry-page .pantry-filter-panel button { min-height: 42px; font-size: .875rem; }
+.pantry-page .pantry-filter-panel button b { font-size: .75rem; }
+.pantry-page .pantry-filters { gap: 15px; }
+.pantry-page .pantry-filters label { font-size: .875rem; }
+.pantry-page .pantry-filters select { height: 42px; font-size: .875rem; }
+.pantry-page .pantry-inventory-toolbar { min-height: 64px; }
+.pantry-page .pantry-tabs button { min-height: 38px; font-size: .8125rem; }
+.pantry-page .pantry-table { min-width: 920px; grid-template-columns: minmax(155px, 1.35fr) minmax(100px, .82fr) 88px 120px 112px 108px 54px; }
+.pantry-page .pantry-table-head { min-height: 44px; font-size: .75rem; }
+.pantry-page .pantry-table-row { min-height: 76px; font-size: .8125rem; }
+.pantry-page .pantry-table-row > strong { font-size: .8125rem; }
+.pantry-page .pantry-food-name strong { font-size: .875rem; }
+.pantry-page .pantry-expiry small,
+.pantry-page .pantry-status { font-size: .75rem; }
+.pantry-page .pantry-item-card > small,
+.pantry-page .pantry-item-card footer em { font-size: .75rem; }
+.pantry-page .pantry-item-card h3 { font-size: 1rem; line-height: 1.4; }
+.pantry-page .pantry-item-card > b { font-size: .875rem; }
+.pantry-page .pantry-pagination { min-height: 60px; font-size: .75rem; }
+.pantry-page .pantry-pagination button { min-width: 32px; height: 32px; font-size: .8125rem; }
+.pantry-page .pantry-donut strong { font-size: 1.5rem; }
+.pantry-page .pantry-donut small { font-size: .75rem; }
+.pantry-page .pantry-overview-card li,
+.pantry-page .pantry-overview-card li b { font-size: .75rem; }
+.pantry-page .pantry-tips-card b { font-size: .875rem; }
+.pantry-page .pantry-tips-card small,
+.pantry-page .pantry-scan-card p { font-size: .75rem; line-height: 1.5; }
+.pantry-page .pantry-scan-card button { min-height: 40px; font-size: .875rem; }
+
+/* Profile */
+.professional-profile-page .professional-profile-header .eyebrow { font-size: .75rem; }
+.professional-profile-page .professional-profile-header h1 { font-size: clamp(2rem, 3vw, 2.5rem); }
+.professional-profile-page .professional-profile-header p { font-size: 1rem; line-height: 1.6; }
+.professional-profile-page .profile-save-top,
+.professional-profile-page .profile-save-bottom { min-height: 44px; font-size: .875rem; }
+.professional-profile-page .profile-identity-copy > span { font-size: .75rem; }
+.professional-profile-page .profile-identity-copy h2 { font-size: 1.5rem; line-height: 1.3; }
+.professional-profile-page .profile-identity-copy p { font-size: .875rem; }
+.professional-profile-page .profile-summary-tags span { min-height: 34px; font-size: .75rem; }
+.professional-profile-page .profile-completion > div:first-child span { font-size: .875rem; }
+.professional-profile-page .profile-completion > div:first-child b { font-size: .875rem; }
+.professional-profile-page .profile-completion > small { font-size: .75rem; line-height: 1.5; }
+.professional-profile-page .profile-section-header small { font-size: .75rem; }
+.professional-profile-page .profile-section-header h2 { font-size: 1.25rem; line-height: 1.35; }
+.professional-profile-page .profile-section-header p { font-size: .875rem; line-height: 1.5; }
+.professional-profile-page .profile-fields { gap: 20px; }
+.professional-profile-page .profile-fields label { font-size: .875rem; }
+.professional-profile-page .profile-fields label > small { font-size: .75rem; line-height: 1.5; }
+.professional-profile-page .profile-fields input,
+.professional-profile-page .profile-fields select { height: 50px; font-size: 1rem; }
+.professional-profile-page .profile-fields label > div input + em { font-size: .8125rem; }
+.professional-profile-page .profile-form-actions > span { font-size: .8125rem; line-height: 1.5; }
+.professional-profile-page .profile-target-card > header small { font-size: .75rem; }
+.professional-profile-page .profile-target-card > header h2 { font-size: 1rem; }
+.professional-profile-page .profile-calorie-ring strong { font-size: 2rem; }
+.professional-profile-page .profile-calorie-ring span { font-size: .8125rem; }
+.professional-profile-page .profile-target-card > p { font-size: .8125rem; line-height: 1.55; }
+.professional-profile-page .profile-macros header span { font-size: .8125rem; }
+.professional-profile-page .profile-macros header b { font-size: .875rem; }
+.professional-profile-page .profile-disclaimer { font-size: .75rem; line-height: 1.5; }
+.professional-profile-page .profile-health-card > header > div > span { font-size: .8125rem; }
+.professional-profile-page .profile-health-card footer span { font-size: .8125rem; }
+.professional-profile-page .profile-health-card footer b { font-size: .75rem; }
+.professional-profile-page .profile-ai-card small { font-size: .75rem; }
+.professional-profile-page .profile-ai-card h2 { font-size: .9375rem; line-height: 1.45; }
+.professional-profile-page .profile-ai-card p { font-size: .8125rem; line-height: 1.55; }
+.professional-profile-page .profile-ai-card a { font-size: .8125rem; }
+
+@media (max-width: 1350px) {
+  .pantry-page .pantry-layout { grid-template-columns: 205px minmax(0, 1fr); }
+}
+
+@media (max-width: 1040px) {
+  .pantry-page .pantry-layout { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 620px) {
+  .reference-dashboard .overview-welcome h1,
+  .professional-profile-page .professional-profile-header h1 { font-size: 2rem; }
+  .pantry-page .pantry-add-button,
+  .professional-profile-page .profile-save-top { font-size: 0; }
+  .pantry-page .pantry-hero { min-height: 400px; }
+  .pantry-page .pantry-table { min-width: 0; }
+  .pantry-page .pantry-table-row { font-size: .875rem; }
+  .pantry-page .pantry-table-row > [data-label]::before { font-size: .75rem; }
+}

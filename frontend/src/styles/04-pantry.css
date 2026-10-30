@@ -1,0 +1,215 @@
+/* Kho thực phẩm: bố cục bám theo thiết kế tham chiếu. Tách nguyên văn từ styles.css cũ; thứ tự import trong styles.css quyết định thứ tự áp dụng. */
+
+/* Pantry inventory — aligned with the Foodly reference */
+.pantry-page { max-width: none; padding: 16px 24px 36px; color: #27372f; }
+.pantry-page-header { min-height: 44px; margin-bottom: 11px; display: grid; grid-template-columns: minmax(185px, 1fr) minmax(290px, 520px) minmax(185px, 1fr); align-items: center; gap: 22px; }
+.pantry-title { display: flex; align-items: center; gap: 10px; }
+.pantry-title > svg { width: 19px; color: #58665f; }
+.pantry-title h1 { margin: 0; color: #1c2722; font-size: 18px; line-height: 1; letter-spacing: -.55px; }
+.pantry-global-search { height: 40px; padding: 0 11px 0 14px; border: 1px solid #e9ece6; border-radius: 11px; color: #89938e; background: white; display: flex; align-items: center; gap: 9px; box-shadow: 0 4px 15px rgba(36,61,47,.025); }
+.pantry-global-search:focus-within { color: #56a83d; border-color: #b8dba9; box-shadow: 0 0 0 3px rgba(93,181,65,.08); }
+.pantry-global-search > svg { width: 16px; }
+.pantry-global-search input { min-width: 0; flex: 1; padding: 0; border: 0; outline: 0; color: #25352d; background: transparent; font-size: 10px; }
+.pantry-global-search input::placeholder { color: #a2aaa6; }
+.pantry-global-search kbd { padding: 3px 5px; border: 0; border-radius: 5px; color: #9ca49f; background: #f4f5f2; font: 500 8px Manrope; }
+.pantry-add-button { justify-self: end; min-height: 39px; padding: 9px 15px; border-radius: 9px; color: white; background: linear-gradient(135deg, #6bc53c, #52ad31); box-shadow: 0 7px 17px rgba(75,163,46,.18); font-size: 9px; }
+.pantry-add-button:hover { color: white; background: #419a2a; }
+.pantry-add-button svg { width: 16px; }
+
+.pantry-hero { position: relative; isolation: isolate; min-height: 194px; padding: 25px 25px 17px; border: 1px solid #e9eee1; border-radius: 14px; background: #f1f7e5 url("/assets/pantry-hero.png") center / cover no-repeat; overflow: hidden; }
+.pantry-hero::before { content: ""; position: absolute; z-index: -1; inset: 0; background: linear-gradient(90deg, rgba(246,250,232,.98) 0%, rgba(242,249,224,.93) 46%, rgba(242,249,224,.25) 72%, rgba(242,249,224,.08)); }
+.pantry-hero-copy { position: relative; z-index: 1; }
+.pantry-hero-copy .eyebrow { margin-bottom: 6px; color: #6d9e58; font-size: 7px; }
+.pantry-hero-copy h2 { margin: 0 0 7px; color: #1e2b24; font-size: 18px; letter-spacing: -.55px; }
+.pantry-hero-copy p { margin: 0; color: #747f79; font-size: 9px; }
+.pantry-hero-stats { position: absolute; z-index: 2; left: 25px; right: 16%; bottom: 16px; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.pantry-hero-stats article { min-width: 0; min-height: 72px; padding: 12px 13px; border: 1px solid rgba(233,237,231,.95); border-radius: 11px; background: rgba(255,255,255,.94); backdrop-filter: blur(6px); display: flex; align-items: center; gap: 11px; box-shadow: 0 7px 22px rgba(47,76,57,.045); }
+.pantry-stat-icon { width: 34px; height: 34px; flex: 0 0 34px; border-radius: 10px; display: grid; place-items: center; }
+.pantry-stat-icon svg { width: 17px; }
+.pantry-stat-icon.total { color: #59b43d; background: #edf8e5; }
+.pantry-stat-icon.soon { color: #ed9e22; background: #fff4df; }
+.pantry-stat-icon.expired { color: #ff5365; background: #ffe9ec; }
+.pantry-stat-icon.cold { color: #4e8ee8; background: #eaf2ff; }
+.pantry-hero-stats strong, .pantry-hero-stats b, .pantry-hero-stats small { display: block; }
+.pantry-hero-stats strong { margin-bottom: 1px; color: #1d2722; font-size: 17px; line-height: 1; }
+.pantry-hero-stats b { overflow: hidden; color: #4b5751; font-size: 8px; text-overflow: ellipsis; white-space: nowrap; }
+.pantry-hero-stats small { margin-top: 3px; color: #9ba39f; font-size: 6px; }
+
+.pantry-layout { margin-top: 11px; display: grid; grid-template-columns: 180px minmax(0, 1fr) 244px; gap: 11px; align-items: start; }
+.pantry-filter-panel, .pantry-inventory-panel, .pantry-insights > section { border: 1px solid #e9ede7; border-radius: 13px; background: white; }
+.pantry-filter-panel { overflow: hidden; }
+.pantry-filter-panel section { padding: 17px 13px; }
+.pantry-filter-panel section + section { border-top: 1px solid #edf0eb; }
+.pantry-filter-panel h2, .pantry-inventory-panel h2, .pantry-insights h2 { margin: 0 0 12px; color: #25332c; font-size: 10px; letter-spacing: -.15px; }
+.pantry-filter-panel button { width: 100%; min-height: 33px; padding: 7px 8px; border: 0; border-radius: 8px; color: #65716b; background: transparent; display: flex; align-items: center; justify-content: space-between; gap: 6px; font-size: 8px; text-align: left; }
+.pantry-filter-panel button:hover { color: #4ca237; background: #f6f9f1; }
+.pantry-filter-panel button.active { color: #4da636; background: linear-gradient(90deg, #f0f8e7, #f8faef); }
+.pantry-filter-panel button span { min-width: 0; display: flex; align-items: center; gap: 8px; }
+.pantry-filter-panel button span svg { width: 13px; color: #8a9690; }
+.pantry-filter-panel button.active span svg { color: #5ab23d; }
+.pantry-filter-panel button b { color: #929c97; font-size: 7px; }
+.pantry-filters { display: grid; gap: 11px; }
+.pantry-filters h2 { margin-bottom: 0; }
+.pantry-filters label { color: #505e57; font-size: 7px; font-weight: 700; }
+.pantry-filters select { width: 100%; height: 33px; margin-top: 5px; padding: 0 9px; border: 1px solid #e5e9e3; border-radius: 7px; outline: 0; color: #69736e; background: #fff; font-size: 7px; }
+.pantry-filters select:focus { border-color: #b3d7a4; box-shadow: 0 0 0 3px rgba(93,181,65,.07); }
+
+.pantry-inventory-panel { min-width: 0; overflow: hidden; }
+.pantry-inventory-toolbar { min-height: 53px; padding: 10px 12px; border-bottom: 1px solid #edf0eb; display: flex; align-items: center; justify-content: space-between; gap: 15px; }
+.pantry-tabs { display: flex; align-items: center; gap: 4px; }
+.pantry-tabs button { min-height: 30px; padding: 7px 10px; border: 1px solid transparent; border-radius: 8px; color: #727d77; background: transparent; font-size: 7px; font-weight: 600; white-space: nowrap; }
+.pantry-tabs button b { margin-left: 3px; font-size: inherit; }
+.pantry-tabs button:hover { color: #4e9e39; background: #f7f9f4; }
+.pantry-tabs button.active { color: #4fa438; border-color: #cbe4bc; background: #f1f8e9; }
+.pantry-view-toggle { padding: 3px; border: 1px solid #e8ebe6; border-radius: 8px; display: flex; }
+.pantry-view-toggle button { width: 27px; height: 27px; padding: 0; border: 0; border-radius: 6px; color: #8b9590; background: transparent; display: grid; place-items: center; }
+.pantry-view-toggle button:hover, .pantry-view-toggle button.active { color: #3e564a; background: #f0f3ed; }
+.pantry-view-toggle svg { width: 13px; }
+.pantry-table-wrap { min-width: 0; overflow-x: auto; }
+.pantry-table { min-width: 680px; display: grid; grid-template-columns: minmax(132px, 1.35fr) minmax(75px, .82fr) 68px 98px 86px 86px 48px; align-items: center; column-gap: 8px; }
+.pantry-table-head { min-height: 36px; padding: 0 13px; color: #9aa29e; border-bottom: 1px solid #eef1ec; font-size: 6px; }
+.pantry-table-row { min-height: 62px; padding: 7px 13px; border-bottom: 1px solid #f0f2ee; color: #5c6862; font-size: 7px; transition: background .18s ease; }
+.pantry-table-row:hover { background: #fafbf8; }
+.pantry-table-row > strong { color: #46534d; font-size: 7px; }
+.pantry-food-name { min-width: 0; display: flex; align-items: center; gap: 8px; }
+.pantry-food-name > span { width: 38px; height: 38px; flex: 0 0 38px; border-radius: 9px; background: #f0f4eb; display: grid; place-items: center; font-size: 20px; }
+.pantry-table-row:nth-child(3n + 2) .pantry-food-name > span { background: #fff2e7; }
+.pantry-table-row:nth-child(3n) .pantry-food-name > span { background: #edf4e7; }
+.pantry-food-name strong { overflow: hidden; color: #26372f; font-size: 8px; text-overflow: ellipsis; white-space: nowrap; }
+.pantry-expiry span, .pantry-expiry small { display: block; }
+.pantry-expiry span { color: #4e5b54; }
+.pantry-expiry small { margin-top: 3px; color: #61ad40; font-size: 6px; font-weight: 700; }
+.pantry-expiry.expiring small { color: #ee9a22; }
+.pantry-expiry.expired small { color: #f25564; }
+.pantry-status { width: fit-content; padding: 5px 7px; border-radius: 99px; font-size: 6px; font-weight: 700; white-space: nowrap; }
+.pantry-status.good { color: #52a638; background: #edf8e7; }
+.pantry-status.expiring { color: #e98e19; background: #fff4e1; }
+.pantry-status.expired { color: #ed5060; background: #ffecef; }
+.pantry-row-actions { display: flex; justify-content: flex-end; gap: 1px; }
+.pantry-row-actions button, .pantry-item-card header button { width: 24px; height: 24px; padding: 0; border: 0; border-radius: 6px; color: #9ca49f; background: transparent; display: grid; place-items: center; }
+.pantry-row-actions button:hover { color: #4d9c39; background: #f0f5ec; }
+.pantry-row-actions button.danger, .pantry-item-card header button.danger { opacity: 0; }
+.pantry-table-row:hover .pantry-row-actions button.danger, .pantry-row-actions button.danger:focus-visible, .pantry-item-card:hover header button.danger { opacity: 1; }
+.pantry-row-actions button.danger:hover, .pantry-item-card header button.danger:hover { color: #e34f5c; background: #fff0f1; }
+.pantry-row-actions svg, .pantry-item-card header button svg { width: 13px; }
+
+.pantry-card-grid { padding: 13px; display: grid; grid-template-columns: repeat(auto-fill, minmax(145px, 1fr)); gap: 9px; }
+.pantry-item-card { min-height: 175px; padding: 13px; border: 1px solid #edf0eb; border-radius: 11px; background: #fff; transition: transform .2s ease, box-shadow .2s ease; }
+.pantry-item-card:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(34,61,45,.06); }
+.pantry-item-card header { margin-bottom: 11px; display: flex; align-items: flex-start; justify-content: space-between; }
+.pantry-item-card header > span { width: 44px; height: 44px; border-radius: 12px; background: #f0f5ea; display: grid; place-items: center; font-size: 23px; }
+.pantry-item-card > small { color: #8e9893; font-size: 6px; }
+.pantry-item-card h3 { margin: 3px 0 5px; color: #26372f; font-size: 11px; }
+.pantry-item-card > b { color: #53615a; font-size: 9px; }
+.pantry-item-card footer { margin-top: 15px; padding-top: 10px; border-top: 1px solid #eff1ed; display: flex; align-items: center; justify-content: space-between; }
+.pantry-item-card footer em { color: #8f9994; font-size: 6px; font-style: normal; }
+.pantry-table-row.notification-target, .pantry-item-card.notification-target { background: #f7fbf3; box-shadow: inset 0 0 0 1px #8cbd72, 0 0 0 4px rgba(103,166,69,.1); }
+.pantry-focus-missing { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.pantry-focus-missing button { padding: 0; border: 0; color: inherit; background: none; display: grid; place-items: center; cursor: pointer; }
+.pantry-focus-missing svg { width: 14px; height: 14px; }
+.pantry-pagination { min-height: 52px; padding: 10px 13px; color: #8d9792; display: flex; align-items: center; justify-content: space-between; gap: 15px; font-size: 6px; }
+.pantry-pagination nav { display: flex; gap: 4px; }
+.pantry-pagination button { min-width: 27px; height: 27px; padding: 0 6px; border: 1px solid transparent; border-radius: 7px; color: #69756f; background: transparent; display: grid; place-items: center; font-size: 7px; }
+.pantry-pagination button:hover:not(:disabled) { background: #f3f6ef; }
+.pantry-pagination button.active { color: #4ba235; border-color: #bfe0ad; background: #f0f8e8; }
+.pantry-pagination button:disabled { opacity: .35; cursor: default; }
+.pantry-pagination svg { width: 12px; }
+
+.pantry-insights { display: grid; gap: 10px; }
+.pantry-insights > section { padding: 17px; }
+.pantry-overview-card .pantry-donut { --good: 70%; --soon: 90%; position: relative; width: 92px; height: 92px; margin: 10px auto 15px; border-radius: 50%; background: conic-gradient(#59b63c 0 var(--good), #f2a226 var(--good) var(--soon), #f45263 var(--soon) 100%); display: grid; place-items: center; }
+.pantry-overview-card .pantry-donut::after { content: ""; position: absolute; inset: 11px; border-radius: 50%; background: white; }
+.pantry-donut > div { position: relative; z-index: 1; text-align: center; }
+.pantry-donut strong, .pantry-donut small { display: block; }
+.pantry-donut strong { color: #25342c; font-size: 17px; }
+.pantry-donut small { color: #929c97; font-size: 6px; }
+.pantry-overview-card ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 8px; }
+.pantry-overview-card li { color: #69746e; display: grid; grid-template-columns: 7px 1fr auto; align-items: center; gap: 6px; font-size: 6px; }
+.pantry-overview-card li i { width: 6px; height: 6px; border-radius: 50%; background: #59b63c; }
+.pantry-overview-card li i.expiring { background: #f2a226; }
+.pantry-overview-card li i.expired { background: #f45263; }
+.pantry-overview-card li b { color: #68736d; font-size: 6px; }
+.pantry-tips-card { background: linear-gradient(145deg, #fbfcf5, #f6faed) !important; }
+.pantry-tips-card > div { padding: 7px 0; display: flex; gap: 8px; }
+.pantry-tips-card > div + div { border-top: 1px solid #edf1e8; }
+.pantry-tips-card > div > span { width: 27px; height: 27px; flex: 0 0 27px; border-radius: 8px; display: grid; place-items: center; }
+.pantry-tips-card > div > span svg { width: 13px; }
+.pantry-tips-card .leaf { color: #62b83f; background: #edf8df; }
+
+.pantry-tips-card p { margin: 0; }
+.pantry-tips-card b, .pantry-tips-card small { display: block; }
+.pantry-tips-card b { margin-bottom: 2px; color: #44534b; font-size: 7px; }
+.pantry-tips-card small { color: #88938d; font-size: 6px; line-height: 1.5; }
+.pantry-scan-card { position: relative; overflow: hidden; }
+.pantry-scan-card .pantry-scan-icon { position: absolute; top: 14px; right: 14px; color: #b8d9aa; }
+.pantry-scan-card .pantry-scan-icon svg { width: 22px; }
+.pantry-scan-card h2 { margin-bottom: 4px; }
+.pantry-scan-card p { max-width: 170px; margin: 0 0 11px; color: #8a958f; font-size: 6px; line-height: 1.5; }
+.pantry-scan-card button { width: 100%; min-height: 31px; border: 0; border-radius: 7px; color: white; background: linear-gradient(135deg, #68c23c, #4dad30); display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 7px; font-weight: 700; }
+.pantry-scan-card button:hover { background: #439d2b; }
+.pantry-scan-card button svg { width: 13px; }
+
+@media (max-width: 1350px) {
+  .pantry-hero-stats { right: 7%; }
+  .pantry-layout { grid-template-columns: 180px minmax(0, 1fr); }
+  .pantry-insights { grid-column: 1 / -1; grid-template-columns: repeat(3, 1fr); }
+  .pantry-overview-card { display: grid; grid-template-columns: 1fr 105px 1.2fr; align-items: center; column-gap: 18px; }
+  .pantry-overview-card h2 { margin: 0; }
+  .pantry-overview-card .pantry-donut { margin: 0; }
+}
+
+@media (max-width: 1040px) {
+  .pantry-page-header { grid-template-columns: auto 1fr auto; }
+  .pantry-hero-stats { right: 18px; }
+  .pantry-layout { grid-template-columns: 1fr; }
+  .pantry-filter-panel { display: grid; grid-template-columns: 1fr 1.2fr; }
+  .pantry-filter-panel section + section { border-top: 0; border-left: 1px solid #edf0eb; }
+  .pantry-filter-panel section:first-child { display: flex; flex-wrap: wrap; align-content: flex-start; gap: 3px; }
+  .pantry-filter-panel section:first-child h2 { width: 100%; }
+  .pantry-filter-panel section:first-child button { width: auto; flex: 1 0 105px; }
+  .pantry-filters { grid-template-columns: repeat(3, 1fr); align-items: end; }
+  .pantry-filters h2 { grid-column: 1 / -1; }
+  .pantry-insights { grid-column: auto; }
+}
+
+@media (max-width: 760px) {
+  .pantry-page-header { grid-template-columns: 1fr auto; }
+  .pantry-global-search { grid-column: 1 / -1; grid-row: 2; }
+  .pantry-hero { min-height: 300px; padding: 22px 18px; background-position: 62% center; }
+  .pantry-hero::before { background: linear-gradient(180deg, rgba(246,250,232,.98) 0%, rgba(242,249,224,.9) 38%, rgba(242,249,224,.2) 68%); }
+  .pantry-hero-stats { left: 14px; right: 14px; bottom: 14px; grid-template-columns: repeat(2, 1fr); gap: 7px; }
+  .pantry-hero-stats article { min-height: 67px; }
+  .pantry-filter-panel { grid-template-columns: 1fr; }
+  .pantry-filter-panel section + section { border-top: 1px solid #edf0eb; border-left: 0; }
+  .pantry-filters { grid-template-columns: 1fr 1fr; }
+  .pantry-filters label:last-child { grid-column: 1 / -1; }
+  .pantry-insights { grid-template-columns: 1fr; }
+  .pantry-overview-card { display: block; }
+  .pantry-overview-card .pantry-donut { margin: 10px auto 15px; }
+}
+
+@media (max-width: 620px) {
+  .pantry-page { padding: 12px 12px 30px; }
+  .pantry-page-header { gap: 10px; }
+  .pantry-title h1 { font-size: 16px; }
+  .pantry-add-button { min-width: 40px; padding: 8px 11px; font-size: 0; }
+  .pantry-add-button svg { margin: 0; }
+  .pantry-hero { min-height: 340px; border-radius: 12px; }
+  .pantry-hero-copy h2 { max-width: 260px; font-size: 17px; }
+  .pantry-hero-stats { grid-template-columns: 1fr 1fr; }
+  .pantry-hero-stats article { padding: 10px; }
+  .pantry-stat-icon { width: 31px; height: 31px; flex-basis: 31px; }
+  .pantry-inventory-toolbar { align-items: flex-start; }
+  .pantry-tabs { max-width: calc(100% - 66px); overflow-x: auto; }
+  .pantry-table-wrap { min-width: 0; padding: 9px; display: grid; gap: 8px; overflow: visible; }
+  .pantry-table-head { display: none; }
+  .pantry-table-row { position: relative; min-width: 0; min-height: 0; padding: 12px; border: 1px solid #edf0eb; border-radius: 10px; grid-template-columns: 1fr 1fr; gap: 10px 14px; }
+  .pantry-table-row > * { min-width: 0; }
+  .pantry-table-row > [data-label]::before { content: attr(data-label); margin-bottom: 3px; color: #9aa39f; display: block; font-size: 6px; font-weight: 500; }
+  .pantry-food-name { grid-column: 1 / -1; }
+  .pantry-row-actions { position: absolute; right: 22px; }
+  .pantry-row-actions button.danger { opacity: 1; }
+  .pantry-pagination { align-items: flex-start; flex-direction: column; }
+  .pantry-pagination nav { width: 100%; overflow-x: auto; }
+  .pantry-card-grid { grid-template-columns: 1fr 1fr; }
+}

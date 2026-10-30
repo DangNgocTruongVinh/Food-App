@@ -1,0 +1,129 @@
+/* Hồ sơ: bảng màu periwinkle. Tách nguyên văn từ styles.css cũ; thứ tự import trong styles.css quyết định thứ tự áp dụng. */
+
+/* Profile — calm Periwinkle Blue account palette */
+.main-content.main-theme-profile { background: #f2f4fc; }
+.main-theme-profile .professional-profile-page {
+  min-height: 100vh;
+  color: #34394a;
+  background:
+    radial-gradient(circle at 88% 3%, rgba(115,134,200,.11), transparent 27rem),
+    linear-gradient(145deg, #f7f8fd 0%, #f2f4fc 62%, #edf0fa 100%);
+}
+.main-theme-profile .professional-profile-header .eyebrow { color: #7386c8; }
+.main-theme-profile .professional-profile-header h1 { color: #34394a; }
+.main-theme-profile .professional-profile-header p { color: #747b91; }
+.main-theme-profile .profile-save-top,
+.main-theme-profile .profile-save-bottom {
+  color: white;
+  background: linear-gradient(135deg, #7386c8, #596bae);
+  box-shadow: 0 9px 22px rgba(89,107,174,.18);
+}
+.main-theme-profile .profile-save-top:hover,
+.main-theme-profile .profile-save-bottom:hover { color: white; background: #4d5f9f; }
+
+.main-theme-profile .profile-identity-card {
+  border-color: #d8def2;
+  background: linear-gradient(108deg, #e7ebfa 0%, #f7f8fd 58%, #eef1fb 100%);
+  box-shadow: 0 10px 28px rgba(77,92,151,.055);
+}
+.main-theme-profile .profile-identity-card::after {
+  border-color: rgba(115,134,200,.15);
+  box-shadow: 0 0 0 32px rgba(115,134,200,.04), 0 0 0 64px rgba(115,134,200,.02);
+}
+.main-theme-profile .profile-avatar {
+  background: linear-gradient(145deg, #7386c8, #8fa1dd);
+  box-shadow: 0 10px 24px rgba(89,107,174,.2);
+}
+.main-theme-profile .profile-avatar > i { border-color: #eef1fb; background: #596bae; }
+.main-theme-profile .profile-identity-copy > span { color: #7380ac; }
+.main-theme-profile .profile-identity-copy h2 { color: #34394a; }
+.main-theme-profile .profile-identity-copy p { color: #747c91; }
+.main-theme-profile .profile-summary-tags span {
+  color: #58627e;
+  border-color: #d8def1;
+  background: rgba(255,255,255,.76);
+}
+.main-theme-profile .profile-summary-tags svg { color: #7386c8; }
+.main-theme-profile .profile-completion { border-color: #d4daf0; }
+.main-theme-profile .profile-completion > div:first-child span { color: #68718a; }
+.main-theme-profile .profile-completion > div:first-child b { color: #596bae; }
+.main-theme-profile .profile-completion-track { background: #d9def0; }
+.main-theme-profile .profile-completion-track span { background: linear-gradient(90deg, #596bae, #8fa1dd); }
+.main-theme-profile .profile-completion > small { color: #7c8499; }
+
+.main-theme-profile .profile-form-card {
+  border-color: #dde2f1;
+  background: rgba(255,255,255,.94);
+  box-shadow: 0 8px 25px rgba(74,87,139,.04);
+}
+.main-theme-profile .profile-section-header { border-color: #e7eaf4; }
+.main-theme-profile .profile-section-header > span,
+.main-theme-profile .profile-section-header > span.orange,
+.main-theme-profile .profile-section-header > span.blue {
+  color: #596bae;
+  background: #e7ebfa;
+}
+.main-theme-profile .profile-section-header small { color: #8189a0; }
+.main-theme-profile .profile-section-header h2 { color: #3b4051; }
+.main-theme-profile .profile-section-header p { color: #8b91a3; }
+.main-theme-profile .profile-section-header > b { color: #e7eaf5; }
+.main-theme-profile .profile-fields label { color: #555d73; }
+.main-theme-profile .profile-fields label > small { color: #8d94a7; }
+.main-theme-profile .profile-fields input,
+.main-theme-profile .profile-fields select {
+  color: #3f4558;
+  border-color: #dce1ef;
+  background: #fafbfe;
+}
+.main-theme-profile .profile-fields input:hover,
+.main-theme-profile .profile-fields select:hover { border-color: #bdc7e6; background: white; }
+.main-theme-profile .profile-fields input:focus,
+.main-theme-profile .profile-fields select:focus {
+  border-color: #7386c8;
+  background: white;
+  box-shadow: 0 0 0 4px rgba(115,134,200,.1);
+}
+.main-theme-profile .profile-fields label > div > svg { color: #8994b8; }
+.main-theme-profile .profile-form-actions { border-color: #dce2f1; background: #f7f8fd; }
+.main-theme-profile .profile-form-actions > span { color: #7d8498; }
+.main-theme-profile .profile-form-actions > span svg { color: #7386c8; }
+
+.main-theme-profile .profile-target-card {
+  background: linear-gradient(150deg, #7386c8 0%, #6679bc 48%, #596bae 100%);
+  box-shadow: 0 16px 36px rgba(78,94,157,.18);
+}
+.main-theme-profile .profile-target-card > header > span { color: #596bae; background: #e7ebfa; }
+.main-theme-profile .profile-target-card > header small,
+.main-theme-profile .profile-calorie-ring span,
+.main-theme-profile .profile-target-card > p,
+.main-theme-profile .profile-macros header span { color: rgba(244,246,255,.76); }
+.main-theme-profile .profile-target-card > header h2,
+.main-theme-profile .profile-macros header b { color: white; }
+.main-theme-profile .profile-calorie-ring { background: conic-gradient(#edf0ff 0 78%, rgba(255,255,255,.15) 78%); }
+.main-theme-profile .profile-calorie-ring.empty { background: rgba(255,255,255,.13); }
+.main-theme-profile .profile-calorie-ring::after { background: #596bae; }
+.main-theme-profile .profile-macros > div > div { background: rgba(255,255,255,.13); }
+.main-theme-profile .profile-macros header i,
+.main-theme-profile .profile-macros > div > div > span { background: #edf0ff; }
+.main-theme-profile .profile-macros header i.carbs,
+.main-theme-profile .profile-macros > div > div > span.carbs { background: #bbc6ed; }
+.main-theme-profile .profile-macros header i.fat,
+.main-theme-profile .profile-macros > div > div > span.fat { background: #d1d8f4; }
+.main-theme-profile .profile-disclaimer { color: rgba(237,240,255,.65); border-color: rgba(255,255,255,.12); }
+
+.main-theme-profile .profile-health-card { border-color: #dde2f1; background: rgba(255,255,255,.94); }
+.main-theme-profile .profile-health-card > header h2 { color: #3b4052; }
+.main-theme-profile .profile-health-card > header > span,
+.main-theme-profile .profile-health-card > header > span.good { color: #596bae; background: #e7ebfa; }
+.main-theme-profile .profile-health-card footer span { color: #626b82; }
+.main-theme-profile .profile-health-card footer b { color: #7a8297; }
+.main-theme-profile .profile-ai-card {
+  border-color: #d9dff1;
+  background: linear-gradient(145deg, #eef1fb, #fafbfe);
+}
+.main-theme-profile .profile-ai-card > span { color: white; background: linear-gradient(145deg, #7386c8, #596bae); }
+.main-theme-profile .profile-ai-card small,
+.main-theme-profile .profile-ai-card a { color: #596bae; }
+.main-theme-profile .profile-ai-card h2 { color: #43495b; }
+.main-theme-profile .profile-ai-card p { color: #7f879a; }
+.main-theme-profile .profile-ai-card a:hover { color: #44558f; }

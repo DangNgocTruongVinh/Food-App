@@ -1,0 +1,88 @@
+/* Dashboard: bảng màu sage–lime cuối. Tách nguyên văn từ styles.css cũ; thứ tự import trong styles.css quyết định thứ tự áp dụng. */
+
+/* Final overview sage–lime palette from the supplied reference */
+.reference-dashboard {
+  color: #304b35;
+  background:
+    radial-gradient(circle at 80% 4%, rgba(142,204,104,.16), transparent 29rem),
+    radial-gradient(circle at 13% 88%, rgba(196,226,161,.14), transparent 24rem),
+    linear-gradient(135deg, #fbfdf8 0%, #f3f9ed 54%, #f7fbf3 100%);
+}
+.reference-dashboard .overview-welcome {
+  border-color: #dcead1;
+  background-color: #eef7e8;
+  box-shadow: 0 10px 30px rgba(74,127,50,.055);
+}
+.reference-dashboard .overview-welcome::before {
+  background: linear-gradient(90deg, rgba(247,251,242,.99) 0%, rgba(234,246,223,.95) 43%, rgba(214,237,195,.17) 73%, transparent);
+}
+.reference-dashboard .overview-welcome .eyebrow { color: #519d39; }
+.reference-dashboard .overview-welcome h1 { color: #183c28; }
+.reference-dashboard .overview-welcome p { color: #627365; }
+.reference-dashboard .overview-search {
+  border-color: #d5e6ca;
+  background: rgba(255,255,255,.93);
+  box-shadow: 0 8px 22px rgba(67,116,46,.065);
+}
+.reference-dashboard .overview-search:focus-within {
+  border-color: #8ec67a;
+  box-shadow: 0 0 0 4px rgba(82,171,57,.09);
+}
+.reference-dashboard .overview-search button {
+  color: white;
+  background: linear-gradient(135deg, #62b83d, #3e982f);
+}
+.reference-dashboard .overview-search button:hover { background: linear-gradient(135deg, #52aa35, #348529); }
+
+.reference-dashboard .overview-metrics {
+  border-color: #dfe9d8;
+  background: rgba(255,255,255,.95);
+  box-shadow: 0 8px 26px rgba(65,105,49,.04);
+}
+.reference-dashboard .overview-metrics > article { border-color: #e6eee1; }
+.reference-dashboard .overview-metric-icon.stock { color: #4aa53b; background: #e0f3da; }
+.reference-dashboard .overview-metric-icon.soon { color: #78a91c; background: #edf7d3; }
+.reference-dashboard .overview-metric-icon.expired { color: #5cae55; background: #e0f2df; }
+.reference-dashboard .overview-metric-icon.meals { color: #569f79; background: #e0f0e5; }
+.reference-dashboard .overview-metrics strong { color: #24432d; }
+.reference-dashboard .overview-metrics article > div > b { color: #49614d; }
+
+.reference-dashboard .overview-panel {
+  border-color: #dfe9da;
+  background: rgba(255,255,255,.95);
+  box-shadow: 0 8px 26px rgba(65,104,48,.038);
+}
+.reference-dashboard .overview-panel > header h2 { color: #29442f; }
+.reference-dashboard .overview-panel > header > a { color: #509f38; }
+.reference-dashboard .overview-panel > header > a:hover { color: #347c2c; }
+.reference-dashboard .overview-food-thumb { background: #e8f4e2; }
+.reference-dashboard .overview-outline-button { color: #4e9f38; border-color: #a6d18f; }
+.reference-dashboard .overview-outline-button:hover { color: white; border-color: #4d9f37; background: #4d9f37; }
+.reference-dashboard .overview-recipe-card footer small { color: #569e43; }
+.reference-dashboard .overview-today > header > svg { color: #58a83d; }
+.reference-dashboard .completed .overview-meal-check { border-color: #55a83b; background: #55a83b; }
+.reference-dashboard .overview-compact-empty svg { color: #62a94b; }
+
+.reference-dashboard .overview-ai-banner {
+  border-color: #d4e9c8;
+  background: linear-gradient(105deg, #e5f6db 0%, #eff9e9 54%, #e3f2df 100%);
+  box-shadow: 0 9px 28px rgba(73,127,51,.05);
+}
+.reference-dashboard .overview-ai-banner::before { background: radial-gradient(circle, rgba(140,213,70,.34), transparent 68%); }
+.reference-dashboard .overview-ai-banner::after { border-color: rgba(85,166,57,.13); }
+.reference-dashboard .overview-ai-banner .eyebrow { color: #579e3e; }
+.reference-dashboard .overview-ai-banner h2 { color: #29452f; }
+.reference-dashboard .overview-ai-prompts a { color: #5c6e5e; border-color: #d7e6d0; background: rgba(255,255,255,.88); }
+.reference-dashboard .overview-ai-prompts a:hover { color: #3e8c31; border-color: #9bca86; }
+.reference-dashboard .overview-ai-banner > .button {
+  color: white;
+  background: linear-gradient(135deg, #5db33a, #3e962f);
+  box-shadow: 0 8px 20px rgba(66,145,46,.17);
+}
+.reference-dashboard .overview-ai-banner > .button:hover { background: linear-gradient(135deg, #50a634, #347f29); }
+
+@media (max-width: 620px) {
+  .reference-dashboard .overview-welcome::before {
+    background: linear-gradient(180deg, rgba(247,251,242,.99) 0%, rgba(233,246,222,.95) 52%, rgba(214,237,195,.1) 86%);
+  }
+}
