@@ -1,11 +1,8 @@
 import type { DietType } from "@prisma/client";
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import { seedRecipesAsRecords } from "../../test/seed-recipes.js";
 import { expandRestrictedTerms, filterRecipesForProfile, findRestrictedTerms, matchesRequiredDiet } from "../../services/dietary.service.js";
-import { fallbackPlan, mealSlots, reconcileAIPlan } from "./meal-plans.service.js";
-
-vi.mock("../../lib/prisma.js", () => ({ prisma: {} }));
-vi.mock("../ai/ai.service.js", () => ({ generatePlanWithAI: vi.fn() }));
+import { fallbackPlan, mealSlots, reconcileAIPlan } from "./meal-plan-generator.js";
 
 const recipes = seedRecipesAsRecords();
 const byId = new Map(recipes.map((recipe) => [recipe.id, recipe]));

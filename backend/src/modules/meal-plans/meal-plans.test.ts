@@ -4,7 +4,7 @@ import { request, testApp } from "../../test/http-test-utils.js";
 import { seedRecipesAsRecords } from "../../test/seed-recipes.js";
 import mealPlanRoutes from "./meal-plans.routes.js";
 import { filterRecipesForProfile } from "../../services/dietary.service.js";
-import { fallbackPlan } from "./meal-plans.service.js";
+import { fallbackPlan } from "./meal-plan-generator.js";
 
 const mocks = vi.hoisted(() => ({
   secret: "nouri-test-only-secret-at-least-32-characters",
