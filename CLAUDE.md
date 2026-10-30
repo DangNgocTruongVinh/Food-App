@@ -210,7 +210,15 @@ Quyết định đã chốt cho GĐ3:
   - Sửa nguyên liệu bằng nested write (`deleteMany` + `create` trong một lệnh update, Prisma chạy trong một transaction).
   - Test: ma trận phân quyền 6 API × (401, USER 403, khóa 403, Admin 2xx), tạo/sửa/ẩn/xóa, nhãn chay sai, slug trùng, validate.
   - Đã kiểm tra trên Docker: USER gọi `/api/admin/recipes` → 403; Admin tạo món thử (slug `thu-gd3-dau-hu-sot-nam`, VEGAN + VEGETARIAN) → hiện ở trang Công thức; nhãn chay sai → 422; ẩn → biến mất khỏi danh sách; xóa món chưa dùng → 204. Đã xóa món thử (còn 33 món).
-  - **Đang dừng ở đây:** chưa làm lượt 4 (Admin người dùng, kiểm duyệt, thống kê).
+  - **Lượt 5 phải siết lại:** `imageUrl` (schema Admin công thức) chỉ nhận `/assets/...` hoặc URL Cloudinary của dự án (đúng cloud name, thư mục của Nouri), không nhận mọi `https://` như hiện tại.
+- [x] Lượt 4 — Admin người dùng, kiểm duyệt, thống kê:
+  - Người dùng (`modules/admin/admin-users.service.ts`): `GET /api/admin/users` (tìm theo tên/email, `pageSize` ≤ 50, kèm `postCount`, `mealPlanCount`, `locked`), `PATCH /api/admin/users/:id/lock` `{ locked }`. Tự khóa mình → 400; Admin khác → 403; khóa lại giữ thời điểm khóa đầu. Cập nhật trong `$transaction`, có chỗ ghi chú thu hồi refresh token (GĐ4).
+  - Xóa dùng chung trong `community.service.ts`: `deleteCommunityPost(postId, actor)` (xóa thông báo `COMMUNITY_LIKE/COMMENT/REPLY` có `relatedId = postId` + xóa bài trong một transaction; like/bình luận Cascade) và `deleteCommunityComment(commentId, actor)` (xóa thông báo `community-comment:<id>`). Không thuộc quyền hoặc không tồn tại → 404.
+  - API: `GET /api/admin/community/posts` (phân trang, kèm email tác giả, bình luận, số like), `DELETE /api/admin/community/posts/:postId`, `DELETE /api/admin/community/comments/:commentId`; người dùng `DELETE /api/community/:postId` ("Xóa bài của tôi", chưa có giao diện).
+  - Thống kê `GET /api/admin/stats`: tổng (người dùng, số bị khóa, thực đơn, bài viết, công thức, số đang ẩn) + 12 tuần giờ Việt Nam, tuần bắt đầu thứ Hai, tuần trống = 0 (`admin-stats.logic.ts`; gom theo tuần ở ứng dụng, dữ liệu lớn thì chuyển sang SQL).
+  - Test: ma trận phân quyền 6 API mới, khóa/mở khóa và các ca cấm, xóa bài/bình luận kèm thông báo, xóa bài người khác → 404 và bài còn nguyên, ranh giới tuần (Chủ nhật 23:59 / thứ Hai 00:00 giờ Việt Nam).
+  - Đã kiểm tra trên Docker: khóa demo → API Kho 403 `ACCOUNT_LOCKED` (token cũ), đăng nhập đúng mật khẩu 403, sai mật khẩu 401; mở khóa → dùng lại bình thường; Admin tự khóa → 400; bài thử của demo có bình luận + like (2 thông báo) → Admin xóa → bài, bình luận, thông báo đều 0; `/admin/stats` khớp DB (tổng và theo tuần). Đã dọn dữ liệu thử, demo đang mở khóa.
+  - **Đang dừng ở đây:** chưa làm lượt 5 (Cloudinary + ảnh công thức).
 - [ ] Upload ảnh Cloudinary.
 - [ ] Đăng ảnh trong bài viết (làm ngay sau hạ tầng upload): lưu URL ảnh vào bài viết, hiện lại nút "Ảnh".
 - [ ] Admin: CRUD công thức, quản lý user (khóa/mở), kiểm duyệt community, thống kê.

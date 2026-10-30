@@ -8,6 +8,7 @@ import type {
 import {
   addCommunityComment,
   createCommunityPost,
+  deleteCommunityPost,
   listCommunityPosts,
   toggleCommunityLike,
 } from "./community.service.js";
@@ -23,6 +24,15 @@ export async function createCommunityPostController(
   res: Response,
 ) {
   res.status(201).json(await createCommunityPost(authenticatedUserId(req), req.body));
+}
+
+/** "Xóa bài của tôi": chỉ tác giả (userId từ JWT); bài người khác hoặc không tồn tại → 404. */
+export async function deleteOwnCommunityPostController(
+  req: ValidatedRequest<Record<string, never>, CommunityPostIdParams>,
+  res: Response,
+) {
+  await deleteCommunityPost(req.params.postId, { userId: authenticatedUserId(req), isAdmin: false });
+  res.status(204).end();
 }
 
 export async function toggleCommunityLikeController(

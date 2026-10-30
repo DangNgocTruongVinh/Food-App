@@ -34,6 +34,12 @@ export const addCommunityCommentSchema = z.object({
   query: empty,
 });
 
+export const deleteCommunityPostSchema = z.object({
+  body: empty,
+  params: postIdParams,
+  query: empty,
+});
+
 export type CreateCommunityPostBody = z.infer<typeof createCommunityPostSchema>["body"];
 export type CommunityPostIdParams = z.infer<typeof postIdParams>;
 export type AddCommunityCommentBody = z.infer<typeof addCommunityCommentSchema>["body"];

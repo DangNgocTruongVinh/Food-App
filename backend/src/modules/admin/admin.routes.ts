@@ -17,6 +17,22 @@ import {
   setRecipeVisibilitySchema,
   updateAdminRecipeSchema,
 } from "./admin-recipes.schema.js";
+import {
+  adminStatsController,
+  listAdminUsersController,
+  listModerationPostsController,
+  moderateDeleteCommentController,
+  moderateDeletePostController,
+  setUserLockController,
+} from "./admin-users.controller.js";
+import {
+  adminStatsSchema,
+  listAdminUsersSchema,
+  listModerationPostsSchema,
+  moderateCommentSchema,
+  moderatePostSchema,
+  setUserLockSchema,
+} from "./admin-users.schema.js";
 
 // Mọi API Admin: đăng nhập (quyền và trạng thái khóa đọc từ DB) rồi mới kiểm tra quyền ADMIN.
 const router = Router();
@@ -28,5 +44,14 @@ router.get("/recipes/:id", validate(adminRecipeIdSchema), asyncHandler(getAdminR
 router.put("/recipes/:id", validate(updateAdminRecipeSchema), asyncHandler(updateAdminRecipeController));
 router.patch("/recipes/:id/visibility", validate(setRecipeVisibilitySchema), asyncHandler(setAdminRecipeVisibilityController));
 router.delete("/recipes/:id", validate(adminRecipeIdSchema), asyncHandler(deleteAdminRecipeController));
+
+router.get("/users", validate(listAdminUsersSchema), asyncHandler(listAdminUsersController));
+router.patch("/users/:id/lock", validate(setUserLockSchema), asyncHandler(setUserLockController));
+
+router.get("/community/posts", validate(listModerationPostsSchema), asyncHandler(listModerationPostsController));
+router.delete("/community/posts/:postId", validate(moderatePostSchema), asyncHandler(moderateDeletePostController));
+router.delete("/community/comments/:commentId", validate(moderateCommentSchema), asyncHandler(moderateDeleteCommentController));
+
+router.get("/stats", validate(adminStatsSchema), asyncHandler(adminStatsController));
 
 export default router;

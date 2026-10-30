@@ -127,3 +127,57 @@ export async function addCommunityComment(authorId: string, postId: string, cont
     return created;
   });
 }
+
+/** Người thực hiện xóa: Admin xóa mọi bài/bình luận; người dùng chỉ xóa của mình. userId luôn lấy từ JWT. */
+export type CommunityActor = { userId: string; isAdmin: boolean };
+
+const POST_NOT_FOUND = "Không tìm thấy bài viết.";
+// Thông báo cộng đồng gắn với bài qua relatedId = postId (không có FK nên phải xóa tay). COMMUNITY_FOLLOW gắn với người dùng.
+const POST_NOTIFICATION_TYPES = ["COMMUNITY_LIKE", "COMMUNITY_COMMENT", "COMMUNITY_REPLY"] as const;
+
+/**
+ * Xóa bài viết — dùng chung cho "Xóa bài của tôi" và Admin kiểm duyệt. Bài không tồn tại hoặc không thuộc quyền → 404
+ * (không lộ sự tồn tại). Like/bình luận tự xóa theo bài (Cascade); thông báo liên quan xóa trong cùng transaction.
+ */
+export async function deleteCommunityPost(postId: string, actor: CommunityActor) {
+  const post = await prisma.communityPost.findUnique({ where: { id: postId }, select: { id: true, authorId: true } });
+  if (!post || (!actor.isAdmin && post.authorId !== actor.userId)) throw new HttpError(404, POST_NOT_FOUND);
+  await prisma.$transaction([
+    prisma.notification.deleteMany({ where: { relatedId: postId, type: { in: [...POST_NOTIFICATION_TYPES] } } }),
+    prisma.communityPost.delete({ where: { id: postId } }),
+  ]);
+}
+
+/** Xóa bình luận: Admin xóa mọi bình luận, người dùng chỉ bình luận của mình; xóa kèm thông báo của bình luận đó. */
+export async function deleteCommunityComment(commentId: string, actor: CommunityActor) {
+  const comment = await prisma.communityComment.findUnique({ where: { id: commentId }, select: { id: true, authorId: true } });
+  if (!comment || (!actor.isAdmin && comment.authorId !== actor.userId)) {
+    throw new HttpError(404, "Không tìm thấy bình luận.");
+  }
+  await prisma.$transaction([
+    prisma.notification.deleteMany({ where: { dedupeKey: `community-comment:${commentId}` } }),
+    prisma.communityComment.delete({ where: { id: commentId } }),
+  ]);
+}
+
+/** Danh sách bài cho Admin kiểm duyệt: mới nhất trước, kèm tác giả (có email), bình luận và số lượt thích. */
+export async function listCommunityPostsForModeration(page: number, pageSize: number) {
+  const [total, posts] = await Promise.all([
+    prisma.communityPost.count(),
+    prisma.communityPost.findMany({
+      orderBy: { createdAt: "desc" },
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+      include: {
+        author: { select: { id: true, name: true, email: true } },
+        recipe: { select: communityRecipeSelect },
+        comments: { orderBy: { createdAt: "asc" }, include: { author: { select: { id: true, name: true, email: true } } } },
+        _count: { select: { likes: true, comments: true } },
+      },
+    }),
+  ]);
+  const items = posts.map(({ _count, recipe, ...post }) => ({
+    ...post, recipe: toRecipeSummary(recipe), likeCount: _count.likes, commentCount: _count.comments,
+  }));
+  return { items, total, page, pageSize };
+}

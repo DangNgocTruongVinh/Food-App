@@ -18,6 +18,7 @@ const mocks = vi.hoisted(() => ({
   createNotification: vi.fn(),
   transaction: vi.fn(),
   findRecipe: vi.fn(),
+  deletePost: vi.fn(),
 }));
 
 vi.mock("../../config/env.js", () => ({ env: { JWT_SECRET: mocks.secret } }));
@@ -27,6 +28,7 @@ vi.mock("../../lib/prisma.js", () => ({
       findMany: mocks.findPosts,
       create: mocks.createPost,
       findUnique: mocks.findPost,
+      delete: mocks.deletePost,
     },
     communityLike: {
       findUnique: mocks.findLike,
@@ -91,6 +93,36 @@ beforeEach(() => {
       });
     }
     throw new Error("Unexpected transaction input");
+  });
+});
+
+describe("Delete my post (DELETE /api/community/:postId)", () => {
+  it("lets the author delete their own post with its community notifications in one transaction", async () => {
+    mocks.findPost.mockResolvedValue({ id: postId, authorId: userId });
+    mocks.deletePost.mockResolvedValue({ id: postId });
+    const response = await request(app, `/api/community/${postId}`, { method: "DELETE", token: token() });
+    expect(response.status).toBe(204);
+    expect(mocks.deleteNotifications).toHaveBeenCalledWith({
+      where: { relatedId: postId, type: { in: ["COMMUNITY_LIKE", "COMMUNITY_COMMENT", "COMMUNITY_REPLY"] } },
+    });
+    expect(mocks.deletePost).toHaveBeenCalledWith({ where: { id: postId } });
+    expect(mocks.transaction).toHaveBeenCalledWith([expect.any(Promise), expect.any(Promise)]);
+  });
+
+  it("returns 404 for someone else's post and keeps it (no notification touched)", async () => {
+    mocks.findPost.mockResolvedValue({ id: postId, authorId: ownerId });
+    expect(await request(app, `/api/community/${postId}`, { method: "DELETE", token: token() }))
+      .toEqual({ status: 404, body: { message: "Không tìm thấy bài viết." } });
+    expect(mocks.deletePost).not.toHaveBeenCalled();
+    expect(mocks.deleteNotifications).not.toHaveBeenCalled();
+  });
+
+  it("returns the same 404 for a post that does not exist, 422 for a bad id and 401 without login", async () => {
+    mocks.findPost.mockResolvedValue(null);
+    expect((await request(app, `/api/community/${postId}`, { method: "DELETE", token: token() })).status).toBe(404);
+    expect((await request(app, "/api/community/not-a-cuid", { method: "DELETE", token: token() })).status).toBe(422);
+    expect((await request(app, `/api/community/${postId}`, { method: "DELETE" })).status).toBe(401);
+    expect(mocks.deletePost).not.toHaveBeenCalled();
   });
 });
 
