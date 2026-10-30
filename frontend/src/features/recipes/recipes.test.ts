@@ -9,7 +9,8 @@ import {
 } from "./recipe-for-you.logic";
 import { getRecipe, getRecipeForYou, listRecipes, normalizeRecipeListParams } from "./recipes.api";
 import {
-  filterAndSortRecipes, formatIngredientAmount, matchesRecipeCategory, paginateRecipes, recipeDetailPath,
+  clampServings, filterAndSortRecipes, formatIngredientAmount, formatScaledIngredientAmount, MAX_RECIPE_SERVINGS,
+  roundIngredientQuantity, scaleIngredientQuantity, matchesRecipeCategory, paginateRecipes, recipeDetailPath,
   recipeDietLabel, recipeImage, recipeImageSrc, recipeTotalMinutes,
 } from "./recipes.logic";
 import { recipeQueries } from "./recipes.queries";
@@ -257,5 +258,42 @@ describe("Recipe \"Dành cho bạn\" helpers", () => {
       { kind: "diet", text: "Không hợp chế độ Thuần chay của bạn" },
     ]);
     expect(forYouWarnings({ allergens: [], dislikedFoods: [], dietConflict: null })).toEqual([]);
+  });
+});
+
+describe("Recipe servings scaling", () => {
+  it("keeps servings between 1 and 12, or the recipe's own servings when larger", () => {
+    expect(MAX_RECIPE_SERVINGS).toBe(12);
+    expect(clampServings(0, 2)).toBe(1);
+    expect(clampServings(13, 2)).toBe(12);
+    expect(clampServings(16, 16)).toBe(16);
+    expect(clampServings(3.4, 2)).toBe(3);
+  });
+  it.each([
+    [150 * 1.5, "G", 225],
+    [12.6, "G", 13],
+    [0.5, "G", 0.5],
+    [0.04, "ML", 0.1],
+    [0.333, "KG", 0.33],
+    [1.26, "L", 1.26],
+    [1.3, "ITEM", 1.5],
+    [1.2, "ITEM", 1],
+    [0.2, "ITEM", 0.5],
+    [2.75, "PACKAGE", 3],
+    [0, "G", 0],
+  ] as const)("rounds %d %s to %d", (quantity, unit, expected) => {
+    expect(roundIngredientQuantity(quantity, unit)).toBe(expected);
+  });
+  it("scales by the servings ratio and keeps the original amount when servings are unchanged", () => {
+    expect(scaleIngredientQuantity({ quantity: 150, unit: "G" }, 1, 3)).toBe(450);
+    expect(scaleIngredientQuantity({ quantity: 300, unit: "G" }, 2, 1)).toBe(150);
+    expect(scaleIngredientQuantity({ quantity: 1, unit: "ITEM" }, 2, 3)).toBe(1.5);
+    expect(scaleIngredientQuantity({ quantity: 1, unit: "ITEM" }, 4, 1)).toBe(0.5);
+    expect(scaleIngredientQuantity({ quantity: 0.333, unit: "L" }, 1, 1)).toBe(0.333);
+  });
+  it("formats scaled amounts with the shared unit labels", () => {
+    expect(formatScaledIngredientAmount({ quantity: 1, unit: "ITEM" }, 2, 3)).toBe("1,5 cái");
+    expect(formatScaledIngredientAmount({ quantity: 5, unit: "ML" }, 1, 4)).toBe("20 ml");
+    expect(formatScaledIngredientAmount({ quantity: 1.5, unit: "KG" }, 2, 5)).toBe("3,75 kg");
   });
 });

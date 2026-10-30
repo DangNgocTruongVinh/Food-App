@@ -1,4 +1,4 @@
-import type { Ingredient, Recipe } from "../../types";
+import type { FoodUnit, Ingredient, Recipe } from "../../types";
 import { foodUnitLabel } from "../../utils/units";
 
 export type RecipeCategory = "all" | "vietnamese" | "international" | "breakfast" | "healthy" | "low-carb" | "vegetarian";
@@ -78,6 +78,32 @@ export function recipeTotalMinutes(recipe: Pick<Recipe, "prepMinutes" | "cookMin
 
 export function formatIngredientAmount(ingredient: Pick<Ingredient, "quantity" | "unit">) {
   return `${new Intl.NumberFormat("vi-VN", { maximumFractionDigits: 2 }).format(ingredient.quantity)} ${foodUnitLabel[ingredient.unit]}`;
+}
+
+export const MAX_RECIPE_SERVINGS = 12;
+
+/** Số khẩu phần người dùng chọn: 1 → 12 (hoặc số khẩu phần gốc nếu công thức lớn hơn 12). Chỉ hiển thị, không lưu. */
+export function clampServings(value: number, recipeServings: number) {
+  const max = Math.max(MAX_RECIPE_SERVINGS, recipeServings);
+  return Math.min(max, Math.max(1, Math.round(value)));
+}
+
+/** Làm tròn định lượng theo đơn vị: g/ml số nguyên (dưới 1 giữ 0,1 để không thành 0), kg/lít 0,01, cái/gói bội số 0,5. */
+export function roundIngredientQuantity(quantity: number, unit: FoodUnit) {
+  if (quantity <= 0) return 0;
+  if (unit === "G" || unit === "ML") return quantity >= 1 ? Math.round(quantity) : Math.max(0.1, Math.round(quantity * 10) / 10);
+  if (unit === "ITEM" || unit === "PACKAGE") return Math.max(0.5, Math.round(quantity * 2) / 2);
+  return Math.max(0.01, Math.round(quantity * 100) / 100);
+}
+
+/** Định lượng nhân theo tỷ lệ khẩu phần; giữ nguyên số gốc khi không đổi khẩu phần. */
+export function scaleIngredientQuantity(ingredient: Pick<Ingredient, "quantity" | "unit">, recipeServings: number, servings: number) {
+  if (servings === recipeServings) return ingredient.quantity;
+  return roundIngredientQuantity((ingredient.quantity * servings) / Math.max(1, recipeServings), ingredient.unit);
+}
+
+export function formatScaledIngredientAmount(ingredient: Pick<Ingredient, "quantity" | "unit">, recipeServings: number, servings: number) {
+  return formatIngredientAmount({ unit: ingredient.unit, quantity: scaleIngredientQuantity(ingredient, recipeServings, servings) });
 }
 
 export function recipeDietLabel(tag: string) {

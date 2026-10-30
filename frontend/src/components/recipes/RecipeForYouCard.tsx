@@ -66,7 +66,9 @@ function RecipeForYouContent({ data }: { data: RecipeForYou }) {
     </div>
 
     <div className="recipe-for-you-block">
-      <div className="recipe-for-you-row"><span><Flame /> Calo so với mục tiêu ngày</span><strong>{data.calories.percentOfDailyTarget}%</strong></div>
+      <div className="recipe-for-you-row">
+        <span><Flame /> Calo 1 khẩu phần so với mục tiêu ngày</span><strong>{data.calories.percentOfDailyTarget}%</strong>
+      </div>
       <div className="recipe-for-you-bar calories"><i style={{ width: `${caloriePercent}%` }} /></div>
       <small className="recipe-for-you-caption">{calorieShareLabel(data.calories)}</small>
     </div>

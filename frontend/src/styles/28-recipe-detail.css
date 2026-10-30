@@ -80,3 +80,15 @@
   .recipe-for-you-alerts { margin-top: 22px; display: block; }
   .recipe-for-you-warnings.in-card { display: none; }
 }
+
+/* (d) Chỉnh số khẩu phần: chỉ đổi định lượng nguyên liệu; dinh dưỡng vẫn tính cho 1 khẩu phần. */
+.recipe-detail-nutrition-note { grid-column: 1 / -1; margin: 0 0 -2px; color: var(--muted); font-size: 12px; }
+.recipe-ingredients-head { margin-bottom: 14px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }
+.recipe-ingredients-head h2 { margin: 0; }
+.recipe-servings-stepper { padding: 3px; border: 1px solid var(--line); border-radius: 999px; background: #f6f8f3; display: inline-flex; align-items: center; gap: 4px; }
+.recipe-servings-stepper button { width: 30px; height: 30px; padding: 0; border: 0; border-radius: 50%; color: var(--green-2); background: white; display: grid; place-items: center; box-shadow: var(--shadow-sm); cursor: pointer; }
+.recipe-servings-stepper button:disabled { color: #b5c0b9; box-shadow: none; cursor: not-allowed; }
+.recipe-servings-stepper svg { width: 15px; height: 15px; }
+.recipe-servings-stepper output { min-width: 92px; color: #153d33; font-size: 13px; font-weight: 700; text-align: center; }
+.recipe-servings-note { margin: -4px 0 8px; color: var(--muted); font-size: 12px; line-height: 1.5; }
+.recipe-servings-note button { padding: 0; border: 0; color: var(--green-2); background: none; font: inherit; font-weight: 700; text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }

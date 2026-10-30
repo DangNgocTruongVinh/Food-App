@@ -12,6 +12,7 @@ export default function RecipeNutritionStrip({ recipe }: { recipe: NutritionReci
     { icon: Leaf, label: "Chất xơ", value: `${recipe.fiberG} g` },
   ];
   return <section className="recipe-detail-nutrition" aria-label="Dinh dưỡng mỗi khẩu phần">
+    <p className="recipe-detail-nutrition-note">Dinh dưỡng tính cho 1 khẩu phần, không đổi theo số khẩu phần bạn chọn.</p>
     {nutrition.map(({ icon: Icon, label, value }) => <article key={label}><Icon /><strong>{value}</strong><small>{label}</small></article>)}
   </section>;
 }
