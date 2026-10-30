@@ -1,7 +1,9 @@
-import type { Response } from "express";
-import type { ValidatedRequest } from "../../types/http.js";
+import type { Request, Response } from "express";
+import type { AuthenticatedRequest, ValidatedRequest } from "../../types/http.js";
 import type { RecipeIdParams, RecipeListQuery } from "./recipes.schema.js";
-import { getRecipe, listRecipes } from "./recipes.service.js";
+import { getRecipe, getRecipeForYou, listRecipes } from "./recipes.service.js";
+
+const authenticatedUserId = (req: Request) => (req as AuthenticatedRequest).userId;
 
 export async function listRecipesController(
   req: ValidatedRequest<unknown, Record<string, never>, RecipeListQuery>,
@@ -15,4 +17,11 @@ export async function getRecipeController(
   res: Response,
 ) {
   res.json(await getRecipe(req.params.id));
+}
+
+export async function getRecipeForYouController(
+  req: ValidatedRequest<unknown, RecipeIdParams>,
+  res: Response,
+) {
+  res.json(await getRecipeForYou(authenticatedUserId(req), req.params.id));
 }

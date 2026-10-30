@@ -7,11 +7,17 @@ const mocks = vi.hoisted(() => ({
   secret: "nouri-test-only-secret-at-least-32-characters",
   findMany: vi.fn(),
   findUnique: vi.fn(),
+  findProfile: vi.fn(),
+  findPantry: vi.fn(),
 }));
 
 vi.mock("../../config/env.js", () => ({ env: { JWT_SECRET: mocks.secret } }));
 vi.mock("../../lib/prisma.js", () => ({
-  prisma: { recipe: { findMany: mocks.findMany, findUnique: mocks.findUnique } },
+  prisma: {
+    recipe: { findMany: mocks.findMany, findUnique: mocks.findUnique },
+    nutritionProfile: { findUnique: mocks.findProfile },
+    pantryItem: { findMany: mocks.findPantry },
+  },
 }));
 
 const app = testApp("/api/recipes", recipeRoutes);
@@ -45,6 +51,8 @@ beforeEach(() => {
   vi.resetAllMocks();
   mocks.findMany.mockResolvedValue([recipe]);
   mocks.findUnique.mockResolvedValue(recipe);
+  mocks.findProfile.mockResolvedValue(null);
+  mocks.findPantry.mockResolvedValue([]);
 });
 
 afterEach(() => vi.restoreAllMocks());
@@ -114,6 +122,69 @@ describe("Recipes HTTP contract (no database)", () => {
       status: 500, body: { message: "Máy chủ gặp lỗi. Vui lòng thử lại." },
     });
     expect(consoleError).toHaveBeenCalledWith(expect.any(Error));
+  });
+});
+
+describe("Recipe \"Dành cho bạn\" for the signed-in user", () => {
+  const forYouPath = `/api/recipes/${recipeId}/for-you`;
+  const seafoodRecipe = {
+    ...recipe,
+    calories: 500,
+    dietTags: ["BALANCED"],
+    ingredients: [
+      { id: "i1", recipeId, name: "Cá basa", quantity: 200, unit: "G", optional: false },
+      { id: "i2", recipeId, name: "Trứng", quantity: 100, unit: "G", optional: false },
+      { id: "i3", recipeId, name: "Hành lá", quantity: 10, unit: "G", optional: true },
+    ],
+  };
+  const future = new Date(Date.now() + 30 * 86_400_000);
+
+  it("returns pantry match, calorie share and warnings from the JWT user's own data", async () => {
+    mocks.findUnique.mockResolvedValue(seafoodRecipe);
+    mocks.findProfile.mockResolvedValue({ userId, dietType: "VEGETARIAN", allergies: ["Hải sản"], dislikedFoods: [], dailyCalorieTarget: 2000 });
+    mocks.findPantry.mockResolvedValue([
+      { name: "cá  BASA", quantity: 1, unit: "G", expiryDate: future },
+      { name: "Trứng", quantity: 6, unit: "ITEM", expiryDate: null },
+    ]);
+    const response = await request(app, `${forYouPath}?userId=user-b`, { token: token() });
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual({
+      recipeId,
+      pantry: {
+        totalIngredients: 3,
+        inPantryCount: 2,
+        inPantry: ["Cá basa", "Trứng"],
+        missing: [{ name: "Hành lá", optional: true }],
+        expiring: [],
+        expired: [],
+        unitMismatches: [{ name: "Trứng", recipeUnit: "G", pantryUnits: ["ITEM"] }],
+      },
+      calories: { recipeCalories: 500, dailyTarget: 2000, percentOfDailyTarget: 25 },
+      warnings: { allergens: ["cá"], dislikedFoods: [], dietConflict: "VEGETARIAN" },
+    });
+    expect(mocks.findUnique).toHaveBeenCalledWith({ where: { id: recipeId }, include: { ingredients: true } });
+    expect(mocks.findProfile).toHaveBeenCalledWith({ where: { userId } });
+    expect(mocks.findPantry).toHaveBeenCalledWith({ where: { userId, quantity: { gt: 0 } } });
+  });
+
+  it("works without a nutrition profile or pantry", async () => {
+    const response = await request(app, forYouPath, { token: token() });
+    expect(response.status).toBe(200);
+    expect(response.body.pantry).toMatchObject({ totalIngredients: 1, inPantryCount: 0, missing: [{ name: "Ức gà", optional: false }] });
+    expect(response.body.warnings).toEqual({ allergens: [], dislikedFoods: [], dietConflict: null });
+    expect(response.body.calories.dailyTarget).toBeGreaterThan(0);
+  });
+
+  it("returns 404 for an unknown recipe", async () => {
+    mocks.findUnique.mockResolvedValue(null);
+    expect(await request(app, forYouPath, { token: token() })).toEqual({ status: 404, body: { message: "Không tìm thấy công thức." } });
+  });
+
+  it("requires authentication and a valid recipe id", async () => {
+    expect((await request(app, forYouPath)).status).toBe(401);
+    expect((await request(app, "/api/recipes/not-a-cuid/for-you", { token: token() })).status).toBe(422);
+    expect(mocks.findUnique).not.toHaveBeenCalled();
+    expect(mocks.findPantry).not.toHaveBeenCalled();
   });
 });
 

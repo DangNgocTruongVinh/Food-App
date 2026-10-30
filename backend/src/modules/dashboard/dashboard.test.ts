@@ -49,7 +49,15 @@ const recipe = {
   prepMinutes: 10,
   cookMinutes: 20,
   dietTags: ["BALANCED"],
+  imageUrl: "/assets/nutrition-hero.jpg",
+  ingredients: [{ name: "Ức gà", quantity: 150, unit: "G" }, { name: "Cà rốt", quantity: 50, unit: "G" }],
 };
+// Món gợi ý trả về cho frontend: thông tin món + số nguyên liệu trong kho / sắp hết hạn.
+const recommended = {
+  id: "recipe-a", name: "Ức gà rau củ", calories: 450, prepMinutes: 10, cookMinutes: 20, dietTags: ["BALANCED"],
+  imageUrl: "/assets/nutrition-hero.jpg", totalIngredients: 2, pantryIngredientCount: 1, expiringIngredientCount: 1,
+};
+const fullPantry = [{ ...pantryItem, unit: "G" }];
 const meal = (id: string, completed: boolean, calories = 450) => ({
   id,
   mealType: "LUNCH",
@@ -70,7 +78,8 @@ beforeEach(() => {
   vi.resetAllMocks();
   mocks.findProfile.mockResolvedValue(profile);
   mocks.countPantry.mockResolvedValueOnce(6).mockResolvedValueOnce(2);
-  mocks.findPantry.mockResolvedValue([pantryItem]);
+  // Truy vấn kho có điều kiện hạn dùng là danh sách "sắp hết hạn"; truy vấn còn lại là toàn bộ kho để xếp gợi ý.
+  mocks.findPantry.mockImplementation(({ where }) => Promise.resolve(where.expiryDate ? [pantryItem] : fullPantry));
   mocks.findPlan.mockResolvedValue(activePlan);
   mocks.findRecipes.mockResolvedValue([recipe]);
 });
@@ -102,18 +111,8 @@ describe("Dashboard service contract (mock Prisma, no database)", () => {
       include: { days: { include: { items: { include: { recipe: true } } } } },
       orderBy: { startDate: "desc" },
     });
-    expect(mocks.findRecipes).toHaveBeenCalledWith({
-      orderBy: { createdAt: "asc" },
-      take: 3,
-      select: {
-        id: true,
-        name: true,
-        calories: true,
-        prepMinutes: true,
-        cookMinutes: true,
-        dietTags: true,
-      },
-    });
+    expect(mocks.findRecipes).toHaveBeenCalledWith({ orderBy: { createdAt: "asc" }, include: { ingredients: true } });
+    expect(mocks.findPantry).toHaveBeenCalledWith({ where: { userId, quantity: { gt: 0 } } });
   });
 
   it("keeps the existing response shape and derived meal-plan values", async () => {
@@ -123,7 +122,7 @@ describe("Dashboard service contract (mock Prisma, no database)", () => {
       pantryCount: 6,
       expiringItems: [pantryItem],
       expiredCount: 2,
-      recommendedRecipes: [recipe],
+      recommendedRecipes: [recommended],
       activePlan: { id: "plan-a", name: "Thực đơn tuần", completionRate: 67 },
       todayMeals: [
         {
@@ -147,7 +146,7 @@ describe("Dashboard service contract (mock Prisma, no database)", () => {
   it("keeps null profile/plan and empty values when related data is absent", async () => {
     mocks.findProfile.mockResolvedValue(null);
     mocks.countPantry.mockReset().mockResolvedValueOnce(0).mockResolvedValueOnce(0);
-    mocks.findPantry.mockResolvedValue([]);
+    mocks.findPantry.mockReset().mockResolvedValue([]);
     mocks.findPlan.mockResolvedValue(null);
     mocks.findRecipes.mockResolvedValue([]);
     await expect(getDashboard(userId, now)).resolves.toEqual({
@@ -166,6 +165,51 @@ describe("Dashboard service contract (mock Prisma, no database)", () => {
     const result = await getDashboard(userId, now);
     expect(result.activePlan).toEqual({ id: "plan-empty", name: "Trống", completionRate: 0 });
     expect(result.todayMeals).toEqual([]);
+  });
+});
+
+describe("Dashboard recommendations follow the profile and pantry", () => {
+  const ing = (name: string) => ({ name, quantity: 100, unit: "G" });
+  const dish = (id: string, dietTags: string[], ingredients: string[]) => ({
+    ...recipe, id, name: id, dietTags, ingredients: ingredients.map(ing),
+  });
+  const pantryRow = (name: string, expiryDate: string | null) => ({ ...pantryItem, name, unit: "G", expiryDate: expiryDate ? new Date(expiryDate) : null });
+  const recommendedIds = async () => (await getDashboard(userId, now)).recommendedRecipes.map((item) => item.id);
+
+  it("excludes dishes that break a vegetarian diet, an allergy or a disliked food", async () => {
+    mocks.findProfile.mockResolvedValue({ ...profile, dietType: "VEGETARIAN", allergies: ["Đậu phộng"], dislikedFoods: ["nấm"] });
+    mocks.findRecipes.mockResolvedValue([
+      dish("pho-bo", ["BALANCED"], ["Thịt bò", "Bánh phở"]),
+      dish("goi-chay", ["VEGETARIAN", "VEGAN"], ["Đậu phộng", "Bún tươi"]),
+      dish("nam-kho", ["VEGETARIAN", "VEGAN"], ["Nấm rơm"]),
+      dish("dau-hu", ["VEGETARIAN", "VEGAN"], ["Đậu hũ", "Cà chua"]),
+    ]);
+    expect(await recommendedIds()).toEqual(["dau-hu"]);
+  });
+
+  it("puts dishes using soon-expiring ingredients first, then dishes using more pantry ingredients", async () => {
+    mocks.findRecipes.mockResolvedValue([
+      dish("no-pantry", ["BALANCED"], ["Tôm"]),
+      dish("two-in-pantry", ["BALANCED"], ["Gạo", "Trứng"]),
+      dish("uses-expiring", ["BALANCED"], ["Ức gà", "Hành lá"]),
+      dish("one-in-pantry", ["BALANCED"], ["Gạo", "Hành tây"]),
+    ]);
+    const pantry = [
+      pantryRow("Ức gà", "2026-09-17T00:00:00.000Z"),
+      pantryRow("Gạo", "2026-12-01T00:00:00.000Z"),
+      pantryRow("Trứng", null),
+    ];
+    mocks.findPantry.mockImplementation(({ where }) => Promise.resolve(where.expiryDate ? [] : pantry));
+    const result = (await getDashboard(userId, now)).recommendedRecipes;
+    expect(result.map((item) => item.id)).toEqual(["uses-expiring", "two-in-pantry", "one-in-pantry"]);
+    expect(result[0]).toMatchObject({ totalIngredients: 2, pantryIngredientCount: 1, expiringIngredientCount: 1 });
+    expect(result[1]).toMatchObject({ totalIngredients: 2, pantryIngredientCount: 2, expiringIngredientCount: 0 });
+  });
+
+  it("does not count expired pantry items as available", async () => {
+    mocks.findRecipes.mockResolvedValue([dish("uses-expired", ["BALANCED"], ["Sữa tươi"])]);
+    mocks.findPantry.mockImplementation(({ where }) => Promise.resolve(where.expiryDate ? [] : [pantryRow("Sữa tươi", "2026-09-10T00:00:00.000Z")]));
+    expect((await getDashboard(userId, now)).recommendedRecipes[0]).toMatchObject({ pantryIngredientCount: 0, expiringIngredientCount: 0 });
   });
 });
 

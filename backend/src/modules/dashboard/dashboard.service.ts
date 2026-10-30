@@ -1,11 +1,13 @@
 import { prisma } from "../../lib/prisma.js";
+import { recommendRecipes } from "../../services/recipe-fit.service.js";
 
 const DAY_MS = 86_400_000;
 const DASHBOARD_WINDOW_DAYS = 7;
+const DASHBOARD_RECOMMENDATIONS = 3;
 
 export async function getDashboard(userId: string, now = new Date()) {
   const inSevenDays = new Date(now.getTime() + DASHBOARD_WINDOW_DAYS * DAY_MS);
-  const [profile, pantryCount, expiringItems, expiredCount, activePlan, recommendedRecipes] = await Promise.all([
+  const [profile, pantryCount, expiringItems, expiredCount, activePlan, recipes, pantry] = await Promise.all([
     prisma.nutritionProfile.findUnique({ where: { userId } }),
     prisma.pantryItem.count({ where: { userId, quantity: { gt: 0 } } }),
     prisma.pantryItem.findMany({
@@ -24,19 +26,23 @@ export async function getDashboard(userId: string, now = new Date()) {
       include: { days: { include: { items: { include: { recipe: true } } } } },
       orderBy: { startDate: "desc" },
     }),
-    prisma.recipe.findMany({
-      orderBy: { createdAt: "asc" },
-      take: 3,
-      select: {
-        id: true,
-        name: true,
-        calories: true,
-        prepMinutes: true,
-        cookMinutes: true,
-        dietTags: true,
-      },
-    }),
+    prisma.recipe.findMany({ orderBy: { createdAt: "asc" }, include: { ingredients: true } }),
+    prisma.pantryItem.findMany({ where: { userId, quantity: { gt: 0 } } }),
   ]);
+  // Gợi ý theo hồ sơ (chế độ ăn, dị ứng, món không thích) và kho: ưu tiên nguyên liệu sắp hết hạn.
+  const recommendedRecipes = recommendRecipes(recipes, profile, pantry, DASHBOARD_RECOMMENDATIONS, now)
+    .map(({ recipe, totalIngredients, pantryIngredientCount, expiringIngredientCount }) => ({
+      id: recipe.id,
+      name: recipe.name,
+      calories: recipe.calories,
+      prepMinutes: recipe.prepMinutes,
+      cookMinutes: recipe.cookMinutes,
+      dietTags: recipe.dietTags,
+      imageUrl: recipe.imageUrl,
+      totalIngredients,
+      pantryIngredientCount,
+      expiringIngredientCount,
+    }));
 
   const mealItems = activePlan?.days.flatMap((day) => day.items) ?? [];
   const todayKey = now.toISOString().slice(0, 10);
