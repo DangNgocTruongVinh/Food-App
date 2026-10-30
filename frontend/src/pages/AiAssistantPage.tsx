@@ -5,7 +5,7 @@ import { getApiError } from "../api/client";
 import { LoadingState } from "../components/States";
 import {
   assistantDietLabel, assistantFallbackHistory, assistantPromptPills, assistantQuickActions,
-  assistantSuggestions, chatHistoryTime, normalizeChatMessage, RECENT_HISTORY_LIMIT, recentUserHistory,
+  assistantSuggestions, chatHistoryTime, normalizeChatMessage, RECENT_HISTORY_LIMIT, recentUserHistory, scrollChatToLatest,
 } from "../features/ai/ai.logic";
 import { aiMutations, aiQueries, invalidateAIHistory } from "../features/ai/ai.queries";
 import { profileQueries } from "../features/profile/profile.queries";
@@ -14,13 +14,21 @@ const quickActionIcons = { meal: <Utensils />, plan: <CalendarDays />, pantry: <
 
 export default function AiAssistantPage() {
   const queryClient = useQueryClient(); const [message, setMessage] = useState(""); const [error, setError] = useState(""); const bottomRef = useRef<HTMLDivElement>(null);
+  const chatWindowRef = useRef<HTMLDivElement>(null);
+  const userHasSent = useRef(false);
   const [showAllHistory, setShowAllHistory] = useState(false);
   const { data = [], isLoading } = useQuery(aiQueries.history());
   const { data: dashboard } = useQuery(aiQueries.dashboard());
   const { data: profileData } = useQuery(profileQueries.detail());
   const chat = useMutation({ ...aiMutations.chat(), onSuccess: () => { setMessage(""); setError(""); invalidateAIHistory(queryClient); }, onError: (err) => setError(getApiError(err)) });
-  useEffect(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), [data, chat.isPending]);
-  const submit = (event: FormEvent) => { event.preventDefault(); const content = normalizeChatMessage(message); if (content) chat.mutate(content); };
+  useEffect(() => scrollChatToLatest(chatWindowRef.current, bottomRef.current, userHasSent.current), [data, chat.isPending]);
+  const submit = (event: FormEvent) => {
+    event.preventDefault();
+    const content = normalizeChatMessage(message);
+    if (!content) return;
+    userHasSent.current = true;
+    chat.mutate(content);
+  };
   if (isLoading) return <LoadingState />;
   const profile = profileData?.profile;
   const historyItems = recentUserHistory(data, showAllHistory ? null : RECENT_HISTORY_LIMIT);
@@ -44,7 +52,7 @@ export default function AiAssistantPage() {
     <div className="assistant-workspace">
       <main className="assistant-conversation-column">
         <section className="assistant-chat-shell">
-          <div className="chat-window">
+          <div className="chat-window" ref={chatWindowRef}>
             {!data.length && <section className="chat-welcome assistant-welcome-dashboard">
               <div className="assistant-welcome-mascot"><span><Heart /></span><img src="/assets/ai-mascot.png" alt="" /></div>
               <span className="assistant-welcome-hello">Xin chào! 👋</span>

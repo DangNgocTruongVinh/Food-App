@@ -7,7 +7,7 @@ import type { ChatMessage, DashboardData } from "../../types";
 import { getAIStatus, getAssistantDashboard, getChatHistory, sendChatMessage } from "./ai.api";
 import {
   assistantDietLabel, assistantFallbackHistory, assistantPromptPills, assistantQuickActions,
-  assistantSuggestions, chatHistoryTime, normalizeChatMessage, recentUserHistory,
+  assistantSuggestions, chatHistoryTime, normalizeChatMessage, recentUserHistory, scrollChatToLatest,
 } from "./ai.logic";
 import { aiMutations, aiQueries, invalidateAIHistory } from "./ai.queries";
 
@@ -149,5 +149,31 @@ describe("AI assistant page business logic", () => {
     expect(assistantQuickActions.map((item) => item.id)).toEqual(["meal", "plan", "pantry", "recipe"]);
     expect(assistantPromptPills).toEqual(["Món dưới 30 phút", "Món ít calo", "Tăng cơ, nhiều protein", "Ăn chay", "Giảm cân"]);
     expect(assistantFallbackHistory).toEqual(["Gợi ý bữa tối giàu protein", "Thực đơn giảm cân 3 ngày", "Dùng thực phẩm trong kho", "Giá trị dinh dưỡng của ức gà"]);
+  });
+});
+
+describe("Chat auto-scroll", () => {
+  const fakes = () => {
+    const chatWindow = { scrollHeight: 1200, scrollTo: vi.fn() };
+    const latest = { scrollIntoView: vi.fn() };
+    return { chatWindow, latest };
+  };
+
+  it("on entering the page scrolls only inside the chat window, never the whole page", () => {
+    const { chatWindow, latest } = fakes();
+    scrollChatToLatest(chatWindow, latest, false);
+    expect(chatWindow.scrollTo).toHaveBeenCalledWith({ top: 1200, behavior: "auto" });
+    expect(latest.scrollIntoView).not.toHaveBeenCalled();
+  });
+
+  it("after the user sends a message still scrolls to the reply", () => {
+    const { chatWindow, latest } = fakes();
+    scrollChatToLatest(chatWindow, latest, true);
+    expect(chatWindow.scrollTo).toHaveBeenCalledWith({ top: 1200, behavior: "smooth" });
+    expect(latest.scrollIntoView).toHaveBeenCalledWith({ behavior: "smooth" });
+  });
+
+  it("does nothing before the chat window is rendered", () => {
+    expect(() => scrollChatToLatest(null, null, true)).not.toThrow();
   });
 });

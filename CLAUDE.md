@@ -142,7 +142,7 @@ Thứ tự: (b) → khảo sát dọn code → (a), (c), (d).
   - Frontend: tách `PantryPage` vào `components/pantry/` + logic `features/pantry/pantry.logic.ts` (so ảnh 0 điểm ảnh lệch, 20 bước Playwright đạt).
 - [x] (a) Sửa tiêu đề trang chi tiết công thức bị thanh menu che.
   - Nguyên nhân: không đưa trang về đầu khi chuyển route; trang mở từ cache giữ vị trí cuộn cũ. Sửa chung bằng `components/ScrollToTop.tsx` + `utils/navigation.ts` (không cuộn khi Back/Forward, chỉ đổi query, hoặc đổi thực đơn trong trang Thực đơn).
-  - [ ] Còn mở: trang Trợ lý AI tự cuộn khung chat bằng `scrollIntoView` nên đẩy cả cửa sổ, tiêu đề bị che khi vào trang. Chờ quyết định cách sửa.
+  - [x] Trang Trợ lý AI: khi vào trang chỉ cuộn bên trong khung chat (`scrollChatToLatest`), sau khi gửi tin mới cuộn cả trang tới câu trả lời. Chưa kiểm tra bằng Playwright.
 - [x] Trước (c): tách component `DashboardPage` vào `components/dashboard/` (`OverviewHero`, `TodayMetrics`, `InsightCard`, `RecommendedRecipes`, `WaterStrip`), commit riêng, so ảnh trước/sau.
 - [ ] (c) Khối "Dành cho bạn" trên trang chi tiết: số nguyên liệu đã có trong kho / tổng và nguyên liệu còn thiếu; % calo so với mục tiêu ngày; cảnh báo dị ứng/không thích (dùng lại logic backend).
   - Gợi ý công thức ở Dashboard theo hồ sơ, **dùng chung logic backend** (`dietary.service.ts`) với khối "Dành cho bạn": hiện `dashboard.service.ts` chỉ lấy 3 món đầu theo `createdAt`, không lọc chế độ ăn/dị ứng (người ăn chay có thể thấy "Phở bò"); dòng "Dùng nguyên liệu trong kho" luôn hiện dù không dựa vào kho; ảnh chưa dùng `imageUrl`. Khi làm thì gom luôn logic so khớp đang chép ở frontend (`asWords` trong `meal-plans.logic.ts`) về backend.

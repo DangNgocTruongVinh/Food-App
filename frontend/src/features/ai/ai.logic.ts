@@ -49,3 +49,15 @@ export function normalizeChatMessage(message: string) {
   const normalized = message.trim();
   return normalized || null;
 }
+
+type ChatScrollContainer = { scrollHeight: number; scrollTo: (options: ScrollToOptions) => void };
+type ChatScrollMarker = { scrollIntoView: (options: ScrollIntoViewOptions) => void };
+
+/**
+ * Cuộn tới tin nhắn mới nhất. Luôn cuộn bên trong khung chat; chỉ kéo cả trang sau khi người dùng đã gửi tin,
+ * để khi vừa vào trang tiêu đề không bị đẩy lên sau thanh menu cố định.
+ */
+export function scrollChatToLatest(chatWindow: ChatScrollContainer | null, latest: ChatScrollMarker | null, userHasSent: boolean) {
+  chatWindow?.scrollTo({ top: chatWindow.scrollHeight, behavior: userHasSent ? "smooth" : "auto" });
+  if (userHasSent) latest?.scrollIntoView({ behavior: "smooth" });
+}
