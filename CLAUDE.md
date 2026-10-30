@@ -131,8 +131,15 @@ Thứ tự: (b) → khảo sát dọn code → (a), (c), (d).
   - Landing: đổi tên 4 món hardcode theo bộ mới (API thật vẫn để GĐ5). Dashboard: 3 món dự phòng lấy từ bộ mới.
   - Kèm theo: chỉ tiêu seed tính bằng `calculateNutritionTargets`; gợi ý trang Thực đơn theo hồ sơ; ảnh món theo công thức; sửa xóa thực đơn cuối; Docker build bằng lockfile (`npm ci`).
   - Đã kiểm thử trên trình duyệt (`docs/test-evidence/`) và gộp vào `main`.
-- [ ] Khảo sát dọn code sau (b).
-  - Xem xét xóa 10 ảnh trong `frontend/public/assets/` không còn được tham chiếu (đã không dùng từ trước GĐ2c): `hero-bowl-clean-v3.png`, `hero-composition-napkin.png`, `hero-ingredient-cluster-v2.png`, `hero-ingredient-trio-v2.png`, `hero-ingredients-clean-v3.png`, `hero-salmon-bowl-v2.png`, `landing-hero-robot.png`, `landing-meal-planner-journal.png`, `nouri-logo-minimal.png`, `nouri-logo.png`.
+- [x] Khảo sát dọn code sau (b) — nhánh `don-code`, đã gộp vào `main`:
+  - Nhãn trung thực "Tạo bởi AI" / "Thuật toán gợi ý" (`GET /api/ai/status` chỉ trả `available`).
+  - `docker-compose.yml` đọc `POSTGRES_PASSWORD`, `JWT_SECRET` từ `.env` ở thư mục gốc (xem `.env.example`).
+  - Xóa `selectMealPlan`; dùng chung `normalizeFoodText`; helper test `seedRecipesAsRecords`; xóa 10 ảnh không dùng.
+  - Đổi tên nutriplan → nouri (package, `/api/health`, email demo `demo@nouri.vn`, key lưu phiên có chuyển key cũ); giữ tên database.
+  - Bỏ `.agents/`, `skills-lock.json` khỏi git.
+  - CSS: xóa selector chắc chắn không dùng; tách `styles.css` thành 28 file `src/styles/NN-<module>.css` (CSS build giống hệt từng byte).
+  - Backend: thuật toán xếp thực đơn tách sang `meal-plan-generator.ts`.
+  - Frontend: tách `PantryPage` vào `components/pantry/` + logic `features/pantry/pantry.logic.ts` (so ảnh 0 điểm ảnh lệch, 20 bước Playwright đạt).
 - [ ] (a) Sửa tiêu đề trang chi tiết công thức bị thanh menu che.
 - [ ] Trước (c): tách component `DashboardPage` vào `components/dashboard/` (`OverviewHero`, `TodayMetrics`, `InsightCard`, `RecommendedRecipes`, `WaterStrip`), commit riêng, so ảnh trước/sau.
 - [ ] (c) Khối "Dành cho bạn" trên trang chi tiết: số nguyên liệu đã có trong kho / tổng và nguyên liệu còn thiếu; % calo so với mục tiêu ngày; cảnh báo dị ứng/không thích (dùng lại logic backend).
