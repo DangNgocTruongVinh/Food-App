@@ -18,6 +18,15 @@ Nouri là ứng dụng quản lý thực phẩm trong gia đình và lập kế 
 8. Không đưa secret/giá trị biến môi trường vào code hoặc commit.
 9. Trả lời người dùng bằng tiếng Việt.
 
+## Quy tắc tổ chức code
+
+1. **Độ dài file:** component/page tối đa ~300 dòng; quá 400 dòng thì bắt buộc tách. Một dòng JSX không quá 160 ký tự. Ngoại lệ: file dữ liệu như `backend/prisma/seed-data.ts`.
+2. **Nơi đặt component:** component con của một module đặt trong `frontend/src/components/<module>/` (vd. `components/pantry/PantryTable.tsx`); component dùng chung nhiều module (`States`, `DateInput`) đặt ở `components/`. Page chỉ ghép component, giữ state và gọi query/mutation.
+3. **Logic thuần:** đặt trong `frontend/src/features/<module>/*.logic.ts` và có test; component chỉ hiển thị và gọi hàm/hook. Backend: logic thuật toán tách khỏi service CRUD (vd. `meal-plan-generator.ts` cạnh `meal-plans.service.ts`).
+4. **CSS theo module:** `frontend/src/styles/NN-<module>.css` là các lớp giao diện tích lũy theo thời gian, **thứ tự import trong `styles.css` quyết định kết quả**. CSS mới viết vào file của module tương ứng hoặc file mới thêm ở **cuối** danh sách import; không thêm vào `01-base.css`. Không đổi thứ tự import hay gộp selector trùng nếu chưa so ảnh trước/sau.
+5. **Tách component theo giai đoạn:** giai đoạn nào sửa trang nào thì **tách component của trang đó trước**, thành **một commit riêng** (không đổi hành vi/giao diện), có **so ảnh trước/sau** (máy tính + điện thoại, các trạng thái chính của trang) rồi mới làm chức năng mới. Lịch tách: Pantry (xong ở bước dọn code), Dashboard ở GĐ2c, Community ở GĐ2b, MealPlans ở GĐ5, Landing (dữ liệu tĩnh ra `features/landing/landing.data.ts`) ở GĐ5; tách toàn bộ Landing là việc tùy chọn ở cuối.
+6. **Cấu trúc Admin (GĐ3):** frontend `pages/admin/*Page.tsx`, `components/admin/`, `features/admin/*.api.ts`, `layouts/AdminLayout.tsx`, route guard `AdminRoute`, CSS `styles/29-admin.css` (thêm cuối danh sách import). Backend `modules/admin/` dùng `requireAdmin`, gọi lại service sẵn có (công thức, service xóa bài dùng chung), không chép logic.
+
 ## Các quyết định đã chốt
 
 | # | Vấn đề | Quyết định |
@@ -125,11 +134,13 @@ Thứ tự: (b) → khảo sát dọn code → (a), (c), (d).
 - [ ] Khảo sát dọn code sau (b).
   - Xem xét xóa 10 ảnh trong `frontend/public/assets/` không còn được tham chiếu (đã không dùng từ trước GĐ2c): `hero-bowl-clean-v3.png`, `hero-composition-napkin.png`, `hero-ingredient-cluster-v2.png`, `hero-ingredient-trio-v2.png`, `hero-ingredients-clean-v3.png`, `hero-salmon-bowl-v2.png`, `landing-hero-robot.png`, `landing-meal-planner-journal.png`, `nouri-logo-minimal.png`, `nouri-logo.png`.
 - [ ] (a) Sửa tiêu đề trang chi tiết công thức bị thanh menu che.
+- [ ] Trước (c): tách component `DashboardPage` vào `components/dashboard/` (`OverviewHero`, `TodayMetrics`, `InsightCard`, `RecommendedRecipes`, `WaterStrip`), commit riêng, so ảnh trước/sau.
 - [ ] (c) Khối "Dành cho bạn" trên trang chi tiết: số nguyên liệu đã có trong kho / tổng và nguyên liệu còn thiếu; % calo so với mục tiêu ngày; cảnh báo dị ứng/không thích (dùng lại logic backend).
   - Gợi ý công thức ở Dashboard theo hồ sơ, **dùng chung logic backend** (`dietary.service.ts`) với khối "Dành cho bạn": hiện `dashboard.service.ts` chỉ lấy 3 món đầu theo `createdAt`, không lọc chế độ ăn/dị ứng (người ăn chay có thể thấy "Phở bò"); dòng "Dùng nguyên liệu trong kho" luôn hiện dù không dựa vào kho; ảnh chưa dùng `imageUrl`. Khi làm thì gom luôn logic so khớp đang chép ở frontend (`asWords` trong `meal-plans.logic.ts`) về backend.
 - [ ] (d) Tùy chọn: chỉnh số khẩu phần.
 
 ### Giai đoạn 2b — Đính kèm công thức vào bài viết
+- [ ] Trước tiên: tách component `CommunityPage` vào `components/community/` (`PostComposer`, `PostCard`, `CommentForm`, `CommunitySidebar`), commit riêng, so ảnh trước/sau.
 - [ ] Schema: `CommunityPost.recipeId` tùy chọn (FK tới `Recipe`), migration mới.
 - [ ] API đăng bài nhận `recipeId` (validate tồn tại); feed trả kèm thông tin tóm tắt công thức.
 - [ ] FE: hiện lại nút "Công thức", chọn công thức có sẵn; bài viết hiển thị thẻ công thức liên kết tới `/recipes/:id` (trang ở GĐ2).
@@ -150,6 +161,7 @@ Thứ tự: (b) → khảo sát dọn code → (a), (c), (d).
 - [ ] Quên/đặt lại mật khẩu qua email (token reset có hạn, dùng 1 lần).
 
 ### Giai đoạn 5 — Nghiệp vụ bổ sung
+- [ ] Trước tiên: tách component `MealPlansPage` vào `components/meal-plans/` (`MealPlanToolbar`, `MealDayTabs`, `MealColumn`, `WeekSummary`, `NutritionCard`, `SuggestionCard`, `ShoppingCard`); tách dữ liệu tĩnh của Landing ra `features/landing/landing.data.ts`. Mỗi việc một commit, so ảnh trước/sau.
 - [ ] Thêm món thủ công vào thực đơn (chọn recipe → gắn vào MealPlanDay/MealType, cập nhật shopping list). Có nút "Thêm vào thực đơn" ở trang chi tiết công thức (chỗ đã để sẵn từ GĐ2).
 - [ ] Lưu DB: favorite recipe, saved post, follow, lượng nước.
 - [ ] Chủ đề/thành viên nổi bật từ dữ liệu thật.
@@ -170,6 +182,7 @@ Thứ tự: (b) → khảo sát dọn code → (a), (c), (d).
 
 ### Giai đoạn 6 — Tùy chọn
 - [ ] Đăng nhập Google (OAuth).
+- [ ] Tách toàn bộ `LandingPage` (1.612 dòng): section vào `components/landing/` (`LandingHero`, `LandingFeatures`, `LandingRecipeCarousel`, `LandingPlanSection`, `LandingCommunity`, `LandingAbout`, `LandingFooter`), hook GSAP vào `features/landing/useLanding*.ts`; so ảnh trước/sau.
 
 ### Cuối cùng — Tài liệu
 - [ ] Cập nhật `REPORT_NOURI.md`: bảng chức năng, thống kê, Use Case, ERD theo code mới.
