@@ -1,4 +1,5 @@
 import { Navigate, Outlet, Route, Routes } from "react-router-dom";
+import ScrollToTop from "./components/ScrollToTop";
 import AppLayout from "./layouts/AppLayout";
 import AiAssistantPage from "./pages/AiAssistantPage";
 import CommunityPage from "./pages/CommunityPage";
@@ -17,22 +18,25 @@ function ProtectedRoute() {
 }
 
 export default function App() {
-  return <Routes>
-    <Route index element={<LandingPage />} />
-    <Route path="/login" element={<LoginPage />} />
-    <Route element={<ProtectedRoute />}>
-      <Route element={<AppLayout />}>
-        <Route path="dashboard" element={<DashboardPage />} />
-        <Route path="pantry" element={<PantryPage />} />
-        <Route path="meal-plans" element={<MealPlansPage />} />
-        <Route path="meal-plans/:id" element={<MealPlansPage />} />
-        <Route path="recipes" element={<RecipesPage />} />
-        <Route path="recipes/:id" element={<RecipeDetailPage />} />
-        <Route path="community" element={<CommunityPage />} />
-        <Route path="assistant" element={<AiAssistantPage />} />
-        <Route path="profile" element={<ProfilePage />} />
+  return <>
+    <ScrollToTop />
+    <Routes>
+      <Route index element={<LandingPage />} />
+      <Route path="/login" element={<LoginPage />} />
+      <Route element={<ProtectedRoute />}>
+        <Route element={<AppLayout />}>
+          <Route path="dashboard" element={<DashboardPage />} />
+          <Route path="pantry" element={<PantryPage />} />
+          <Route path="meal-plans" element={<MealPlansPage />} />
+          <Route path="meal-plans/:id" element={<MealPlansPage />} />
+          <Route path="recipes" element={<RecipesPage />} />
+          <Route path="recipes/:id" element={<RecipeDetailPage />} />
+          <Route path="community" element={<CommunityPage />} />
+          <Route path="assistant" element={<AiAssistantPage />} />
+          <Route path="profile" element={<ProfilePage />} />
+        </Route>
       </Route>
-    </Route>
-    <Route path="*" element={<Navigate to="/" replace />} />
-  </Routes>;
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
+  </>;
 }
