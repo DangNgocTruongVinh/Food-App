@@ -80,11 +80,20 @@ enum NotificationType {
   AI_NUTRITION_SUGGESTION
 }
 
+// Quyền: tài khoản Admin chỉ tạo bằng seed (ADMIN_EMAIL/ADMIN_PASSWORD), không đăng ký công khai.
+enum Role {
+  USER
+  ADMIN
+}
+
 model User {
   id                String             @id @default(cuid())
   email             String             @unique
   passwordHash      String
   name              String
+  role              Role               @default(USER)
+  // Khác null: tài khoản đang bị khóa (không đăng nhập, không gọi API được); lưu thời điểm khóa.
+  lockedAt          DateTime?
   profile           NutritionProfile?
   pantryItems       PantryItem[]
   mealPlans         MealPlan[]

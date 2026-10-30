@@ -92,7 +92,7 @@ Nouri là ứng dụng quản lý thực phẩm trong gia đình và lập kế 
 | OAuth Google | Tùy chọn, làm sau cùng nếu còn thời gian |
 | Payment | Không làm (trừ khi đề cương bắt buộc) |
 
-Biến môi trường mới phải thêm vào `backend/src/config/env.ts` (Zod) và `.env.example` (chỉ tên, không giá trị).
+Biến môi trường mới phải thêm vào `backend/src/config/env.ts` (Zod) và `.env.example` (chỉ tên, không giá trị). Biến chỉ seed dùng khai báo trong `backend/src/config/seed-env.ts`.
 
 ## Kế hoạch thực hiện (theo thứ tự)
 
@@ -172,7 +172,28 @@ Thứ tự: (b) → khảo sát dọn code → (a), (c), (d).
   - **Phông chữ phải đủ tiếng Việt.** Khi đổi phông (ở bước này hoặc khi chỉnh UI), kiểm tra bằng Playwright các chữ có dấu chồng (ố, ặ, ữ, ỗ, ẫ, ợ) ở **mọi độ đậm đang dùng và chữ nghiêng**; khai báo phông dự phòng có tiếng Việt (Noto Serif cho chữ có chân, Noto Sans cho chữ không chân), không để rơi về Georgia. Lý do: Georgia không có chữ ghép sẵn như "ố" nên trình duyệt ghép "ô" + dấu rời và đặt lệch ("Sô ́ng"); đã sửa bằng Noto Serif ở nhánh `fix-landing-tieng-viet`. Test `source-nfc.test.ts` (frontend, backend) chỉ chặn dấu rời trong mã nguồn, không phát hiện lỗi phông.
 
 ### Giai đoạn 3 — Admin + upload ảnh
-- [ ] Role + middleware + seed tài khoản Admin.
+Kế hoạch backend chia 7 lượt (mỗi lượt một commit), frontend Admin làm sau khi chốt UI:
+1. Role/khóa tài khoản, `requireAuth` đọc DB, `requireAdmin`, seed Admin, seed không xóa/ghi đè món.
+2. `Recipe.hiddenAt` + lọc món ẩn ở mọi chỗ (danh sách, tạo thực đơn + `reconcileAIPlan`, `assertAttachableRecipe`, chia sẻ, gợi ý Dashboard, "Dành cho bạn", `/api/recipes/stats`); chi tiết và feed trả cờ ẩn.
+3. Admin công thức (tạo/sửa/ẩn/xóa khi chưa dùng → 409), bộ từ khóa chay chuyển từ `seed-data.test.ts` sang `dietary.service.ts`.
+4. Admin người dùng (tìm kiếm, phân trang, khóa/mở) + service xóa bài/bình luận dùng chung + `DELETE /api/community/:postId` ("Xóa bài của tôi", giao diện để sau) + kiểm duyệt + thống kê theo tuần.
+5. Hạ tầng Cloudinary + ảnh công thức. 6. Ảnh bài viết (`CommunityPostImage`). 7. Nhật ký thao tác Admin.
+
+Quyết định đã chốt cho GĐ3:
+- **Seed:** chỉ tạo món còn thiếu, không xóa, không ghi đè. `SEED_UPDATE_RECIPES=true` (mặc định tắt) để cố ý cập nhật lại các món gốc. Admin tạo từ `ADMIN_EMAIL`/`ADMIN_PASSWORD` (đã có email thì chỉ nâng quyền, giữ mật khẩu); seed không in mật khẩu.
+- **Quyền/khóa:** đọc `role` và `lockedAt` từ DB ở mỗi request (không để trong JWT) để khóa có hiệu lực ngay; tài khoản khóa → 403 `details.code = "ACCOUNT_LOCKED"`; đăng nhập kiểm tra mật khẩu trước rồi mới báo khóa. Admin không khóa được chính mình hay Admin khác. GĐ4: khóa tài khoản thì thu hồi refresh token trong cùng transaction.
+- **"Dành cho bạn" của món ẩn:** 404, frontend ẩn khối; trang chi tiết hiện "Món này đã ngừng sử dụng".
+- **Ảnh:** jpg/png/webp (kiểm tra cả byte đầu file), tối đa 5 MB/ảnh, tối đa 4 ảnh/bài; xóa EXIF (nhất là GPS) khỏi ảnh bài viết; hiển thị bằng URL Cloudinary đã tối ưu (`f_auto`, `q_auto`, giới hạn chiều rộng); thay ảnh thì xóa ảnh cũ theo `publicId` sau khi cập nhật DB thành công.
+- **Nhật ký thao tác Admin:** có làm (lượt 7).
+- **"Xóa bài của tôi"** (`DELETE /api/community/:postId`): làm ở lượt 4, dùng chung service xóa với Admin; giao diện để sau.
+- **Thống kê theo tuần:** theo giờ Việt Nam (`Asia/Ho_Chi_Minh`), tuần bắt đầu thứ Hai.
+
+- [x] Lượt 1 — Role + middleware + seed tài khoản Admin:
+  - Migration `20261031000000_add_user_role_and_lock` (`User.role` USER/ADMIN, `User.lockedAt`).
+  - `requireAuth` đọc quyền/khóa qua `services/account-status.service.ts`; `requireAdmin`; `AuthenticatedRequest.userRole`. Đăng nhập/đăng ký và `GET /api/profile` trả thêm `role`; đăng ký không nhận `role`.
+  - Test dùng bản giả chung `getAccountStatus` trong `src/test/setup.ts` (`backend/vitest.config.ts`), mặc định USER chưa khóa.
+  - Seed: `prisma/seed-steps.ts` (món, Admin), biến seed khai báo bằng Zod trong `src/config/seed-env.ts`; `backend/.env.example` chỉ còn tên biến; `docker-compose.yml` truyền biến seed.
+  - Hạn chế: chạy lại seed không còn tự xóa bộ món cũ (trước GĐ2c); muốn bỏ hẳn thì reset database.
 - [ ] Upload ảnh Cloudinary.
 - [ ] Đăng ảnh trong bài viết (làm ngay sau hạ tầng upload): lưu URL ảnh vào bài viết, hiện lại nút "Ảnh".
 - [ ] Admin: CRUD công thức, quản lý user (khóa/mở), kiểm duyệt community, thống kê.

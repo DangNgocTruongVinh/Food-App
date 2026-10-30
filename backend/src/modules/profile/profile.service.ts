@@ -2,7 +2,7 @@ import { prisma } from "../../lib/prisma.js";
 import { nutritionTargetFields } from "../../services/nutrition.service.js";
 import type { UpdateProfileInput } from "./profile.schema.js";
 
-const publicUserSelect = { id: true, name: true, email: true } as const;
+const publicUserSelect = { id: true, name: true, email: true, role: true } as const;
 
 export async function getProfile(userId: string) {
   return prisma.user.findUnique({

@@ -37,7 +37,7 @@ describe("Profile HTTP contract (no database)", () => {
     mocks.findUser.mockResolvedValue(result);
     expect(await request(app, "/api/profile?userId=user-b", { token: token() }))
       .toEqual({ status: 200, body: JSON.parse(JSON.stringify(result)) });
-    expect(mocks.findUser).toHaveBeenCalledWith({ where: { id: user.id }, select: { id: true, name: true, email: true, profile: true } });
+    expect(mocks.findUser).toHaveBeenCalledWith({ where: { id: user.id }, select: { id: true, name: true, email: true, role: true, profile: true } });
   });
 
   it("preserves the current 200/null response for a missing user", async () => {
@@ -50,7 +50,7 @@ describe("Profile HTTP contract (no database)", () => {
       method: "PUT", token: token(), body: { name: "Tên mới", ...profileInput, userId: "user-b", dailyCalorieTarget: 9999 },
     });
     expect(response.status).toBe(200);
-    expect(mocks.updateUser).toHaveBeenCalledWith({ where: { id: user.id }, data: { name: "Tên mới" }, select: { id: true, name: true, email: true } });
+    expect(mocks.updateUser).toHaveBeenCalledWith({ where: { id: user.id }, data: { name: "Tên mới" }, select: { id: true, name: true, email: true, role: true } });
     const saved = { ...profileInput, dailyCalorieTarget: 2085, proteinTargetG: 130, carbTargetG: 245, fatTargetG: 65 };
     expect(mocks.upsertProfile).toHaveBeenCalledWith({ where: { userId: user.id }, create: { userId: user.id, ...saved }, update: saved });
     expect(mocks.transaction).toHaveBeenCalledTimes(1);

@@ -1,22 +1,24 @@
 import { PrismaClient, type Prisma } from "@prisma/client";
 import bcrypt from "bcryptjs";
+import { readSeedEnv } from "../src/config/seed-env.js";
 import { nutritionTargetFields } from "../src/services/nutrition.service.js";
 import { seedRecipes } from "./seed-data.js";
+import { seedAdminAccount, seedRecipeCatalog } from "./seed-steps.js";
 
 const prisma = new PrismaClient();
 
 async function main() {
-  for (const recipe of seedRecipes) {
-    const { ingredients, ...data } = recipe;
-    await prisma.recipe.upsert({
-      where: { slug: recipe.slug },
-      update: { ...data, servings: 1, ingredients: { deleteMany: {}, create: ingredients } },
-      create: { ...data, servings: 1, ingredients: { create: ingredients } },
-    });
+  const options = readSeedEnv();
+  // Không xóa và (mặc định) không ghi đè công thức: Admin có thể đã sửa món gốc hoặc thêm món mới.
+  const recipes = await seedRecipeCatalog(prisma, seedRecipes, options.updateRecipes);
+  console.log(`Công thức: tạo mới ${recipes.created}, cập nhật ${recipes.updated}, giữ nguyên ${recipes.skipped}.`);
+
+  if (options.admin) {
+    const result = await seedAdminAccount(prisma, options.admin);
+    console.log(`Tài khoản Admin ${options.admin.email}: ${result === "created" ? "đã tạo" : "đã có, giữ mật khẩu cũ, đặt quyền ADMIN"}.`);
+  } else {
+    console.warn("Bỏ qua tạo tài khoản Admin: chưa khai báo ADMIN_EMAIL và ADMIN_PASSWORD.");
   }
-  // Bộ món cũ: xóa các công thức không còn trong seed và chưa được thực đơn nào dùng.
-  // (Công thức đã nằm trong thực đơn được giữ lại; reset database để bỏ hẳn dữ liệu cũ.)
-  await prisma.recipe.deleteMany({ where: { slug: { notIn: seedRecipes.map((recipe) => recipe.slug) }, mealItems: { none: {} } } });
 
   const email = "demo@nouri.vn";
   // Đổi tên nutriplan → nouri: chuyển tài khoản demo cũ sang email mới thay vì tạo thêm tài khoản thứ hai.

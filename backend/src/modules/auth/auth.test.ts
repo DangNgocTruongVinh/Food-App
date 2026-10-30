@@ -14,7 +14,7 @@ vi.mock("../../lib/prisma.js", () => ({ prisma: {
 } }));
 
 const app = testApp("/api/auth", authRoutes);
-const user = { id: "user-a", name: "Minh Anh", email: "demo@nouri.vn", passwordHash: "private-hash" };
+const user = { id: "user-a", name: "Minh Anh", email: "demo@nouri.vn", passwordHash: "private-hash", role: "USER", lockedAt: null };
 const credentials = { email: "Demo@Nouri.vn", password: "Demo@123" };
 beforeEach(() => vi.resetAllMocks());
 
@@ -23,10 +23,11 @@ describe("Auth HTTP contract (no database)", () => {
     mocks.findUser.mockResolvedValue(null);
     mocks.createUser.mockImplementation(async ({ data }) => ({ ...user, ...data }));
     const response = await request(app, "/api/auth/register", {
-      method: "POST", body: { ...credentials, name: "  Minh Anh  ", admin: true },
+      method: "POST", body: { ...credentials, name: "  Minh Anh  ", admin: true, role: "ADMIN" },
     });
     expect(response.status).toBe(201);
-    expect(response.body.user).toEqual({ id: user.id, name: user.name, email: user.email });
+    // Không đăng ký được thành Admin: role gửi lên bị bỏ, tài khoản nhận quyền mặc định USER.
+    expect(response.body.user).toEqual({ id: user.id, name: user.name, email: user.email, role: "USER" });
     const data = mocks.createUser.mock.calls[0][0].data;
     expect(data).toEqual({ email: user.email, name: user.name, passwordHash: expect.any(String), profile: { create: {} } });
     expect(bcrypt.getRounds(data.passwordHash)).toBe(12);
@@ -63,8 +64,29 @@ describe("Auth HTTP contract (no database)", () => {
     const response = await request(app, "/api/auth/login", { method: "POST", body: credentials });
     expect(response.status).toBe(200);
     expect(mocks.findUser).toHaveBeenCalledWith({ where: { email: user.email } });
-    expect(response.body.user).toEqual({ id: user.id, email: user.email, name: user.name });
+    expect(response.body.user).toEqual({ id: user.id, email: user.email, name: user.name, role: "USER" });
     expect(jwt.verify(response.body.token, mocks.secret)).toMatchObject({ sub: user.id });
+  });
+
+  it("returns the role so the frontend can show Admin pages", async () => {
+    mocks.findUser.mockResolvedValue({ ...user, role: "ADMIN", passwordHash: await bcrypt.hash(credentials.password, 4) });
+    const response = await request(app, "/api/auth/login", { method: "POST", body: credentials });
+    expect(response.body.user.role).toBe("ADMIN");
+    expect(jwt.decode(response.body.token)).not.toHaveProperty("role");
+  });
+
+  it("blocks a locked account with the right password and a clear 403", async () => {
+    mocks.findUser.mockResolvedValue({ ...user, lockedAt: new Date(), passwordHash: await bcrypt.hash(credentials.password, 4) });
+    expect(await request(app, "/api/auth/login", { method: "POST", body: credentials })).toEqual({
+      status: 403,
+      body: { message: "Tài khoản của bạn đã bị khóa. Vui lòng liên hệ quản trị viên.", details: { code: "ACCOUNT_LOCKED" } },
+    });
+  });
+
+  it("does not reveal that an account is locked to someone with a wrong password", async () => {
+    mocks.findUser.mockResolvedValue({ ...user, lockedAt: new Date(), passwordHash: await bcrypt.hash("different", 4) });
+    expect(await request(app, "/api/auth/login", { method: "POST", body: credentials }))
+      .toEqual({ status: 401, body: { message: "Email hoặc mật khẩu không đúng." } });
   });
 
   it.each([false, true])("uses the same 401 response for missing user / wrong password (%s)", async (exists) => {

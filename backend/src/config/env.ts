@@ -12,3 +12,4 @@ const envSchema = z.object({
 });
 
 export const env = envSchema.parse(process.env);
+// Biến chỉ dùng cho seed (ADMIN_EMAIL, ADMIN_PASSWORD, SEED_UPDATE_RECIPES): xem seed-env.ts.
