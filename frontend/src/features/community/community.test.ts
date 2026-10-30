@@ -11,7 +11,11 @@ import {
   toggleCommunityLike,
 } from "./community.api";
 import {
+  COMMUNITY_COMMENT_MAX_LENGTH,
+  COMMUNITY_POST_MAX_LENGTH,
+  communityCommentInputId,
   communityInitials,
+  communityPostElementId,
   communityRelativeTime,
   featuredMembers,
   normalizeCommunityContent,
@@ -203,5 +207,16 @@ describe("Community page business logic", () => {
 
     const share = vi.fn().mockRejectedValue(new Error("cancelled"));
     await expect(shareCommunityPost(post, { share })).resolves.toBeUndefined();
+  });
+});
+
+describe("Community element ids and limits", () => {
+  it("keeps the post anchor used by notification links (?post=) and the comment input id", () => {
+    expect(communityPostElementId("post-a")).toBe("post-post-a");
+    expect(communityCommentInputId("post-a")).toBe("comment-post-a");
+  });
+  it("matches the backend content limits", () => {
+    expect(COMMUNITY_POST_MAX_LENGTH).toBe(2000);
+    expect(COMMUNITY_COMMENT_MAX_LENGTH).toBe(500);
   });
 });

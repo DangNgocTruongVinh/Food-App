@@ -14,6 +14,19 @@ export const featuredMembers = [
   { name: "Minh An", role: "Thành viên tích cực" },
 ];
 
+export const COMMUNITY_POST_MAX_LENGTH = 2000;
+export const COMMUNITY_COMMENT_MAX_LENGTH = 500;
+
+/** id phần tử bài viết: link thông báo `/community?post=<id>` cuộn tới phần tử này. */
+export function communityPostElementId(postId: string) {
+  return `post-${postId}`;
+}
+
+/** id ô bình luận của bài viết: nút "Bình luận" đưa con trỏ vào ô này. */
+export function communityCommentInputId(postId: string) {
+  return `comment-${postId}`;
+}
+
 export function communityInitials(name: string) {
   return name.trim().split(/\s+/).slice(-2).map((part) => part.charAt(0).toUpperCase()).join("");
 }

@@ -24,7 +24,7 @@ Nouri là ứng dụng quản lý thực phẩm trong gia đình và lập kế 
 2. **Nơi đặt component:** component con của một module đặt trong `frontend/src/components/<module>/` (vd. `components/pantry/PantryTable.tsx`); component dùng chung nhiều module (`States`, `DateInput`) đặt ở `components/`. Page chỉ ghép component, giữ state và gọi query/mutation.
 3. **Logic thuần:** đặt trong `frontend/src/features/<module>/*.logic.ts` và có test; component chỉ hiển thị và gọi hàm/hook. Backend: logic thuật toán tách khỏi service CRUD (vd. `meal-plan-generator.ts` cạnh `meal-plans.service.ts`).
 4. **CSS theo module:** `frontend/src/styles/NN-<module>.css` là các lớp giao diện tích lũy theo thời gian, **thứ tự import trong `styles.css` quyết định kết quả**. CSS mới viết vào file của module tương ứng hoặc file mới thêm ở **cuối** danh sách import; không thêm vào `01-base.css`. Không đổi thứ tự import hay gộp selector trùng nếu chưa so ảnh trước/sau.
-5. **Tách component theo giai đoạn:** giai đoạn nào sửa trang nào thì **tách component của trang đó trước**, thành **một commit riêng** (không đổi hành vi/giao diện), có **so ảnh trước/sau** (máy tính + điện thoại, các trạng thái chính của trang) rồi mới làm chức năng mới. Lịch tách: Pantry (xong ở bước dọn code), Dashboard và RecipeDetail ở GĐ2c (xong), Community ở GĐ2b, MealPlans ở GĐ5, Landing (dữ liệu tĩnh ra `features/landing/landing.data.ts`) ở GĐ5; tách toàn bộ Landing là việc tùy chọn ở cuối.
+5. **Tách component theo giai đoạn:** giai đoạn nào sửa trang nào thì **tách component của trang đó trước**, thành **một commit riêng** (không đổi hành vi/giao diện), có **so ảnh trước/sau** (máy tính + điện thoại, các trạng thái chính của trang) rồi mới làm chức năng mới. Lịch tách: Pantry (xong ở bước dọn code), Dashboard và RecipeDetail ở GĐ2c (xong), Community ở GĐ2b (xong), MealPlans ở GĐ5, Landing (dữ liệu tĩnh ra `features/landing/landing.data.ts`) ở GĐ5; tách toàn bộ Landing là việc tùy chọn ở cuối.
 6. **Cấu trúc Admin (GĐ3):** frontend `pages/admin/*Page.tsx`, `components/admin/`, `features/admin/*.api.ts`, `layouts/AdminLayout.tsx`, route guard `AdminRoute`, CSS `styles/29-admin.css` (thêm cuối danh sách import). Backend `modules/admin/` dùng `requireAdmin`, gọi lại service sẵn có (công thức, service xóa bài dùng chung), không chép logic.
 
 ## Các quyết định đã chốt
@@ -157,7 +157,7 @@ Thứ tự: (b) → khảo sát dọn code → (a), (c), (d).
 Đã xong GĐ2c, gộp vào `main`.
 
 ### Giai đoạn 2b — Đính kèm công thức vào bài viết
-- [ ] Trước tiên: tách component `CommunityPage` vào `components/community/` (`PostComposer`, `PostCard`, `CommentForm`, `CommunitySidebar`), commit riêng, so ảnh trước/sau.
+- [x] Trước tiên: tách component `CommunityPage` vào `components/community/` (`CommunityHero`, `PostComposer`, `PostCard`, `CommentForm`, `CommunitySidebar`, `CommunityFeedStates`), commit riêng, so ảnh trước/sau giống hệt (máy tính + điện thoại; feed trống, feed có bài/bình luận/lượt thích, `?post=`); đăng bài, thích, bình luận, `?post=` đã thử bằng Playwright.
 - [ ] Schema: `CommunityPost.recipeId` tùy chọn (FK tới `Recipe`), migration mới.
 - [ ] API đăng bài nhận `recipeId` (validate tồn tại); feed trả kèm thông tin tóm tắt công thức.
 - [ ] FE: hiện lại nút "Công thức", chọn công thức có sẵn; bài viết hiển thị thẻ công thức liên kết tới `/recipes/:id` (trang ở GĐ2).
