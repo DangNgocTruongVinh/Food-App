@@ -1,0 +1,28 @@
+import { Clock3, CookingPot, UsersRound } from "lucide-react";
+import { recipeDietLabel, recipeImageSrc, recipeTotalMinutes } from "../../features/recipes/recipes.logic";
+import type { Recipe } from "../../types";
+import { RecipeBackLink } from "./RecipeDetailStates";
+
+export default function RecipeDetailHero({ recipe }: { recipe: Recipe }) {
+  return <header className="recipe-detail-hero">
+    <img src={recipeImageSrc(recipe)} alt={recipe.name} />
+    <div className="recipe-detail-intro">
+      <div className="recipe-detail-tags"><b>{recipe.cuisine}</b>{recipe.dietTags.map((tag) => <b key={tag}>{recipeDietLabel(tag)}</b>)}</div>
+      <h1>{recipe.name}</h1>
+      <p>{recipe.description}</p>
+      <ul className="recipe-detail-facts">
+        <li>
+          <Clock3 />
+          <span><strong>{recipeTotalMinutes(recipe)} phút</strong><small>Sơ chế {recipe.prepMinutes} · Nấu {recipe.cookMinutes}</small></span>
+        </li>
+        <li><UsersRound /><span><strong>{recipe.servings} khẩu phần</strong><small>Theo công thức</small></span></li>
+        <li>
+          <CookingPot />
+          <span><strong>{recipe.ingredients.length} nguyên liệu</strong><small>{recipe.instructions.length} bước thực hiện</small></span>
+        </li>
+      </ul>
+      {/* GĐ5: nút "Thêm vào thực đơn" đặt cạnh liên kết quay lại trong khối hành động này. */}
+      <div className="recipe-detail-actions"><RecipeBackLink /></div>
+    </div>
+  </header>;
+}
