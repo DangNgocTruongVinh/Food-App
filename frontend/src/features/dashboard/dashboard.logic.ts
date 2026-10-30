@@ -1,6 +1,8 @@
-import { differenceInCalendarDays } from "date-fns";
+import { differenceInCalendarDays, format } from "date-fns";
+import { vi } from "date-fns/locale";
 import { Moon, Sun, Sunrise } from "lucide-react";
 import type { DashboardData, MealType } from "../../types";
+import { recipeDetailPath } from "../recipes/recipes.logic";
 
 export const dashboardMealLabels: Record<MealType, string> = {
   BREAKFAST: "Sáng",
@@ -49,6 +51,32 @@ export function dashboardRecipeSearchPath(search: string) {
 
 export function dashboardWaterLiters(waterGlasses: number) {
   return Number((waterGlasses * 0.25).toFixed(2));
+}
+
+export const DASHBOARD_MAX_WATER_GLASSES = 8;
+
+export function nextWaterGlasses(waterGlasses: number) {
+  return Math.min(DASHBOARD_MAX_WATER_GLASSES, waterGlasses + 1);
+}
+
+/** Ngày hiển thị ở đầu Dashboard, vd. "Thứ Sáu, 30 tháng 10". */
+export function dashboardDateLabel(now = new Date()) {
+  return { iso: format(now, "yyyy-MM-dd"), label: format(now, "EEEE, dd 'tháng' M", { locale: vi }) };
+}
+
+/** Công thức mẫu dự phòng không có trong DB nên chỉ dẫn về danh sách công thức. */
+export function recommendedRecipePath(recipeId: string, isRealRecipe: boolean) {
+  return isRealRecipe ? recipeDetailPath(recipeId) : "/recipes";
+}
+
+export function recommendedRecipeImage(index: number, recipeName: string) {
+  return dashboardSuggestionImages[index] ?? dashboardMealImage(recipeName);
+}
+
+export function dashboardInsightMessage(hasExpiringItems: boolean) {
+  return hasExpiringItems
+    ? "sắp hết hạn. Nouri gợi ý món ngon sử dụng cả hai để tránh lãng phí nhé."
+    : "Hãy tiếp tục duy trì thói quen sử dụng nguyên liệu tươi và lên kế hoạch bữa ăn đều đặn.";
 }
 
 export function buildDashboardViewModel(

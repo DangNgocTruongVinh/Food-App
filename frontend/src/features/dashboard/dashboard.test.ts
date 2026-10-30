@@ -16,6 +16,12 @@ import {
   dashboardRecipeSearchPath,
   dashboardSuggestionImages,
   dashboardWaterLiters,
+  DASHBOARD_MAX_WATER_GLASSES,
+  dashboardDateLabel,
+  dashboardInsightMessage,
+  nextWaterGlasses,
+  recommendedRecipeImage,
+  recommendedRecipePath,
 } from "./dashboard.logic";
 import { dashboardQueries } from "./dashboard.queries";
 
@@ -227,5 +233,27 @@ describe("Dashboard hardcoded presentation rules", () => {
     expect(dashboardWaterLiters(0)).toBe(0);
     expect(dashboardWaterLiters(5)).toBe(1.25);
     expect(dashboardWaterLiters(8)).toBe(2);
+  });
+});
+
+describe("Dashboard component helpers", () => {
+  it("formats the header date in Vietnamese", () => {
+    expect(dashboardDateLabel(new Date(2026, 9, 30, 9))).toEqual({ iso: "2026-10-30", label: "Thứ Sáu, 30 tháng 10" });
+  });
+  it("links only real recommended recipes to their detail page", () => {
+    expect(recommendedRecipePath("recipe-a", true)).toBe("/recipes/recipe-a");
+    expect(recommendedRecipePath("fallback-ga-teriyaki", false)).toBe("/recipes");
+  });
+  it("uses the fixed suggestion images first, then an image by name", () => {
+    expect(recommendedRecipeImage(0, "Phở bò")).toBe(dashboardSuggestionImages[0]);
+    expect(recommendedRecipeImage(5, "Cá kho tộ")).toBe("/assets/recipe-salmon.jpg");
+  });
+  it("words the insight by whether items are expiring", () => {
+    expect(dashboardInsightMessage(true)).toContain("sắp hết hạn");
+    expect(dashboardInsightMessage(false)).toContain("duy trì thói quen");
+  });
+  it("adds one glass of water up to the maximum", () => {
+    expect(nextWaterGlasses(5)).toBe(6);
+    expect(nextWaterGlasses(DASHBOARD_MAX_WATER_GLASSES)).toBe(DASHBOARD_MAX_WATER_GLASSES);
   });
 });
