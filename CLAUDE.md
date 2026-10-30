@@ -155,6 +155,9 @@ Thứ tự: (b) → khảo sát dọn code → (a), (c), (d).
 - [ ] FE: hiện lại nút "Công thức", chọn công thức có sẵn; bài viết hiển thị thẻ công thức liên kết tới `/recipes/:id` (trang ở GĐ2).
 - [ ] Chỉ gắn công thức có sẵn; người dùng tự tạo công thức → hướng phát triển.
 
+### Chốt hướng thiết kế UI (ngay trước GĐ3)
+- [ ] Chốt hướng thiết kế UI dùng chung (màu, chữ, khoảng cách, thành phần dùng chung) trước khi làm trang Admin; ghi quyết định vào CLAUDE.md để các trang mới (Admin) và việc chỉnh trang cũ theo cùng một hướng.
+
 ### Giai đoạn 3 — Admin + upload ảnh
 - [ ] Role + middleware + seed tài khoản Admin.
 - [ ] Upload ảnh Cloudinary.
@@ -168,6 +171,10 @@ Thứ tự: (b) → khảo sát dọn code → (a), (c), (d).
 ### Giai đoạn 4 — Bảo mật tài khoản
 - [ ] Access token ngắn hạn + refresh token lưu DB, endpoint refresh/logout, interceptor tự refresh.
 - [ ] Quên/đặt lại mật khẩu qua email (token reset có hạn, dùng 1 lần).
+
+### Chỉnh UI các trang cũ (khoảng 20–23/11/2026)
+- [ ] Chỉnh UI các trang cũ theo hướng thiết kế đã chốt. Mỗi trang: tách component trước (nếu chưa tách), commit riêng, so ảnh trước/sau trên máy tính và điện thoại.
+- Vị trí trong lộ trình là ước tính theo ngày; điều chỉnh khi biết tiến độ GĐ3–GĐ4.
 
 ### Giai đoạn 5 — Nghiệp vụ bổ sung
 - [ ] Trước tiên: tách component `MealPlansPage` vào `components/meal-plans/` (`MealPlanToolbar`, `MealDayTabs`, `MealColumn`, `WeekSummary`, `NutritionCard`, `SuggestionCard`, `ShoppingCard`); tách dữ liệu tĩnh của Landing ra `features/landing/landing.data.ts`. Mỗi việc một commit, so ảnh trước/sau.
