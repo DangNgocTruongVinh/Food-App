@@ -17,6 +17,7 @@ const mocks = vi.hoisted(() => ({
   deleteNotifications: vi.fn(),
   createNotification: vi.fn(),
   transaction: vi.fn(),
+  findRecipe: vi.fn(),
 }));
 
 vi.mock("../../config/env.js", () => ({ env: { JWT_SECRET: mocks.secret } }));
@@ -33,6 +34,7 @@ vi.mock("../../lib/prisma.js", () => ({
       count: mocks.countLikes,
     },
     user: { findUnique: mocks.findUser },
+    recipe: { findUnique: mocks.findRecipe },
     notification: { deleteMany: mocks.deleteNotifications },
     $transaction: mocks.transaction,
   },
@@ -46,7 +48,12 @@ const commentId = "cm44444444444444444444444";
 const token = () => `Bearer ${jwt.sign({ sub: userId, email: "member@nouri.vn" }, mocks.secret)}`;
 const author = { id: ownerId, name: "Linh Nhi" };
 const createdAt = new Date("2026-09-15T08:00:00.000Z");
-const basePost = { id: postId, authorId: ownerId, content: "Bữa trưa", createdAt, updatedAt: createdAt, author };
+const recipeId = "cm55555555555555555555555";
+const recipeSummary = {
+  id: recipeId, name: "Cá kho tộ (kèm cơm)", imageUrl: "/assets/recipe-salmon.jpg", calories: 520, prepMinutes: 15, cookMinutes: 35,
+};
+const recipeSelect = { id: true, name: true, imageUrl: true, calories: true, prepMinutes: true, cookMinutes: true };
+const basePost = { id: postId, authorId: ownerId, content: "Bữa trưa", recipeId: null, recipe: null, createdAt, updatedAt: createdAt, author };
 const createdComment = {
   id: commentId,
   postId,
@@ -62,6 +69,7 @@ beforeEach(() => {
   mocks.findPosts.mockResolvedValue([]);
   mocks.createPost.mockResolvedValue(basePost);
   mocks.findPost.mockResolvedValue({ id: postId, authorId: ownerId });
+  mocks.findRecipe.mockResolvedValue({ id: recipeId });
   mocks.findUser.mockResolvedValue({ name: "Minh An" });
   mocks.findLike.mockResolvedValue(null);
   mocks.deleteLike.mockResolvedValue({});
@@ -108,6 +116,7 @@ describe("Community HTTP contract (mock Prisma, no database)", () => {
       take: 30,
       include: {
         author: { select: { id: true, name: true } },
+        recipe: { select: recipeSelect },
         likes: { where: { userId }, select: { userId: true } },
         comments: {
           orderBy: { createdAt: "asc" },
@@ -133,9 +142,64 @@ describe("Community HTTP contract (mock Prisma, no database)", () => {
       comments: [],
     });
     expect(mocks.createPost).toHaveBeenCalledWith({
-      data: { authorId: userId, content: "Bữa trưa" },
-      include: { author: { select: { id: true, name: true } } },
+      data: { authorId: userId, content: "Bữa trưa", recipeId: null },
+      include: { author: { select: { id: true, name: true } }, recipe: { select: recipeSelect } },
     });
+    expect(mocks.findRecipe).not.toHaveBeenCalled();
+  });
+
+  it("returns the attached recipe summary in the feed and null for posts without one", async () => {
+    mocks.findPosts.mockResolvedValue([
+      { ...basePost, recipeId, recipe: recipeSummary, likes: [], comments: [], _count: { likes: 0, comments: 0 } },
+      { ...basePost, id: commentId, likes: [], comments: [], _count: { likes: 0, comments: 0 } },
+    ]);
+    const response = await request(app, "/api/community", { token: token() });
+    expect(response.body.map((post: { recipe: unknown }) => post.recipe)).toEqual([recipeSummary, null]);
+  });
+
+  it("attaches an existing recipe to a new post", async () => {
+    mocks.createPost.mockResolvedValue({ ...basePost, authorId: userId, recipeId, recipe: recipeSummary });
+    const response = await request(app, "/api/community", {
+      method: "POST", token: token(), body: { content: "Món tối nay", recipeId },
+    });
+    expect(response.status).toBe(201);
+    expect(response.body.recipe).toEqual(recipeSummary);
+    expect(mocks.findRecipe).toHaveBeenCalledWith({ where: { id: recipeId }, select: { id: true } });
+    expect(mocks.createPost).toHaveBeenCalledWith({
+      data: { authorId: userId, content: "Món tối nay", recipeId },
+      include: { author: { select: { id: true, name: true } }, recipe: { select: recipeSelect } },
+    });
+  });
+
+  it.each([
+    ["no content", { recipeId }],
+    ["blank content", { content: "   ", recipeId }],
+  ])("allows a recipe-only post (%s) and stores empty content", async (_name, body) => {
+    const response = await request(app, "/api/community", { method: "POST", token: token(), body });
+    expect(response.status).toBe(201);
+    expect(mocks.createPost.mock.calls[0][0].data).toEqual({ authorId: userId, content: "", recipeId });
+  });
+
+  it("rejects a recipe that does not exist without creating the post", async () => {
+    mocks.findRecipe.mockResolvedValue(null);
+    const response = await request(app, "/api/community", {
+      method: "POST", token: token(), body: { content: "Món tối nay", recipeId },
+    });
+    expect(response).toEqual({ status: 422, body: { message: "Công thức đính kèm không tồn tại." } });
+    expect(mocks.createPost).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    [{ content: "Món tối nay", recipeId: "not-a-cuid" }],
+    [{ content: "Món tối nay", recipeId: 12 }],
+    [{ content: "Món tối nay", recipeId: null }],
+    [{ content: "   " }],
+    [{ content: "a".repeat(2001), recipeId }],
+  ])("rejects an invalid post body before calling Prisma %#", async (body) => {
+    const response = await request(app, "/api/community", { method: "POST", token: token(), body });
+    expect(response.status).toBe(422);
+    expect(mocks.findRecipe).not.toHaveBeenCalled();
+    expect(mocks.createPost).not.toHaveBeenCalled();
   });
 
   it("likes another member's post and creates the existing notification in one transaction", async () => {

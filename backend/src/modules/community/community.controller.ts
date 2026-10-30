@@ -22,7 +22,7 @@ export async function createCommunityPostController(
   req: ValidatedRequest<CreateCommunityPostBody>,
   res: Response,
 ) {
-  res.status(201).json(await createCommunityPost(authenticatedUserId(req), req.body.content));
+  res.status(201).json(await createCommunityPost(authenticatedUserId(req), req.body));
 }
 
 export async function toggleCommunityLikeController(

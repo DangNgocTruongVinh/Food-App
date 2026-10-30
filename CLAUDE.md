@@ -158,8 +158,8 @@ Thứ tự: (b) → khảo sát dọn code → (a), (c), (d).
 
 ### Giai đoạn 2b — Đính kèm công thức vào bài viết
 - [x] Trước tiên: tách component `CommunityPage` vào `components/community/` (`CommunityHero`, `PostComposer`, `PostCard`, `CommentForm`, `CommunitySidebar`, `CommunityFeedStates`), commit riêng, so ảnh trước/sau giống hệt (máy tính + điện thoại; feed trống, feed có bài/bình luận/lượt thích, `?post=`); đăng bài, thích, bình luận, `?post=` đã thử bằng Playwright.
-- [ ] Schema: `CommunityPost.recipeId` tùy chọn (FK tới `Recipe`), migration mới.
-- [ ] API đăng bài nhận `recipeId` (validate tồn tại); feed trả kèm thông tin tóm tắt công thức.
+- [x] Schema: `CommunityPost.recipeId` tùy chọn (FK tới `Recipe`, `onDelete: Restrict`, có index), migration `20261030000000_add_community_post_recipe`.
+- [x] API đăng bài nhận `recipeId` (cuid, công thức phải tồn tại, không thì 422 "Công thức đính kèm không tồn tại."); bài cần có chữ hoặc công thức (chỉ có công thức thì `content` = ""). Feed và bài vừa đăng trả `recipe` tóm tắt (`id, name, imageUrl, calories, prepMinutes, cookMinutes`) hoặc `null`; chỗ kiểm tra "được phép gắn" là `assertAttachableRecipe` (GĐ3 thêm điều kiện không bị ẩn).
 - [ ] FE: hiện lại nút "Công thức", chọn công thức có sẵn; bài viết hiển thị thẻ công thức liên kết tới `/recipes/:id` (trang ở GĐ2).
 - [ ] Chỉ gắn công thức có sẵn; người dùng tự tạo công thức → hướng phát triển.
 
@@ -171,7 +171,12 @@ Thứ tự: (b) → khảo sát dọn code → (a), (c), (d).
 - [ ] Upload ảnh Cloudinary.
 - [ ] Đăng ảnh trong bài viết (làm ngay sau hạ tầng upload): lưu URL ảnh vào bài viết, hiện lại nút "Ảnh".
 - [ ] Admin: CRUD công thức, quản lý user (khóa/mở), kiểm duyệt community, thống kê.
-  - Công thức: Admin thêm/sửa món và upload ảnh thật (thay ảnh tạm theo nhóm món của seed). Công thức **đã được dùng trong meal plan** (có `MealPlanItem` tham chiếu) thì chỉ **ẩn**, không xóa hẳn: cần trường đánh dấu ẩn (migration mới); món ẩn không hiện ở danh sách/tạo thực đơn mới nhưng thực đơn cũ vẫn hiển thị đúng. Món chưa từng được dùng thì được xóa hẳn.
+  - Công thức: Admin thêm/sửa món và upload ảnh thật (thay ảnh tạm theo nhóm món của seed). Công thức **đã được dùng** thì chỉ **ẩn**, không xóa hẳn: cần trường đánh dấu ẩn (migration mới). Món chưa từng được dùng thì được xóa hẳn.
+  - **Quy tắc chung cho món bị ẩn** (áp dụng cho cả thực đơn và bài viết cộng đồng):
+    - "Đã được dùng" = có `MealPlanItem` **hoặc** `CommunityPost` tham chiếu (cả hai FK đều chặn xóa hẳn).
+    - Vẫn xem được trang chi tiết `/recipes/:id` qua link trực tiếp, có thông báo "Món này đã ngừng sử dụng". Thực đơn cũ và bài viết cũ vẫn hiện món (bài viết: thẻ công thức kèm nhãn, **giữ** link tới `/recipes/:id`).
+    - Không hiện trong danh sách công thức; không chọn được khi tạo thực đơn, đăng bài (ô chọn công thức + `assertAttachableRecipe`) hay thêm món thủ công.
+    - Ẩn các nút "Chia sẻ lên cộng đồng" và "Thêm vào thực đơn" trên trang chi tiết của món bị ẩn.
   - Kiểm duyệt community: Admin xóa **bất kỳ** bài/bình luận vi phạm. Dùng chung service xóa bài với "Xóa bài của tôi" (GĐ5); chỉ khác điều kiện quyền (`requireAdmin` thay vì `authorId === userId`).
   - Khi Admin tạo/sửa món có nhãn `VEGETARIAN` hoặc `VEGAN`, backend kiểm tra nguyên liệu bằng logic trong `backend/src/services/dietary.service.ts` (cùng bộ từ khóa thịt/cá/hải sản và nhóm Sữa/Trứng như test dữ liệu seed) và **từ chối** (422) nếu có thành phần không hợp lệ với nhãn.
 - [ ] Route/page Admin ở frontend, guard theo role.
@@ -203,6 +208,7 @@ Thứ tự: (b) → khảo sát dọn code → (a), (c), (d).
 
 ### Việc làm sau (chưa xếp giai đoạn)
 - [ ] Gom logic so khớp nguyên liệu/dị ứng của `mealPlanSuggestions` (`asWords` trong `features/meal-plans/meal-plans.logic.ts`) về backend, dùng chung `dietary.service.ts` / `recipe-fit.service.ts`.
+- [ ] Ô chọn công thức khi đăng bài đang lọc ở frontend trên toàn bộ danh sách công thức; khi Admin thêm nhiều món thì chuyển sang tìm kiếm ở backend (có giới hạn số kết quả).
 - [ ] Thay `window.confirm` bằng một hộp xác nhận dùng chung cho mọi thao tác xóa (Pantry, Meal Plans, bài viết).
 
 ### Giai đoạn 6 — Tùy chọn

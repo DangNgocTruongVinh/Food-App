@@ -1,8 +1,19 @@
 import { prisma } from "../../lib/prisma.js";
 import { HttpError } from "../../utils/http-error.js";
+import type { CreateCommunityPostBody } from "./community.schema.js";
 
 const COMMUNITY_FEED_LIMIT = 30;
 const authorSelect = { id: true, name: true } as const;
+/** Tóm tắt công thức gắn trong bài: chỉ các cột thẻ hiển thị cần, không lấy nguyên liệu/các bước. */
+export const communityRecipeSelect = {
+  id: true, name: true, imageUrl: true, calories: true, prepMinutes: true, cookMinutes: true,
+} as const;
+
+/** Chỉ gắn được công thức có sẵn. GĐ3: thêm điều kiện công thức không bị ẩn tại đây. */
+async function assertAttachableRecipe(recipeId: string) {
+  const recipe = await prisma.recipe.findUnique({ where: { id: recipeId }, select: { id: true } });
+  if (!recipe) throw new HttpError(422, "Công thức đính kèm không tồn tại.");
+}
 
 export async function listCommunityPosts(userId: string) {
   const posts = await prisma.communityPost.findMany({
@@ -10,6 +21,7 @@ export async function listCommunityPosts(userId: string) {
     take: COMMUNITY_FEED_LIMIT,
     include: {
       author: { select: authorSelect },
+      recipe: { select: communityRecipeSelect },
       likes: { where: { userId }, select: { userId: true } },
       comments: {
         orderBy: { createdAt: "asc" },
@@ -27,10 +39,11 @@ export async function listCommunityPosts(userId: string) {
   }));
 }
 
-export async function createCommunityPost(authorId: string, content: string) {
+export async function createCommunityPost(authorId: string, { content, recipeId }: CreateCommunityPostBody) {
+  if (recipeId) await assertAttachableRecipe(recipeId);
   const post = await prisma.communityPost.create({
-    data: { authorId, content },
-    include: { author: { select: authorSelect } },
+    data: { authorId, content, recipeId: recipeId ?? null },
+    include: { author: { select: authorSelect }, recipe: { select: communityRecipeSelect } },
   });
 
   return { ...post, likedByMe: false, likeCount: 0, commentCount: 0, comments: [] };
