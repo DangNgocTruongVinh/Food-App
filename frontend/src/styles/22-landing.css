@@ -2107,3 +2107,9 @@
   .landing-community-feature,
   .landing-community-feature-content { min-height: 230px; }
 }
+
+/* Khối giới thiệu cộng đồng dùng chữ thay số minh họa: giữ mỗi nhãn trên một dòng. */
+.landing-community-stats strong { font-size: 1rem; white-space: nowrap; }
+@media (max-width: 520px) {
+  .landing-community-stats strong { font-size: .85rem; }
+}

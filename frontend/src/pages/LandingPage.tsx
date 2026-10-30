@@ -1496,9 +1496,9 @@ export default function LandingPage() {
               <p>Chia sẻ hành trình, tìm cảm hứng và nhận lời khuyên từ cộng đồng yêu lối sống lành mạnh.</p>
 
               <div className="landing-community-stats">
-                <article><span><UsersRound /></span><div><strong>20K+</strong><small>Thành viên</small></div></article>
-                <article><span><MessageCircle /></span><div><strong>5K+</strong><small>Bài viết chia sẻ</small></div></article>
-                <article><span><Heart /></span><div><strong>15K+</strong><small>Lượt tương tác</small></div></article>
+                <article><span><UsersRound /></span><div><strong>Kết nối</strong><small>Cùng sở thích</small></div></article>
+                <article><span><MessageCircle /></span><div><strong>Chia sẻ</strong><small>Món kèm công thức</small></div></article>
+                <article><span><Heart /></span><div><strong>Cổ vũ</strong><small>Thích, bình luận</small></div></article>
               </div>
 
               <div className="landing-community-actions">
@@ -1516,12 +1516,12 @@ export default function LandingPage() {
 
               <article className="landing-community-float landing-community-active-card">
                 <div className="landing-community-avatars"><span>AN</span><span>MY</span><span>LI</span></div>
-                <div><strong>2.340</strong><small>thành viên</small><b>đang hoạt động</b></div>
+                <div><strong>Hôm nay</strong><small>trong cộng đồng</small><b>Mọi người cùng chia sẻ bữa ăn</b></div>
               </article>
 
               <article className="landing-community-float landing-community-post-card">
                 <img src="/assets/community-yoga.jpg" alt="" />
-                <div><strong>Bữa trưa hôm nay<br />siêu healthy!</strong><span><Heart /> 128 <i /> 2 giờ trước</span></div>
+                <div><strong>Bữa trưa hôm nay<br />đủ chất, nhẹ bụng!</strong><span><Heart /> Thích <i /> 2 giờ trước</span></div>
               </article>
 
               <article className="landing-community-float landing-community-tip-card">

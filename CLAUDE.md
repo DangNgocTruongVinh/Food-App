@@ -169,6 +169,7 @@ Thứ tự: (b) → khảo sát dọn code → (a), (c), (d).
 
 ### Chốt hướng thiết kế UI (ngay trước GĐ3)
 - [ ] Chốt hướng thiết kế UI dùng chung (màu, chữ, khoảng cách, thành phần dùng chung) trước khi làm trang Admin; ghi quyết định vào CLAUDE.md để các trang mới (Admin) và việc chỉnh trang cũ theo cùng một hướng.
+  - **Phông chữ phải đủ tiếng Việt.** Khi đổi phông (ở bước này hoặc khi chỉnh UI), kiểm tra bằng Playwright các chữ có dấu chồng (ố, ặ, ữ, ỗ, ẫ, ợ) ở **mọi độ đậm đang dùng và chữ nghiêng**; khai báo phông dự phòng có tiếng Việt (Noto Serif cho chữ có chân, Noto Sans cho chữ không chân), không để rơi về Georgia. Lý do: Georgia không có chữ ghép sẵn như "ố" nên trình duyệt ghép "ô" + dấu rời và đặt lệch ("Sô ́ng"); đã sửa bằng Noto Serif ở nhánh `fix-landing-tieng-viet`. Test `source-nfc.test.ts` (frontend, backend) chỉ chặn dấu rời trong mã nguồn, không phát hiện lỗi phông.
 
 ### Giai đoạn 3 — Admin + upload ảnh
 - [ ] Role + middleware + seed tài khoản Admin.
@@ -209,7 +210,7 @@ Thứ tự: (b) → khảo sát dọn code → (a), (c), (d).
 - [ ] Bookmark Dashboard nối favorite recipe; bookmark Landing chuyển Guest sang `/login`; "Xem tất cả" thành viên nổi bật.
 - [ ] Endpoint công thức công khai cho Landing; Landing dùng API thật.
   - Đã làm trước (nhánh `fix-landing-tieng-viet`): `GET /api/recipes/stats` công khai, chỉ trả số đếm (tổng, bữa sáng, món chay, thuần chay, ít tinh bột, giàu đạm); Landing hiện số thật theo nhóm, chưa tải được thì ẩn số; bỏ nhóm giả "Giảm cân", "Eat clean" và câu "Hàng ngàn công thức".
-  - Còn lại GĐ5: carousel 4 món vẫn là dữ liệu tĩnh (đã khớp tên, thời gian, ảnh nhóm món với seed; ảnh qua `recipeImageSrc`); bấm nhóm chỉ đổi món nổi bật, chưa lọc món thật; "2.340 thành viên" ở mục Cộng đồng vẫn là số minh họa.
+  - Còn lại GĐ5: carousel 4 món vẫn là dữ liệu tĩnh (đã khớp tên, thời gian, ảnh nhóm món với seed; ảnh qua `recipeImageSrc`); bấm nhóm chỉ đổi món nổi bật, chưa lọc món thật; số minh họa ở mục Cộng đồng ("2.340 thành viên", "20K+/5K+/15K+", "128" lượt thích) đã bỏ, thay bằng chữ; khi có số thật (GĐ5) có thể hiện lại.
 - [ ] Gộp cảnh báo pantry về module Notifications (về mặt tổ chức code/tài liệu).
 
 ### Việc làm sau (chưa xếp giai đoạn)
