@@ -12,8 +12,13 @@ export interface CommunityAuthor { id: string; name: string }
 export interface CommunityComment {
   id: string; content: string; createdAt: string; updatedAt: string; author: CommunityAuthor;
 }
+/** Tóm tắt công thức gắn trong bài viết (feed không trả nguyên liệu/các bước). */
+export interface CommunityRecipeSummary {
+  id: string; name: string; imageUrl?: string | null; calories: number; prepMinutes: number; cookMinutes: number;
+}
 export interface CommunityPost {
   id: string; content: string; createdAt: string; updatedAt: string; author: CommunityAuthor;
+  recipe: CommunityRecipeSummary | null;
   likedByMe: boolean; likeCount: number; commentCount: number; comments: CommunityComment[];
 }
 

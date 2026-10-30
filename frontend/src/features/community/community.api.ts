@@ -15,8 +15,13 @@ export async function listCommunityPosts() {
   return (await api.get<CommunityPost[]>("/community")).data;
 }
 
-export async function publishCommunityPost(content: string) {
-  return (await api.post<CommunityPost>("/community", { content })).data;
+export interface PublishCommunityPostInput {
+  content: string;
+  recipeId?: string;
+}
+
+export async function publishCommunityPost({ content, recipeId }: PublishCommunityPostInput) {
+  return (await api.post<CommunityPost>("/community", { content, ...(recipeId ? { recipeId } : {}) })).data;
 }
 
 export async function toggleCommunityLike(postId: string) {

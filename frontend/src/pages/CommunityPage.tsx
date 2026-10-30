@@ -6,10 +6,18 @@ import CommunityHero from "../components/community/CommunityHero";
 import { CommunityFeedEmpty, CommunityFeedError } from "../components/community/CommunityFeedStates";
 import CommunitySidebar from "../components/community/CommunitySidebar";
 import PostCard from "../components/community/PostCard";
-import PostComposer from "../components/community/PostComposer";
+import PostComposer, { COMMUNITY_POST_INPUT_ID } from "../components/community/PostComposer";
+import RecipePicker from "../components/community/RecipePicker";
 import { LoadingState } from "../components/States";
 import { useAuth } from "../contexts/AuthContext";
-import { communityPostElementId, normalizeCommunityContent, toggleCommunitySelection } from "../features/community/community.logic";
+import {
+  communityPostElementId,
+  normalizeCommunityContent,
+  SHARE_RECIPE_PARAM,
+  toCommunityPublishInput,
+  toCommunityRecipeSummary,
+  toggleCommunitySelection,
+} from "../features/community/community.logic";
 import {
   appendCommunityComment,
   communityMutations,
@@ -17,19 +25,42 @@ import {
   prependCommunityPost,
   updateCommunityLike,
 } from "../features/community/community.queries";
+import { recipeQueries } from "../features/recipes/recipes.queries";
+import type { CommunityRecipeSummary } from "../types";
 
 export default function CommunityPage() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const focusedPostId = searchParams.get("post");
+  const shareRecipeId = searchParams.get(SHARE_RECIPE_PARAM);
   const [postContent, setPostContent] = useState("");
+  const [attachedRecipe, setAttachedRecipe] = useState<CommunityRecipeSummary | null>(null);
+  const [isPickerOpen, setPickerOpen] = useState(false);
+  const [recipeQuery, setRecipeQuery] = useState("");
   const [commentDrafts, setCommentDrafts] = useState<Record<string, string>>({});
   const [savedPosts, setSavedPosts] = useState<Set<string>>(() => new Set());
   const [followedMembers, setFollowedMembers] = useState<Set<string>>(() => new Set());
   const [error, setError] = useState("");
 
   const feed = useQuery(communityQueries.feed());
+  const recipes = useQuery({ ...recipeQueries.list(), enabled: isPickerOpen });
+  const sharedRecipe = useQuery({ ...recipeQueries.detail(shareRecipeId ?? ""), enabled: Boolean(shareRecipeId) });
+
+  // `?shareRecipe=<id>` từ trang chi tiết công thức: gắn sẵn món vào form, đưa con trỏ vào ô nhập, rồi xóa tham số khỏi URL.
+  useEffect(() => {
+    if (!shareRecipeId || sharedRecipe.isPending) return;
+    if (sharedRecipe.data) {
+      setAttachedRecipe(toCommunityRecipeSummary(sharedRecipe.data));
+      document.getElementById(COMMUNITY_POST_INPUT_ID)?.focus();
+    } else {
+      setError("Không tìm thấy công thức để chia sẻ.");
+    }
+    setSearchParams((params) => {
+      params.delete(SHARE_RECIPE_PARAM);
+      return params;
+    }, { replace: true });
+  }, [setSearchParams, shareRecipeId, sharedRecipe.data, sharedRecipe.isPending]);
 
   useEffect(() => {
     if (!focusedPostId || !feed.data) return;
@@ -44,6 +75,9 @@ export default function CommunityPage() {
     onSuccess: (post) => {
       prependCommunityPost(queryClient, post);
       setPostContent("");
+      setAttachedRecipe(null);
+      setPickerOpen(false);
+      setRecipeQuery("");
       setError("");
     },
     onError: (publishError) => setError(getApiError(publishError)),
@@ -67,8 +101,8 @@ export default function CommunityPage() {
 
   const submitPost = (event: FormEvent) => {
     event.preventDefault();
-    const content = normalizeCommunityContent(postContent);
-    if (content) publish.mutate(content);
+    const input = toCommunityPublishInput(postContent, attachedRecipe);
+    if (input) publish.mutate(input);
   };
 
   const submitComment = (event: FormEvent, postId: string) => {
@@ -83,7 +117,21 @@ export default function CommunityPage() {
 
       <div className="community-layout">
         <main className="community-feed">
-          <PostComposer userName={user?.name} value={postContent} onChange={setPostContent} onSubmit={submitPost} isPending={publish.isPending} />
+          <PostComposer
+            userName={user?.name} value={postContent} onChange={setPostContent} onSubmit={submitPost} isPending={publish.isPending}
+            canPublish={toCommunityPublishInput(postContent, attachedRecipe) !== null}
+            attachedRecipe={attachedRecipe} onRemoveRecipe={() => setAttachedRecipe(null)}
+            isPickerOpen={isPickerOpen} onTogglePicker={() => setPickerOpen((open) => !open)}
+            picker={<RecipePicker
+              recipes={recipes.data} isLoading={recipes.isLoading} isError={recipes.isError}
+              query={recipeQuery} onQueryChange={setRecipeQuery} onClose={() => setPickerOpen(false)}
+              onSelect={(recipe) => {
+                setAttachedRecipe(toCommunityRecipeSummary(recipe));
+                setPickerOpen(false);
+                setRecipeQuery("");
+              }}
+            />}
+          />
 
           {error && <div className="form-error community-error">{error}</div>}
           {feed.isLoading && <LoadingState label="Đang tải bài viết..." />}

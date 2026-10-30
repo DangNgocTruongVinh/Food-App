@@ -519,3 +519,36 @@
   .community-side { grid-template-columns: 1fr; }
   .community-members-card { grid-column: auto; }
 }
+
+/* GĐ2b: đính kèm công thức vào bài viết (thẻ công thức, xem trước trong form, ô chọn công thức). */
+.community-composer .community-composer-tools .community-recipe-tool span { display: inline; }
+.community-composer .community-recipe-tool[aria-expanded="true"] { color: #4b8a35; background: #f3f8ed; }
+.community-recipe-card { padding: 10px; border: 1px solid #e3ebdf; border-radius: 16px; color: inherit; background: #f8fbf5; display: flex; align-items: center; gap: 12px; text-decoration: none; transition: border-color .2s ease, box-shadow .2s ease; }
+a.community-recipe-card:hover { border-color: #b9d7a6; box-shadow: 0 8px 18px rgba(68,141,46,.08); }
+.community-post .community-recipe-card { margin: 16px 0; }
+.community-post .community-post-content + .community-recipe-card { margin-top: -4px; }
+.community-composer .community-recipe-card { margin-top: 10px; }
+.community-recipe-card img { width: 72px; height: 56px; flex: 0 0 auto; border-radius: 11px; object-fit: cover; background: #e9ece5; }
+.community-recipe-card-copy { min-width: 0; flex: 1; display: grid; gap: 3px; }
+.community-recipe-card-copy small { color: #5b9a3e; display: inline-flex; align-items: center; gap: 5px; font-size: .6875rem; font-weight: 700; }
+.community-recipe-card-copy strong { color: #26372a; font-size: .875rem; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.community-recipe-card-copy > span { color: #78817d; display: inline-flex; flex-wrap: wrap; align-items: center; gap: 5px; font-size: .75rem; }
+.community-recipe-card-copy svg { width: 13px; height: 13px; flex: 0 0 auto; }
+.community-recipe-card-copy > span svg:not(:first-child) { margin-left: 8px; }
+.community-composer .community-recipe-remove { width: 30px; height: 30px; padding: 0; border: 0; border-radius: 50%; color: #78817d; background: white; display: grid; place-items: center; box-shadow: none; }
+.community-composer .community-recipe-remove:hover { color: #b4441d; }
+.community-composer .community-recipe-remove svg { width: 15px; height: 15px; }
+.community-recipe-picker { margin-top: 10px; padding: 10px; border: 1px solid #e3ebdf; border-radius: 16px; background: white; box-shadow: 0 12px 26px rgba(36,49,35,.08); }
+.community-recipe-search { padding: 0 4px 8px; border-bottom: 1px solid #eef2ec; display: flex; align-items: center; gap: 8px; }
+.community-recipe-search > svg { width: 16px; height: 16px; flex: 0 0 auto; color: #78817d; }
+.community-recipe-picker .community-recipe-search input { min-width: 0; flex: 1; padding: 8px 4px; border: 0; outline: 0; background: transparent; box-shadow: none; font-size: .8125rem; }
+.community-recipe-picker .community-recipe-search button { width: 28px; height: 28px; padding: 0; border: 0; border-radius: 50%; color: #78817d; background: none; display: grid; place-items: center; box-shadow: none; }
+.community-recipe-search button svg { width: 15px; height: 15px; }
+.community-recipe-picker ul { max-height: 280px; margin: 6px 0 0; padding: 0; list-style: none; overflow-y: auto; }
+.community-recipe-picker li button { width: 100%; padding: 7px 6px; border: 0; border-radius: 10px; color: inherit; background: none; display: flex; align-items: center; gap: 10px; text-align: left; box-shadow: none; }
+.community-recipe-picker li button:hover, .community-recipe-picker li button:focus-visible { background: #f3f8ed; }
+.community-recipe-picker li img { width: 44px; height: 36px; flex: 0 0 auto; border-radius: 8px; object-fit: cover; }
+.community-recipe-picker li span { min-width: 0; display: grid; gap: 1px; }
+.community-recipe-picker li strong { color: #26372a; font-size: .8125rem; font-weight: 650; }
+.community-recipe-picker li small { color: #849184; font-size: .6875rem; }
+.community-recipe-picker-note { margin: 8px 6px 2px; color: #849184; font-size: .75rem; }

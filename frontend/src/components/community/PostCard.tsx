@@ -5,6 +5,7 @@ import {
 } from "../../features/community/community.logic";
 import type { CommunityPost } from "../../types";
 import CommentForm from "./CommentForm";
+import RecipeAttachmentCard from "./RecipeAttachmentCard";
 
 type PostCardProps = {
   post: CommunityPost;
@@ -37,7 +38,8 @@ export default function PostCard(props: PostCardProps) {
       <button className="community-post-menu" type="button" aria-label="Tùy chọn bài viết"><MoreHorizontal /></button>
     </header>
 
-    <p className="community-post-content">{post.content}</p>
+    {post.content && <p className="community-post-content">{post.content}</p>}
+    {post.recipe && <RecipeAttachmentCard recipe={post.recipe} />}
 
     <div className="community-post-stats">
       <span><Heart /> {post.likeCount} lượt thích</span>

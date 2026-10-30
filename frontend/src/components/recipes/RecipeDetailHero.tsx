@@ -1,4 +1,6 @@
-import { Clock3, CookingPot, UsersRound } from "lucide-react";
+import { Clock3, CookingPot, Share2, UsersRound } from "lucide-react";
+import { Link } from "react-router-dom";
+import { communityShareRecipePath } from "../../features/community/community.logic";
 import { recipeDietLabel, recipeImageSrc, recipeTotalMinutes } from "../../features/recipes/recipes.logic";
 import type { Recipe } from "../../types";
 import { RecipeBackLink } from "./RecipeDetailStates";
@@ -21,8 +23,11 @@ export default function RecipeDetailHero({ recipe }: { recipe: Recipe }) {
           <span><strong>{recipe.ingredients.length} nguyên liệu</strong><small>{recipe.instructions.length} bước thực hiện</small></span>
         </li>
       </ul>
-      {/* GĐ5: nút "Thêm vào thực đơn" đặt cạnh liên kết quay lại trong khối hành động này. */}
-      <div className="recipe-detail-actions"><RecipeBackLink /></div>
+      {/* GĐ5: nút "Thêm vào thực đơn" đặt trong khối hành động này. GĐ3: món bị ẩn thì ẩn nút chia sẻ và nút thêm vào thực đơn. */}
+      <div className="recipe-detail-actions">
+        <Link className="button primary" to={communityShareRecipePath(recipe.id)}><Share2 /> Chia sẻ lên cộng đồng</Link>
+        <RecipeBackLink />
+      </div>
     </div>
   </header>;
 }
