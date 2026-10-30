@@ -1434,7 +1434,7 @@
   pointer-events: none;
   transform: rotate(-1deg);
 }
-.landing-plan-journal-copy small { margin-bottom: 4px; font: italic 600 .73rem Georgia, serif; }
+.landing-plan-journal-copy small { margin-bottom: 4px; font: italic 600 .73rem "Noto Serif", Georgia, serif; }
 .landing-plan-journal-copy span { padding-bottom: 6px; border-bottom: 1px solid rgba(111,141,105,.16); display: flex; align-items: center; gap: 7px; font-size: .52rem; }
 .landing-plan-journal-copy svg { width: 11px; height: 11px; }
 
@@ -1544,7 +1544,7 @@
   top: -86px;
   left: 34%;
   color: transparent;
-  font: 400 clamp(11rem, 21vw, 22rem)/.9 Georgia, serif;
+  font: 400 clamp(11rem, 21vw, 22rem)/.9 "Noto Serif", Georgia, serif;
   letter-spacing: -.085em;
   opacity: .18;
   pointer-events: none;
@@ -1570,7 +1570,7 @@
   max-width: 780px;
   margin: 0;
   color: #193b28;
-  font: 500 clamp(3.35rem, 4.45vw, 5rem)/1.02 Georgia, serif;
+  font: 500 clamp(3.35rem, 4.45vw, 5rem)/1.02 "Noto Serif", Georgia, serif;
   letter-spacing: -.045em;
 }
 .landing-about-title > * { display: block; will-change: transform, opacity; }
@@ -1633,7 +1633,7 @@
   color: #6d813d;
   display: grid;
   justify-items: center;
-  font: italic 500 clamp(.86rem, 1.2vw, 1.22rem)/1.25 Georgia, serif;
+  font: italic 500 clamp(.86rem, 1.2vw, 1.22rem)/1.25 "Noto Serif", Georgia, serif;
   text-align: center;
   transform: rotate(-2deg);
 }

@@ -110,7 +110,7 @@
   max-width: 42rem;
   margin: 25px 0 12px;
   color: #173a2b;
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: "Noto Serif", Georgia, "Times New Roman", serif;
   font-size: clamp(3.4rem, 5vw, 5.3rem);
   font-weight: 400;
   line-height: .94;
@@ -183,7 +183,7 @@
   height: 25px;
   color: #809563;
   display: block;
-  font-family: Georgia, serif;
+  font-family: "Noto Serif", Georgia, serif;
   font-size: 3.2rem;
   line-height: 1;
 }
@@ -231,7 +231,7 @@
 .auth-card-greeting {
   color: #71864c;
   display: block;
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: "Noto Serif", Georgia, "Times New Roman", serif;
   font-size: 1.08rem;
   font-style: italic;
   text-align: center;
@@ -239,7 +239,7 @@
 .auth-page-v2 .auth-card h2 {
   margin: 5px 0 9px;
   color: #183b2c;
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: "Noto Serif", Georgia, "Times New Roman", serif;
   font-size: clamp(2.45rem, 3.4vw, 3.15rem);
   font-weight: 400;
   line-height: 1;

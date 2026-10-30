@@ -128,11 +128,11 @@
 .landing-trusted .landing-container { min-height: 90px; display: grid; grid-template-columns: 170px 1fr; align-items: center; gap: 50px; }
 .landing-trusted span { color: #527e38; font-size: .64rem; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase; }
 .landing-trusted div div { display: flex; align-items: center; justify-content: space-between; gap: 34px; }
-.landing-trusted b { color: #a1a6a0; font: 700 .95rem/1 Georgia, serif; letter-spacing: -.3px; }
+.landing-trusted b { color: #a1a6a0; font: 700 .95rem/1 "Noto Serif", Georgia, serif; letter-spacing: -.3px; }
 
 .landing-section { padding: 78px 0; scroll-margin-top: 30px; }
 .landing-section-heading { margin-bottom: 36px; display: flex; align-items: flex-end; justify-content: space-between; gap: 40px; }
-.landing-section-heading h2 { margin: 15px 0 0; font: 500 clamp(2.1rem, 3.2vw, 3.25rem)/1.12 Georgia, serif; letter-spacing: -1.5px; }
+.landing-section-heading h2 { margin: 15px 0 0; font: 500 clamp(2.1rem, 3.2vw, 3.25rem)/1.12 "Noto Serif", Georgia, serif; letter-spacing: -1.5px; }
 .landing-section-heading h2 strong { color: var(--landing-green); font-weight: inherit; }
 .landing-section-heading > p { max-width: 470px; margin: 0 0 5px; color: #737a72; font-size: .82rem; line-height: 1.75; }
 .landing-feature-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; }
@@ -171,7 +171,7 @@
 .landing-plan-card::after { content: ""; position: absolute; z-index: -1; right: -90px; bottom: -180px; width: 430px; height: 520px; background: radial-gradient(ellipse, rgba(123,169,71,.33), transparent 64%); transform: rotate(-18deg); }
 .landing-plan-copy { position: relative; z-index: 2; width: 39%; }
 .landing-plan-copy > span { color: #a8db6b; }
-.landing-plan-copy h2 { margin: 18px 0; font: 500 clamp(2.2rem, 3.3vw, 3.35rem)/1.1 Georgia, serif; letter-spacing: -1.5px; }
+.landing-plan-copy h2 { margin: 18px 0; font: 500 clamp(2.2rem, 3.3vw, 3.35rem)/1.1 "Noto Serif", Georgia, serif; letter-spacing: -1.5px; }
 .landing-plan-copy > p { color: #c8d5c7; font-size: .8rem; line-height: 1.75; }
 .landing-plan-copy ul { margin: 22px 0 28px; padding: 0; list-style: none; display: grid; gap: 12px; }
 .landing-plan-copy li { color: #dce7db; display: flex; align-items: center; gap: 9px; font-size: .75rem; }
@@ -212,7 +212,7 @@
 .landing-community { padding: 34px 0 80px; scroll-margin-top: 40px; }
 .landing-community .landing-container { min-height: 160px; padding: 32px 38px; border: 1px solid #dce6d4; border-radius: 22px; background: linear-gradient(105deg, #eff7e8, #f9fcf6); display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 24px; }
 .landing-community .landing-container > svg { width: 62px; height: 62px; padding: 16px; border-radius: 20px; color: #4e852b; background: #deedcf; }
-.landing-community h2 { margin: 8px 0 6px; font: 500 1.75rem Georgia, serif; }
+.landing-community h2 { margin: 8px 0 6px; font: 500 1.75rem "Noto Serif", Georgia, serif; }
 .landing-community p { margin: 0; color: #6e776c; font-size: .76rem; }
 .landing-community a { min-height: 45px; padding: 11px 19px; border-radius: 999px; color: white; background: var(--landing-green); display: flex; align-items: center; gap: 8px; font-size: .74rem; font-weight: 750; }
 .landing-community a svg { width: 15px; }
