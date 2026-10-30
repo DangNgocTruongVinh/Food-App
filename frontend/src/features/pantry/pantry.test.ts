@@ -9,7 +9,10 @@ import {
   type PantryFormValues,
 } from "./pantry.api";
 import { invalidatePantryQueries, pantryMutations, pantryQueries } from "./pantry.queries";
-import { pantryItemPage } from "./pantry.logic";
+import {
+  estimatedSavings, expiryCopy, filterAndSortPantry, getDaysLeft, getPantryStatus, initialPantryForm, pantryCategories,
+  pantryCounts, pantryItemPage, pantryStatusLabel, storageTip, type PantryFilters,
+} from "./pantry.logic";
 
 const form: PantryFormValues = {
   name: "Ức gà", category: "Thịt & cá", quantity: 500, unit: "G",
@@ -151,5 +154,56 @@ describe("Pantry notification focus", () => {
   it("returns null for an item that is not in the list", () => {
     expect(pantryItemPage(items, "deleted-item", 8)).toBeNull();
     expect(pantryItemPage([], "item-0", 8)).toBeNull();
+  });
+});
+
+describe("Pantry page logic", () => {
+  // Mốc cố định: 30/10/2026 12:00 giờ máy.
+  const now = new Date(2026, 9, 30, 12, 0);
+  const pantryItem = (overrides: Partial<PantryItem>): PantryItem => ({ ...item, id: overrides.name ?? item.id, ...overrides });
+  const items = [
+    pantryItem({ name: "Sữa tươi", category: "Trứng & sữa", quantity: 1, storageLocation: "REFRIGERATOR", expiryDate: "2026-10-25T00:00:00.000Z" }),
+    pantryItem({ name: "Chuối", category: "Trái cây", quantity: 6, storageLocation: "DRY_STORAGE", expiryDate: "2026-10-31T00:00:00.000Z" }),
+    pantryItem({ name: "Cà chua", category: "Rau củ", quantity: 500, storageLocation: "REFRIGERATOR", expiryDate: "2026-11-02T00:00:00.000Z" }),
+    pantryItem({ name: "Bông cải xanh", category: "Rau củ", quantity: 300, storageLocation: "FREEZER", expiryDate: "2026-12-20T00:00:00.000Z" }),
+    pantryItem({ name: "Nước mắm", category: "Gia vị", quantity: 1, storageLocation: "DRY_STORAGE", expiryDate: null }),
+  ];
+  const noFilters: PantryFilters = { search: "", status: "all", category: "all", storage: "all", sortBy: "expiry" };
+
+  it("classifies expiry with the same 3-day window as the backend alerts", () => {
+    expect(items.map((value) => getPantryStatus(value, now))).toEqual(["expired", "expiring", "expiring", "good", "good"]);
+    expect(getDaysLeft(items[1], now)).toBe(1);
+    expect(getDaysLeft(items[4], now)).toBeNull();
+    expect(pantryStatusLabel("expiring")).toBe("Sắp hết hạn");
+  });
+
+  it("describes the expiry date for the table and alerts", () => {
+    expect(expiryCopy(items[0], now)).toEqual({ date: "25/10/2026", relative: "Quá 5 ngày" });
+    expect(expiryCopy(pantryItem({ expiryDate: "2026-10-30T00:00:00.000Z" }), now).relative).toBe("Hôm nay");
+    expect(expiryCopy(items[1], now).relative).toBe("1 ngày");
+    expect(expiryCopy(items[4], now)).toEqual({ date: "Không thời hạn", relative: "—" });
+  });
+
+  it("counts the summary metrics and categories (most items first)", () => {
+    expect(pantryCounts(items, now)).toEqual({ total: 5, good: 2, expiring: 2, expired: 1, cold: 3 });
+    expect(pantryCategories(items)[0]).toEqual(["Rau củ", 2]);
+    expect(estimatedSavings({ good: 2, expiring: 2 })).toBe(48000);
+  });
+
+  it("filters by search, status, category and storage, then sorts", () => {
+    const names = (filters: Partial<PantryFilters>) => filterAndSortPantry(items, { ...noFilters, ...filters }, now).map((value) => value.name);
+    expect(names({})).toEqual(["Sữa tươi", "Chuối", "Cà chua", "Bông cải xanh", "Nước mắm"]);
+    expect(names({ search: "  RAU " })).toEqual(["Cà chua", "Bông cải xanh"]);
+    expect(names({ status: "expiring" })).toEqual(["Chuối", "Cà chua"]);
+    expect(names({ category: "Gia vị" })).toEqual(["Nước mắm"]);
+    expect(names({ storage: "DRY_STORAGE" })).toEqual(["Chuối", "Nước mắm"]);
+    expect(names({ sortBy: "name" })).toEqual(["Bông cải xanh", "Cà chua", "Chuối", "Nước mắm", "Sữa tươi"]);
+    expect(names({ sortBy: "quantity" })[0]).toBe("Cà chua");
+  });
+
+  it("keeps the default form and storage tips", () => {
+    expect(initialPantryForm).toMatchObject({ category: "Rau củ", quantity: 1, unit: "ITEM", storageLocation: "REFRIGERATOR", expiryDate: "" });
+    expect(storageTip({ storageLocation: "DRY_STORAGE" })).toBe("Đặt nơi khô ráo, kín và tránh ánh nắng trực tiếp.");
+    expect(storageTip({ storageLocation: "FREEZER" })).toContain("ngăn đông");
   });
 });
