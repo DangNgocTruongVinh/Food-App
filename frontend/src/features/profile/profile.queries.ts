@@ -13,7 +13,8 @@ export const profileMutations = {
 };
 
 export function invalidateProfileQueries(queryClient: QueryClient) {
-  // Preserve V1's non-blocking invalidation and its two existing targets.
+  // Non-blocking invalidation; "Dành cho bạn" ở trang công thức phụ thuộc dị ứng/chế độ ăn/mục tiêu calo.
   void queryClient.invalidateQueries({ queryKey: queryKeys.profile });
   void queryClient.invalidateQueries({ queryKey: queryKeys.dashboard });
+  void queryClient.invalidateQueries({ queryKey: queryKeys.recipes.forYouAll });
 }

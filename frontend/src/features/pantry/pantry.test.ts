@@ -101,14 +101,17 @@ describe("Pantry query and mutation definitions", () => {
     expect(adapter).toHaveBeenCalledTimes(1);
   });
 
-  it("invalidates only Pantry and Dashboard query prefixes", () => {
-    for (const key of [["pantry"], ["pantry", "detail"], ["dashboard"], ["profile"], ["recipes"]]) client.setQueryData(key, {});
+  it("invalidates Pantry, Dashboard and recipe \"Dành cho bạn\" queries only", () => {
+    for (const key of [["pantry"], ["pantry", "detail"], ["dashboard"], ["profile"], ["recipes"], ["recipes", "for-you", "recipe-a"]]) {
+      client.setQueryData(key, {});
+    }
     expect(invalidatePantryQueries(client)).toBeUndefined();
     expect(client.getQueryState(["pantry"])?.isInvalidated).toBe(true);
     expect(client.getQueryState(["pantry", "detail"])?.isInvalidated).toBe(true);
     expect(client.getQueryState(["dashboard"])?.isInvalidated).toBe(true);
     expect(client.getQueryState(["profile"])?.isInvalidated).toBe(false);
     expect(client.getQueryState(["recipes"])?.isInvalidated).toBe(false);
+    expect(client.getQueryState(["recipes", "for-you", "recipe-a"])?.isInvalidated).toBe(true);
   });
 
   it("executes create, update and delete mutations through the shared API", async () => {

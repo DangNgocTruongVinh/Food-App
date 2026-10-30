@@ -1,5 +1,5 @@
 import { api } from "../../api/client";
-import type { Recipe } from "../../types";
+import type { Recipe, RecipeForYou } from "../../types";
 
 export interface RecipeListParams {
   search?: string;
@@ -24,4 +24,8 @@ export async function listRecipes(params: RecipeListParams = {}) {
 
 export async function getRecipe(id: string) {
   return (await api.get<Recipe>(`/recipes/${id}`)).data;
+}
+
+export async function getRecipeForYou(id: string) {
+  return (await api.get<RecipeForYou>(`/recipes/${id}/for-you`)).data;
 }

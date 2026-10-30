@@ -45,3 +45,31 @@
   .recipe-detail-facts { grid-template-columns: 1fr; }
   .recipe-detail-nutrition { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
+
+/* Khối "Dành cho bạn" (GĐ2c): cột phải, dưới "Cách làm". */
+.recipe-detail-side { min-width: 0; display: grid; gap: 18px; }
+.recipe-for-you { display: grid; gap: 16px; }
+.recipe-for-you h2 { margin: 0; }
+.recipe-for-you svg { width: 16px; height: 16px; flex: 0 0 auto; }
+.recipe-for-you-warnings { margin: 0; padding: 0; list-style: none; display: grid; gap: 8px; }
+.recipe-for-you-warnings li { padding: 11px 13px; border: 1px solid #f3c2a9; border-radius: 14px; color: #8a3413; background: #fff1ea; display: flex; align-items: flex-start; gap: 9px; font-size: 13px; font-weight: 700; line-height: 1.45; }
+.recipe-for-you-warnings svg { margin-top: 1px; color: #d4541c; }
+.recipe-for-you-ok { margin: 0; color: var(--green-2); display: flex; align-items: flex-start; gap: 8px; font-size: 13px; line-height: 1.45; }
+.recipe-for-you-block { padding-top: 14px; border-top: 1px solid #eef2ec; display: grid; gap: 9px; }
+.recipe-for-you-row { color: #3f5650; display: flex; justify-content: space-between; align-items: center; gap: 12px; font-size: 13px; }
+.recipe-for-you-row span { display: inline-flex; align-items: center; gap: 8px; }
+.recipe-for-you-row svg { color: var(--green-2); }
+.recipe-for-you-row strong { color: #153d33; font-size: 16px; }
+.recipe-for-you-bar { height: 7px; border-radius: 999px; background: #eef2ec; overflow: hidden; }
+.recipe-for-you-bar i { height: 100%; border-radius: inherit; background: var(--green-2); display: block; }
+.recipe-for-you-bar.calories i { background: var(--orange); }
+.recipe-for-you-missing { display: grid; gap: 6px; }
+.recipe-for-you-missing > small, .recipe-for-you-caption { color: var(--muted); font-size: 12px; }
+.recipe-for-you-missing ul { margin: 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; gap: 6px; }
+.recipe-for-you-missing li { padding: 5px 10px; border-radius: 999px; color: #3f5650; background: #f3f5f0; font-size: 12px; }
+.recipe-for-you-missing li small { color: var(--muted); }
+.recipe-for-you-expiring, .recipe-for-you-note { margin: 0; display: flex; align-items: flex-start; gap: 8px; font-size: 12px; line-height: 1.5; }
+.recipe-for-you-expiring { padding: 9px 11px; border-radius: 12px; color: #8a4b12; background: #fff6e6; font-weight: 700; }
+.recipe-for-you-note { color: var(--muted); }
+.recipe-for-you-error { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }
+.recipe-for-you-error p { margin: 0; color: var(--muted); font-size: 13px; }

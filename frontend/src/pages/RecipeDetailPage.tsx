@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import { ArrowLeft, Beef, Clock3, CookingPot, Droplet, Flame, Leaf, UsersRound, Wheat } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
+import RecipeForYouCard from "../components/recipes/RecipeForYouCard";
 import { EmptyState, LoadingState } from "../components/States";
 import {
   formatIngredientAmount, recipeDietLabel, recipeImageSrc, recipeTotalMinutes,
@@ -13,6 +14,7 @@ const backLink = <Link className="button ghost" to="/recipes"><ArrowLeft /> Về
 export default function RecipeDetailPage() {
   const { id = "" } = useParams();
   const { data: recipe, isLoading, isError, error, refetch } = useQuery(recipeQueries.detail(id));
+  const forYou = useQuery(recipeQueries.forYou(id));
 
   if (isLoading) return <LoadingState />;
   if (isError || !recipe) {
@@ -67,12 +69,16 @@ export default function RecipeDetailPage() {
         </ul> : <p className="recipe-detail-empty">Công thức chưa có danh sách nguyên liệu.</p>}
       </section>
 
-      <section className="recipe-detail-card">
-        <h2>Cách làm</h2>
-        {recipe.instructions.length ? <ol className="recipe-detail-steps">
-          {recipe.instructions.map((step, index) => <li key={`${index}-${step}`}><span>{index + 1}</span><p>{step}</p></li>)}
-        </ol> : <p className="recipe-detail-empty">Công thức chưa có hướng dẫn thực hiện.</p>}
-      </section>
+      <div className="recipe-detail-side">
+        <section className="recipe-detail-card">
+          <h2>Cách làm</h2>
+          {recipe.instructions.length ? <ol className="recipe-detail-steps">
+            {recipe.instructions.map((step, index) => <li key={`${index}-${step}`}><span>{index + 1}</span><p>{step}</p></li>)}
+          </ol> : <p className="recipe-detail-empty">Công thức chưa có hướng dẫn thực hiện.</p>}
+        </section>
+
+        <RecipeForYouCard data={forYou.data} isLoading={forYou.isLoading} isError={forYou.isError} onRetry={() => void forYou.refetch()} />
+      </div>
     </div>
   </div>;
 }

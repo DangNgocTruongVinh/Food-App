@@ -3,8 +3,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { api } from "../../api/client";
 import { createAppQueryClient, retryUnlessClientError } from "../../api/query-client";
 import { queryKeys } from "../../api/query-keys";
-import type { Recipe } from "../../types";
-import { getRecipe, listRecipes, normalizeRecipeListParams } from "./recipes.api";
+import type { Recipe, RecipeForYou } from "../../types";
+import {
+  calorieShareLabel, expiringHint, forYouWarnings, missingIngredientItems, pantryCoverage, unitMismatchNote,
+} from "./recipe-for-you.logic";
+import { getRecipe, getRecipeForYou, listRecipes, normalizeRecipeListParams } from "./recipes.api";
 import {
   filterAndSortRecipes, formatIngredientAmount, matchesRecipeCategory, paginateRecipes, recipeDetailPath,
   recipeDietLabel, recipeImage, recipeImageSrc, recipeTotalMinutes,
@@ -44,6 +47,18 @@ const recipes = [
     cuisine: "Quốc tế", dietTags: ["VEGAN"], ingredients: [],
   }),
 ];
+
+const forYou: RecipeForYou = {
+  recipeId: "recipe-a",
+  pantry: {
+    totalIngredients: 4, inPantryCount: 1, inPantry: ["Ức gà"],
+    missing: [{ name: "Hành lá", optional: true }, { name: "Sữa tươi", optional: false }, { name: "Bông cải", optional: false }],
+    expiring: ["Ức gà"], expired: ["Sữa tươi"],
+    unitMismatches: [{ name: "Ức gà", recipeUnit: "G", pantryUnits: ["ITEM"] }],
+  },
+  calories: { recipeCalories: 520, dailyTarget: 2000, percentOfDailyTarget: 26 },
+  warnings: { allergens: ["cá", "nước mắm"], dislikedFoods: ["hành tím"], dietConflict: "VEGETARIAN" },
+};
 
 const originalAdapter = api.defaults.adapter;
 let client: QueryClient;
@@ -91,6 +106,14 @@ describe("Recipes API adapters (no network)", () => {
     expect(adapter.mock.calls[0][0]).toMatchObject({ method: "get", url: `/recipes/${recipes[0].id}` });
   });
 
+  it("gets the signed-in user's fit for a recipe without sending a userId", async () => {
+    const adapter = vi.fn(async (config) => ({ config, data: forYou, status: 200, statusText: "OK", headers: {} }));
+    api.defaults.adapter = adapter;
+    expect(await getRecipeForYou("recipe-a")).toEqual(forYou);
+    expect(adapter.mock.calls[0][0]).toMatchObject({ method: "get", url: "/recipes/recipe-a/for-you" });
+    expect(adapter.mock.calls[0][0].params).toBeUndefined();
+  });
+
   it.each(["list", "detail"] as const)("propagates a failed %s request", async (operation) => {
     const failure = new Error(`${operation} failed`);
     api.defaults.adapter = async () => { throw failure; };
@@ -113,6 +136,8 @@ describe("Recipes query definitions", () => {
   it("uses a distinct shared key for recipe details", () => {
     expect(queryKeys.recipes.all).toEqual(["recipes"]);
     expect(recipeQueries.detail("recipe-a").queryKey).toEqual(["recipes", "detail", "recipe-a"]);
+    expect(recipeQueries.forYou("recipe-a").queryKey).toEqual(["recipes", "for-you", "recipe-a"]);
+    expect(recipeQueries.forYou("recipe-a").retry).toBe(retryUnlessClientError);
   });
 });
 
@@ -196,5 +221,41 @@ describe("Recipe detail helpers", () => {
   });
   it("does not retry recipe details for client errors such as 404", () => {
     expect(recipeQueries.detail("recipe-a").retry).toBe(retryUnlessClientError);
+  });
+});
+
+describe("Recipe \"Dành cho bạn\" helpers", () => {
+  it("summarizes pantry coverage", () => {
+    expect(pantryCoverage(forYou.pantry)).toEqual({ label: "1/4", percent: 25 });
+    expect(pantryCoverage({ ...forYou.pantry, totalIngredients: 0, inPantryCount: 0 })).toEqual({ label: "0/0", percent: 0 });
+  });
+  it("lists required missing ingredients first and marks optional or expired ones", () => {
+    expect(missingIngredientItems(forYou.pantry)).toEqual([
+      { name: "Sữa tươi", note: "trong kho đã hết hạn" },
+      { name: "Bông cải", note: "" },
+      { name: "Hành lá", note: "tùy chọn" },
+    ]);
+  });
+  it("suggests cooking soon only when the recipe uses expiring pantry items", () => {
+    expect(expiringHint(["Ức gà", "Cà chua"])).toBe("Ức gà, Cà chua trong kho sắp hết hạn. Nên nấu món này sớm.");
+    expect(expiringHint([])).toBeNull();
+  });
+  it("explains the name-only comparison only when units differ", () => {
+    expect(unitMismatchNote(forYou.pantry.unitMismatches)).toBe("Chỉ so theo tên nguyên liệu, chưa so được số lượng (khác đơn vị: Ức gà).");
+    expect(unitMismatchNote([])).toBeNull();
+  });
+  it("formats the calorie share", () => {
+    expect(calorieShareLabel(forYou.calories)).toBe("520 / 2.000 kcal mục tiêu ngày");
+  });
+  it("turns profile conflicts into warnings and returns none when everything fits", () => {
+    expect(forYouWarnings(forYou.warnings)).toEqual([
+      { kind: "allergen", text: "Có thành phần bạn dị ứng: cá, nước mắm" },
+      { kind: "disliked", text: "Có món bạn không thích: hành tím" },
+      { kind: "diet", text: "Không hợp chế độ Ăn chay của bạn" },
+    ]);
+    expect(forYouWarnings({ allergens: [], dislikedFoods: [], dietConflict: "VEGAN" })).toEqual([
+      { kind: "diet", text: "Không hợp chế độ Thuần chay của bạn" },
+    ]);
+    expect(forYouWarnings({ allergens: [], dislikedFoods: [], dietConflict: null })).toEqual([]);
   });
 });

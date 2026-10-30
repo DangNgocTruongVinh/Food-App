@@ -21,6 +21,7 @@ import {
   dashboardInsightMessage,
   nextWaterGlasses,
   recommendedRecipeImage,
+  recommendedRecipePantryNote,
   recommendedRecipePath,
 } from "./dashboard.logic";
 import { dashboardQueries } from "./dashboard.queries";
@@ -244,9 +245,16 @@ describe("Dashboard component helpers", () => {
     expect(recommendedRecipePath("recipe-a", true)).toBe("/recipes/recipe-a");
     expect(recommendedRecipePath("fallback-ga-teriyaki", false)).toBe("/recipes");
   });
-  it("uses the fixed suggestion images first, then an image by name", () => {
-    expect(recommendedRecipeImage(0, "Phở bò")).toBe(dashboardSuggestionImages[0]);
-    expect(recommendedRecipeImage(5, "Cá kho tộ")).toBe("/assets/recipe-salmon.jpg");
+  it("uses the recipe imageUrl, else the fixed suggestion images, then an image by name", () => {
+    expect(recommendedRecipeImage(0, { name: "Phở bò", imageUrl: "/assets/pho.jpg" })).toBe("/assets/pho.jpg");
+    expect(recommendedRecipeImage(0, { name: "Phở bò", imageUrl: null })).toBe(dashboardSuggestionImages[0]);
+    expect(recommendedRecipeImage(5, { name: "Cá kho tộ" })).toBe("/assets/recipe-salmon.jpg");
+  });
+  it("words the pantry line from real counts, preferring expiring ingredients", () => {
+    expect(recommendedRecipePantryNote({ pantryIngredientCount: 3, expiringIngredientCount: 2 })).toBe("Dùng 2 nguyên liệu sắp hết hạn");
+    expect(recommendedRecipePantryNote({ pantryIngredientCount: 3, expiringIngredientCount: 0 })).toBe("Dùng 3 nguyên liệu trong kho");
+    expect(recommendedRecipePantryNote({ pantryIngredientCount: 0, expiringIngredientCount: 0 })).toBeNull();
+    expect(recommendedRecipePantryNote({})).toBeNull();
   });
   it("words the insight by whether items are expiring", () => {
     expect(dashboardInsightMessage(true)).toContain("sắp hết hạn");

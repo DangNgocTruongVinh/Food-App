@@ -147,7 +147,9 @@ Thứ tự: (b) → khảo sát dọn code → (a), (c), (d).
 - [ ] (c) Khối "Dành cho bạn" trên trang chi tiết: số nguyên liệu đã có trong kho / tổng và nguyên liệu còn thiếu; % calo so với mục tiêu ngày; cảnh báo dị ứng/không thích (dùng lại logic backend).
   - Gợi ý công thức ở Dashboard theo hồ sơ, **dùng chung logic backend** (`dietary.service.ts`) với khối "Dành cho bạn": hiện `dashboard.service.ts` chỉ lấy 3 món đầu theo `createdAt`, không lọc chế độ ăn/dị ứng (người ăn chay có thể thấy "Phở bò"); dòng "Dùng nguyên liệu trong kho" luôn hiện dù không dựa vào kho; ảnh chưa dùng `imageUrl`. Khi làm thì gom luôn logic so khớp đang chép ở frontend (`asWords` trong `meal-plans.logic.ts`) về backend.
   - [x] Backend: `services/recipe-fit.service.ts` (dùng `dietary.service.ts`, `normalizeFoodText`). `GET /api/recipes/:id/for-you` trả nguyên liệu có/thiếu (so theo tên, có/không; khác đơn vị vẫn tính "có" và ghi `unitMismatches`; món hết hạn không tính), % calo so với mục tiêu ngày, cảnh báo dị ứng/không thích/xung đột chay–thuần chay. Dashboard: chỉ gợi ý món hợp hồ sơ, ưu tiên món dùng nguyên liệu sắp hết hạn (≤3 ngày, cùng ngưỡng thông báo) rồi món dùng nhiều nguyên liệu trong kho; trả thêm `totalIngredients`, `pantryIngredientCount`, `expiringIngredientCount`, `imageUrl`. Có test.
-  - [ ] **Đang dừng ở đây:** frontend khối "Dành cho bạn" (trang `/recipes/:id`) và thẻ gợi ý Dashboard (bỏ dòng "Dùng nguyên liệu trong kho" cố định, hiện số liệu thật, dùng `imageUrl`); gom `asWords` ở frontend về backend; kiểm tra bằng Playwright.
+  - [x] Frontend: khối "Dành cho bạn" ở cột phải trang `/recipes/:id`, dưới "Cách làm" (`components/recipes/RecipeForYouCard.tsx`, logic `features/recipes/recipe-for-you.logic.ts`; lỗi/đang tải chỉ ảnh hưởng khối này; mutation kho/hồ sơ làm mới khóa `["recipes","for-you"]`). Thẻ gợi ý Dashboard: dòng kho theo số liệu thật (ưu tiên "Dùng N nguyên liệu sắp hết hạn", ẩn khi không dùng gì trong kho), ảnh dùng `imageUrl`. Có test.
+  - [ ] Kiểm tra bằng Playwright (dị ứng Hải sản, Ăn chay, số "có trong kho" khớp kho thực tế).
+  - `asWords` chưa chuyển (mealPlanSuggestions còn dùng) → xem "Việc làm sau".
 - [ ] (d) Tùy chọn: chỉnh số khẩu phần.
 
 ### Giai đoạn 2b — Đính kèm công thức vào bài viết
@@ -196,6 +198,7 @@ Thứ tự: (b) → khảo sát dọn code → (a), (c), (d).
 - [ ] Gộp cảnh báo pantry về module Notifications (về mặt tổ chức code/tài liệu).
 
 ### Việc làm sau (chưa xếp giai đoạn)
+- [ ] Gom logic so khớp nguyên liệu/dị ứng của `mealPlanSuggestions` (`asWords` trong `features/meal-plans/meal-plans.logic.ts`) về backend, dùng chung `dietary.service.ts` / `recipe-fit.service.ts`.
 - [ ] Thay `window.confirm` bằng một hộp xác nhận dùng chung cho mọi thao tác xóa (Pantry, Meal Plans, bài viết).
 
 ### Giai đoạn 6 — Tùy chọn

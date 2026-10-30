@@ -22,4 +22,5 @@ export const pantryMutations = {
 export function invalidatePantryQueries(queryClient: QueryClient) {
   void queryClient.invalidateQueries({ queryKey: queryKeys.pantry });
   void queryClient.invalidateQueries({ queryKey: queryKeys.dashboard });
+  void queryClient.invalidateQueries({ queryKey: queryKeys.recipes.forYouAll });
 }

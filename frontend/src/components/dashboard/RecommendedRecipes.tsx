@@ -1,6 +1,6 @@
 import { ArrowRight, Bookmark, Clock3, Flame, Leaf, Sparkles } from "lucide-react";
 import { Link } from "react-router-dom";
-import { recommendedRecipeImage, recommendedRecipePath } from "../../features/dashboard/dashboard.logic";
+import { recommendedRecipeImage, recommendedRecipePantryNote, recommendedRecipePath } from "../../features/dashboard/dashboard.logic";
 import type { DashboardData } from "../../types";
 
 type RecommendedRecipesProps = { recipes: DashboardData["recommendedRecipes"]; areRealRecipes: boolean };
@@ -14,12 +14,13 @@ export default function RecommendedRecipes({ recipes, areRealRecipes }: Recommen
     <div className="overview-v2-recipe-grid">
       {recipes.map((recipe, index) => {
         const recipePath = recommendedRecipePath(recipe.id, areRealRecipes);
+        const pantryNote = recommendedRecipePantryNote(recipe);
         return <article className="overview-v2-recipe-card" key={recipe.id}>
-          <Link className="overview-v2-recipe-image" to={recipePath}><img src={recommendedRecipeImage(index, recipe.name)} alt={recipe.name} /></Link>
+          <Link className="overview-v2-recipe-image" to={recipePath}><img src={recommendedRecipeImage(index, recipe)} alt={recipe.name} /></Link>
           <button type="button" aria-label={`Lưu ${recipe.name}`}><Bookmark /></button>
           <div>
             <Link to={recipePath}><h3>{recipe.name}</h3></Link>
-            <small><Leaf /> Dùng nguyên liệu trong kho</small>
+            {pantryNote && <small><Leaf /> {pantryNote}</small>}
             <footer><span><Clock3 /> {recipe.prepMinutes + recipe.cookMinutes} phút</span><span><Flame /> {recipe.calories} kcal</span></footer>
           </div>
         </article>;

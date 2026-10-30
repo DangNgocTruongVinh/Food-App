@@ -56,14 +56,17 @@ describe("Profile query and mutation compatibility", () => {
     expect(await client.fetchQuery(profileQueries.detail())).toEqual(profile);
     expect(adapter).toHaveBeenCalledTimes(1);
   });
-  it("invalidates only existing profile and dashboard prefixes", () => {
-    for (const key of [["profile"], ["dashboard"], ["dashboard", "detail"], ["pantry"], ["meal-plans"]]) client.setQueryData(key, {});
+  it("invalidates profile, dashboard and recipe \"Dành cho bạn\" queries only", () => {
+    const keys = [["profile"], ["dashboard"], ["dashboard", "detail"], ["pantry"], ["meal-plans"], ["recipes", "for-you", "recipe-a"], ["recipes", "detail", "recipe-a"]];
+    for (const key of keys) client.setQueryData(key, {});
     expect(invalidateProfileQueries(client)).toBeUndefined();
     expect(client.getQueryState(["profile"])?.isInvalidated).toBe(true);
     expect(client.getQueryState(["dashboard"])?.isInvalidated).toBe(true);
     expect(client.getQueryState(["dashboard", "detail"])?.isInvalidated).toBe(true);
     expect(client.getQueryState(["pantry"])?.isInvalidated).toBe(false);
     expect(client.getQueryState(["meal-plans"])?.isInvalidated).toBe(false);
+    expect(client.getQueryState(["recipes", "for-you", "recipe-a"])?.isInvalidated).toBe(true);
+    expect(client.getQueryState(["recipes", "detail", "recipe-a"])?.isInvalidated).toBe(false);
   });
   it("submits the form and runs invalidation after success", async () => {
     client.setQueryData(queryKeys.profile, profile);

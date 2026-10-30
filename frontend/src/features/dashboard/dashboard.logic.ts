@@ -1,7 +1,7 @@
 import { differenceInCalendarDays, format } from "date-fns";
 import { vi } from "date-fns/locale";
 import { Moon, Sun, Sunrise } from "lucide-react";
-import type { DashboardData, MealType } from "../../types";
+import type { DashboardData, DashboardRecommendedRecipe, MealType } from "../../types";
 import { recipeDetailPath } from "../recipes/recipes.logic";
 
 export const dashboardMealLabels: Record<MealType, string> = {
@@ -69,8 +69,16 @@ export function recommendedRecipePath(recipeId: string, isRealRecipe: boolean) {
   return isRealRecipe ? recipeDetailPath(recipeId) : "/recipes";
 }
 
-export function recommendedRecipeImage(index: number, recipeName: string) {
-  return dashboardSuggestionImages[index] ?? dashboardMealImage(recipeName);
+/** Ảnh công thức (imageUrl) nếu có; món mẫu dự phòng dùng ảnh gợi ý cố định, rồi ảnh theo tên. */
+export function recommendedRecipeImage(index: number, recipe: Pick<DashboardRecommendedRecipe, "name" | "imageUrl">) {
+  return recipe.imageUrl || (dashboardSuggestionImages[index] ?? dashboardMealImage(recipe.name));
+}
+
+/** Dòng phụ dưới tên món gợi ý: ưu tiên nguyên liệu sắp hết hạn, rồi nguyên liệu trong kho; không dùng gì trong kho thì ẩn. */
+export function recommendedRecipePantryNote(recipe: Pick<DashboardRecommendedRecipe, "pantryIngredientCount" | "expiringIngredientCount">) {
+  if (recipe.expiringIngredientCount) return `Dùng ${recipe.expiringIngredientCount} nguyên liệu sắp hết hạn`;
+  if (recipe.pantryIngredientCount) return `Dùng ${recipe.pantryIngredientCount} nguyên liệu trong kho`;
+  return null;
 }
 
 export function dashboardInsightMessage(hasExpiringItems: boolean) {

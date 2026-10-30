@@ -83,6 +83,18 @@ export interface Recipe {
   cuisine: string; dietTags: string[]; mealTypes?: MealType[]; imageUrl?: string | null; ingredients: Ingredient[];
 }
 
+/** GET /api/recipes/:id/for-you: mức phù hợp của công thức với hồ sơ và kho của người dùng đang đăng nhập. */
+export interface RecipeForYou {
+  recipeId: string;
+  pantry: {
+    totalIngredients: number; inPantryCount: number; inPantry: string[];
+    missing: Array<{ name: string; optional: boolean }>; expiring: string[]; expired: string[];
+    unitMismatches: Array<{ name: string; recipeUnit: FoodUnit; pantryUnits: FoodUnit[] }>;
+  };
+  calories: { recipeCalories: number; dailyTarget: number; percentOfDailyTarget: number };
+  warnings: { allergens: string[]; dislikedFoods: string[]; dietConflict: string | null };
+}
+
 export interface MealPlanItem { id: string; mealType: MealType; servings: number; calories: number; completed: boolean; recipe: Recipe }
 export interface MealPlanDay { id: string; date: string; items: MealPlanItem[] }
 export interface ShoppingItem { id: string; name: string; quantity: number; unit: FoodUnit; purchased: boolean }
@@ -92,11 +104,17 @@ export interface MealPlan {
   createdAt?: string;
 }
 
+// Số liệu kho chỉ có ở món gợi ý thật từ API; món mẫu dự phòng không có.
+export interface DashboardRecommendedRecipe {
+  id: string; name: string; calories: number; prepMinutes: number; cookMinutes: number; dietTags: string[];
+  imageUrl?: string | null; totalIngredients?: number; pantryIngredientCount?: number; expiringIngredientCount?: number;
+}
+
 export interface DashboardData {
   nutritionTargets: { calories: number; proteinG: number; carbsG: number; fatG: number } | null;
   pantryCount: number; expiringItems: PantryItem[]; expiredCount: number;
   activePlan: { id: string; name: string; completionRate: number } | null;
-  recommendedRecipes: Array<{ id: string; name: string; calories: number; prepMinutes: number; cookMinutes: number; dietTags: string[] }>;
+  recommendedRecipes: DashboardRecommendedRecipe[];
   todayMeals: Array<{
     id: string; mealType: MealType; calories: number; completed: boolean;
     recipe: { id: string; name: string; prepMinutes: number; cookMinutes: number };
