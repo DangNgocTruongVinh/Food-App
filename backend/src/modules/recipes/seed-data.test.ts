@@ -1,12 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { seedCuisines, seedImageGroups, seedRecipes } from "../../../prisma/seed-data.js";
-import { expandRestrictedTerms, findRestrictedTerms } from "../../services/dietary.service.js";
+import { findDietViolations } from "../../services/dietary.service.js";
 
 const foodUnits = ["G", "KG", "ML", "L", "ITEM", "PACKAGE"];
 const mealTypes = ["BREAKFAST", "LUNCH", "DINNER", "SNACK"] as const;
-// Nguyên liệu động vật không được có trong món chay/thuần chay.
-const meatAndFish = ["thịt", "sườn", "xương", "gà", "bò", "heo", "đùi gà", "ức gà", ...expandRestrictedTerms(["Hải sản"])];
-const animalProducts = [...meatAndFish, ...expandRestrictedTerms(["Sữa", "Trứng"]), "mật ong"];
 
 describe("Seed recipe data", () => {
   it("has 25–35 recipes with unique slugs and names", () => {
@@ -52,14 +49,15 @@ describe("Seed recipe data", () => {
   it.each(seedRecipes.filter((recipe) => recipe.dietTags.includes("VEGAN")).map((recipe) => [recipe.slug, recipe] as const))(
     "vegan dish %s has no animal products",
     (_slug, recipe) => {
-      expect(findRestrictedTerms(recipe, animalProducts)).toEqual([]);
+      // Cùng bộ từ khóa với API Admin công thức (dietary.service.ts).
+      expect(findDietViolations(recipe)).toEqual([]);
     },
   );
 
   it.each(seedRecipes.filter((recipe) => recipe.dietTags.includes("VEGETARIAN")).map((recipe) => [recipe.slug, recipe] as const))(
     "vegetarian dish %s has no meat, fish or fish sauce",
     (_slug, recipe) => {
-      expect(findRestrictedTerms(recipe, meatAndFish)).toEqual([]);
+      expect(findDietViolations(recipe)).toEqual([]);
     },
   );
 

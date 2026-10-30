@@ -52,6 +52,33 @@ export function findRestrictedTerms(recipe: Pick<DietaryRecipe, "name" | "ingred
   return restrictedTerms.filter((term) => texts.some((text) => text.includes(asWords(term))));
 }
 
+// Nguyên liệu động vật trái với nhãn chay/thuần chay. Dùng chung cho kiểm tra dữ liệu seed và API Admin công thức.
+export const MEAT_AND_FISH_TERMS = ["thịt", "sườn", "xương", "gà", "bò", "heo", "đùi gà", "ức gà", ...expandRestrictedTerms(["Hải sản"])];
+export const ANIMAL_PRODUCT_TERMS = [...MEAT_AND_FISH_TERMS, ...expandRestrictedTerms(["Sữa", "Trứng"]), "mật ong"];
+
+/** Nhãn chế độ ăn không trùng lặp; món thuần chay luôn được gắn thêm nhãn chay. */
+export function normalizeDietTags(tags: DietType[]) {
+  const unique = new Set(tags);
+  if (unique.has("VEGAN")) unique.add("VEGETARIAN");
+  return [...unique];
+}
+
+export type DietViolation = { ingredient: string; terms: string[]; dietTag: "VEGETARIAN" | "VEGAN" };
+
+/**
+ * Nguyên liệu trái với nhãn: VEGAN không được có thịt/cá/hải sản, sữa, trứng, mật ong; VEGETARIAN không được có
+ * thịt/cá/hải sản (kể cả nước mắm). Chỉ xét tên nguyên liệu (món chay có thể tên "gà chay").
+ */
+export function findDietViolations(recipe: Pick<DietaryRecipe, "dietTags" | "ingredients">): DietViolation[] {
+  const dietTag = recipe.dietTags.includes("VEGAN") ? "VEGAN" : recipe.dietTags.includes("VEGETARIAN") ? "VEGETARIAN" : null;
+  if (!dietTag) return [];
+  const forbidden = dietTag === "VEGAN" ? ANIMAL_PRODUCT_TERMS : MEAT_AND_FISH_TERMS;
+  return recipe.ingredients.flatMap(({ name }) => {
+    const terms = findRestrictedTerms({ name: "", ingredients: [{ name }] }, forbidden);
+    return terms.length ? [{ ingredient: name, terms, dietTag }] : [];
+  });
+}
+
 /** Chay và thuần chay là ràng buộc bắt buộc; các chế độ khác chỉ dùng để ưu tiên. */
 export function matchesRequiredDiet(recipe: Pick<DietaryRecipe, "dietTags">, dietType: DietType) {
   if (dietType === "VEGAN") return recipe.dietTags.includes("VEGAN");

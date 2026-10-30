@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
-  expandRestrictedTerms, filterRecipesForProfile, findRestrictedTerms, matchesRequiredDiet, normalizeFoodText, prefersDiet,
+  expandRestrictedTerms, filterRecipesForProfile, findDietViolations, findRestrictedTerms, matchesRequiredDiet, normalizeDietTags,
+  normalizeFoodText, prefersDiet,
 } from "./dietary.service.js";
 
 const recipe = (name: string, ingredients: string[], dietTags: Array<"BALANCED" | "VEGETARIAN" | "VEGAN" | "LOW_CARB" | "HIGH_PROTEIN"> = ["BALANCED"]) => ({
@@ -78,5 +79,33 @@ describe("diet rules", () => {
     const allowed = filterRecipesForProfile(recipes, { dietType: "VEGETARIAN", allergies: ["Trứng"], dislikedFoods: ["cần tây"] });
     expect(allowed.map((item) => item.name)).toEqual(["Đậu hũ sốt cà"]);
     expect(filterRecipesForProfile(recipes, null)).toHaveLength(4);
+  });
+});
+
+describe("vegetarian / vegan labels (shared by seed data tests and the Admin recipe API)", () => {
+  const withIngredients = (dietTags: Array<"BALANCED" | "VEGETARIAN" | "VEGAN">, names: string[]) => ({
+    dietTags, ingredients: names.map((name) => ({ name })),
+  });
+
+  it("adds VEGETARIAN to a vegan dish and removes duplicate tags", () => {
+    expect(normalizeDietTags(["VEGAN"])).toEqual(["VEGAN", "VEGETARIAN"]);
+    expect(normalizeDietTags(["BALANCED", "BALANCED", "LOW_CARB"])).toEqual(["BALANCED", "LOW_CARB"]);
+  });
+
+  it("lists the meat, fish or fish sauce ingredients of a vegetarian dish", () => {
+    expect(findDietViolations(withIngredients(["VEGETARIAN"], ["Đậu hũ", "Thịt heo xay", "Nước mắm", "Trứng"]))).toEqual([
+      { ingredient: "Thịt heo xay", terms: ["thịt", "heo"], dietTag: "VEGETARIAN" },
+      { ingredient: "Nước mắm", terms: ["nước mắm", "mắm"], dietTag: "VEGETARIAN" },
+    ]);
+  });
+
+  it("also rejects milk, eggs and honey in a vegan dish", () => {
+    expect(findDietViolations(withIngredients(["VEGAN", "VEGETARIAN"], ["Sữa tươi", "Trứng gà", "Mật ong", "Sữa đậu nành"]))
+      .map((violation) => violation.ingredient)).toEqual(["Sữa tươi", "Trứng gà", "Mật ong"]);
+  });
+
+  it("accepts valid vegetarian dishes and ignores dishes without a vegetarian label", () => {
+    expect(findDietViolations(withIngredients(["VEGETARIAN"], ["Đậu hũ", "Cà chua", "Nước tương", "Trứng"]))).toEqual([]);
+    expect(findDietViolations(withIngredients(["BALANCED"], ["Thịt bò"]))).toEqual([]);
   });
 });

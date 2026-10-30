@@ -201,7 +201,16 @@ Quyết định đã chốt cho GĐ3:
   - Không lọc: chi tiết (`hidden: true`), thực đơn cũ, feed (`recipe.hidden`).
   - Frontend tối thiểu: trang chi tiết hiện "Món này đã ngừng sử dụng", ẩn nút chia sẻ và khối "Dành cho bạn"; `?shareRecipe=` từ chối món ẩn; thẻ công thức trong bài cũ có nhãn "Đã ngừng sử dụng".
   - Đã kiểm tra trên Docker bằng cách tạm ẩn "Cá kho tộ" (danh sách 32 món, stats 32, chi tiết `hidden`, "Dành cho bạn" 404, gắn bài 422, Dashboard không gợi ý, giao diện đúng), sau đó hiện lại.
-  - **Đang dừng ở đây:** chưa làm lượt 3 (Admin công thức).
+- [x] Lượt 3 — Admin quản lý công thức:
+  - `modules/admin/` (`admin.routes.ts` gắn `requireAuth` + `requireAdmin` cho mọi route, schema/controller công thức); nghiệp vụ ở `modules/recipes/recipe-management.service.ts`.
+  - API: `GET /api/admin/recipes` (search, status all/visible/hidden, page, pageSize ≤ 50, kèm `usage` = số `MealPlanItem` và bài viết), `GET /:id`, `POST`, `PUT /:id`, `PATCH /:id/visibility`, `DELETE /:id` (đã dùng → 409 kèm `usage`, gợi ý ẩn; FK Restrict là lớp chặn cuối).
+  - Zod: đơn vị thuộc `FoodUnit`, ≥ 1 nguyên liệu (≤ 40), ≥ 1 `mealTypes`, 1–20 bước, số dinh dưỡng không âm, cấm nguyên liệu "Bơ" trống, ảnh chỉ `/assets/...` hoặc `https://`.
+  - Nhãn chay: `findDietViolations` + `normalizeDietTags` trong `dietary.service.ts` (bộ từ khóa chuyển từ `seed-data.test.ts`, test seed dùng chung); sai nhãn → 422 kèm `details.violations`; VEGAN tự thêm VEGETARIAN. Chỉ xét tên nguyên liệu (món chay có thể tên "gà chay").
+  - Slug: `utils/slug.ts` (bỏ dấu, "đ" → "d", hậu tố -2, -3 nếu trùng; tạo trùng cùng lúc → 409). Sửa món **giữ nguyên slug** để seed vẫn nhận ra món gốc.
+  - Sửa nguyên liệu bằng nested write (`deleteMany` + `create` trong một lệnh update, Prisma chạy trong một transaction).
+  - Test: ma trận phân quyền 6 API × (401, USER 403, khóa 403, Admin 2xx), tạo/sửa/ẩn/xóa, nhãn chay sai, slug trùng, validate.
+  - Đã kiểm tra trên Docker: USER gọi `/api/admin/recipes` → 403; Admin tạo món thử (slug `thu-gd3-dau-hu-sot-nam`, VEGAN + VEGETARIAN) → hiện ở trang Công thức; nhãn chay sai → 422; ẩn → biến mất khỏi danh sách; xóa món chưa dùng → 204. Đã xóa món thử (còn 33 món).
+  - **Đang dừng ở đây:** chưa làm lượt 4 (Admin người dùng, kiểm duyệt, thống kê).
 - [ ] Upload ảnh Cloudinary.
 - [ ] Đăng ảnh trong bài viết (làm ngay sau hạ tầng upload): lưu URL ảnh vào bài viết, hiện lại nút "Ảnh".
 - [ ] Admin: CRUD công thức, quản lý user (khóa/mở), kiểm duyệt community, thống kê.
@@ -260,6 +269,8 @@ Quyết định đã chốt cho GĐ3:
 - [ ] Hạn chế: dinh dưỡng của bộ món seed là **số liệu ước tính**, tham khảo *Bảng thành phần thực phẩm Việt Nam* (Viện Dinh dưỡng, NXB Y học, 2007).
 - [ ] Hạn chế: so khớp dị ứng dựa trên tên nguyên liệu và bảng nhóm dị ứng cố định; nguyên liệu có thành phần ẩn (vd. nước tương có lúa mì) có thể không bị phát hiện.
 - [ ] Hạn chế: ngày từ server (hạn sử dụng, ngày thực đơn) hiển thị theo múi giờ máy người dùng; ở múi giờ âm (vd. châu Mỹ) có thể lệch về ngày hôm trước.
+- [ ] Hạn chế: Admin sửa một món đã có trong thực đơn cũ thì thực đơn cũ giữ calo đã lưu ở `MealPlanItem`, nhưng tên, ảnh và nguyên liệu hiển thị theo bản đã sửa.
+- [ ] Hạn chế: kiểm tra nhãn chay/thuần chay dựa trên tên nguyên liệu và bộ từ khóa cố định (`dietary.service.ts`).
 
 ## Lưu ý khi demo
 - Phải có `OPENAI_API_KEY` hợp lệ, nếu không meal plan/chat chạy fallback (không phải AI thật).
