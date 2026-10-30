@@ -73,3 +73,10 @@
 .recipe-for-you-note { color: var(--muted); }
 .recipe-for-you-error { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }
 .recipe-for-you-error p { margin: 0; color: var(--muted); font-size: 13px; }
+
+/* Màn hình hẹp: cảnh báo theo hồ sơ lên ngay sau phần thông tin chính; máy tính giữ trong khối "Dành cho bạn". */
+.recipe-for-you-alerts { display: none; }
+@media (max-width: 900px) {
+  .recipe-for-you-alerts { margin-top: 22px; display: block; }
+  .recipe-for-you-warnings.in-card { display: none; }
+}

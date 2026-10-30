@@ -6,6 +6,24 @@ import type { RecipeForYou } from "../../types";
 
 type RecipeForYouCardProps = { data?: RecipeForYou; isLoading: boolean; isError: boolean; onRetry: () => void };
 
+/**
+ * Cảnh báo theo hồ sơ đặt ngay sau phần thông tin chính, chỉ hiện trên màn hình hẹp (CSS); khi đó danh sách cảnh báo
+ * trong khối "Dành cho bạn" bị ẩn để không lặp. Máy tính vẫn xem cảnh báo trong khối như cũ.
+ */
+export function RecipeForYouAlerts({ data }: { data?: RecipeForYou }) {
+  const warnings = data ? forYouWarnings(data.warnings) : [];
+  if (!warnings.length) return null;
+  return <section className="recipe-for-you-alerts" aria-label="Cảnh báo theo hồ sơ của bạn">
+    <WarningList warnings={warnings} />
+  </section>;
+}
+
+function WarningList({ warnings, className = "" }: { warnings: ReturnType<typeof forYouWarnings>; className?: string }) {
+  return <ul className={`recipe-for-you-warnings ${className}`.trim()} role="alert">
+    {warnings.map((warning) => <li key={warning.kind}><TriangleAlert /><span>{warning.text}</span></li>)}
+  </ul>;
+}
+
 /** Khối "Dành cho bạn": lỗi hoặc đang tải chỉ ảnh hưởng khối này, không ảnh hưởng phần còn lại của trang. */
 export default function RecipeForYouCard({ data, isLoading, isError, onRetry }: RecipeForYouCardProps) {
   return <section className="recipe-detail-card recipe-for-you" aria-label="Dành cho bạn" aria-busy={isLoading}>
@@ -31,9 +49,7 @@ function RecipeForYouContent({ data }: { data: RecipeForYou }) {
 
   return <>
     {warnings.length
-      ? <ul className="recipe-for-you-warnings" role="alert">
-        {warnings.map((warning) => <li key={warning.kind}><TriangleAlert /><span>{warning.text}</span></li>)}
-      </ul>
+      ? <WarningList warnings={warnings} className="in-card" />
       : <p className="recipe-for-you-ok"><CircleCheck /> Phù hợp với dị ứng, món không thích và chế độ ăn của bạn.</p>}
 
     <div className="recipe-for-you-block">

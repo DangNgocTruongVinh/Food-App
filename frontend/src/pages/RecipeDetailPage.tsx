@@ -4,7 +4,7 @@ import { ArrowLeft } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
 import RecipeDetailHero from "../components/recipes/RecipeDetailHero";
 import { RecipeDetailError } from "../components/recipes/RecipeDetailStates";
-import RecipeForYouCard from "../components/recipes/RecipeForYouCard";
+import RecipeForYouCard, { RecipeForYouAlerts } from "../components/recipes/RecipeForYouCard";
 import RecipeIngredientsCard from "../components/recipes/RecipeIngredientsCard";
 import RecipeNutritionStrip from "../components/recipes/RecipeNutritionStrip";
 import RecipeStepsCard from "../components/recipes/RecipeStepsCard";
@@ -26,6 +26,7 @@ export default function RecipeDetailPage() {
   return <div className="page recipe-detail-page">
     <nav className="recipe-detail-nav" aria-label="Điều hướng công thức"><Link to="/recipes"><ArrowLeft /> Công thức</Link></nav>
     <RecipeDetailHero recipe={recipe} />
+    <RecipeForYouAlerts data={forYou.data} />
     <RecipeNutritionStrip recipe={recipe} />
 
     <div className="recipe-detail-body">
