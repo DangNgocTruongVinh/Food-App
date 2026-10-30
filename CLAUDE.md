@@ -160,8 +160,12 @@ Thứ tự: (b) → khảo sát dọn code → (a), (c), (d).
 - [x] Trước tiên: tách component `CommunityPage` vào `components/community/` (`CommunityHero`, `PostComposer`, `PostCard`, `CommentForm`, `CommunitySidebar`, `CommunityFeedStates`), commit riêng, so ảnh trước/sau giống hệt (máy tính + điện thoại; feed trống, feed có bài/bình luận/lượt thích, `?post=`); đăng bài, thích, bình luận, `?post=` đã thử bằng Playwright.
 - [x] Schema: `CommunityPost.recipeId` tùy chọn (FK tới `Recipe`, `onDelete: Restrict`, có index), migration `20261030000000_add_community_post_recipe`.
 - [x] API đăng bài nhận `recipeId` (cuid, công thức phải tồn tại, không thì 422 "Công thức đính kèm không tồn tại."); bài cần có chữ hoặc công thức (chỉ có công thức thì `content` = ""). Feed và bài vừa đăng trả `recipe` tóm tắt (`id, name, imageUrl, calories, prepMinutes, cookMinutes`) hoặc `null`; chỗ kiểm tra "được phép gắn" là `assertAttachableRecipe` (GĐ3 thêm điều kiện không bị ẩn).
-- [ ] FE: hiện lại nút "Công thức", chọn công thức có sẵn; bài viết hiển thị thẻ công thức liên kết tới `/recipes/:id` (trang ở GĐ2).
-- [ ] Chỉ gắn công thức có sẵn; người dùng tự tạo công thức → hướng phát triển.
+- [x] FE: hiện lại nút "Công thức" (nút "Ảnh" vẫn ẩn đến GĐ3); ô chọn công thức tìm theo tên không phân biệt dấu, xem trước và bỏ chọn trước khi đăng; bài viết hiển thị thẻ công thức (ảnh, tên, calo, thời gian) liên kết tới `/recipes/:id`; bài chỉ có công thức được phép.
+- [x] Trang chi tiết công thức có nút "Chia sẻ lên cộng đồng" → `/community?shareRecipe=<id>` (gắn sẵn món, đưa con trỏ vào ô nhập, xóa tham số bằng `replace`).
+- [x] Chỉ gắn công thức có sẵn; người dùng tự tạo công thức → hướng phát triển.
+- [x] Đã thử bằng Playwright: chọn/tìm không dấu/xem trước/bỏ chọn, đăng bài có chữ + công thức, bài chỉ có công thức, bấm thẻ mở trang chi tiết, chia sẻ từ trang chi tiết, `?shareRecipe=` sai; điện thoại hiển thị ổn. `Restrict` chặn xóa công thức đang được gắn (thử trong DB). Dữ liệu thử đã xóa.
+
+Đã xong GĐ2b, gộp vào `main`.
 
 ### Chốt hướng thiết kế UI (ngay trước GĐ3)
 - [ ] Chốt hướng thiết kế UI dùng chung (màu, chữ, khoảng cách, thành phần dùng chung) trước khi làm trang Admin; ghi quyết định vào CLAUDE.md để các trang mới (Admin) và việc chỉnh trang cũ theo cùng một hướng.
