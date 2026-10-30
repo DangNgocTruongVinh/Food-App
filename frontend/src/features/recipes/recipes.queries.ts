@@ -1,7 +1,7 @@
 import { queryOptions } from "@tanstack/react-query";
 import { retryUnlessClientError } from "../../api/query-client";
 import { queryKeys } from "../../api/query-keys";
-import { getRecipe, getRecipeForYou, listRecipes, normalizeRecipeListParams, type RecipeListParams } from "./recipes.api";
+import { getRecipe, getRecipeForYou, getRecipeStats, listRecipes, normalizeRecipeListParams, type RecipeListParams } from "./recipes.api";
 
 export const recipeQueries = {
   list: (params: RecipeListParams = {}) => {
@@ -16,6 +16,7 @@ export const recipeQueries = {
     queryFn: () => getRecipe(id),
     retry: retryUnlessClientError,
   }),
+  stats: () => queryOptions({ queryKey: queryKeys.recipes.stats, queryFn: getRecipeStats }),
   // Phụ thuộc kho và hồ sơ: các mutation kho/hồ sơ làm mới nhóm khóa forYouAll.
   forYou: (id: string) => queryOptions({
     queryKey: queryKeys.recipes.forYou(id),

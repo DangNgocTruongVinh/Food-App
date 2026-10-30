@@ -1,5 +1,5 @@
 import { api } from "../../api/client";
-import type { Recipe, RecipeForYou } from "../../types";
+import type { Recipe, RecipeForYou, RecipeStats } from "../../types";
 
 export interface RecipeListParams {
   search?: string;
@@ -24,6 +24,11 @@ export async function listRecipes(params: RecipeListParams = {}) {
 
 export async function getRecipe(id: string) {
   return (await api.get<Recipe>(`/recipes/${id}`)).data;
+}
+
+/** Công khai (không cần đăng nhập): chỉ số đếm theo nhóm, dùng cho Landing. */
+export async function getRecipeStats() {
+  return (await api.get<RecipeStats>("/recipes/stats")).data;
 }
 
 export async function getRecipeForYou(id: string) {

@@ -1,9 +1,13 @@
 import type { Request, Response } from "express";
 import type { AuthenticatedRequest, ValidatedRequest } from "../../types/http.js";
 import type { RecipeIdParams, RecipeListQuery } from "./recipes.schema.js";
-import { getRecipe, getRecipeForYou, listRecipes } from "./recipes.service.js";
+import { getRecipe, getRecipeForYou, getRecipeStats, listRecipes } from "./recipes.service.js";
 
 const authenticatedUserId = (req: Request) => (req as AuthenticatedRequest).userId;
+
+export async function getRecipeStatsController(_req: Request, res: Response) {
+  res.json(await getRecipeStats());
+}
 
 export async function listRecipesController(
   req: ValidatedRequest<unknown, Record<string, never>, RecipeListQuery>,

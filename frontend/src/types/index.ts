@@ -100,6 +100,9 @@ export interface RecipeForYou {
   warnings: { allergens: string[]; dislikedFoods: string[]; dietConflict: string | null };
 }
 
+/** GET /api/recipes/stats (công khai): số công thức theo nhóm cho Landing. */
+export interface RecipeStats { total: number; breakfast: number; vegetarian: number; vegan: number; lowCarb: number; highProtein: number }
+
 export interface MealPlanItem { id: string; mealType: MealType; servings: number; calories: number; completed: boolean; recipe: Recipe }
 export interface MealPlanDay { id: string; date: string; items: MealPlanItem[] }
 export interface ShoppingItem { id: string; name: string; quantity: number; unit: FoodUnit; purchased: boolean }

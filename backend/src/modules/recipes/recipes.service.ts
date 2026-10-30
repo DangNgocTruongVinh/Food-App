@@ -6,6 +6,22 @@ import type { RecipeListQuery } from "./recipes.schema.js";
 
 const recipeWithIngredients = { ingredients: true } as const;
 
+/**
+ * Số công thức theo nhóm cho Landing (công khai, Guest xem được): chỉ trả số đếm, không trả dữ liệu công thức.
+ * Nhóm khớp với nhãn thật của công thức: bữa ăn (mealTypes) và chế độ ăn (dietTags).
+ */
+export async function getRecipeStats() {
+  const [total, breakfast, vegetarian, vegan, lowCarb, highProtein] = await Promise.all([
+    prisma.recipe.count(),
+    prisma.recipe.count({ where: { mealTypes: { has: "BREAKFAST" } } }),
+    prisma.recipe.count({ where: { dietTags: { hasSome: ["VEGETARIAN", "VEGAN"] } } }),
+    prisma.recipe.count({ where: { dietTags: { has: "VEGAN" } } }),
+    prisma.recipe.count({ where: { dietTags: { has: "LOW_CARB" } } }),
+    prisma.recipe.count({ where: { dietTags: { has: "HIGH_PROTEIN" } } }),
+  ]);
+  return { total, breakfast, vegetarian, vegan, lowCarb, highProtein };
+}
+
 export function listRecipes(query: RecipeListQuery) {
   const where: Prisma.RecipeWhereInput = {
     ...(query.search ? { name: { contains: query.search, mode: "insensitive" } } : {}),

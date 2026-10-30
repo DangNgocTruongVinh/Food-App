@@ -11,6 +11,8 @@ export const listRecipesSchema = z.object({
   }),
 });
 
+export const recipeStatsSchema = z.object({ body: empty, params: empty, query: empty });
+
 export const getRecipeSchema = z.object({
   body: empty,
   params: z.object({ id: z.string().cuid() }),

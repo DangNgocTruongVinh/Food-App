@@ -3,8 +3,9 @@ import {
   BookOpen, Bot, CircleHelp, Dumbbell, Facebook, FileText, Grid2X2, Heart,
   HeartPulse, Instagram, Leaf, Lightbulb, Mail, Menu, MessageCircle, Play,
   Newspaper, Package, Salad, ShieldCheck, Sparkles, Star, Sunrise,
-  Target, Trophy, UserRound, UsersRound, Utensils, X,
+  Target, Trophy, UserRound, UsersRound, Utensils, Wheat, X,
 } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
 import { Flip } from "gsap/Flip";
@@ -14,22 +15,25 @@ import { flushSync } from "react-dom";
 import { Link } from "react-router-dom";
 import Logo from "../components/Logo";
 import { useAuth } from "../contexts/AuthContext";
+import { landingCategoryCountLabel, type LandingRecipeCategoryId } from "../features/landing/landing.logic";
+import { recipeImageSrc } from "../features/recipes/recipes.logic";
+import { recipeQueries } from "../features/recipes/recipes.queries";
 
 gsap.registerPlugin(ScrollTrigger, Flip, useGSAP);
 
 const features = [
   { icon: CalendarDays, title: "Lên thực đơn thông minh", copy: "Tạo thực đơn theo nhu cầu, sở thích và mục tiêu sức khỏe.", href: "#plan", image: "/assets/feature-meal-plan.png" },
-  { icon: Utensils, title: "Công thức đa dạng", copy: "Hàng ngàn công thức ngon, dễ làm và giàu dinh dưỡng.", href: "#recipes", image: "/assets/feature-recipes.png" },
+  { icon: Utensils, title: "Công thức đa dạng", copy: "Công thức ngon, dễ làm và giàu dinh dưỡng.", href: "#recipes", image: "/assets/feature-recipes.png" },
   { icon: HeartPulse, title: "Theo dõi dinh dưỡng", copy: "Kiểm soát calo và dưỡng chất dễ dàng mỗi ngày.", href: "#plan", image: "/assets/feature-nutrition.png" },
   { icon: UsersRound, title: "Cộng đồng truyền cảm hứng", copy: "Chia sẻ món ngon, mẹo hay và hành trình lành mạnh.", href: "#community", image: "/assets/feature-community.png" },
 ];
 
-// Tạm khớp tên với bộ món seed; GĐ5 Landing chuyển sang endpoint công thức công khai.
+// Tạm khớp tên, thời gian và ảnh nhóm món (imageUrl) với bộ món seed; GĐ5 Landing chuyển sang endpoint công thức công khai.
 const recipes = [
-  { image: "/assets/recipe-vegan-bowl.jpg", name: "Đậu hũ sốt cà chua", description: "Đậu hũ chiên vàng sốt cà chua chua ngọt, nêm nước tương, ăn cùng cơm nóng; món thuần chay dễ nấu.", tags: ["Thuần chay", "Món Việt"], time: "25 phút", level: "Dễ", servings: "1 phần" },
-  { image: "/assets/recipe-salmon.jpg", name: "Cá hấp gừng hành", description: "Cá diêu hồng hấp gừng hành, rưới nước tương, ăn kèm cải ngọt luộc; nhiều đạm, ít tinh bột.", tags: ["Giàu protein", "Ít tinh bột"], time: "35 phút", level: "Dễ", servings: "1 phần" },
-  { image: "/assets/nutrition-hero.jpg", name: "Gà xào sả ớt", description: "Đùi gà xào sả ớt thơm cay, săn chắc, đưa cơm cho bữa trưa hoặc bữa tối gia đình.", tags: ["Giàu protein", "Món Việt"], time: "30 phút", level: "Dễ", servings: "1 phần" },
-  { image: "/assets/recipe-oats.jpg", name: "Yến mạch qua đêm sữa chua chuối", description: "Yến mạch ngâm sữa chua và sữa tươi từ tối hôm trước, sáng ra thêm chuối là có bữa sáng no lâu.", tags: ["Bữa sáng", "Nhiều chất xơ"], time: "8 phút", level: "Dễ", servings: "1 phần" },
+  { imageUrl: "/assets/recipe-vegan-bowl.jpg", name: "Đậu hũ sốt cà chua", description: "Đậu hũ chiên vàng sốt cà chua chua ngọt, nêm nước tương, ăn cùng cơm nóng; món thuần chay dễ nấu.", tags: ["Thuần chay", "Món Việt"], time: "25 phút", level: "Dễ", servings: "1 phần" },
+  { imageUrl: "/assets/recipe-salmon.jpg", name: "Cá hấp gừng hành", description: "Cá diêu hồng hấp gừng hành, rưới nước tương, ăn kèm cải ngọt luộc; nhiều đạm, ít tinh bột.", tags: ["Giàu đạm", "Ít tinh bột"], time: "35 phút", level: "Dễ", servings: "1 phần" },
+  { imageUrl: "/assets/nutrition-hero.jpg", name: "Gà xào sả ớt", description: "Đùi gà xào sả ớt thơm cay, săn chắc, đưa cơm cho bữa trưa hoặc bữa tối gia đình.", tags: ["Giàu đạm", "Món Việt"], time: "30 phút", level: "Dễ", servings: "1 phần" },
+  { imageUrl: "/assets/recipe-oats.jpg", name: "Yến mạch qua đêm sữa chua chuối", description: "Yến mạch ngâm sữa chua và sữa tươi từ tối hôm trước, sáng ra thêm chuối là có bữa sáng no lâu.", tags: ["Bữa sáng", "Nhiều chất xơ"], time: "8 phút", level: "Dễ", servings: "1 phần" },
 ];
 
 type RecipeSlide = {
@@ -74,13 +78,13 @@ const createRecipeSlides = (activeIndex: number): RecipeSlide[] => [-2, -1, 0, 1
 }));
 const getRecipePositionClass = (position: number) => position < 0 ? `position-minus-${Math.abs(position)}` : `position-${position}`;
 
-const recipeCategories = [
-  { id: "all", label: "Tất cả", count: 245, icon: Grid2X2, recipeIndex: 1 },
-  { id: "weight-loss", label: "Giảm cân", count: 56, icon: Leaf, recipeIndex: 2 },
-  { id: "protein", label: "Giàu protein", count: 48, icon: Dumbbell, recipeIndex: 1 },
-  { id: "eat-clean", label: "Eat clean", count: 62, icon: Salad, recipeIndex: 0 },
-  { id: "vegan", label: "Thuần chay", count: 40, icon: Leaf, recipeIndex: 2 },
-  { id: "breakfast", label: "Bữa sáng", count: 38, icon: Sunrise, recipeIndex: 3 },
+const recipeCategories: Array<{ id: LandingRecipeCategoryId; label: string; icon: typeof Leaf; recipeIndex: number }> = [
+  { id: "all", label: "Tất cả", icon: Grid2X2, recipeIndex: 1 },
+  { id: "breakfast", label: "Bữa sáng", icon: Sunrise, recipeIndex: 3 },
+  { id: "vegetarian", label: "Món chay", icon: Leaf, recipeIndex: 0 },
+  { id: "vegan", label: "Thuần chay", icon: Salad, recipeIndex: 0 },
+  { id: "low-carb", label: "Ít tinh bột", icon: Wheat, recipeIndex: 1 },
+  { id: "protein", label: "Giàu đạm", icon: Dumbbell, recipeIndex: 2 },
 ];
 
 const landingNavItems = [
@@ -159,6 +163,8 @@ export default function LandingPage() {
   const [activeNavSection, setActiveNavSection] = useState<LandingNavSection>("home");
   const [featuredRecipeIndex, setFeaturedRecipeIndex] = useState(1);
   const [activeRecipeCategory, setActiveRecipeCategory] = useState("all");
+  // Số món thật theo nhóm (endpoint công khai); chưa tải được thì ẩn số.
+  const recipeStats = useQuery(recipeQueries.stats());
   const [recipeSlides, setRecipeSlides] = useState<RecipeSlide[]>(() => createRecipeSlides(1));
   const [isRecipeAnimating, setIsRecipeAnimating] = useState(false);
   const pageRef = useRef<HTMLDivElement>(null);
@@ -1401,7 +1407,7 @@ export default function LandingPage() {
                   key={slide.id}
                 >
                   <div className="landing-recipe-media">
-                    <img src={recipe.image} alt={recipe.name} draggable="false" />
+                    <img src={recipeImageSrc(recipe)} alt={recipe.name} draggable="false" />
                     <span className="landing-featured-badge"><Star /> Nổi bật</span>
                     <button type="button" aria-label={`Lưu ${recipe.name}`} tabIndex={isOutside ? -1 : 0}><Bookmark /></button>
                   </div>
@@ -1431,7 +1437,15 @@ export default function LandingPage() {
           </div>
 
           <div className="landing-recipe-filters" aria-label="Lọc công thức theo danh mục">
-            {recipeCategories.map(({ id, label, count, icon: Icon, recipeIndex }) => <button className={id === activeRecipeCategory ? "active" : ""} type="button" key={id} onClick={() => selectRecipeCategory(id, recipeIndex)} aria-pressed={id === activeRecipeCategory} disabled={isRecipeAnimating}><span><Icon /></span><span><strong>{label}</strong><small>{count} món</small></span></button>)}
+            {recipeCategories.map(({ id, label, icon: Icon, recipeIndex }) => {
+              const countLabel = landingCategoryCountLabel(recipeStats.data, id);
+              return <button
+                className={id === activeRecipeCategory ? "active" : ""} type="button" key={id} onClick={() => selectRecipeCategory(id, recipeIndex)}
+                aria-pressed={id === activeRecipeCategory} disabled={isRecipeAnimating}
+              >
+                <span><Icon /></span><span><strong>{label}</strong>{countLabel && <small>{countLabel}</small>}</span>
+              </button>;
+            })}
           </div>
         </div>
       </section>

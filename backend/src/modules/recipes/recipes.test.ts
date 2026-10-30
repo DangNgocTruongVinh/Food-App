@@ -9,12 +9,13 @@ const mocks = vi.hoisted(() => ({
   findUnique: vi.fn(),
   findProfile: vi.fn(),
   findPantry: vi.fn(),
+  count: vi.fn(),
 }));
 
 vi.mock("../../config/env.js", () => ({ env: { JWT_SECRET: mocks.secret } }));
 vi.mock("../../lib/prisma.js", () => ({
   prisma: {
-    recipe: { findMany: mocks.findMany, findUnique: mocks.findUnique },
+    recipe: { findMany: mocks.findMany, findUnique: mocks.findUnique, count: mocks.count },
     nutritionProfile: { findUnique: mocks.findProfile },
     pantryItem: { findMany: mocks.findPantry },
   },
@@ -185,6 +186,41 @@ describe("Recipe \"Dành cho bạn\" for the signed-in user", () => {
     expect((await request(app, "/api/recipes/not-a-cuid/for-you", { token: token() })).status).toBe(422);
     expect(mocks.findUnique).not.toHaveBeenCalled();
     expect(mocks.findPantry).not.toHaveBeenCalled();
+  });
+});
+
+describe("Public recipe stats for the Landing page", () => {
+  it("returns only counts per real group without authentication", async () => {
+    mocks.count
+      .mockResolvedValueOnce(33).mockResolvedValueOnce(9).mockResolvedValueOnce(17)
+      .mockResolvedValueOnce(10).mockResolvedValueOnce(4).mockResolvedValueOnce(12);
+    const response = await request(app, "/api/recipes/stats");
+    expect(response).toEqual({
+      status: 200, body: { total: 33, breakfast: 9, vegetarian: 17, vegan: 10, lowCarb: 4, highProtein: 12 },
+    });
+    expect(mocks.count.mock.calls.map((call) => call[0])).toEqual([
+      undefined,
+      { where: { mealTypes: { has: "BREAKFAST" } } },
+      { where: { dietTags: { hasSome: ["VEGETARIAN", "VEGAN"] } } },
+      { where: { dietTags: { has: "VEGAN" } } },
+      { where: { dietTags: { has: "LOW_CARB" } } },
+      { where: { dietTags: { has: "HIGH_PROTEIN" } } },
+    ]);
+    expect(mocks.findMany).not.toHaveBeenCalled();
+    expect(mocks.findUnique).not.toHaveBeenCalled();
+  });
+
+  it("keeps the other recipe endpoints behind authentication", async () => {
+    expect((await request(app, "/api/recipes")).status).toBe(401);
+    expect((await request(app, `/api/recipes/${recipeId}`)).status).toBe(401);
+  });
+
+  it("uses the shared error response when counting fails", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => undefined);
+    mocks.count.mockRejectedValue(new Error("database unavailable"));
+    expect(await request(app, "/api/recipes/stats")).toEqual({
+      status: 500, body: { message: "Máy chủ gặp lỗi. Vui lòng thử lại." },
+    });
   });
 });
 

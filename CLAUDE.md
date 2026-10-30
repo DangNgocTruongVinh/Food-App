@@ -208,6 +208,8 @@ Thứ tự: (b) → khảo sát dọn code → (a), (c), (d).
 - [ ] Menu "Tùy chọn bài viết": "Lưu bài" (SavedPost) + "Xóa bài của tôi".
 - [ ] Bookmark Dashboard nối favorite recipe; bookmark Landing chuyển Guest sang `/login`; "Xem tất cả" thành viên nổi bật.
 - [ ] Endpoint công thức công khai cho Landing; Landing dùng API thật.
+  - Đã làm trước (nhánh `fix-landing-tieng-viet`): `GET /api/recipes/stats` công khai, chỉ trả số đếm (tổng, bữa sáng, món chay, thuần chay, ít tinh bột, giàu đạm); Landing hiện số thật theo nhóm, chưa tải được thì ẩn số; bỏ nhóm giả "Giảm cân", "Eat clean" và câu "Hàng ngàn công thức".
+  - Còn lại GĐ5: carousel 4 món vẫn là dữ liệu tĩnh (đã khớp tên, thời gian, ảnh nhóm món với seed; ảnh qua `recipeImageSrc`); bấm nhóm chỉ đổi món nổi bật, chưa lọc món thật; "2.340 thành viên" ở mục Cộng đồng vẫn là số minh họa.
 - [ ] Gộp cảnh báo pantry về module Notifications (về mặt tổ chức code/tài liệu).
 
 ### Việc làm sau (chưa xếp giai đoạn)

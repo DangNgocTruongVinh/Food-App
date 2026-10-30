@@ -7,6 +7,7 @@ export const queryKeys = {
     all: ["recipes"] as const,
     list: (filters: { search?: string; cuisine?: string } = {}) => ["recipes", "list", filters] as const,
     detail: (id: string) => ["recipes", "detail", id] as const,
+    stats: ["recipes", "stats"] as const,
     forYouAll: ["recipes", "for-you"] as const,
     forYou: (id: string) => ["recipes", "for-you", id] as const,
   },
