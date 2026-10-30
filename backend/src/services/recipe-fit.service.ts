@@ -72,12 +72,16 @@ export function calorieShare(recipeCalories: number, profile: FitProfile | null 
   return { recipeCalories, dailyTarget, percentOfDailyTarget: Math.round((recipeCalories / Math.max(1, dailyTarget)) * 100) };
 }
 
+/** Bỏ cụm từ đã nằm trong một cụm khác cũng khớp (vd. "mắm" khi đã có "nước mắm") để cảnh báo không lặp. */
+const withoutNestedTerms = (terms: string[]) =>
+  terms.filter((term) => !terms.some((other) => other !== term && ` ${other} `.includes(` ${term} `)));
+
 /** Cảnh báo theo hồ sơ: thành phần gây dị ứng (theo nhóm), món không thích, không hợp chế độ chay/thuần chay. */
 export function recipeWarnings(recipe: Pick<FitRecipe, "name" | "dietTags" | "ingredients">, profile: FitProfile | null | undefined) {
   const dietType = profile?.dietType ?? "BALANCED";
   return {
-    allergens: findRestrictedTerms(recipe, expandRestrictedTerms(profile?.allergies ?? [])),
-    dislikedFoods: findRestrictedTerms(recipe, expandRestrictedTerms(profile?.dislikedFoods ?? [])),
+    allergens: withoutNestedTerms(findRestrictedTerms(recipe, expandRestrictedTerms(profile?.allergies ?? []))),
+    dislikedFoods: withoutNestedTerms(findRestrictedTerms(recipe, expandRestrictedTerms(profile?.dislikedFoods ?? []))),
     dietConflict: matchesRequiredDiet(recipe, dietType) ? null : dietType,
   };
 }
