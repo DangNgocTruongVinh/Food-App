@@ -24,7 +24,7 @@ Nouri là ứng dụng quản lý thực phẩm trong gia đình và lập kế 
 2. **Nơi đặt component:** component con của một module đặt trong `frontend/src/components/<module>/` (vd. `components/pantry/PantryTable.tsx`); component dùng chung nhiều module (`States`, `DateInput`) đặt ở `components/`. Page chỉ ghép component, giữ state và gọi query/mutation.
 3. **Logic thuần:** đặt trong `frontend/src/features/<module>/*.logic.ts` và có test; component chỉ hiển thị và gọi hàm/hook. Backend: logic thuật toán tách khỏi service CRUD (vd. `meal-plan-generator.ts` cạnh `meal-plans.service.ts`).
 4. **CSS theo module:** `frontend/src/styles/NN-<module>.css` là các lớp giao diện tích lũy theo thời gian, **thứ tự import trong `styles.css` quyết định kết quả**. CSS mới viết vào file của module tương ứng hoặc file mới thêm ở **cuối** danh sách import; không thêm vào `01-base.css`. Không đổi thứ tự import hay gộp selector trùng nếu chưa so ảnh trước/sau.
-5. **Tách component theo giai đoạn:** giai đoạn nào sửa trang nào thì **tách component của trang đó trước**, thành **một commit riêng** (không đổi hành vi/giao diện), có **so ảnh trước/sau** (máy tính + điện thoại, các trạng thái chính của trang) rồi mới làm chức năng mới. Lịch tách: Pantry (xong ở bước dọn code), Dashboard ở GĐ2c, Community ở GĐ2b, MealPlans ở GĐ5, Landing (dữ liệu tĩnh ra `features/landing/landing.data.ts`) ở GĐ5; tách toàn bộ Landing là việc tùy chọn ở cuối.
+5. **Tách component theo giai đoạn:** giai đoạn nào sửa trang nào thì **tách component của trang đó trước**, thành **một commit riêng** (không đổi hành vi/giao diện), có **so ảnh trước/sau** (máy tính + điện thoại, các trạng thái chính của trang) rồi mới làm chức năng mới. Lịch tách: Pantry (xong ở bước dọn code), Dashboard và RecipeDetail ở GĐ2c (xong), Community ở GĐ2b, MealPlans ở GĐ5, Landing (dữ liệu tĩnh ra `features/landing/landing.data.ts`) ở GĐ5; tách toàn bộ Landing là việc tùy chọn ở cuối.
 6. **Cấu trúc Admin (GĐ3):** frontend `pages/admin/*Page.tsx`, `components/admin/`, `features/admin/*.api.ts`, `layouts/AdminLayout.tsx`, route guard `AdminRoute`, CSS `styles/29-admin.css` (thêm cuối danh sách import). Backend `modules/admin/` dùng `requireAdmin`, gọi lại service sẵn có (công thức, service xóa bài dùng chung), không chép logic.
 
 ## Các quyết định đã chốt
@@ -150,7 +150,11 @@ Thứ tự: (b) → khảo sát dọn code → (a), (c), (d).
   - [x] Frontend: khối "Dành cho bạn" ở cột phải trang `/recipes/:id`, dưới "Cách làm" (`components/recipes/RecipeForYouCard.tsx`, logic `features/recipes/recipe-for-you.logic.ts`; lỗi/đang tải chỉ ảnh hưởng khối này; mutation kho/hồ sơ làm mới khóa `["recipes","for-you"]`). Thẻ gợi ý Dashboard: dòng kho theo số liệu thật (ưu tiên "Dùng N nguyên liệu sắp hết hạn", ẩn khi không dùng gì trong kho), ảnh dùng `imageUrl`. Có test.
   - [x] Đã kiểm tra bằng Playwright: dị ứng Hải sản (Dashboard không gợi ý món cá/tôm, trang Cá kho tộ có cảnh báo), Ăn chay (Dashboard không gợi ý món thịt), số "có trong kho" khớp kho thực tế; điện thoại hiển thị ổn. Hồ sơ demo đã trả về ban đầu.
   - `asWords` chưa chuyển (mealPlanSuggestions còn dùng) → xem "Việc làm sau".
-- [ ] (d) Tùy chọn: chỉnh số khẩu phần.
+  - [x] Trên điện thoại (≤900px), cảnh báo theo hồ sơ hiện ngay sau phần thông tin chính của món; máy tính giữ trong khối "Dành cho bạn".
+- [x] Trước (d): tách component `RecipeDetailPage` vào `components/recipes/` (`RecipeDetailHero`, `RecipeNutritionStrip`, `RecipeIngredientsCard`, `RecipeStepsCard`, `RecipeDetailStates`), commit riêng, so ảnh trước/sau giống hệt.
+- [x] (d) Chỉnh số khẩu phần trên trang chi tiết (1 → 12, mặc định theo công thức, chỉ hiển thị): định lượng nhân tỷ lệ, làm tròn theo đơn vị (g/ml số nguyên, kg/lít 0,01, cái/gói bội số 0,5); dinh dưỡng/calo vẫn ghi cho 1 khẩu phần. Có test, đã thử bằng Playwright.
+
+Đã xong GĐ2c, gộp vào `main`.
 
 ### Giai đoạn 2b — Đính kèm công thức vào bài viết
 - [ ] Trước tiên: tách component `CommunityPage` vào `components/community/` (`PostComposer`, `PostCard`, `CommentForm`, `CommunitySidebar`), commit riêng, so ảnh trước/sau.
