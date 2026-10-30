@@ -1,5 +1,6 @@
 import { prisma } from "../../lib/prisma.js";
 import { recommendRecipes } from "../../services/recipe-fit.service.js";
+import { visibleRecipeWhere } from "../../services/recipe-visibility.js";
 
 const DAY_MS = 86_400_000;
 const DASHBOARD_WINDOW_DAYS = 7;
@@ -26,7 +27,7 @@ export async function getDashboard(userId: string, now = new Date()) {
       include: { days: { include: { items: { include: { recipe: true } } } } },
       orderBy: { startDate: "desc" },
     }),
-    prisma.recipe.findMany({ orderBy: { createdAt: "asc" }, include: { ingredients: true } }),
+    prisma.recipe.findMany({ where: visibleRecipeWhere, orderBy: { createdAt: "asc" }, include: { ingredients: true } }),
     prisma.pantryItem.findMany({ where: { userId, quantity: { gt: 0 } } }),
   ]);
   // Gợi ý theo hồ sơ (chế độ ăn, dị ứng, món không thích) và kho: ưu tiên nguyên liệu sắp hết hạn.

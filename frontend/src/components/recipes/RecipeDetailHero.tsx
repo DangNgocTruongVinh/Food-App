@@ -23,9 +23,10 @@ export default function RecipeDetailHero({ recipe }: { recipe: Recipe }) {
           <span><strong>{recipe.ingredients.length} nguyên liệu</strong><small>{recipe.instructions.length} bước thực hiện</small></span>
         </li>
       </ul>
-      {/* GĐ5: nút "Thêm vào thực đơn" đặt trong khối hành động này. GĐ3: món bị ẩn thì ẩn nút chia sẻ và nút thêm vào thực đơn. */}
+      {recipe.hidden && <p className="recipe-detail-hidden-note" role="status">Món này đã ngừng sử dụng.</p>}
+      {/* GĐ5: nút "Thêm vào thực đơn" đặt trong khối hành động này; món đã ngừng sử dụng thì ẩn cả hai nút. */}
       <div className="recipe-detail-actions">
-        <Link className="button primary" to={communityShareRecipePath(recipe.id)}><Share2 /> Chia sẻ lên cộng đồng</Link>
+        {!recipe.hidden && <Link className="button primary" to={communityShareRecipePath(recipe.id)}><Share2 /> Chia sẻ lên cộng đồng</Link>}
         <RecipeBackLink />
       </div>
     </div>

@@ -14,7 +14,7 @@ export interface CommunityComment {
 }
 /** Tóm tắt công thức gắn trong bài viết (feed không trả nguyên liệu/các bước). */
 export interface CommunityRecipeSummary {
-  id: string; name: string; imageUrl?: string | null; calories: number; prepMinutes: number; cookMinutes: number;
+  id: string; name: string; imageUrl?: string | null; calories: number; prepMinutes: number; cookMinutes: number; hidden?: boolean;
 }
 export interface CommunityPost {
   id: string; content: string; createdAt: string; updatedAt: string; author: CommunityAuthor;
@@ -86,6 +86,8 @@ export interface Recipe {
   id: string; name: string; description: string; instructions: string[]; prepMinutes: number; cookMinutes: number;
   servings: number; calories: number; proteinG: number; carbsG: number; fatG: number; fiberG: number;
   cuisine: string; dietTags: string[]; mealTypes?: MealType[]; imageUrl?: string | null; ingredients: Ingredient[];
+  /** Món đã ngừng sử dụng (Admin ẩn): vẫn xem được chi tiết, không chia sẻ/không chọn mới. */
+  hidden?: boolean;
 }
 
 /** GET /api/recipes/:id/for-you: mức phù hợp của công thức với hồ sơ và kho của người dùng đang đăng nhập. */

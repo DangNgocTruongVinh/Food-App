@@ -552,3 +552,6 @@ a.community-recipe-card:hover { border-color: #b9d7a6; box-shadow: 0 8px 18px rg
 .community-recipe-picker li strong { color: #26372a; font-size: .8125rem; font-weight: 650; }
 .community-recipe-picker li small { color: #849184; font-size: .6875rem; }
 .community-recipe-picker-note { margin: 8px 6px 2px; color: #849184; font-size: .75rem; }
+
+/* GĐ3: thẻ công thức của món đã ngừng sử dụng trong bài viết cũ. */
+.community-recipe-hidden { color: #a0671a; font-size: .6875rem; font-style: normal; font-weight: 700; }

@@ -199,6 +199,26 @@ describe("Meal Plan and Shopping HTTP contract (no database)", () => {
     }
   });
 
+  it("never plans a hidden recipe: excluded from the query, and replaced if OpenAI still returns its id", async () => {
+    const seedAsDb = seedRecipesAsRecords();
+    const hidden = seedAsDb.find((candidate) => candidate.mealTypes.includes("BREAKFAST"))!;
+    const visible = seedAsDb.filter((candidate) => candidate.id !== hidden.id);
+    mocks.listRecipes.mockResolvedValue(visible);
+    mocks.listPantry.mockResolvedValue([]);
+    const aiPlan = { ...fallbackPlan(visible, new Set(), 3), summary: "AI" };
+    aiPlan.days[0].meals[0] = { ...aiPlan.days[0].meals[0], recipeId: hidden.id };
+    mocks.generatePlanWithAI.mockResolvedValue(aiPlan);
+
+    const response = await request(app, "/api/meal-plans/generate", { method: "POST", token: token(), body: { startDate: "2026-10-01" } });
+    expect(response.status).toBe(201);
+    expect(mocks.listRecipes).toHaveBeenCalledWith({ where: { hiddenAt: null }, include: { ingredients: true } });
+    expect(mocks.generatePlanWithAI.mock.calls[0][0].recipes.map((item: { id: string }) => item.id)).not.toContain(hidden.id);
+    const data = mocks.createPlan.mock.calls[0][0].data;
+    const savedIds = data.days.create.flatMap((day: { items: { create: Array<{ recipeId: string }> } }) => day.items.create.map((item) => item.recipeId));
+    expect(savedIds).not.toContain(hidden.id);
+    expect(data.days.create[0].items.create[0]).toMatchObject({ mealType: "BREAKFAST" });
+  });
+
   it("updates plan status by id and owner in one transaction", async () => {
     const response = await request(app, `/api/meal-plans/${planId}/status`, {
       method: "PATCH", token: token(), body: { status: "ACTIVE", userId: otherUserId },

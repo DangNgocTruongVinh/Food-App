@@ -92,3 +92,6 @@
 .recipe-servings-stepper output { min-width: 92px; color: #153d33; font-size: 13px; font-weight: 700; text-align: center; }
 .recipe-servings-note { margin: -4px 0 8px; color: var(--muted); font-size: 12px; line-height: 1.5; }
 .recipe-servings-note button { padding: 0; border: 0; color: var(--green-2); background: none; font: inherit; font-weight: 700; text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
+
+/* GĐ3: món đã ngừng sử dụng (Admin ẩn) vẫn xem được qua link trực tiếp. */
+.recipe-detail-hidden-note { margin: 0 0 14px; padding: 10px 13px; border: 1px solid #f0d9a8; border-radius: 12px; color: #7a5410; background: #fff8e8; font-size: 13px; font-weight: 700; }

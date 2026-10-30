@@ -1,4 +1,5 @@
 import { prisma } from "../../lib/prisma.js";
+import { HIDDEN_RECIPE_MESSAGE, isRecipeHidden } from "../../services/recipe-visibility.js";
 import { HttpError } from "../../utils/http-error.js";
 import type { CreateCommunityPostBody } from "./community.schema.js";
 
@@ -6,13 +7,23 @@ const COMMUNITY_FEED_LIMIT = 30;
 const authorSelect = { id: true, name: true } as const;
 /** Tóm tắt công thức gắn trong bài: chỉ các cột thẻ hiển thị cần, không lấy nguyên liệu/các bước. */
 export const communityRecipeSelect = {
-  id: true, name: true, imageUrl: true, calories: true, prepMinutes: true, cookMinutes: true,
+  id: true, name: true, imageUrl: true, calories: true, prepMinutes: true, cookMinutes: true, hiddenAt: true,
 } as const;
 
-/** Chỉ gắn được công thức có sẵn. GĐ3: thêm điều kiện công thức không bị ẩn tại đây. */
+type CommunityRecipeRow = { hiddenAt: Date | null } & Record<string, unknown>;
+
+/** Bài cũ gắn món đã ẩn vẫn hiện thẻ công thức, kèm cờ hidden để frontend gắn nhãn "đã ngừng sử dụng". */
+function toRecipeSummary<T extends CommunityRecipeRow>(recipe: T | null) {
+  if (!recipe) return null;
+  const { hiddenAt, ...summary } = recipe;
+  return { ...summary, hidden: hiddenAt !== null };
+}
+
+/** Chỉ gắn được công thức có sẵn và còn dùng (chưa bị Admin ẩn). */
 async function assertAttachableRecipe(recipeId: string) {
-  const recipe = await prisma.recipe.findUnique({ where: { id: recipeId }, select: { id: true } });
+  const recipe = await prisma.recipe.findUnique({ where: { id: recipeId }, select: { id: true, hiddenAt: true } });
   if (!recipe) throw new HttpError(422, "Công thức đính kèm không tồn tại.");
+  if (isRecipeHidden(recipe)) throw new HttpError(422, HIDDEN_RECIPE_MESSAGE);
 }
 
 export async function listCommunityPosts(userId: string) {
@@ -31,8 +42,9 @@ export async function listCommunityPosts(userId: string) {
     },
   });
 
-  return posts.map(({ likes, _count, ...post }) => ({
+  return posts.map(({ likes, _count, recipe, ...post }) => ({
     ...post,
+    recipe: toRecipeSummary(recipe),
     likedByMe: likes.length > 0,
     likeCount: _count.likes,
     commentCount: _count.comments,
@@ -46,7 +58,7 @@ export async function createCommunityPost(authorId: string, { content, recipeId 
     include: { author: { select: authorSelect }, recipe: { select: communityRecipeSelect } },
   });
 
-  return { ...post, likedByMe: false, likeCount: 0, commentCount: 0, comments: [] };
+  return { ...post, recipe: toRecipeSummary(post.recipe), likedByMe: false, likeCount: 0, commentCount: 0, comments: [] };
 }
 
 export async function toggleCommunityLike(userId: string, postId: string) {

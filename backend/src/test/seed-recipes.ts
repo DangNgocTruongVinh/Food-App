@@ -6,6 +6,7 @@ export function seedRecipesAsRecords() {
     ...recipe,
     id: recipe.slug,
     servings: 1,
+    hiddenAt: null,
     createdAt: new Date(0),
     updatedAt: new Date(0),
     ingredients: recipe.ingredients.map((ingredient, index) => ({

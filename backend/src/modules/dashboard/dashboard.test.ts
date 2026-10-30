@@ -111,7 +111,7 @@ describe("Dashboard service contract (mock Prisma, no database)", () => {
       include: { days: { include: { items: { include: { recipe: true } } } } },
       orderBy: { startDate: "desc" },
     });
-    expect(mocks.findRecipes).toHaveBeenCalledWith({ orderBy: { createdAt: "asc" }, include: { ingredients: true } });
+    expect(mocks.findRecipes).toHaveBeenCalledWith({ where: { hiddenAt: null }, orderBy: { createdAt: "asc" }, include: { ingredients: true } });
     expect(mocks.findPantry).toHaveBeenCalledWith({ where: { userId, quantity: { gt: 0 } } });
   });
 
@@ -175,6 +175,11 @@ describe("Dashboard recommendations follow the profile and pantry", () => {
   });
   const pantryRow = (name: string, expiryDate: string | null) => ({ ...pantryItem, name, unit: "G", expiryDate: expiryDate ? new Date(expiryDate) : null });
   const recommendedIds = async () => (await getDashboard(userId, now)).recommendedRecipes.map((item) => item.id);
+
+  it("only considers recipes that are not hidden (discontinued)", async () => {
+    await getDashboard(userId, now);
+    expect(mocks.findRecipes.mock.calls[0][0].where).toEqual({ hiddenAt: null });
+  });
 
   it("excludes dishes that break a vegetarian diet, an allergy or a disliked food", async () => {
     mocks.findProfile.mockResolvedValue({ ...profile, dietType: "VEGETARIAN", allergies: ["Đậu phộng"], dislikedFoods: ["nấm"] });

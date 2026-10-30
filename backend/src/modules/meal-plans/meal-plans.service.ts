@@ -2,6 +2,7 @@ import type { FoodUnit, PlanStatus } from "@prisma/client";
 import { prisma } from "../../lib/prisma.js";
 import { filterRecipesForProfile, normalizeFoodText } from "../../services/dietary.service.js";
 import { calculateNutritionTargets } from "../../services/nutrition.service.js";
+import { visibleRecipeWhere } from "../../services/recipe-visibility.js";
 import { HttpError } from "../../utils/http-error.js";
 import { generatePlanWithAI } from "../ai/ai.service.js";
 import { fallbackPlan, reconcileAIPlan } from "./meal-plan-generator.js";
@@ -10,7 +11,8 @@ export async function generateWeeklyPlan(userId: string, startDateInput: string)
   const [user, pantry, allRecipes] = await Promise.all([
     prisma.user.findUnique({ where: { id: userId }, include: { profile: true } }),
     prisma.pantryItem.findMany({ where: { userId, quantity: { gt: 0 } }, orderBy: { expiryDate: "asc" } }),
-    prisma.recipe.findMany({ include: { ingredients: true } }),
+    // Món đã ẩn không vào danh sách gửi OpenAI lẫn thuật toán dự phòng; AI trả id món ẩn thì reconcileAIPlan coi là ngoài danh sách.
+    prisma.recipe.findMany({ where: visibleRecipeWhere, include: { ingredients: true } }),
   ]);
   if (!user) throw new HttpError(404, "Không tìm thấy người dùng.");
   const profile = user.profile;

@@ -22,6 +22,7 @@ import {
   filterAttachableRecipes,
   normalizeSearchText,
   SHARE_RECIPE_PARAM,
+  shareRecipeError,
   toCommunityPublishInput,
   toCommunityRecipeSummary,
   communityRelativeTime,
@@ -283,5 +284,14 @@ describe("Attaching a recipe to a post", () => {
     const writeText = vi.fn().mockResolvedValue(undefined);
     await shareCommunityPost(recipeOnly, { clipboard: { writeText } });
     expect(writeText).toHaveBeenCalledWith("Công thức: Cá kho tộ (kèm cơm)");
+  });
+});
+
+describe("Sharing a discontinued recipe", () => {
+  it("refuses to attach a hidden recipe from ?shareRecipe= and explains why", () => {
+    expect(shareRecipeError(undefined)).toBe("Không tìm thấy công thức để chia sẻ.");
+    expect(shareRecipeError({ hidden: true })).toBe("Món này đã ngừng sử dụng.");
+    expect(shareRecipeError({ hidden: false })).toBeNull();
+    expect(shareRecipeError({})).toBeNull();
   });
 });

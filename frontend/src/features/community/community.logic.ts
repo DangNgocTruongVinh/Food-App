@@ -68,6 +68,14 @@ export function toCommunityRecipeSummary(recipe: Pick<Recipe, "id" | "name" | "i
 /** Tham số `/community?shareRecipe=<id>`: nút "Chia sẻ lên cộng đồng" ở trang chi tiết công thức. */
 export const SHARE_RECIPE_PARAM = "shareRecipe";
 
+export const HIDDEN_RECIPE_MESSAGE = "Món này đã ngừng sử dụng.";
+
+/** Lý do không gắn được món từ `?shareRecipe=`: không tìm thấy hoặc món đã ngừng sử dụng; gắn được thì null. */
+export function shareRecipeError(recipe: Pick<Recipe, "hidden"> | undefined) {
+  if (!recipe) return "Không tìm thấy công thức để chia sẻ.";
+  return recipe.hidden ? HIDDEN_RECIPE_MESSAGE : null;
+}
+
 export function communityShareRecipePath(recipeId: string) {
   return `/community?${SHARE_RECIPE_PARAM}=${encodeURIComponent(recipeId)}`;
 }

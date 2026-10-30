@@ -52,7 +52,10 @@ const recipeId = "cm55555555555555555555555";
 const recipeSummary = {
   id: recipeId, name: "Cá kho tộ (kèm cơm)", imageUrl: "/assets/recipe-salmon.jpg", calories: 520, prepMinutes: 15, cookMinutes: 35,
 };
-const recipeSelect = { id: true, name: true, imageUrl: true, calories: true, prepMinutes: true, cookMinutes: true };
+const recipeSelect = { id: true, name: true, imageUrl: true, calories: true, prepMinutes: true, cookMinutes: true, hiddenAt: true };
+// Bản ghi DB có hiddenAt; phản hồi API thay bằng cờ hidden.
+const recipeRow = { ...recipeSummary, hiddenAt: null };
+const recipeResponse = { ...recipeSummary, hidden: false };
 const basePost = { id: postId, authorId: ownerId, content: "Bữa trưa", recipeId: null, recipe: null, createdAt, updatedAt: createdAt, author };
 const createdComment = {
   id: commentId,
@@ -69,7 +72,7 @@ beforeEach(() => {
   mocks.findPosts.mockResolvedValue([]);
   mocks.createPost.mockResolvedValue(basePost);
   mocks.findPost.mockResolvedValue({ id: postId, authorId: ownerId });
-  mocks.findRecipe.mockResolvedValue({ id: recipeId });
+  mocks.findRecipe.mockResolvedValue({ id: recipeId, hiddenAt: null });
   mocks.findUser.mockResolvedValue({ name: "Minh An" });
   mocks.findLike.mockResolvedValue(null);
   mocks.deleteLike.mockResolvedValue({});
@@ -150,21 +153,21 @@ describe("Community HTTP contract (mock Prisma, no database)", () => {
 
   it("returns the attached recipe summary in the feed and null for posts without one", async () => {
     mocks.findPosts.mockResolvedValue([
-      { ...basePost, recipeId, recipe: recipeSummary, likes: [], comments: [], _count: { likes: 0, comments: 0 } },
+      { ...basePost, recipeId, recipe: recipeRow, likes: [], comments: [], _count: { likes: 0, comments: 0 } },
       { ...basePost, id: commentId, likes: [], comments: [], _count: { likes: 0, comments: 0 } },
     ]);
     const response = await request(app, "/api/community", { token: token() });
-    expect(response.body.map((post: { recipe: unknown }) => post.recipe)).toEqual([recipeSummary, null]);
+    expect(response.body.map((post: { recipe: unknown }) => post.recipe)).toEqual([recipeResponse, null]);
   });
 
   it("attaches an existing recipe to a new post", async () => {
-    mocks.createPost.mockResolvedValue({ ...basePost, authorId: userId, recipeId, recipe: recipeSummary });
+    mocks.createPost.mockResolvedValue({ ...basePost, authorId: userId, recipeId, recipe: recipeRow });
     const response = await request(app, "/api/community", {
       method: "POST", token: token(), body: { content: "Món tối nay", recipeId },
     });
     expect(response.status).toBe(201);
-    expect(response.body.recipe).toEqual(recipeSummary);
-    expect(mocks.findRecipe).toHaveBeenCalledWith({ where: { id: recipeId }, select: { id: true } });
+    expect(response.body.recipe).toEqual(recipeResponse);
+    expect(mocks.findRecipe).toHaveBeenCalledWith({ where: { id: recipeId }, select: { id: true, hiddenAt: true } });
     expect(mocks.createPost).toHaveBeenCalledWith({
       data: { authorId: userId, content: "Món tối nay", recipeId },
       include: { author: { select: { id: true, name: true } }, recipe: { select: recipeSelect } },
@@ -178,6 +181,24 @@ describe("Community HTTP contract (mock Prisma, no database)", () => {
     const response = await request(app, "/api/community", { method: "POST", token: token(), body });
     expect(response.status).toBe(201);
     expect(mocks.createPost.mock.calls[0][0].data).toEqual({ authorId: userId, content: "", recipeId });
+  });
+
+  it("rejects a hidden (discontinued) recipe without creating the post", async () => {
+    mocks.findRecipe.mockResolvedValue({ id: recipeId, hiddenAt: new Date("2026-10-31T00:00:00.000Z") });
+    const response = await request(app, "/api/community", {
+      method: "POST", token: token(), body: { content: "Món tối nay", recipeId },
+    });
+    expect(response).toEqual({ status: 422, body: { message: "Món này đã ngừng sử dụng." } });
+    expect(mocks.createPost).not.toHaveBeenCalled();
+  });
+
+  it("keeps showing a hidden recipe on old posts, flagged as hidden", async () => {
+    mocks.findPosts.mockResolvedValue([{
+      ...basePost, recipeId, recipe: { ...recipeSummary, hiddenAt: new Date("2026-10-31T00:00:00.000Z") },
+      likes: [], comments: [], _count: { likes: 0, comments: 0 },
+    }]);
+    const response = await request(app, "/api/community", { token: token() });
+    expect(response.body[0].recipe).toEqual({ ...recipeSummary, hidden: true });
   });
 
   it("rejects a recipe that does not exist without creating the post", async () => {

@@ -44,6 +44,7 @@ const recipe = {
   ingredients: [{
     id: "ingredient-a", recipeId, name: "Ức gà", quantity: 300, unit: "G", optional: false,
   }],
+  hiddenAt: null,
   createdAt: new Date("2026-09-01T00:00:00.000Z"),
   updatedAt: new Date("2026-09-01T00:00:00.000Z"),
 };
@@ -63,7 +64,7 @@ describe("Recipes HTTP contract (no database)", () => {
     const response = await request(app, "/api/recipes", { token: token() });
     expect(response).toEqual({ status: 200, body: JSON.parse(JSON.stringify([recipe])) });
     expect(mocks.findMany).toHaveBeenCalledWith({
-      where: {}, include: { ingredients: true }, orderBy: { name: "asc" },
+      where: { hiddenAt: null }, include: { ingredients: true }, orderBy: { name: "asc" },
     });
   });
 
@@ -76,6 +77,7 @@ describe("Recipes HTTP contract (no database)", () => {
     expect(response.status).toBe(200);
     expect(mocks.findMany).toHaveBeenCalledWith({
       where: {
+        hiddenAt: null,
         name: { contains: "Ức gà", mode: "insensitive" },
         cuisine: "Việt Nam",
       },
@@ -87,13 +89,13 @@ describe("Recipes HTTP contract (no database)", () => {
   it("preserves empty search and cuisine parameters as no filters", async () => {
     await request(app, "/api/recipes?search=&cuisine=", { token: token() });
     expect(mocks.findMany).toHaveBeenCalledWith({
-      where: {}, include: { ingredients: true }, orderBy: { name: "asc" },
+      where: { hiddenAt: null }, include: { ingredients: true }, orderBy: { name: "asc" },
     });
   });
 
   it("gets one recipe with its ingredients", async () => {
     const response = await request(app, `/api/recipes/${recipeId}`, { token: token() });
-    expect(response).toEqual({ status: 200, body: JSON.parse(JSON.stringify(recipe)) });
+    expect(response).toEqual({ status: 200, body: JSON.parse(JSON.stringify({ ...recipe, hidden: false })) });
     expect(mocks.findUnique).toHaveBeenCalledWith({
       where: { id: recipeId }, include: { ingredients: true },
     });
@@ -199,12 +201,12 @@ describe("Public recipe stats for the Landing page", () => {
       status: 200, body: { total: 33, breakfast: 9, vegetarian: 17, vegan: 10, lowCarb: 4, highProtein: 12 },
     });
     expect(mocks.count.mock.calls.map((call) => call[0])).toEqual([
-      undefined,
-      { where: { mealTypes: { has: "BREAKFAST" } } },
-      { where: { dietTags: { hasSome: ["VEGETARIAN", "VEGAN"] } } },
-      { where: { dietTags: { has: "VEGAN" } } },
-      { where: { dietTags: { has: "LOW_CARB" } } },
-      { where: { dietTags: { has: "HIGH_PROTEIN" } } },
+      { where: { hiddenAt: null } },
+      { where: { hiddenAt: null, mealTypes: { has: "BREAKFAST" } } },
+      { where: { hiddenAt: null, dietTags: { hasSome: ["VEGETARIAN", "VEGAN"] } } },
+      { where: { hiddenAt: null, dietTags: { has: "VEGAN" } } },
+      { where: { hiddenAt: null, dietTags: { has: "LOW_CARB" } } },
+      { where: { hiddenAt: null, dietTags: { has: "HIGH_PROTEIN" } } },
     ]);
     expect(mocks.findMany).not.toHaveBeenCalled();
     expect(mocks.findUnique).not.toHaveBeenCalled();
@@ -221,6 +223,32 @@ describe("Public recipe stats for the Landing page", () => {
     expect(await request(app, "/api/recipes/stats")).toEqual({
       status: 500, body: { message: "Máy chủ gặp lỗi. Vui lòng thử lại." },
     });
+  });
+});
+
+describe("Hidden (discontinued) recipes", () => {
+  const hiddenRecipe = { ...recipe, hiddenAt: new Date("2026-10-31T00:00:00.000Z") };
+
+  it("still opens the detail page by direct link, flagged as hidden", async () => {
+    mocks.findUnique.mockResolvedValue(hiddenRecipe);
+    const response = await request(app, `/api/recipes/${recipeId}`, { token: token() });
+    expect(response.status).toBe(200);
+    expect(response.body).toMatchObject({ id: recipeId, hidden: true });
+  });
+
+  it("returns 404 for \"Dành cho bạn\" of a hidden recipe", async () => {
+    mocks.findUnique.mockResolvedValue(hiddenRecipe);
+    expect(await request(app, `/api/recipes/${recipeId}/for-you`, { token: token() }))
+      .toEqual({ status: 404, body: { message: "Món này đã ngừng sử dụng." } });
+  });
+
+  it("excludes hidden recipes from the list and from every public count", async () => {
+    await request(app, "/api/recipes", { token: token() });
+    expect(mocks.findMany.mock.calls[0][0].where).toEqual({ hiddenAt: null });
+    mocks.count.mockResolvedValue(0);
+    await request(app, "/api/recipes/stats");
+    expect(mocks.count.mock.calls.every((call) => call[0].where.hiddenAt === null)).toBe(true);
+    expect(mocks.count).toHaveBeenCalledTimes(6);
   });
 });
 

@@ -14,6 +14,7 @@ import {
   communityPostElementId,
   normalizeCommunityContent,
   SHARE_RECIPE_PARAM,
+  shareRecipeError,
   toCommunityPublishInput,
   toCommunityRecipeSummary,
   toggleCommunitySelection,
@@ -50,11 +51,12 @@ export default function CommunityPage() {
   // `?shareRecipe=<id>` từ trang chi tiết công thức: gắn sẵn món vào form, đưa con trỏ vào ô nhập, rồi xóa tham số khỏi URL.
   useEffect(() => {
     if (!shareRecipeId || sharedRecipe.isPending) return;
-    if (sharedRecipe.data) {
+    const shareError = shareRecipeError(sharedRecipe.data);
+    if (sharedRecipe.data && !shareError) {
       setAttachedRecipe(toCommunityRecipeSummary(sharedRecipe.data));
       document.getElementById(COMMUNITY_POST_INPUT_ID)?.focus();
     } else {
-      setError("Không tìm thấy công thức để chia sẻ.");
+      setError(shareError ?? "");
     }
     setSearchParams((params) => {
       params.delete(SHARE_RECIPE_PARAM);

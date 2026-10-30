@@ -12,6 +12,7 @@ export default function RecipeAttachmentCard({ recipe, onRemove }: RecipeAttachm
     <span className="community-recipe-card-copy">
       <small><BookOpen /> Công thức</small>
       <strong>{recipe.name}</strong>
+      {recipe.hidden && <em className="community-recipe-hidden">Đã ngừng sử dụng</em>}
       <span><Flame /> {recipe.calories} kcal <Clock3 /> {recipeTotalMinutes(recipe)} phút</span>
     </span>
   </>;

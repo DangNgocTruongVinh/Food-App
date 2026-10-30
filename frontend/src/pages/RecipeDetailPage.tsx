@@ -16,6 +16,7 @@ import { recipeQueries } from "../features/recipes/recipes.queries";
 export default function RecipeDetailPage() {
   const { id = "" } = useParams();
   const { data: recipe, isLoading, isError, error, refetch } = useQuery(recipeQueries.detail(id));
+  // Tải song song với chi tiết; món đã ngừng sử dụng thì backend trả 404 (không thử lại) và khối này không hiển thị.
   const forYou = useQuery(recipeQueries.forYou(id));
   // Số khẩu phần gắn với id công thức: sang món khác thì tự về số khẩu phần của món đó.
   const [servingChoice, setServingChoice] = useState<{ recipeId: string; servings: number } | null>(null);
@@ -33,7 +34,7 @@ export default function RecipeDetailPage() {
   return <div className="page recipe-detail-page">
     <nav className="recipe-detail-nav" aria-label="Điều hướng công thức"><Link to="/recipes"><ArrowLeft /> Công thức</Link></nav>
     <RecipeDetailHero recipe={recipe} />
-    <RecipeForYouAlerts data={forYou.data} />
+    {!recipe.hidden && <RecipeForYouAlerts data={forYou.data} />}
     <RecipeNutritionStrip recipe={recipe} />
 
     <div className="recipe-detail-body">
@@ -42,7 +43,9 @@ export default function RecipeDetailPage() {
       />
       <div className="recipe-detail-side">
         <RecipeStepsCard instructions={recipe.instructions} />
-        <RecipeForYouCard data={forYou.data} isLoading={forYou.isLoading} isError={forYou.isError} onRetry={() => void forYou.refetch()} />
+        {!recipe.hidden && (
+          <RecipeForYouCard data={forYou.data} isLoading={forYou.isLoading} isError={forYou.isError} onRetry={() => void forYou.refetch()} />
+        )}
       </div>
     </div>
   </div>;

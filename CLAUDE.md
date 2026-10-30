@@ -194,6 +194,14 @@ Quyết định đã chốt cho GĐ3:
   - Test dùng bản giả chung `getAccountStatus` trong `src/test/setup.ts` (`backend/vitest.config.ts`), mặc định USER chưa khóa.
   - Seed: `prisma/seed-steps.ts` (món, Admin), biến seed khai báo bằng Zod trong `src/config/seed-env.ts`; `backend/.env.example` chỉ còn tên biến; `docker-compose.yml` truyền biến seed.
   - Hạn chế: chạy lại seed không còn tự xóa bộ món cũ (trước GĐ2c); muốn bỏ hẳn thì reset database.
+  - Đã kiểm tra trên Docker: migration áp dụng; Admin đăng nhập trả `role` ADMIN, demo trả USER. Chưa có route Admin nên 403 của `requireAdmin` mới kiểm bằng test; kiểm lại trên Docker ở lượt 3.
+- [x] Lượt 2 — Món bị ẩn:
+  - Migration `20261031010000_add_recipe_hidden_at` (`Recipe.hiddenAt`, index). Điều kiện dùng chung `visibleRecipeWhere` trong `services/recipe-visibility.ts`.
+  - Lọc ở: `listRecipes` (kéo theo trang Công thức, gợi ý trang Thực đơn, ô chọn công thức khi đăng bài), `generateWeeklyPlan` (OpenAI + dự phòng; AI trả id món ẩn thì `reconcileAIPlan` thay), `assertAttachableRecipe` (422 "Món này đã ngừng sử dụng."), gợi ý Dashboard, "Dành cho bạn" (404), `/api/recipes/stats` (cả 6 số).
+  - Không lọc: chi tiết (`hidden: true`), thực đơn cũ, feed (`recipe.hidden`).
+  - Frontend tối thiểu: trang chi tiết hiện "Món này đã ngừng sử dụng", ẩn nút chia sẻ và khối "Dành cho bạn"; `?shareRecipe=` từ chối món ẩn; thẻ công thức trong bài cũ có nhãn "Đã ngừng sử dụng".
+  - Đã kiểm tra trên Docker bằng cách tạm ẩn "Cá kho tộ" (danh sách 32 món, stats 32, chi tiết `hidden`, "Dành cho bạn" 404, gắn bài 422, Dashboard không gợi ý, giao diện đúng), sau đó hiện lại.
+  - **Đang dừng ở đây:** chưa làm lượt 3 (Admin công thức).
 - [ ] Upload ảnh Cloudinary.
 - [ ] Đăng ảnh trong bài viết (làm ngay sau hạ tầng upload): lưu URL ảnh vào bài viết, hiện lại nút "Ảnh".
 - [ ] Admin: CRUD công thức, quản lý user (khóa/mở), kiểm duyệt community, thống kê.
