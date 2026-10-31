@@ -14,8 +14,9 @@ export function testApp(prefix: string, router: express.Router) {
   return app;
 }
 
+/** `form`: gửi multipart/form-data (upload ảnh); fetch tự đặt Content-Type kèm boundary. */
 export async function request(app: Express, path: string, options: {
-  method?: string; body?: unknown; token?: string;
+  method?: string; body?: unknown; token?: string; form?: FormData;
 } = {}) {
   const server = app.listen(0, "127.0.0.1");
   try {
@@ -24,10 +25,10 @@ export async function request(app: Express, path: string, options: {
     const response = await fetch(`http://127.0.0.1:${port}${path}`, {
       method: options.method ?? "GET",
       headers: {
-        ...(options.body !== undefined ? { "Content-Type": "application/json" } : {}),
+        ...(options.body !== undefined && !options.form ? { "Content-Type": "application/json" } : {}),
         ...(options.token ? { Authorization: options.token } : {}),
       },
-      body: options.body === undefined ? undefined : JSON.stringify(options.body),
+      body: options.form ?? (options.body === undefined ? undefined : JSON.stringify(options.body)),
     });
     const text = await response.text();
     return { status: response.status, body: text ? JSON.parse(text) : null };

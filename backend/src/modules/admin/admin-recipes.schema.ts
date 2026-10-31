@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { normalizeFoodText } from "../../services/dietary.service.js";
+import { isProjectImageUrl } from "../../services/image-upload.service.js";
 
 const empty = z.object({});
 const idParams = z.object({ id: z.string().cuid() });
@@ -14,8 +15,8 @@ const ingredientSchema = z.object({
 
 const nutrient = z.number().min(0).max(1000);
 
-// Ảnh: ảnh nhóm món có sẵn (/assets/...) hoặc URL https (ảnh upload ở lượt 5 dùng API riêng).
-const imageUrlSchema = z.string().trim().max(500).regex(/^(\/assets\/[\w.-]+|https:\/\/\S+)$/, "Đường dẫn ảnh không hợp lệ.");
+// Ảnh: chỉ ảnh nhóm món có sẵn (/assets/...) hoặc ảnh Cloudinary của dự án; tải ảnh mới dùng PUT /:id/image.
+const imageUrlSchema = z.string().trim().max(500).refine(isProjectImageUrl, "Ảnh phải là ảnh có sẵn (/assets) hoặc ảnh đã tải lên của Nouri.");
 
 export const recipeInputSchema = z.object({
   name: z.string().trim().min(2).max(120),

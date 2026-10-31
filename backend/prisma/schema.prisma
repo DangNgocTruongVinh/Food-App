@@ -228,6 +228,8 @@ model Recipe {
   mealTypes    MealType[]         @default([])
   cuisine      String
   imageUrl     String?
+  // publicId trên Cloudinary của ảnh do Admin tải lên (null với ảnh nhóm món /assets); dùng để xóa ảnh cũ khi thay.
+  imagePublicId String?
   // Khác null: món đã ngừng sử dụng (Admin ẩn thay vì xóa món đã được dùng). Không hiện ở danh sách, không chọn được
   // khi tạo thực đơn/đăng bài; trang chi tiết, thực đơn cũ và bài viết cũ vẫn hiển thị.
   hiddenAt     DateTime?

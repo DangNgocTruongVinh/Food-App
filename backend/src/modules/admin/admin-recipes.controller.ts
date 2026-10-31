@@ -1,7 +1,7 @@
 import type { Request, Response } from "express";
 import type { ValidatedRequest } from "../../types/http.js";
 import {
-  createRecipe, deleteRecipe, getRecipeForAdmin, listRecipesForAdmin, setRecipeVisibility, updateRecipe,
+  createRecipe, deleteRecipe, getRecipeForAdmin, listRecipesForAdmin, replaceRecipeImage, setRecipeVisibility, updateRecipe,
 } from "../recipes/recipe-management.service.js";
 import { type AdminRecipeIdParams, listAdminRecipesSchema, type RecipeInput } from "./admin-recipes.schema.js";
 
@@ -27,6 +27,11 @@ export async function setAdminRecipeVisibilityController(
   res: Response,
 ) {
   res.json(await setRecipeVisibility(req.params.id, req.body.hidden));
+}
+
+/** File ảnh đã được singleImageUpload kiểm tra (định dạng, dung lượng) trước khi tới đây. */
+export async function replaceAdminRecipeImageController(req: ValidatedRequest<unknown, AdminRecipeIdParams>, res: Response) {
+  res.json(await replaceRecipeImage(req.params.id, req.file!.buffer));
 }
 
 export async function deleteAdminRecipeController(req: ValidatedRequest<unknown, AdminRecipeIdParams>, res: Response) {

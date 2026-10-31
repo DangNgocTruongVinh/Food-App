@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { requireAdmin, requireAuth } from "../../middleware/auth.js";
+import { singleImageUpload } from "../../middleware/image-upload.js";
 import { validate } from "../../middleware/validate.js";
 import { asyncHandler } from "../../utils/async-handler.js";
 import {
@@ -7,6 +8,7 @@ import {
   deleteAdminRecipeController,
   getAdminRecipeController,
   listAdminRecipesController,
+  replaceAdminRecipeImageController,
   setAdminRecipeVisibilityController,
   updateAdminRecipeController,
 } from "./admin-recipes.controller.js";
@@ -43,6 +45,7 @@ router.post("/recipes", validate(createAdminRecipeSchema), asyncHandler(createAd
 router.get("/recipes/:id", validate(adminRecipeIdSchema), asyncHandler(getAdminRecipeController));
 router.put("/recipes/:id", validate(updateAdminRecipeSchema), asyncHandler(updateAdminRecipeController));
 router.patch("/recipes/:id/visibility", validate(setRecipeVisibilitySchema), asyncHandler(setAdminRecipeVisibilityController));
+router.put("/recipes/:id/image", validate(adminRecipeIdSchema), singleImageUpload, asyncHandler(replaceAdminRecipeImageController));
 router.delete("/recipes/:id", validate(adminRecipeIdSchema), asyncHandler(deleteAdminRecipeController));
 
 router.get("/users", validate(listAdminUsersSchema), asyncHandler(listAdminUsersController));

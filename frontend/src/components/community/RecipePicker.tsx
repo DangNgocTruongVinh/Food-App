@@ -2,6 +2,7 @@ import { Search, X } from "lucide-react";
 import { filterAttachableRecipes } from "../../features/community/community.logic";
 import { recipeImageSrc } from "../../features/recipes/recipes.logic";
 import type { Recipe } from "../../types";
+import { IMAGE_WIDTHS } from "../../utils/images";
 
 type RecipePickerProps = {
   recipes?: Recipe[];
@@ -31,7 +32,7 @@ export default function RecipePicker({ recipes, isLoading, isError, query, onQue
     {results.length > 0 && <ul>
       {results.map((recipe) => <li key={recipe.id}>
         <button type="button" onClick={() => onSelect(recipe)}>
-          <img src={recipeImageSrc(recipe)} alt="" />
+          <img src={recipeImageSrc(recipe, IMAGE_WIDTHS.thumb)} alt="" />
           <span><strong>{recipe.name}</strong><small>{recipe.calories} kcal · {recipe.prepMinutes + recipe.cookMinutes} phút</small></span>
         </button>
       </li>)}

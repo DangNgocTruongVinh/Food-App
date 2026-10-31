@@ -218,7 +218,16 @@ Quyết định đã chốt cho GĐ3:
   - Thống kê `GET /api/admin/stats`: tổng (người dùng, số bị khóa, thực đơn, bài viết, công thức, số đang ẩn) + 12 tuần giờ Việt Nam, tuần bắt đầu thứ Hai, tuần trống = 0 (`admin-stats.logic.ts`; gom theo tuần ở ứng dụng, dữ liệu lớn thì chuyển sang SQL).
   - Test: ma trận phân quyền 6 API mới, khóa/mở khóa và các ca cấm, xóa bài/bình luận kèm thông báo, xóa bài người khác → 404 và bài còn nguyên, ranh giới tuần (Chủ nhật 23:59 / thứ Hai 00:00 giờ Việt Nam).
   - Đã kiểm tra trên Docker: khóa demo → API Kho 403 `ACCOUNT_LOCKED` (token cũ), đăng nhập đúng mật khẩu 403, sai mật khẩu 401; mở khóa → dùng lại bình thường; Admin tự khóa → 400; bài thử của demo có bình luận + like (2 thông báo) → Admin xóa → bài, bình luận, thông báo đều 0; `/admin/stats` khớp DB (tổng và theo tuần). Đã dọn dữ liệu thử, demo đang mở khóa.
-  - **Đang dừng ở đây:** chưa làm lượt 5 (Cloudinary + ảnh công thức).
+- [x] Lượt 5 — Cloudinary + ảnh công thức:
+  - Thư viện `multer` (bộ nhớ) và `cloudinary`. Biến `CLOUDINARY_CLOUD_NAME/API_KEY/API_SECRET` trong `env.ts` (đủ cả ba hoặc không có; giá trị rỗng từ docker compose coi như không có), hai file `.env.example`, `docker-compose.yml`. Nginx frontend nâng `client_max_body_size` lên 6m cho `/api/` (mặc định 1 MB sẽ chặn ảnh).
+  - `services/image-file.ts` (nhận dạng jpg/png/webp theo byte đầu file, tối đa 5 MB), `services/image-upload.service.ts` (upload vào `nouri/recipes`/`nouri/posts`, lỗi Cloudinary → 502, `deleteImageQuietly` chỉ ghi log, `isProjectImageUrl`), `middleware/image-upload.ts` (trường `image`; chưa cấu hình → 503 trước khi đọc file; quá 5 MB, thiếu file, sai định dạng → 422).
+  - `PUT /api/admin/recipes/:id/image`: upload → lưu `imageUrl` + `imagePublicId` (migration `20261031020000_add_recipe_image_public_id`) → lưu lỗi thì xóa ảnh vừa upload; lưu xong mới xóa ảnh cũ. `PUT /:id` đổi sang ảnh khác (vd. về ảnh nhóm `/assets`) cũng bỏ liên kết và xóa ảnh Cloudinary cũ.
+  - `imageUrl` chỉ nhận `/assets/...` hoặc ảnh Cloudinary của đúng cloud name, trong thư mục `nouri/`.
+  - Frontend `utils/images.ts`: `optimizedImageUrl` thêm `f_auto,q_auto,c_limit,w_...` cho ảnh Cloudinary (thẻ 640, chi tiết 1200, ảnh nhỏ 160); `recipeImageSrc` và ảnh gợi ý Dashboard dùng hàm này (lượt 6 dùng lại cho ảnh bài viết).
+  - Test (giả lập Cloudinary): ma trận phân quyền API mới, 503 khi chưa cấu hình, GIF, file chữ đổi đuôi `.jpg`, quá 5 MB, thiếu file, 404, thay ảnh xóa ảnh cũ (sau khi lưu DB), DB lỗi thì xóa ảnh vừa upload, `imageUrl` ngoài phạm vi → 422, biến môi trường thiếu một phần → lỗi.
+  - Đã kiểm tra trên Docker với Cloudinary thật: upload ảnh thử cho "Cá kho tộ" → hiện ở trang Công thức (bản 640px) và trang chi tiết (bản ≤ 1200px); thay ảnh lần hai → ảnh lần một bị xóa trên Cloudinary; trả về ảnh `/assets/recipe-salmon.jpg` → ảnh lần hai bị xóa, thư mục `nouri/recipes` trống. (Bước trả về dùng `PUT /:id` nên nguyên liệu được ghi lại, nội dung không đổi.)
+  - Còn lại cho lượt 6: xóa EXIF (GPS) khỏi ảnh bài viết; `npm audit` có lỗ hổng sẵn từ trước ở axios, prisma, express/body-parser, zod (không do gói mới), chưa xử lý.
+  - **Đang dừng ở đây:** chưa làm lượt 6 (ảnh bài viết).
 - [ ] Upload ảnh Cloudinary.
 - [ ] Đăng ảnh trong bài viết (làm ngay sau hạ tầng upload): lưu URL ảnh vào bài viết, hiện lại nút "Ảnh".
 - [ ] Admin: CRUD công thức, quản lý user (khóa/mở), kiểm duyệt community, thống kê.

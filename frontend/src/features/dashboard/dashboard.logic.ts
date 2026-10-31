@@ -2,6 +2,7 @@ import { differenceInCalendarDays, format } from "date-fns";
 import { vi } from "date-fns/locale";
 import { Moon, Sun, Sunrise } from "lucide-react";
 import type { DashboardData, DashboardRecommendedRecipe, MealType } from "../../types";
+import { IMAGE_WIDTHS, optimizedImageUrl } from "../../utils/images";
 import { recipeDetailPath } from "../recipes/recipes.logic";
 
 export const dashboardMealLabels: Record<MealType, string> = {
@@ -71,7 +72,7 @@ export function recommendedRecipePath(recipeId: string, isRealRecipe: boolean) {
 
 /** Ảnh công thức (imageUrl) nếu có; món mẫu dự phòng dùng ảnh gợi ý cố định, rồi ảnh theo tên. */
 export function recommendedRecipeImage(index: number, recipe: Pick<DashboardRecommendedRecipe, "name" | "imageUrl">) {
-  return recipe.imageUrl || (dashboardSuggestionImages[index] ?? dashboardMealImage(recipe.name));
+  return recipe.imageUrl ? optimizedImageUrl(recipe.imageUrl, IMAGE_WIDTHS.card) : (dashboardSuggestionImages[index] ?? dashboardMealImage(recipe.name));
 }
 
 /** Dòng phụ dưới tên món gợi ý: ưu tiên nguyên liệu sắp hết hạn, rồi nguyên liệu trong kho; không dùng gì trong kho thì ẩn. */

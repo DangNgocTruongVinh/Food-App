@@ -3,11 +3,12 @@ import { Link } from "react-router-dom";
 import { communityShareRecipePath } from "../../features/community/community.logic";
 import { recipeDietLabel, recipeImageSrc, recipeTotalMinutes } from "../../features/recipes/recipes.logic";
 import type { Recipe } from "../../types";
+import { IMAGE_WIDTHS } from "../../utils/images";
 import { RecipeBackLink } from "./RecipeDetailStates";
 
 export default function RecipeDetailHero({ recipe }: { recipe: Recipe }) {
   return <header className="recipe-detail-hero">
-    <img src={recipeImageSrc(recipe)} alt={recipe.name} />
+    <img src={recipeImageSrc(recipe, IMAGE_WIDTHS.hero)} alt={recipe.name} />
     <div className="recipe-detail-intro">
       <div className="recipe-detail-tags"><b>{recipe.cuisine}</b>{recipe.dietTags.map((tag) => <b key={tag}>{recipeDietLabel(tag)}</b>)}</div>
       <h1>{recipe.name}</h1>

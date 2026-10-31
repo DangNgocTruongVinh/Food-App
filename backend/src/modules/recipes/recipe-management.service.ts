@@ -1,6 +1,7 @@
 import { Prisma } from "@prisma/client";
 import { prisma } from "../../lib/prisma.js";
 import { findDietViolations, normalizeDietTags } from "../../services/dietary.service.js";
+import { deleteImageQuietly, IMAGE_FOLDERS, uploadImage } from "../../services/image-upload.service.js";
 import { HttpError } from "../../utils/http-error.js";
 import { nextAvailableSlug, slugifyVietnamese } from "../../utils/slug.js";
 import type { AdminRecipeListQuery, RecipeInput } from "../admin/admin-recipes.schema.js";
@@ -81,12 +82,40 @@ export async function createRecipe(input: RecipeInput) {
  */
 export async function updateRecipe(id: string, input: RecipeInput) {
   const { data, ingredients } = prepareRecipeData(input);
-  if (!(await prisma.recipe.findUnique({ where: { id }, select: { id: true } }))) throw new HttpError(404, NOT_FOUND);
-  return prisma.recipe.update({
+  const current = await prisma.recipe.findUnique({ where: { id }, select: { id: true, imageUrl: true, imagePublicId: true } });
+  if (!current) throw new HttpError(404, NOT_FOUND);
+  // Đổi sang ảnh khác (vd. về ảnh nhóm món) thì bỏ liên kết ảnh Cloudinary cũ và xóa nó sau khi lưu xong.
+  const replacesUploadedImage = Boolean(current.imagePublicId) && data.imageUrl !== current.imageUrl;
+  const updated = await prisma.recipe.update({
     where: { id },
-    data: { ...data, ingredients: { deleteMany: {}, create: ingredients } },
+    data: { ...data, ...(replacesUploadedImage ? { imagePublicId: null } : {}), ingredients: { deleteMany: {}, create: ingredients } },
     include: { ingredients: true },
   });
+  if (replacesUploadedImage) await deleteImageQuietly(current.imagePublicId);
+  return updated;
+}
+
+/**
+ * Thay ảnh món bằng ảnh vừa tải lên (thư mục nouri/recipes). Lưu DB lỗi thì xóa ảnh vừa tải để không để ảnh mồ côi;
+ * lưu xong mới xóa ảnh cũ (lỗi chỉ ghi log).
+ */
+export async function replaceRecipeImage(id: string, file: Buffer) {
+  const current = await prisma.recipe.findUnique({ where: { id }, select: { id: true, imagePublicId: true } });
+  if (!current) throw new HttpError(404, NOT_FOUND);
+  const uploaded = await uploadImage(file, IMAGE_FOLDERS.recipes);
+  let updated;
+  try {
+    updated = await prisma.recipe.update({
+      where: { id },
+      data: { imageUrl: uploaded.url, imagePublicId: uploaded.publicId },
+      select: { id: true, imageUrl: true, imagePublicId: true },
+    });
+  } catch (error) {
+    await deleteImageQuietly(uploaded.publicId);
+    throw error;
+  }
+  if (current.imagePublicId && current.imagePublicId !== uploaded.publicId) await deleteImageQuietly(current.imagePublicId);
+  return updated;
 }
 
 /** Ẩn (ngừng sử dụng) hoặc hiện lại; ẩn lại món đã ẩn thì giữ thời điểm ẩn ban đầu. */

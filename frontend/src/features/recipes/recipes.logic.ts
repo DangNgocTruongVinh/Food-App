@@ -1,4 +1,5 @@
 import type { FoodUnit, Ingredient, Recipe } from "../../types";
+import { IMAGE_WIDTHS, optimizedImageUrl } from "../../utils/images";
 import { foodUnitLabel } from "../../utils/units";
 
 export type RecipeCategory = "all" | "vietnamese" | "international" | "breakfast" | "healthy" | "low-carb" | "vegetarian";
@@ -64,8 +65,9 @@ export function paginateRecipes(recipes: Recipe[], pageIndex: number, pageSize: 
 }
 
 // Ảnh do Admin upload (imageUrl) được ưu tiên; chưa có thì dùng ảnh minh họa local theo tên món.
-export function recipeImageSrc(recipe: Pick<Recipe, "name" | "imageUrl">) {
-  return recipe.imageUrl || recipeImage(recipe.name);
+// Ảnh Cloudinary được tối ưu theo chiều rộng hiển thị (mặc định khổ thẻ).
+export function recipeImageSrc(recipe: Pick<Recipe, "name" | "imageUrl">, width: number = IMAGE_WIDTHS.card) {
+  return optimizedImageUrl(recipe.imageUrl || recipeImage(recipe.name), width);
 }
 
 export function recipeDetailPath(id: string) {
