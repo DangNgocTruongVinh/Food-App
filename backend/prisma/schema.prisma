@@ -114,6 +114,7 @@ model CommunityPost {
   // Công thức có sẵn được gắn kèm (tùy chọn). Restrict: công thức đã được bài viết gắn thì không xóa hẳn được (GĐ3: chỉ ẩn).
   recipeId  String?
   recipe    Recipe?            @relation(fields: [recipeId], references: [id], onDelete: Restrict)
+  images    CommunityPostImage[]
   likes     CommunityLike[]
   comments  CommunityComment[]
   createdAt DateTime           @default(now())
@@ -122,6 +123,19 @@ model CommunityPost {
   @@index([createdAt])
   @@index([authorId, createdAt])
   @@index([recipeId])
+}
+
+// Ảnh trong bài viết (tối đa 4, lưu trên Cloudinary thư mục nouri/posts, đã xóa EXIF/GPS trước khi tải lên).
+model CommunityPostImage {
+  id        String        @id @default(cuid())
+  postId    String
+  post      CommunityPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  url       String
+  publicId  String
+  position  Int
+  createdAt DateTime      @default(now())
+
+  @@index([postId, position])
 }
 
 model CommunityLike {

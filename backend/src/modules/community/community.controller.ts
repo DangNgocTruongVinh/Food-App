@@ -23,7 +23,8 @@ export async function createCommunityPostController(
   req: ValidatedRequest<CreateCommunityPostBody>,
   res: Response,
 ) {
-  res.status(201).json(await createCommunityPost(authenticatedUserId(req), req.body));
+  const files = (req.files as Express.Multer.File[] | undefined) ?? [];
+  res.status(201).json(await createCommunityPost(authenticatedUserId(req), req.body, files.map((file) => file.buffer)));
 }
 
 /** "Xóa bài của tôi": chỉ tác giả (userId từ JWT); bài người khác hoặc không tồn tại → 404. */

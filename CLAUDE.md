@@ -227,7 +227,14 @@ Quyết định đã chốt cho GĐ3:
   - Test (giả lập Cloudinary): ma trận phân quyền API mới, 503 khi chưa cấu hình, GIF, file chữ đổi đuôi `.jpg`, quá 5 MB, thiếu file, 404, thay ảnh xóa ảnh cũ (sau khi lưu DB), DB lỗi thì xóa ảnh vừa upload, `imageUrl` ngoài phạm vi → 422, biến môi trường thiếu một phần → lỗi.
   - Đã kiểm tra trên Docker với Cloudinary thật: upload ảnh thử cho "Cá kho tộ" → hiện ở trang Công thức (bản 640px) và trang chi tiết (bản ≤ 1200px); thay ảnh lần hai → ảnh lần một bị xóa trên Cloudinary; trả về ảnh `/assets/recipe-salmon.jpg` → ảnh lần hai bị xóa, thư mục `nouri/recipes` trống. (Bước trả về dùng `PUT /:id` nên nguyên liệu được ghi lại, nội dung không đổi.)
   - Còn lại cho lượt 6: xóa EXIF (GPS) khỏi ảnh bài viết; `npm audit` có lỗ hổng sẵn từ trước ở axios, prisma, express/body-parser, zod (không do gói mới), chưa xử lý.
-  - **Đang dừng ở đây:** chưa làm lượt 6 (ảnh bài viết).
+- [ ] Lượt 6 — Ảnh trong bài viết (code xong, đã commit; **chưa kiểm tra trên Docker** vì ổ C: hết dung lượng, Docker không build được):
+  - Model `CommunityPostImage` (`postId`, `url`, `publicId`, `position`, xóa theo bài), migration `20261031030000_add_community_post_images`.
+  - `POST /api/community` nhận JSON như cũ hoặc multipart (`content`, `recipeId`, `images` ≤ 4) qua `communityPostImagesUpload`; bài cần có chữ, công thức hoặc ảnh (kiểm tra trong service, 422). Có ảnh mà chưa cấu hình Cloudinary → 503; bài không ảnh vẫn đăng được.
+  - Xóa EXIF bằng **sharp** (`services/image-sanitize.ts`): giải mã, `rotate()` theo tag Orientation (ảnh giữ đúng chiều), mã hóa lại cùng định dạng không kèm metadata (JPEG/WEBP chất lượng 90), chặn ảnh > 40 MP; ảnh hỏng → 422. Làm **trước** khi tải lên nên bản gốc trên Cloudinary không còn GPS.
+  - Tải lần lượt vào `nouri/posts`; ảnh sau lỗi thì xóa các ảnh đã tải; tạo bài (nested create) lỗi thì xóa toàn bộ ảnh đã tải. `deleteCommunityPost` (Admin và "xóa bài của tôi") xóa ảnh Cloudinary sau khi transaction thành công (lỗi chỉ ghi log). Feed, bài vừa đăng và danh sách kiểm duyệt trả `images: [{ url, position }]`.
+  - Frontend: nút "Ảnh" hiện lại (chọn nhiều, tối đa 4), xem trước + bỏ từng ảnh (`ComposerImagePreviews`), báo lỗi định dạng/dung lượng/số ảnh trước khi gửi (`addCommunityImages`), gửi multipart khi có ảnh; ảnh trong bài (`PostImages`) dùng `optimizedImageUrl` khổ thẻ.
+  - Test: quá 4 ảnh, sai định dạng, quá 5 MB, bài chỉ có ảnh, JSON cũ vẫn chạy, tạo bài lỗi/ảnh sau lỗi thì xóa ảnh đã tải, xóa bài thì xóa ảnh, chưa cấu hình → 503 nhưng bài không ảnh vẫn đăng, ảnh gửi lên Cloudinary không còn EXIF/GPS và đã xoay đúng.
+  - **Đang dừng ở đây:** chạy lại kịch bản Docker của lượt 6 (ảnh có GPS + 1 ảnh khác bằng demo, tải bản gốc kiểm tra GPS, xem bài trên máy tính và điện thoại, "xóa bài của tôi" → `nouri/posts` trống, dọn dữ liệu thử) sau khi ổ C: có chỗ trống; Docker cũng cần build lại để có `sharp` trong container.
 - [ ] Upload ảnh Cloudinary.
 - [ ] Đăng ảnh trong bài viết (làm ngay sau hạ tầng upload): lưu URL ảnh vào bài viết, hiện lại nút "Ảnh".
 - [ ] Admin: CRUD công thức, quản lý user (khóa/mở), kiểm duyệt community, thống kê.
@@ -244,6 +251,7 @@ Quyết định đã chốt cho GĐ3:
 ### Giai đoạn 4 — Bảo mật tài khoản
 - [ ] Access token ngắn hạn + refresh token lưu DB, endpoint refresh/logout, interceptor tự refresh.
 - [ ] Quên/đặt lại mật khẩu qua email (token reset có hạn, dùng 1 lần).
+- [ ] Xử lý lỗ hổng `npm audit` (hiện có ở axios, prisma, express/body-parser, zod…): ưu tiên nâng bản vá/minor an toàn; bản major thì **báo người dùng trước** khi nâng. Nâng xong chạy lại toàn bộ test (backend, frontend) và build.
 
 ### Chỉnh UI các trang cũ (khoảng 20–23/11/2026)
 - [ ] Chỉnh UI các trang cũ theo hướng thiết kế đã chốt. Mỗi trang: tách component trước (nếu chưa tách), commit riêng, so ảnh trước/sau trên máy tính và điện thoại.

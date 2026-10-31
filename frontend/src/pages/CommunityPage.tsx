@@ -16,6 +16,7 @@ import {
   SHARE_RECIPE_PARAM,
   shareRecipeError,
   toCommunityPublishInput,
+  addCommunityImages,
   toCommunityRecipeSummary,
   toggleCommunitySelection,
 } from "../features/community/community.logic";
@@ -37,6 +38,8 @@ export default function CommunityPage() {
   const shareRecipeId = searchParams.get(SHARE_RECIPE_PARAM);
   const [postContent, setPostContent] = useState("");
   const [attachedRecipe, setAttachedRecipe] = useState<CommunityRecipeSummary | null>(null);
+  const [attachedImages, setAttachedImages] = useState<File[]>([]);
+  const [imageError, setImageError] = useState<string | null>(null);
   const [isPickerOpen, setPickerOpen] = useState(false);
   const [recipeQuery, setRecipeQuery] = useState("");
   const [commentDrafts, setCommentDrafts] = useState<Record<string, string>>({});
@@ -78,6 +81,8 @@ export default function CommunityPage() {
       prependCommunityPost(queryClient, post);
       setPostContent("");
       setAttachedRecipe(null);
+      setAttachedImages([]);
+      setImageError(null);
       setPickerOpen(false);
       setRecipeQuery("");
       setError("");
@@ -103,7 +108,7 @@ export default function CommunityPage() {
 
   const submitPost = (event: FormEvent) => {
     event.preventDefault();
-    const input = toCommunityPublishInput(postContent, attachedRecipe);
+    const input = toCommunityPublishInput(postContent, attachedRecipe, attachedImages);
     if (input) publish.mutate(input);
   };
 
@@ -121,7 +126,17 @@ export default function CommunityPage() {
         <main className="community-feed">
           <PostComposer
             userName={user?.name} value={postContent} onChange={setPostContent} onSubmit={submitPost} isPending={publish.isPending}
-            canPublish={toCommunityPublishInput(postContent, attachedRecipe) !== null}
+            canPublish={toCommunityPublishInput(postContent, attachedRecipe, attachedImages) !== null}
+            images={attachedImages} imageError={imageError}
+            onAddImages={(files) => {
+              const result = addCommunityImages(attachedImages, files);
+              setAttachedImages(result.images);
+              setImageError(result.error);
+            }}
+            onRemoveImage={(index) => {
+              setAttachedImages((images) => images.filter((_, position) => position !== index));
+              setImageError(null);
+            }}
             attachedRecipe={attachedRecipe} onRemoveRecipe={() => setAttachedRecipe(null)}
             isPickerOpen={isPickerOpen} onTogglePicker={() => setPickerOpen((open) => !open)}
             picker={<RecipePicker

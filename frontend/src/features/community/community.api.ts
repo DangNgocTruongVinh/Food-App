@@ -18,10 +18,19 @@ export async function listCommunityPosts() {
 export interface PublishCommunityPostInput {
   content: string;
   recipeId?: string;
+  images?: File[];
 }
 
-export async function publishCommunityPost({ content, recipeId }: PublishCommunityPostInput) {
-  return (await api.post<CommunityPost>("/community", { content, ...(recipeId ? { recipeId } : {}) })).data;
+/** Có ảnh thì gửi multipart (trường "images"), không có thì gửi JSON như trước. */
+export async function publishCommunityPost({ content, recipeId, images = [] }: PublishCommunityPostInput) {
+  if (!images.length) {
+    return (await api.post<CommunityPost>("/community", { content, ...(recipeId ? { recipeId } : {}) })).data;
+  }
+  const form = new FormData();
+  form.append("content", content);
+  if (recipeId) form.append("recipeId", recipeId);
+  for (const image of images) form.append("images", image, image.name);
+  return (await api.post<CommunityPost>("/community", form)).data;
 }
 
 export async function toggleCommunityLike(postId: string) {

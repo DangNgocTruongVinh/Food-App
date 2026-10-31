@@ -1,7 +1,8 @@
-import { BookOpen, Send } from "lucide-react";
+import { BookOpen, ImagePlus, Send } from "lucide-react";
 import type { FormEvent, ReactNode } from "react";
-import { COMMUNITY_POST_MAX_LENGTH, communityInitials } from "../../features/community/community.logic";
+import { COMMUNITY_IMAGE_TYPES, COMMUNITY_MAX_IMAGES, COMMUNITY_POST_MAX_LENGTH, communityInitials } from "../../features/community/community.logic";
 import type { CommunityRecipeSummary } from "../../types";
+import ComposerImagePreviews from "./ComposerImagePreviews";
 import RecipeAttachmentCard from "./RecipeAttachmentCard";
 
 export const COMMUNITY_POST_INPUT_ID = "community-post";
@@ -19,6 +20,10 @@ type PostComposerProps = {
   onTogglePicker: () => void;
   /** Ô chọn công thức, hiện ngay dưới khung nhập khi đang mở. */
   picker?: ReactNode;
+  images: File[];
+  imageError: string | null;
+  onAddImages: (files: File[]) => void;
+  onRemoveImage: (index: number) => void;
 };
 
 export default function PostComposer(props: PostComposerProps) {
@@ -37,9 +42,20 @@ export default function PostComposer(props: PostComposerProps) {
       />
       {props.isPickerOpen && props.picker}
       {attachedRecipe && <RecipeAttachmentCard recipe={attachedRecipe} onRemove={props.onRemoveRecipe} />}
+      <ComposerImagePreviews images={props.images} onRemove={props.onRemoveImage} />
+      {props.imageError && <p className="community-image-error" role="alert">{props.imageError}</p>}
       <footer className="community-composer-footer">
-        {/* Nút "Ảnh" hiện lại ở GĐ3 (sau hạ tầng upload). */}
         <div className="community-composer-tools" aria-label="Loại nội dung">
+          <label className={`community-image-tool${props.images.length >= COMMUNITY_MAX_IMAGES ? " disabled" : ""}`} title="Thêm ảnh">
+            <ImagePlus /> <span>Ảnh</span>
+            <input
+              type="file" accept={COMMUNITY_IMAGE_TYPES.join(",")} multiple hidden disabled={props.images.length >= COMMUNITY_MAX_IMAGES}
+              onChange={(event) => {
+                props.onAddImages(Array.from(event.target.files ?? []));
+                event.target.value = "";
+              }}
+            />
+          </label>
           <button
             type="button" className="community-recipe-tool" title="Chia sẻ công thức"
             aria-expanded={props.isPickerOpen} onClick={props.onTogglePicker}

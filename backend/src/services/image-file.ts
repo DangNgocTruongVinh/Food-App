@@ -2,6 +2,7 @@
 // vì mimetype và đuôi file do trình duyệt gửi lên có thể giả mạo.
 
 export const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
+export const MAX_POST_IMAGES = 4;
 export type ImageFormat = "jpg" | "png" | "webp";
 
 const startsWith = (buffer: Buffer, bytes: number[], offset = 0) => bytes.every((byte, index) => buffer[offset + index] === byte);

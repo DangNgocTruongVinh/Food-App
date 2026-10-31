@@ -19,6 +19,8 @@ export interface CommunityRecipeSummary {
 export interface CommunityPost {
   id: string; content: string; createdAt: string; updatedAt: string; author: CommunityAuthor;
   recipe: CommunityRecipeSummary | null;
+  /** Ảnh trong bài (tối đa 4), URL Cloudinary gốc; hiển thị qua optimizedImageUrl. */
+  images: Array<{ url: string; position: number }>;
   likedByMe: boolean; likeCount: number; commentCount: number; comments: CommunityComment[];
 }
 

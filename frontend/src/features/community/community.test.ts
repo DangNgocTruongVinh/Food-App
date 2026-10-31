@@ -22,6 +22,8 @@ import {
   filterAttachableRecipes,
   normalizeSearchText,
   SHARE_RECIPE_PARAM,
+  addCommunityImages,
+  COMMUNITY_MAX_IMAGES,
   shareRecipeError,
   toCommunityPublishInput,
   toCommunityRecipeSummary,
@@ -54,6 +56,7 @@ const post: CommunityPost = {
   updatedAt: "2026-09-15T08:00:00.000Z",
   author,
   recipe: null,
+  images: [],
   likedByMe: false,
   likeCount: 2,
   commentCount: 0,
@@ -293,5 +296,43 @@ describe("Sharing a discontinued recipe", () => {
     expect(shareRecipeError({ hidden: true })).toBe("Món này đã ngừng sử dụng.");
     expect(shareRecipeError({ hidden: false })).toBeNull();
     expect(shareRecipeError({})).toBeNull();
+  });
+});
+
+describe("Images in a post (checked before sending)", () => {
+  const file = (name: string, type = "image/jpeg", size = 1000) => ({ name, type, size });
+
+  it("adds JPG/PNG/WEBP images up to 4 and reports the first problem", () => {
+    const four = ["a", "b", "c", "d"].map((name) => file(`${name}.jpg`));
+    expect(COMMUNITY_MAX_IMAGES).toBe(4);
+    expect(addCommunityImages([], four)).toEqual({ images: four, error: null });
+    expect(addCommunityImages(four, [file("e.jpg")])).toEqual({ images: four, error: "Mỗi bài tối đa 4 ảnh." });
+  });
+
+  it("skips a wrong type or a file over 5 MB but keeps the valid ones", () => {
+    const result = addCommunityImages([], [file("a.gif", "image/gif"), file("b.png", "image/png", 6 * 1024 * 1024), file("c.webp", "image/webp")]);
+    expect(result.images.map((image) => image.name)).toEqual(["c.webp"]);
+    expect(result.error).toBe("\"a.gif\" không phải ảnh JPG, PNG hoặc WEBP.");
+    expect(addCommunityImages([], [file("b.png", "image/png", 6 * 1024 * 1024)]).error).toBe("\"b.png\" vượt quá 5 MB.");
+  });
+
+  it("lets a post with only images be published", () => {
+    const images = [new File(["x"], "a.jpg", { type: "image/jpeg" })];
+    expect(toCommunityPublishInput("  ", null, images)).toEqual({ content: "", images });
+    expect(toCommunityPublishInput("  ", null, [])).toBeNull();
+  });
+
+  it("sends multipart with the images field when there are images, JSON otherwise", async () => {
+    const adapter = vi.fn(async (config) => ({ config, data: post, status: 201, statusText: "Created", headers: {} }));
+    api.defaults.adapter = adapter;
+    const image = new File(["x"], "a.jpg", { type: "image/jpeg" });
+    await publishCommunityPost({ content: "Bữa trưa", recipeId: "recipe-a", images: [image] });
+    const body = adapter.mock.calls[0][0].data as FormData;
+    expect(body).toBeInstanceOf(FormData);
+    expect(body.get("content")).toBe("Bữa trưa");
+    expect(body.get("recipeId")).toBe("recipe-a");
+    expect(body.getAll("images")).toHaveLength(1);
+    await publishCommunityPost({ content: "Bữa tối", images: [] });
+    expect(JSON.parse(adapter.mock.calls[1][0].data)).toEqual({ content: "Bữa tối" });
   });
 });

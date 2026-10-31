@@ -40,11 +40,31 @@ export function normalizeCommunityContent(value: string) {
   return normalized || null;
 }
 
-/** Bài viết cần có chữ hoặc công thức đính kèm; trả về dữ liệu gửi API hoặc null nếu chưa đăng được. */
-export function toCommunityPublishInput(content: string, recipe: Pick<CommunityRecipeSummary, "id"> | null) {
+/** Bài viết cần có chữ, công thức hoặc ảnh; trả về dữ liệu gửi API hoặc null nếu chưa đăng được. */
+export function toCommunityPublishInput(content: string, recipe: Pick<CommunityRecipeSummary, "id"> | null, images: File[] = []) {
   const normalized = content.trim();
-  if (!normalized && !recipe) return null;
-  return { content: normalized, ...(recipe ? { recipeId: recipe.id } : {}) };
+  if (!normalized && !recipe && !images.length) return null;
+  return { content: normalized, ...(recipe ? { recipeId: recipe.id } : {}), ...(images.length ? { images } : {}) };
+}
+
+// Kiểm tra trước khi gửi, khớp với backend (backend vẫn kiểm tra lại theo byte đầu file).
+export const COMMUNITY_MAX_IMAGES = 4;
+export const COMMUNITY_IMAGE_MAX_BYTES = 5 * 1024 * 1024;
+export const COMMUNITY_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
+
+type ImageCandidate = { name: string; type: string; size: number };
+
+/** Thêm ảnh vừa chọn vào danh sách: bỏ ảnh sai định dạng, quá 5 MB hoặc vượt 4 ảnh, kèm lời báo lỗi đầu tiên gặp. */
+export function addCommunityImages<T extends ImageCandidate>(current: T[], incoming: T[]) {
+  const images = [...current];
+  let error: string | null = null;
+  for (const file of incoming) {
+    if (!COMMUNITY_IMAGE_TYPES.includes(file.type)) error ??= `"${file.name}" không phải ảnh JPG, PNG hoặc WEBP.`;
+    else if (file.size > COMMUNITY_IMAGE_MAX_BYTES) error ??= `"${file.name}" vượt quá 5 MB.`;
+    else if (images.length >= COMMUNITY_MAX_IMAGES) error ??= `Mỗi bài tối đa ${COMMUNITY_MAX_IMAGES} ảnh.`;
+    else images.push(file);
+  }
+  return { images, error };
 }
 
 export const COMMUNITY_RECIPE_PICKER_LIMIT = 8;

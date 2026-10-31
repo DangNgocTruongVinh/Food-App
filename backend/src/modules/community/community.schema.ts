@@ -9,14 +9,12 @@ export const listCommunityPostsSchema = z.object({
   query: empty,
 });
 
-// Bài viết cần có chữ hoặc công thức đính kèm (hoặc cả hai); chỉ có công thức thì nội dung lưu "".
+// Gửi JSON hoặc multipart (kèm trường "images"). Điều kiện "có chữ, công thức hoặc ảnh" kiểm tra trong service
+// vì cần biết số ảnh; bài không có chữ thì nội dung lưu "".
 export const createCommunityPostSchema = z.object({
   body: z.object({
     content: z.string().trim().max(2000).default(""),
     recipeId: z.string().cuid().optional(),
-  }).refine((body) => body.content.length > 0 || body.recipeId !== undefined, {
-    message: "Bài viết cần có nội dung hoặc công thức.",
-    path: ["content"],
   }),
   params: empty,
   query: empty,

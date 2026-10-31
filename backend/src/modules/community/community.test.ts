@@ -57,6 +57,7 @@ const recipeSummary = {
 const recipeSelect = { id: true, name: true, imageUrl: true, calories: true, prepMinutes: true, cookMinutes: true, hiddenAt: true };
 // Bản ghi DB có hiddenAt; phản hồi API thay bằng cờ hidden.
 const recipeRow = { ...recipeSummary, hiddenAt: null };
+const imagesSelect = { select: { url: true, position: true }, orderBy: { position: "asc" } };
 const recipeResponse = { ...recipeSummary, hidden: false };
 const basePost = { id: postId, authorId: ownerId, content: "Bữa trưa", recipeId: null, recipe: null, createdAt, updatedAt: createdAt, author };
 const createdComment = {
@@ -152,6 +153,7 @@ describe("Community HTTP contract (mock Prisma, no database)", () => {
       include: {
         author: { select: { id: true, name: true } },
         recipe: { select: recipeSelect },
+        images: imagesSelect,
         likes: { where: { userId }, select: { userId: true } },
         comments: {
           orderBy: { createdAt: "asc" },
@@ -178,7 +180,7 @@ describe("Community HTTP contract (mock Prisma, no database)", () => {
     });
     expect(mocks.createPost).toHaveBeenCalledWith({
       data: { authorId: userId, content: "Bữa trưa", recipeId: null },
-      include: { author: { select: { id: true, name: true } }, recipe: { select: recipeSelect } },
+      include: { author: { select: { id: true, name: true } }, recipe: { select: recipeSelect }, images: imagesSelect },
     });
     expect(mocks.findRecipe).not.toHaveBeenCalled();
   });
@@ -202,7 +204,7 @@ describe("Community HTTP contract (mock Prisma, no database)", () => {
     expect(mocks.findRecipe).toHaveBeenCalledWith({ where: { id: recipeId }, select: { id: true, hiddenAt: true } });
     expect(mocks.createPost).toHaveBeenCalledWith({
       data: { authorId: userId, content: "Món tối nay", recipeId },
-      include: { author: { select: { id: true, name: true } }, recipe: { select: recipeSelect } },
+      include: { author: { select: { id: true, name: true } }, recipe: { select: recipeSelect }, images: imagesSelect },
     });
   });
 

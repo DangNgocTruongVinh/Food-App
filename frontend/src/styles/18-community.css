@@ -555,3 +555,22 @@ a.community-recipe-card:hover { border-color: #b9d7a6; box-shadow: 0 8px 18px rg
 
 /* GĐ3: thẻ công thức của món đã ngừng sử dụng trong bài viết cũ. */
 .community-recipe-hidden { color: #a0671a; font-size: .6875rem; font-style: normal; font-weight: 700; }
+
+/* GĐ3: ảnh trong bài viết (giao diện tối thiểu, làm lại ở bước chỉnh UI). */
+.community-composer .community-image-tool { min-height: 34px; padding: 6px 10px; border-radius: 9px; color: #78817d; display: inline-flex; align-items: center; gap: 7px; font-size: .75rem; font-weight: 650; cursor: pointer; }
+.community-composer .community-image-tool:hover { color: #4b8a35; background: #f3f8ed; }
+.community-composer .community-image-tool.disabled { opacity: .45; cursor: not-allowed; }
+.community-composer .community-image-tool svg { width: 16px; height: 16px; }
+.community-composer .community-image-tool span { display: inline; }
+.community-image-previews { margin: 10px 0 0; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.community-image-previews li { position: relative; aspect-ratio: 1; border-radius: 12px; overflow: hidden; background: #eef2ec; }
+.community-image-previews img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.community-composer .community-image-previews button { position: absolute; top: 5px; right: 5px; width: 24px; height: 24px; padding: 0; border: 0; border-radius: 50%; color: #3f4d47; background: rgba(255,255,255,.9); display: grid; place-items: center; box-shadow: none; }
+.community-composer .community-image-previews button svg { width: 13px; height: 13px; }
+.community-image-error { margin: 8px 0 0; color: #b4441d; font-size: .75rem; }
+.community-post-images { margin: 14px 0; display: grid; gap: 6px; border-radius: 14px; overflow: hidden; }
+.community-post-images.count-1 { grid-template-columns: 1fr; }
+.community-post-images.count-2, .community-post-images.count-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.community-post-images.count-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.community-post-images img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; display: block; background: #eef2ec; }
+.community-post-images.count-1 img { aspect-ratio: auto; max-height: 520px; }

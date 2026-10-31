@@ -1,4 +1,7 @@
 import { prisma } from "../../lib/prisma.js";
+import { detectImageFormat } from "../../services/image-file.js";
+import { stripImageMetadata } from "../../services/image-sanitize.js";
+import { deleteImageQuietly, IMAGE_FOLDERS, type UploadedImage, uploadImage } from "../../services/image-upload.service.js";
 import { HIDDEN_RECIPE_MESSAGE, isRecipeHidden } from "../../services/recipe-visibility.js";
 import { HttpError } from "../../utils/http-error.js";
 import type { CreateCommunityPostBody } from "./community.schema.js";
@@ -9,6 +12,8 @@ const authorSelect = { id: true, name: true } as const;
 export const communityRecipeSelect = {
   id: true, name: true, imageUrl: true, calories: true, prepMinutes: true, cookMinutes: true, hiddenAt: true,
 } as const;
+/** Ảnh trong bài: chỉ URL và thứ tự (publicId chỉ dùng nội bộ để xóa). */
+const postImagesInclude = { images: { select: { url: true, position: true }, orderBy: { position: "asc" } } } as const;
 
 type CommunityRecipeRow = { hiddenAt: Date | null } & Record<string, unknown>;
 
@@ -33,6 +38,7 @@ export async function listCommunityPosts(userId: string) {
     include: {
       author: { select: authorSelect },
       recipe: { select: communityRecipeSelect },
+      ...postImagesInclude,
       likes: { where: { userId }, select: { userId: true } },
       comments: {
         orderBy: { createdAt: "asc" },
@@ -51,14 +57,42 @@ export async function listCommunityPosts(userId: string) {
   }));
 }
 
-export async function createCommunityPost(authorId: string, { content, recipeId }: CreateCommunityPostBody) {
-  if (recipeId) await assertAttachableRecipe(recipeId);
-  const post = await prisma.communityPost.create({
-    data: { authorId, content, recipeId: recipeId ?? null },
-    include: { author: { select: authorSelect }, recipe: { select: communityRecipeSelect } },
-  });
+/** Xóa EXIF/GPS rồi tải lần lượt lên nouri/posts; một ảnh lỗi thì xóa các ảnh đã tải trước đó. */
+async function uploadPostImages(files: Buffer[]) {
+  const uploaded: UploadedImage[] = [];
+  try {
+    for (const file of files) {
+      const clean = await stripImageMetadata(file, detectImageFormat(file) ?? "jpg");
+      uploaded.push(await uploadImage(clean, IMAGE_FOLDERS.posts));
+    }
+    return uploaded;
+  } catch (error) {
+    await Promise.all(uploaded.map((image) => deleteImageQuietly(image.publicId)));
+    throw error;
+  }
+}
 
-  return { ...post, recipe: toRecipeSummary(post.recipe), likedByMe: false, likeCount: 0, commentCount: 0, comments: [] };
+/**
+ * Đăng bài: cần có ít nhất một trong ba (chữ, công thức, ảnh). Tải hết ảnh trước rồi tạo bài cùng ảnh trong một lệnh
+ * (nested create, Prisma chạy trong transaction); tạo bài lỗi thì xóa các ảnh đã tải để không để ảnh mồ côi.
+ */
+export async function createCommunityPost(authorId: string, { content, recipeId }: CreateCommunityPostBody, files: Buffer[] = []) {
+  if (!content && !recipeId && !files.length) throw new HttpError(422, "Bài viết cần có nội dung, công thức hoặc ảnh.");
+  if (recipeId) await assertAttachableRecipe(recipeId);
+  const images = await uploadPostImages(files);
+  try {
+    const post = await prisma.communityPost.create({
+      data: {
+        authorId, content, recipeId: recipeId ?? null,
+        ...(images.length ? { images: { create: images.map((image, position) => ({ ...image, position })) } } : {}),
+      },
+      include: { author: { select: authorSelect }, recipe: { select: communityRecipeSelect }, ...postImagesInclude },
+    });
+    return { ...post, recipe: toRecipeSummary(post.recipe), likedByMe: false, likeCount: 0, commentCount: 0, comments: [] };
+  } catch (error) {
+    await Promise.all(images.map((image) => deleteImageQuietly(image.publicId)));
+    throw error;
+  }
 }
 
 export async function toggleCommunityLike(userId: string, postId: string) {
@@ -140,12 +174,16 @@ const POST_NOTIFICATION_TYPES = ["COMMUNITY_LIKE", "COMMUNITY_COMMENT", "COMMUNI
  * (không lộ sự tồn tại). Like/bình luận tự xóa theo bài (Cascade); thông báo liên quan xóa trong cùng transaction.
  */
 export async function deleteCommunityPost(postId: string, actor: CommunityActor) {
-  const post = await prisma.communityPost.findUnique({ where: { id: postId }, select: { id: true, authorId: true } });
+  const post = await prisma.communityPost.findUnique({
+    where: { id: postId }, select: { id: true, authorId: true, images: { select: { publicId: true } } },
+  });
   if (!post || (!actor.isAdmin && post.authorId !== actor.userId)) throw new HttpError(404, POST_NOT_FOUND);
   await prisma.$transaction([
     prisma.notification.deleteMany({ where: { relatedId: postId, type: { in: [...POST_NOTIFICATION_TYPES] } } }),
     prisma.communityPost.delete({ where: { id: postId } }),
   ]);
+  // Sau khi bài đã xóa (ảnh trong DB xóa theo bài): dọn ảnh trên Cloudinary, lỗi chỉ ghi log.
+  await Promise.all((post.images ?? []).map((image) => deleteImageQuietly(image.publicId)));
 }
 
 /** Xóa bình luận: Admin xóa mọi bình luận, người dùng chỉ bình luận của mình; xóa kèm thông báo của bình luận đó. */
@@ -171,6 +209,7 @@ export async function listCommunityPostsForModeration(page: number, pageSize: nu
       include: {
         author: { select: { id: true, name: true, email: true } },
         recipe: { select: communityRecipeSelect },
+        ...postImagesInclude,
         comments: { orderBy: { createdAt: "asc" }, include: { author: { select: { id: true, name: true, email: true } } } },
         _count: { select: { likes: true, comments: true } },
       },

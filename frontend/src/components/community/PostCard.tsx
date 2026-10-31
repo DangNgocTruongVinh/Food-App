@@ -5,6 +5,7 @@ import {
 } from "../../features/community/community.logic";
 import type { CommunityPost } from "../../types";
 import CommentForm from "./CommentForm";
+import PostImages from "./PostImages";
 import RecipeAttachmentCard from "./RecipeAttachmentCard";
 
 type PostCardProps = {
@@ -39,6 +40,7 @@ export default function PostCard(props: PostCardProps) {
     </header>
 
     {post.content && <p className="community-post-content">{post.content}</p>}
+    <PostImages images={post.images ?? []} authorName={post.author.name} />
     {post.recipe && <RecipeAttachmentCard recipe={post.recipe} />}
 
     <div className="community-post-stats">
