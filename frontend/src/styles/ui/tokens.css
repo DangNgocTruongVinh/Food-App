@@ -1,0 +1,132 @@
+/*
+ * Token giao diện mới (docs/design/DESIGN.md, mục 4–8). CSS của trang/thành phần mới chỉ dùng biến ở đây,
+ * không viết mã màu cứng. Chế độ đặt bằng data-theme trên <html> (script trong index.html, trước khi vẽ trang);
+ * đặt data-theme trên một phần tử con thì vùng đó dùng bộ màu tương ứng (trang /dev/ui hiện cả hai chế độ).
+ * CSS cũ dùng --legacy-line / --legacy-muted / --legacy-surface để không trùng tên với token mới.
+ * --action: nền (nút chính, chip đang chọn); --action-text: chữ, liên kết, viền/outline focus (chế độ tối #2f725d
+ * làm chữ trên nền tối chỉ đạt 2.9:1). --action-hover tối #3a8570 → #3a8270 để chữ trắng đạt 4.5:1.
+ * Bảng đo: docs/design/contrast.md (test: src/features/ui/contrast.test.ts).
+ */
+
+:root,
+[data-theme="light"] {
+  --bg: #fbfaf6;
+  --surface: #ffffff;
+  --surface-2: #f3f1ea;
+  --ink: #17302a;
+  --ink-2: #3c4f47;
+  --muted: #5e6d66;
+  --line: #e3e1d8;
+  --action: #15483c;
+  --action-hover: #0f3a30;
+  --action-text: #15483c;
+  --on-action: #ffffff;
+  --accent: #2f725d;
+  --warn: #a43c18;
+  --warn-bg: #fbede3;
+  --track: #e9e6dc;
+  --tag-bg: #e6f1e7;
+  --border-input: #c9d0c6;
+  --focus-ring: #dff184;
+  --dot: #ff8a52;
+  --shadow-overlay: 0 12px 32px rgba(21, 72, 60, .12);
+  --backdrop: rgba(23, 48, 42, .45);
+  color-scheme: light;
+}
+
+[data-theme="dark"] {
+  --bg: #111814;
+  --surface: #18211c;
+  --surface-2: #202b25;
+  --ink: #f2efe7;
+  --ink-2: #cdd1c7;
+  --muted: #a9b1a6;
+  --line: #2a352f;
+  --action: #2f725d;
+  --action-hover: #3a8270;
+  --action-text: #8fc2ae;
+  --on-action: #ffffff;
+  --accent: #9ccb8f;
+  --warn: #f0a070;
+  --warn-bg: #2e231c;
+  --track: #2a352f;
+  --tag-bg: #1f3a2c;
+  --border-input: #3a4740;
+  --focus-ring: #dff184;
+  --dot: #ff8a52;
+  --shadow-overlay: 0 12px 32px rgba(0, 0, 0, .4);
+  --backdrop: rgba(0, 0, 0, .6);
+  color-scheme: dark;
+}
+
+:root {
+  /* Chữ: Fraunces cho tiêu đề/số liệu/logo, Be Vietnam Pro cho phần còn lại; dự phòng Noto (đủ tiếng Việt), không Georgia. */
+  --font-serif: "Fraunces", "Noto Serif", serif;
+  --font-sans: "Be Vietnam Pro", "Noto Sans", sans-serif;
+
+  /* Thang chữ (mục 5): điện thoại → máy tính. */
+  --fs-hero: clamp(2.5rem, 1.6rem + 3.6vw, 4.5rem);
+  --fs-h1: clamp(2rem, 1.55rem + 1.6vw, 3rem);
+  --fs-h2: clamp(1.5rem, 1.25rem + .9vw, 2rem);
+  --fs-h3: clamp(1.125rem, 1.05rem + .25vw, 1.25rem);
+  --fs-stat: clamp(2rem, 1.6rem + 1.2vw, 3rem);
+  --fs-body: 1rem;
+  --fs-small: .875rem;
+  --fs-label: .8125rem;
+  --lh-hero: 1.05;
+  --lh-h1: 1.1;
+  --lh-h2: 1.15;
+  --lh-h3: 1.35;
+  --lh-body: 1.6;
+  --lh-small: 1.5;
+  --lh-label: 1.4;
+
+  /* Khoảng cách bội số 4 (mục 6). */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 64px;
+  --space-9: 96px;
+
+  /* Bo góc, kích thước điều khiển. */
+  --radius-sm: 8px;
+  --radius-field: 12px;
+  --radius-card: 16px;
+  --radius-pill: 999px;
+  --control-h: 44px;
+  --control-h-lg: 48px;
+
+  /* Bố cục. */
+  --content-max: 1280px;
+  --gutter: 16px;
+
+  /* Chuyển động (mục 8). */
+  --ease-out: cubic-bezier(.2, .7, .2, 1);
+  --duration-fast: 160ms;
+  --duration-dialog: 200ms;
+}
+
+@media (min-width: 640px) {
+  :root { --gutter: 24px; }
+}
+
+@media (min-width: 1024px) {
+  :root { --gutter: 32px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --duration-fast: 0ms;
+    --duration-dialog: 0ms;
+  }
+}
+
+/* Focus bàn phím chung (mục 7): mọi phần tử tương tác; độ ưu tiên thấp để thành phần có thể tinh chỉnh. */
+:where(a, button, input, select, textarea, summary, [tabindex], [contenteditable="true"]):focus-visible {
+  outline: 2px solid var(--action-text);
+  outline-offset: 3px;
+}

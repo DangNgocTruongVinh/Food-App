@@ -1,0 +1,53 @@
+/* Trang /dev/ui (chỉ môi trường dev, tải cùng chunk của trang). Chỉ dùng token. */
+
+.dev-ui-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  max-width: var(--content-max);
+  margin: 0 auto;
+  padding: var(--space-4) var(--gutter);
+  border-bottom: 1px solid var(--line);
+}
+
+.dev-ui-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 520px), 1fr));
+  gap: var(--space-5);
+  max-width: var(--content-max);
+  margin: 0 auto;
+  padding: var(--space-5) var(--gutter) var(--space-8);
+}
+
+.dev-ui-panel {
+  display: grid;
+  align-content: start;
+  gap: var(--space-7);
+  min-height: 0;
+  padding: var(--space-5);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+}
+
+.dev-ui-section { display: grid; gap: var(--space-4); min-width: 0; }
+.dev-ui-section__title {
+  margin: 0;
+  padding-bottom: var(--space-2);
+  border-bottom: 1px solid var(--line);
+  color: var(--muted);
+  font-family: var(--font-sans);
+  font-size: var(--fs-small);
+  font-weight: 600;
+}
+
+.dev-ui-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); }
+.dev-ui-fields { display: grid; gap: var(--space-4); }
+.dev-ui-fonts { display: grid; gap: var(--space-1); }
+.dev-ui-font { margin: 0; color: var(--ink); font-size: 1.125rem; line-height: 1.4; }
+.dev-ui-font--sans { font-family: var(--font-sans); }
+.dev-ui-font--serif { font-family: var(--font-serif); font-size: 1.375rem; }
+
+@media (max-width: 639px) {
+  .dev-ui-panel { padding: var(--space-4); }
+}

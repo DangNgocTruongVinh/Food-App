@@ -23,9 +23,9 @@ Nouri là ứng dụng quản lý thực phẩm trong gia đình và lập kế 
 1. **Độ dài file:** component/page tối đa ~300 dòng; quá 400 dòng thì bắt buộc tách. Một dòng JSX không quá 160 ký tự. Ngoại lệ: file dữ liệu như `backend/prisma/seed-data.ts`.
 2. **Nơi đặt component:** component con của một module đặt trong `frontend/src/components/<module>/` (vd. `components/pantry/PantryTable.tsx`); component dùng chung nhiều module (`States`, `DateInput`) đặt ở `components/`. Page chỉ ghép component, giữ state và gọi query/mutation.
 3. **Logic thuần:** đặt trong `frontend/src/features/<module>/*.logic.ts` và có test; component chỉ hiển thị và gọi hàm/hook. Backend: logic thuật toán tách khỏi service CRUD (vd. `meal-plan-generator.ts` cạnh `meal-plans.service.ts`).
-4. **CSS theo module:** `frontend/src/styles/NN-<module>.css` là các lớp giao diện tích lũy theo thời gian, **thứ tự import trong `styles.css` quyết định kết quả**. CSS mới viết vào file của module tương ứng hoặc file mới thêm ở **cuối** danh sách import; không thêm vào `01-base.css`. Không đổi thứ tự import hay gộp selector trùng nếu chưa so ảnh trước/sau.
+4. **CSS theo module:** giao diện mới (từ UI-1) viết ở `frontend/src/styles/ui/` và chỉ dùng token, xem "Làm lại toàn bộ giao diện". CSS cũ: `frontend/src/styles/NN-<module>.css` là các lớp giao diện tích lũy theo thời gian, **thứ tự import trong `styles.css` quyết định kết quả**. CSS mới viết vào file của module tương ứng hoặc file mới thêm ở **cuối** danh sách import; không thêm vào `01-base.css`. Không đổi thứ tự import hay gộp selector trùng nếu chưa so ảnh trước/sau.
 5. **Tách component theo giai đoạn:** giai đoạn nào sửa trang nào thì **tách component của trang đó trước**, thành **một commit riêng** (không đổi hành vi/giao diện), có **so ảnh trước/sau** (máy tính + điện thoại, các trạng thái chính của trang) rồi mới làm chức năng mới. Lịch tách: Pantry (xong ở bước dọn code), Dashboard và RecipeDetail ở GĐ2c (xong), Community ở GĐ2b (xong), MealPlans ở GĐ5, Landing (dữ liệu tĩnh ra `features/landing/landing.data.ts`) ở GĐ5; tách toàn bộ Landing là việc tùy chọn ở cuối.
-6. **Cấu trúc Admin (GĐ3):** frontend `pages/admin/*Page.tsx`, `components/admin/`, `features/admin/*.api.ts`, `layouts/AdminLayout.tsx`, route guard `AdminRoute`, CSS `styles/29-admin.css` (thêm cuối danh sách import). Backend `modules/admin/` dùng `requireAdmin`, gọi lại service sẵn có (công thức, service xóa bài dùng chung), không chép logic.
+6. **Cấu trúc Admin (GĐ3):** frontend `pages/admin/*Page.tsx`, `components/admin/`, `features/admin/*.api.ts`, `layouts/AdminLayout.tsx`, route guard `AdminRoute`, CSS `styles/ui/admin.css` (chỉ dùng token). Backend `modules/admin/` dùng `requireAdmin`, gọi lại service sẵn có (công thức, service xóa bài dùng chung), không chép logic.
 
 ## Các quyết định đã chốt
 
@@ -168,8 +168,48 @@ Thứ tự: (b) → khảo sát dọn code → (a), (c), (d).
 Đã xong GĐ2b, gộp vào `main`.
 
 ### Chốt hướng thiết kế UI (ngay trước GĐ3)
-- [ ] Chốt hướng thiết kế UI dùng chung (màu, chữ, khoảng cách, thành phần dùng chung) trước khi làm trang Admin; ghi quyết định vào CLAUDE.md để các trang mới (Admin) và việc chỉnh trang cũ theo cùng một hướng.
+- [x] Đã chốt: `docs/design/DESIGN.md` (bản 2, 31/10/2026) là **nguồn sự thật về giao diện**. Mockup và DESIGN.md khác nhau → theo DESIGN.md. Làm lại toàn bộ UI theo mục "Làm lại toàn bộ giao diện" bên dưới.
   - **Phông chữ phải đủ tiếng Việt.** Khi đổi phông (ở bước này hoặc khi chỉnh UI), kiểm tra bằng Playwright các chữ có dấu chồng (ố, ặ, ữ, ỗ, ẫ, ợ) ở **mọi độ đậm đang dùng và chữ nghiêng**; khai báo phông dự phòng có tiếng Việt (Noto Serif cho chữ có chân, Noto Sans cho chữ không chân), không để rơi về Georgia. Lý do: Georgia không có chữ ghép sẵn như "ố" nên trình duyệt ghép "ô" + dấu rời và đặt lệch ("Sô ́ng"); đã sửa bằng Noto Serif ở nhánh `fix-landing-tieng-viet`. Test `source-nfc.test.ts` (frontend, backend) chỉ chặn dấu rời trong mã nguồn, không phát hiện lỗi phông.
+
+### Lộ trình mới (chốt 31/10/2026)
+| Thời gian | Việc |
+|---|---|
+| 31/10–7/11 | Làm lại toàn bộ giao diện, lượt UI-1 → UI-12 (nhánh `ui-moi`) |
+| 8–10/11 | GĐ3b |
+| 11–14/11 | GĐ3c |
+| 15–17/11 | GĐ4 — Bảo mật tài khoản |
+| 18–21/11 | GĐ5 — Nghiệp vụ bổ sung |
+| 22–23/11 | Dự phòng |
+| từ 24/11 | Tài liệu (`REPORT_NOURI.md`) |
+
+Nội dung GĐ3b, GĐ3c **chưa ghi rõ** trong kế hoạch: hỏi người dùng trước khi bắt đầu.
+
+### Làm lại toàn bộ giao diện (31/10–7/11) — nhánh `ui-moi`
+Quy tắc (ngoài DESIGN.md):
+- Đọc `docs/design/DESIGN.md` trước mỗi lượt; cuối mỗi lượt **tự nghiệm thu theo mục 15** và báo kết quả checklist mục 3. Ảnh nghiệm thu lưu ở `docs/design/screens/<lượt>/`.
+- CSS mới ở `frontend/src/styles/ui/`, **chỉ dùng biến token** (`tokens.css`); test `features/ui/design-rules.test.ts` chặn mã màu cứng, gradient, `backdrop-filter`, emoji, "→" (khi làm lại trang nào thì thêm thư mục CSS/component của trang đó vào danh sách của test). Token đổi → test `contrast.test.ts` và `docs/design/contrast.md`.
+- Mỗi trang làm lại thì **gỡ CSS cũ của trang đó** (`styles/NN-*.css`). Không đổi nghiệp vụ, API, DB; không xóa chức năng. Trang chưa có mockup thì thiết kế theo DESIGN.md.
+- Thành phần dùng chung ở `components/ui/` (import từ `components/ui`); `window.confirm` thay bằng `useConfirm()` khi làm lại trang có thao tác xóa/khóa.
+
+- [x] UI-1 — Nền:
+  - `styles/ui/tokens.css`: hai bộ màu đúng DESIGN.md mục 4 (đặt bằng `data-theme` trên `<html>` hoặc trên một vùng con), thang chữ, khoảng cách, bo góc, chuyển động, focus chung `:focus-visible`. CSS cũ đổi tên `--line/--muted/--surface` → `--legacy-*` để không trùng token (CSS build ra giống hệt từng byte khi đổi tên ngược lại; trang Đăng nhập và Landing so điểm ảnh 0 khác).
+  - **Lệch DESIGN.md (chờ xác nhận):** `--action-hover` tối #3A8570 → #3A8270 (chữ trắng 4.40 → 4.56:1); thêm `--action-text` (tối #8FC2AE) cho chữ/viền/focus vì `--action` tối làm chữ trên nền tối chỉ 2.9:1. Thêm `--on-action`, `--shadow-overlay`, `--backdrop`. Chi tiết: `docs/design/contrast.md`.
+  - Phông: Fraunces + Be Vietnam Pro (Google Fonts, có subset tiếng Việt), dự phòng Noto Serif/Noto Sans; Playwright xác nhận mọi glyph của "Sống uống ặc ữ ỗ ẫ ợ Đậu hũ" ở Be Vietnam Pro 400/500/600/700 + nghiêng 400/500/600 và Fraunces 400/500/600 + nghiêng đều vẽ bằng đúng phông (không rơi về phông hệ thống).
+  - Sáng/tối: `features/theme/` (mặc định sáng, khóa `nouri.theme`, đọc/ghi bọc try/catch, đồng bộ giữa các tab); script inline trong `index.html` đặt `data-theme` trước khi tải ứng dụng (không nháy màu); `ThemeToggle` (aria-pressed). Nút chuyển gắn vào menu ở UI-2.
+  - `components/ui/`: Button/ButtonLink/IconButton, Field, Chip/Tag, Card, PageHeader, Skeleton/LoadingState/EmptyState/ErrorState, Logo, ConfirmDialog (`<dialog>` gốc: khóa focus, Esc = Hủy, trả focus) + `ConfirmProvider`/`useConfirm` (đã gắn ở `main.tsx`), ThemeToggle. Logic + test: `features/ui/ui.logic.ts`, `features/theme/theme.logic.ts`, `features/ui/contrast.logic.ts`.
+  - Trang `/dev/ui` (chỉ khi `import.meta.env.DEV`; bản build không có mã/CSS của trang): mọi thành phần ở cả hai chế độ. Nghiệm thu Playwright 35/35 (phông, không cuộn ngang 320/390/1440, Tab 39 điểm dừng đều thấy focus, hộp xác nhận, vùng bấm ≥ 44px, không nháy màu, lỗi localStorage).
+  - **Lỗi có sẵn (để GĐ4):** khi localStorage bị chặn hoàn toàn (getter ném lỗi), ứng dụng sập ở `auth.storage.ts` (`migrateLegacyKeys` không có try/catch). Chế độ sáng/tối không bị ảnh hưởng.
+  - Chưa có ảnh mockup trong `docs/design/mockups/` (DESIGN.md nhắc tới); cần trước UI-3 (Tổng quan), UI-4 (Công thức), UI-5 (Kho).
+- [ ] UI-2 — Khung chung: menu trên (logo, nhóm liên kết dạng viên, chế độ tối, chuông, tài khoản), footer (DESIGN.md mục 13).
+- [ ] UI-3 — Tổng quan.
+- [ ] UI-4 — Công thức + Chi tiết công thức.
+- [ ] UI-5 — Kho thực phẩm.
+- [ ] UI-6 — Thực đơn.
+- [ ] UI-7 — Cộng đồng + Trợ lý AI.
+- [ ] UI-8 — Hồ sơ + Đăng nhập/Đăng ký.
+- [ ] UI-9, UI-10 — Admin (2 lượt; dùng API backend GĐ3 đã xong, gồm nhật ký thao tác).
+- [ ] UI-11 — Landing.
+- [ ] UI-12 — Xóa CSS cũ còn lại (`styles/NN-*.css`, biến `--legacy-*`, `@import` phông cũ Manrope/Outfit).
 
 ### Giai đoạn 3 — Admin + upload ảnh
 Kế hoạch backend chia 7 lượt (mỗi lượt một commit), frontend Admin làm sau khi chốt UI:
@@ -266,9 +306,8 @@ Quyết định đã chốt cho GĐ3:
 - [ ] Quên/đặt lại mật khẩu qua email (token reset có hạn, dùng 1 lần).
 - [ ] Xử lý lỗ hổng `npm audit` (hiện có ở axios, prisma, express/body-parser, zod…): ưu tiên nâng bản vá/minor an toàn; bản major thì **báo người dùng trước** khi nâng. Nâng xong chạy lại toàn bộ test (backend, frontend) và build.
 
-### Chỉnh UI các trang cũ (khoảng 20–23/11/2026)
-- [ ] Chỉnh UI các trang cũ theo hướng thiết kế đã chốt. Mỗi trang: tách component trước (nếu chưa tách), commit riêng, so ảnh trước/sau trên máy tính và điện thoại.
-- Vị trí trong lộ trình là ước tính theo ngày; điều chỉnh khi biết tiến độ GĐ3–GĐ4.
+### Chỉnh UI các trang cũ
+- Thay bằng mục "Làm lại toàn bộ giao diện" (31/10–7/11), làm trước GĐ4.
 
 ### Giai đoạn 5 — Nghiệp vụ bổ sung
 - [ ] Trước tiên: tách component `MealPlansPage` vào `components/meal-plans/` (`MealPlanToolbar`, `MealDayTabs`, `MealColumn`, `WeekSummary`, `NutritionCard`, `SuggestionCard`, `ShoppingCard`); tách dữ liệu tĩnh của Landing ra `features/landing/landing.data.ts`. Mỗi việc một commit, so ảnh trước/sau.
@@ -292,7 +331,7 @@ Quyết định đã chốt cho GĐ3:
 ### Việc làm sau (chưa xếp giai đoạn)
 - [ ] Gom logic so khớp nguyên liệu/dị ứng của `mealPlanSuggestions` (`asWords` trong `features/meal-plans/meal-plans.logic.ts`) về backend, dùng chung `dietary.service.ts` / `recipe-fit.service.ts`.
 - [ ] Ô chọn công thức khi đăng bài đang lọc ở frontend trên toàn bộ danh sách công thức; khi Admin thêm nhiều món thì chuyển sang tìm kiếm ở backend (có giới hạn số kết quả).
-- [ ] Thay `window.confirm` bằng một hộp xác nhận dùng chung cho mọi thao tác xóa (Pantry, Meal Plans, bài viết).
+- [ ] Thay `window.confirm` bằng một hộp xác nhận dùng chung cho mọi thao tác xóa (Pantry, Meal Plans, bài viết): đã có `useConfirm()` (UI-1), thay dần khi làm lại từng trang.
 
 ### Giai đoạn 6 — Tùy chọn
 - [ ] Đăng nhập Google (OAuth).

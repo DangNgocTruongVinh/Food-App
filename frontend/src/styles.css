@@ -29,3 +29,6 @@
 @import "./styles/26-login.css";
 @import "./styles/27-pantry-v2.css";
 @import "./styles/28-recipe-detail.css";
+/* Giao diện mới (docs/design/DESIGN.md): token + thành phần dùng chung. Đặt cuối; CSS cũ gỡ dần theo từng lượt UI. */
+@import "./styles/ui/tokens.css";
+@import "./styles/ui/components.css";

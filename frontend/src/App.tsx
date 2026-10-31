@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import { Navigate, Outlet, Route, Routes } from "react-router-dom";
 import ScrollToTop from "./components/ScrollToTop";
 import AppLayout from "./layouts/AppLayout";
@@ -12,6 +13,9 @@ import ProfilePage from "./pages/ProfilePage";
 import RecipeDetailPage from "./pages/RecipeDetailPage";
 import RecipesPage from "./pages/RecipesPage";
 import { getAuthToken } from "./features/auth/auth.storage";
+
+// Trang mẫu thành phần giao diện: chỉ có ở môi trường dev (bản build production loại bỏ cả route lẫn mã của trang).
+const DevUiPage = import.meta.env.DEV ? lazy(() => import("./pages/dev/DevUiPage")) : null;
 
 function ProtectedRoute() {
   return getAuthToken() ? <Outlet /> : <Navigate to="/login" replace />;
@@ -36,6 +40,7 @@ export default function App() {
           <Route path="profile" element={<ProfilePage />} />
         </Route>
       </Route>
+      {DevUiPage && <Route path="/dev/ui" element={<Suspense fallback={null}><DevUiPage /></Suspense>} />}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   </>;

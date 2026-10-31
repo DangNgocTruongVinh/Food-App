@@ -6,6 +6,25 @@
     <meta name="theme-color" content="#3f741d" />
     <meta name="description" content="Nouri — trợ lý dinh dưỡng AI giúp bạn ăn ngon, sống khỏe và lập kế hoạch bữa ăn cá nhân hóa." />
     <title>Nouri — Ăn ngon mỗi ngày, sống khỏe dài lâu</title>
+    <script>
+      // Đặt chế độ sáng/tối trước khi vẽ trang (không nháy màu). Cùng khóa với src/features/theme/theme.logic.ts.
+      (function () {
+        var theme = "light";
+        try {
+          var stored = window.localStorage.getItem("nouri.theme");
+          if (stored === "light" || stored === "dark") theme = stored;
+        } catch (error) {}
+        document.documentElement.setAttribute("data-theme", theme);
+        document.documentElement.style.colorScheme = theme;
+      })();
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <!-- Giao diện mới (docs/design/DESIGN.md mục 5): Fraunces + Be Vietnam Pro; Noto Serif/Noto Sans dự phòng (đủ tiếng Việt). -->
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600&family=Fraunces:ital,opsz,wght@0,9..144,400..600;1,9..144,400..600&family=Noto+Sans:ital,wght@0,400;0,600;1,400&display=swap"
+    />
   </head>
   <body>
     <div id="root"></div>

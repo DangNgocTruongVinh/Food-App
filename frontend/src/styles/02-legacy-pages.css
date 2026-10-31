@@ -9,8 +9,8 @@
   --lime-bright: #edff8c;
   --cream: #f4f5ef;
   --orange: #ff7d4d;
-  --line: #e2e5dd;
-  --muted: #707b76;
+  --legacy-line: #e2e5dd;
+  --legacy-muted: #707b76;
   --shadow-sm: 0 1px 2px rgba(20, 48, 41, .025);
 }
 
@@ -221,7 +221,7 @@ body { background: #f4f5ef; }
 .plan-insights article:nth-child(3) > span { color: #426c79; background: #e5f0f2; }
 .plan-insights svg { width: 18px; }
 .plan-insights small, .plan-insights b { display: block; }
-.plan-insights small { margin-bottom: 3px; color: var(--muted); font-size: 9px; }
+.plan-insights small { margin-bottom: 3px; color: var(--legacy-muted); font-size: 9px; }
 .plan-insights b { color: #193a32; font: 700 13px Manrope; }
 .meal-plan-layout { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 16px; align-items: start; }
 .week-section { min-width: 0; padding: 25px; border: 1px solid #e0e4dc; border-radius: 25px; background: #fff; }
