@@ -31,6 +31,8 @@ export default function NotificationCenter() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const rootRef = useRef<HTMLDivElement>(null);
+  const drawerRef = useRef<HTMLDialogElement>(null);
+  const bellRef = useRef<HTMLButtonElement>(null);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [filter, setFilter] = useState<NotificationFilter>("all");
@@ -61,25 +63,32 @@ export default function NotificationCenter() {
     return () => document.removeEventListener("pointerdown", onPointerDown);
   }, [dropdownOpen]);
 
+  // Danh sách thả: Esc đóng và trả focus về chuông. Bảng đầy đủ là <dialog> gốc (khóa focus, Esc = đóng).
   useEffect(() => {
-    if (!dropdownOpen && !drawerOpen) return;
+    if (!dropdownOpen) return;
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         setDropdownOpen(false);
-        setDrawerOpen(false);
+        bellRef.current?.focus();
       }
     };
     document.addEventListener("keydown", onKeyDown);
     return () => document.removeEventListener("keydown", onKeyDown);
-  }, [dropdownOpen, drawerOpen]);
+  }, [dropdownOpen]);
 
   useEffect(() => {
-    document.body.classList.toggle("notification-drawer-open", drawerOpen);
-    return () => document.body.classList.remove("notification-drawer-open");
+    const drawer = drawerRef.current;
+    if (!drawer) return;
+    if (drawerOpen && !drawer.open) drawer.showModal();
+    if (!drawerOpen && drawer.open) {
+      drawer.close();
+      bellRef.current?.focus();
+    }
   }, [drawerOpen]);
 
   const unreadCount = countQuery.data?.count ?? 0;
   const badgeLabel = unreadBadgeLabel(unreadCount);
+  const bellLabel = badgeLabel ? `Thông báo, ${badgeLabel} chưa đọc` : "Thông báo";
   const notifications = notificationsQuery.data ?? [];
 
   const selectNotification = async (notification: AppNotification) => {
@@ -112,51 +121,64 @@ export default function NotificationCenter() {
   return (
     <div className="notification-center" ref={rootRef}>
       <button
+        ref={bellRef}
         type="button"
-        className={`notification-bell${dropdownOpen ? " active" : ""}`}
-        aria-label="Thông báo"
+        className="ui-icon-button notification-bell"
+        aria-label={bellLabel}
         aria-expanded={dropdownOpen}
-        title="Thông báo"
         onClick={() => {
           setDrawerOpen(false);
           setDropdownOpen((open) => !open);
         }}
       >
-        <Bell />
-        {badgeLabel && <span className="notification-badge">{badgeLabel}</span>}
+        <Bell aria-hidden="true" />
+        {badgeLabel && <span className="notification-dot" aria-hidden="true" />}
       </button>
 
       {dropdownOpen && (
         <section className="notification-dropdown" aria-label="Danh sách thông báo">
           <header className="notification-panel-header">
             <h2>Thông báo</h2>
-            <button type="button" disabled={!unreadCount || markAllRead.isPending} onClick={() => markAllRead.mutate()}>
-              <CheckCheck /> Đánh dấu đã đọc
+            <button type="button" className="notification-text-button" disabled={!unreadCount || markAllRead.isPending} onClick={() => markAllRead.mutate()}>
+              <CheckCheck aria-hidden="true" /> Đánh dấu đã đọc
             </button>
           </header>
           <NotificationTabs filter={filter} onChange={setFilter} />
           <div className="notification-dropdown-scroll"><NotificationList {...listProps} /></div>
-          <button type="button" className="notification-view-all" onClick={openDrawer}>Xem tất cả thông báo <span>→</span></button>
+          <button type="button" className="notification-view-all" onClick={openDrawer}>Xem tất cả thông báo</button>
         </section>
       )}
 
-      {drawerOpen && (
-        <div className="notification-drawer-layer" role="presentation" onMouseDown={(event) => {
+      <dialog
+        ref={drawerRef}
+        className="notification-drawer"
+        aria-labelledby="notification-drawer-title"
+        onCancel={(event) => {
+          event.preventDefault();
+          setDrawerOpen(false);
+        }}
+        onClick={(event) => {
           if (event.target === event.currentTarget) setDrawerOpen(false);
-        }}>
-          <aside className="notification-drawer" role="dialog" aria-modal="true" aria-labelledby="notification-drawer-title">
+        }}
+      >
+        {drawerOpen && (
+          <div className="notification-drawer__body">
             <header className="notification-drawer-header">
-              <div><span><Bell /></span><h2 id="notification-drawer-title">Thông báo</h2></div>
-              <button type="button" aria-label="Đóng thông báo" onClick={() => setDrawerOpen(false)}><X /></button>
+              <h2 id="notification-drawer-title">Thông báo</h2>
+              <button type="button" className="ui-icon-button ui-icon-button--quiet" aria-label="Đóng thông báo" onClick={() => setDrawerOpen(false)}>
+                <X aria-hidden="true" />
+              </button>
             </header>
             <div className="notification-drawer-toolbar">
               <NotificationTabs filter={filter} onChange={setFilter} />
-              <button type="button" disabled={!unreadCount || markAllRead.isPending} onClick={() => markAllRead.mutate()}><CheckCheck /> Đánh dấu tất cả đã đọc</button>
+              <button type="button" className="notification-text-button" disabled={!unreadCount || markAllRead.isPending} onClick={() => markAllRead.mutate()}>
+                <CheckCheck aria-hidden="true" /> Đánh dấu tất cả đã đọc
+              </button>
             </div>
             <div className="notification-drawer-scroll"><NotificationList {...listProps} /></div>
-          </aside>
-        </div>
-      )}
+          </div>
+        )}
+      </dialog>
     </div>
   );
 }

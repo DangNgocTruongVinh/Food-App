@@ -3,7 +3,8 @@ export type StorageLocation = "REFRIGERATOR" | "FREEZER" | "DRY_STORAGE";
 export type MealType = "BREAKFAST" | "LUNCH" | "DINNER" | "SNACK";
 export type MealPlanStatus = "DRAFT" | "ACTIVE" | "COMPLETED";
 
-export interface User { id: string; name: string; email: string }
+/** role: phiên lưu trước khi có phân quyền không có trường này → coi như USER. */
+export interface User { id: string; name: string; email: string; role?: "USER" | "ADMIN" }
 export interface AuthResponse { token: string; user: User }
 export interface LoginInput { email: string; password: string }
 export interface RegisterInput extends LoginInput { name: string }

@@ -1,0 +1,184 @@
+/*
+ * Chuông thông báo, danh sách thả và bảng thông báo đầy đủ (<dialog>). Thay 20-notifications.css. Chỉ dùng token.
+ * Chưa đọc: chấm --dot (chỉ chấm, không làm nền chữ); số lượng nằm trong tên đọc của nút chuông.
+ */
+
+.notification-center { position: relative; }
+.notification-bell { position: relative; }
+.notification-dot {
+  position: absolute;
+  top: 9px;
+  right: 9px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--dot);
+  box-shadow: 0 0 0 2px var(--surface);
+}
+
+.notification-dropdown {
+  position: absolute;
+  top: calc(100% + var(--space-2));
+  right: 0;
+  z-index: 70;
+  display: grid;
+  width: min(380px, calc(100vw - 2 * var(--gutter)));
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  color: var(--ink);
+  background: var(--surface);
+  box-shadow: var(--shadow-overlay);
+  font-family: var(--font-sans);
+}
+.notification-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-3) var(--space-2) var(--space-4);
+}
+.notification-panel-header h2 { margin: 0; color: var(--ink); font-family: var(--font-sans); font-size: var(--fs-h3); font-weight: 600; }
+
+.notification-text-button {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--control-h);
+  padding: 0 var(--space-2);
+  border: 0;
+  border-radius: var(--radius-sm);
+  color: var(--action-text);
+  background: transparent;
+  font-family: var(--font-sans);
+  font-size: var(--fs-small);
+  font-weight: 600;
+  cursor: pointer;
+}
+.notification-text-button:hover:not(:disabled) { background: var(--surface-2); }
+.notification-text-button:disabled { color: var(--muted); cursor: not-allowed; }
+.notification-text-button svg { width: 20px; height: 20px; stroke-width: 1.75; }
+
+.notification-tabs { display: flex; gap: var(--space-2); padding: 0 var(--space-4) var(--space-3); }
+.notification-tabs button {
+  min-height: 40px;
+  padding: 0 var(--space-4);
+  border: 1px solid var(--border-input);
+  border-radius: var(--radius-pill);
+  color: var(--ink);
+  background: var(--surface);
+  font-family: var(--font-sans);
+  font-size: var(--fs-small);
+  font-weight: 500;
+  cursor: pointer;
+}
+.notification-tabs button[aria-selected="true"] { border-color: var(--action); color: var(--on-action); background: var(--action); }
+
+.notification-dropdown-scroll { max-height: min(60vh, 440px); overflow-y: auto; border-top: 1px solid var(--line); }
+.notification-view-all {
+  min-height: var(--control-h-lg);
+  border: 0;
+  border-top: 1px solid var(--line);
+  color: var(--action-text);
+  background: var(--surface);
+  font-family: var(--font-sans);
+  font-size: var(--fs-small);
+  font-weight: 600;
+  cursor: pointer;
+}
+.notification-view-all:hover { background: var(--surface-2); }
+
+/* Danh sách. */
+.notification-groups { display: grid; }
+.notification-group h3 {
+  margin: 0;
+  padding: var(--space-3) var(--space-4) var(--space-1);
+  color: var(--muted);
+  font-family: var(--font-sans);
+  font-size: var(--fs-label);
+  font-weight: 600;
+}
+.notification-group > div { display: grid; }
+.notification-item {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr) auto;
+  align-items: start;
+  gap: var(--space-3);
+  width: 100%;
+  padding: var(--space-3) var(--space-4);
+  border: 0;
+  color: var(--ink);
+  background: transparent;
+  font-family: var(--font-sans);
+  text-align: left;
+  cursor: pointer;
+}
+.notification-item:hover { background: var(--surface-2); }
+.notification-type-icon {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  color: var(--action-text);
+  background: var(--tag-bg);
+}
+.notification-type-icon.pantry { color: var(--warn); background: var(--warn-bg); }
+.notification-type-icon svg { width: 20px; height: 20px; stroke-width: 1.75; }
+.notification-item-copy { display: grid; gap: 2px; min-width: 0; }
+.notification-item-copy strong { color: var(--ink); font-size: var(--fs-small); font-weight: 600; }
+.notification-item:not(.unread) .notification-item-copy strong { font-weight: 500; }
+.notification-item-copy span { color: var(--ink-2); font-size: var(--fs-small); line-height: var(--lh-small); }
+.notification-item-copy time { color: var(--muted); font-size: var(--fs-label); }
+.notification-unread-dot { width: 9px; height: 9px; margin-top: 6px; border-radius: 50%; background: var(--dot); }
+
+.notification-state { padding: var(--space-4); }
+.notification-skeleton { display: grid; grid-template-columns: 36px minmax(0, 1fr); align-items: center; gap: var(--space-3); }
+.notification-skeleton > span { display: grid; gap: var(--space-2); }
+
+/* Bảng thông báo đầy đủ: <dialog> gốc bên phải màn hình. */
+.notification-drawer {
+  width: min(440px, 100vw);
+  max-width: 100vw;
+  height: 100vh;
+  max-height: 100vh;
+  margin: 0 0 0 auto;
+  padding: 0;
+  border: 0;
+  border-left: 1px solid var(--line);
+  color: var(--ink);
+  background: var(--surface);
+  box-shadow: var(--shadow-overlay);
+  font-family: var(--font-sans);
+}
+.notification-drawer::backdrop { background: var(--backdrop); }
+.notification-drawer[open] { animation: notification-drawer-in var(--duration-dialog) var(--ease-out); }
+.notification-drawer__body { display: flex; flex-direction: column; height: 100%; }
+.notification-drawer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-3) var(--space-2) var(--space-5);
+}
+.notification-drawer-header h2 { margin: 0; color: var(--ink); font-family: var(--font-serif); font-size: var(--fs-h2); font-weight: 500; line-height: var(--lh-h2); }
+.notification-drawer-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: 0 var(--space-3) var(--space-3) var(--space-5);
+  border-bottom: 1px solid var(--line);
+}
+.notification-drawer-toolbar .notification-tabs { padding: 0; }
+.notification-drawer-scroll { flex: 1; overflow-y: auto; }
+
+@keyframes notification-drawer-in {
+  from { opacity: 0; transform: translateX(16px); }
+  to { opacity: 1; transform: none; }
+}
+
+@media (max-width: 639px) {
+  .notification-dropdown { position: fixed; top: 72px; right: var(--gutter); left: var(--gutter); width: auto; }
+}

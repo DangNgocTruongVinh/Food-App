@@ -1,9 +1,8 @@
 import {
   ArrowLeft, ArrowRight, Bookmark, CalendarDays, Check, ChefHat, Clock3,
-  BookOpen, Bot, CircleHelp, Dumbbell, Facebook, FileText, Grid2X2, Heart,
-  HeartPulse, Instagram, Leaf, Lightbulb, Mail, Menu, MessageCircle, Play,
-  Newspaper, Package, Salad, ShieldCheck, Sparkles, Star, Sunrise,
-  Target, Trophy, UserRound, UsersRound, Utensils, Wheat, X,
+  BookOpen, Bot, Dumbbell, Grid2X2, Heart, HeartPulse, Leaf, Lightbulb, Menu,
+  MessageCircle, Play, Salad, Sparkles, Star, Sunrise, Target, Trophy,
+  UserRound, UsersRound, Utensils, Wheat, X,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useGSAP } from "@gsap/react";
@@ -14,6 +13,7 @@ import { useEffect, useRef, useState, type MouseEvent as ReactMouseEvent, type P
 import { flushSync } from "react-dom";
 import { Link } from "react-router-dom";
 import Logo from "../components/Logo";
+import { SiteFooter } from "../components/layout/SiteFooter";
 import { useAuth } from "../contexts/AuthContext";
 import { landingCategoryCountLabel, type LandingRecipeCategoryId } from "../features/landing/landing.logic";
 import { recipeImageSrc } from "../features/recipes/recipes.logic";
@@ -109,53 +109,6 @@ const communityHighlights = [
   { icon: MessageCircle, title: "Hỏi & Đáp", copy: "Đặt câu hỏi và nhận lời khuyên hữu ích từ cộng đồng và chuyên gia.", image: "/assets/community-card-qa.png" },
   { icon: Trophy, title: "Thử thách & Sự kiện", copy: "Tham gia thử thách, sự kiện thú vị để cùng nhau tiến bộ mỗi ngày.", image: "/assets/community-card-event.png" },
 ];
-
-const footerGroups = [
-  {
-    title: "Khám phá",
-    links: [
-      { label: "Kho thực phẩm", href: "/pantry", icon: Package },
-      { label: "Thực đơn", href: "/meal-plans", icon: CalendarDays },
-      { label: "Công thức", href: "/recipes", icon: Utensils },
-      { label: "Trợ lý AI", href: "/assistant", icon: Sparkles },
-    ],
-  },
-  {
-    title: "Nouri",
-    links: [
-      { label: "Về chúng tôi", href: "#about", icon: UserRound },
-      { label: "Cộng đồng", href: "/community", icon: UsersRound },
-      { label: "Tin tức", href: "#community", icon: Newspaper },
-      { label: "Liên hệ", href: "mailto:hello@nouri.vn", icon: Mail },
-    ],
-  },
-  {
-    title: "Hỗ trợ",
-    links: [
-      { label: "Trung tâm trợ giúp", href: "/assistant", icon: CircleHelp },
-      { label: "Hướng dẫn sử dụng", href: "/dashboard", icon: BookOpen },
-      { label: "Chính sách bảo mật", href: "/privacy", icon: ShieldCheck },
-      { label: "Điều khoản sử dụng", href: "/terms", icon: FileText },
-    ],
-  },
-];
-
-function FooterBotanical({ side }: { side: "left" | "right" }) {
-  return <svg className={`landing-footer-botanical botanical-${side}`} viewBox="0 0 180 220" fill="none" aria-hidden="true">
-    <path className="botanical-stem" d="M18 218C35 176 58 145 78 112C99 78 116 44 125 7" />
-    <path className="botanical-stem botanical-stem-soft" d="M48 160C33 145 22 130 16 110M68 128C88 117 101 103 110 87M86 97C72 79 66 62 64 45M106 61C124 53 139 41 150 27" />
-    <path className="botanical-leaf leaf-a" d="M20 111C2 112-5 96 2 75C21 80 31 94 20 111Z" />
-    <path className="botanical-leaf leaf-b" d="M50 158C32 156 24 141 31 121C51 127 62 143 50 158Z" />
-    <path className="botanical-leaf leaf-c" d="M66 128C73 108 89 101 108 106C102 126 86 137 66 128Z" />
-    <path className="botanical-leaf leaf-d" d="M85 98C67 91 60 75 66 55C85 62 95 78 85 98Z" />
-    <path className="botanical-leaf leaf-e" d="M107 62C113 43 129 34 148 38C143 57 127 68 107 62Z" />
-    <path className="botanical-leaf leaf-f" d="M124 34C110 24 109 10 122 0C136 11 136 24 124 34Z" />
-    <circle className="botanical-dot" cx="18" cy="57" r="2.4" />
-    <circle className="botanical-dot" cx="151" cy="76" r="1.8" />
-    <circle className="botanical-dot" cx="11" cy="137" r="1.6" />
-    <circle className="botanical-dot" cx="157" cy="52" r="1.2" />
-  </svg>;
-}
 
 export default function LandingPage() {
   const { user } = useAuth();
@@ -1073,37 +1026,6 @@ export default function LandingPage() {
       },
     });
 
-    const footerReveal = gsap.timeline({
-      scrollTrigger: {
-        trigger: ".landing-footer",
-        start: "top 90%",
-        once: true,
-      },
-    });
-    footerReveal
-      .from(".landing-footer-brand > *", {
-        y: 24,
-        opacity: 0,
-        duration: 0.62,
-        stagger: 0.07,
-        ease: "power3.out",
-      })
-      .from(".landing-footer-group", {
-        y: 30,
-        opacity: 0,
-        duration: 0.68,
-        stagger: 0.09,
-        ease: "power3.out",
-      }, "-=0.38")
-      .from(".landing-footer-botanical .botanical-leaf", {
-        scale: 0.78,
-        opacity: 0,
-        duration: 0.78,
-        stagger: 0.045,
-        transformOrigin: "50% 100%",
-        ease: "power2.out",
-      }, "-=0.58");
-
     return () => {
       heroMotion.revert();
       featureMotion.revert();
@@ -1257,7 +1179,8 @@ export default function LandingPage() {
     return () => transition.kill();
   }, { scope: recipeCarouselRef, dependencies: [recipeSlides] });
 
-  return <div className="landing-page" ref={pageRef}>
+  // Chưa làm lại theo giao diện mới (UI-11): cố định chế độ sáng.
+  return <div className="landing-page" data-theme="light" ref={pageRef}>
     <header className="landing-header">
       <div className="landing-container landing-header-inner">
         <Link
@@ -1592,35 +1515,6 @@ export default function LandingPage() {
       </section>
     </main>
 
-    <footer className="landing-footer">
-      <FooterBotanical side="left" />
-      <FooterBotanical side="right" />
-
-      <div className="landing-container">
-        <div className="landing-footer-grid">
-          <section className="landing-footer-brand" aria-label="Giới thiệu Nouri">
-            <Link to="/" className="landing-footer-logo" aria-label="Nouri - Trang chủ"><Logo /></Link>
-            <strong>Ăn ngon hơn. Sống khỏe hơn.</strong>
-            <p>Nền tảng giúp bạn lên thực đơn, khám phá công thức và chăm sóc dinh dưỡng mỗi ngày.</p>
-            <nav className="landing-footer-socials" aria-label="Kênh cộng đồng Nouri">
-              <Link to="/community" aria-label="Nouri trên Facebook"><Facebook /></Link>
-              <Link to="/community" aria-label="Nouri trên Instagram"><Instagram /></Link>
-              <a href="mailto:hello@nouri.vn" aria-label="Gửi email cho Nouri"><Mail /></a>
-            </nav>
-          </section>
-
-          {footerGroups.map((group) => <nav className="landing-footer-group" aria-label={group.title} key={group.title}>
-            <h2>{group.title}<Leaf aria-hidden="true" /></h2>
-            <ul>
-              {group.links.map(({ label, href, icon: Icon }) => <li key={label}>
-                {href.startsWith("mailto:")
-                  ? <a href={href}><Icon aria-hidden="true" /><span>{label}</span></a>
-                  : <Link to={href}><Icon aria-hidden="true" /><span>{label}</span></Link>}
-              </li>)}
-            </ul>
-          </nav>)}
-        </div>
-      </div>
-    </footer>
+    <SiteFooter />
   </div>;
 }

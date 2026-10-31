@@ -1,0 +1,291 @@
+/*
+ * Khung chung (DESIGN.md mục 13): menu trên, menu tài khoản, menu thu gọn ≤ 1200px, footer.
+ * Thay 21-navigation.css, 23-app-navbar.css. Chỉ dùng token.
+ */
+
+body:has(.ui-shell) { background: var(--bg); }
+
+.ui-shell {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: var(--bg);
+}
+
+.ui-skip-link {
+  position: fixed;
+  top: -100px;
+  left: var(--space-4);
+  z-index: 100;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-sm);
+  color: var(--on-action);
+  background: var(--action);
+  font-family: var(--font-sans);
+  font-size: var(--fs-small);
+  font-weight: 600;
+  text-decoration: none;
+}
+.ui-skip-link:focus { top: var(--space-3); }
+
+.ui-shell__main { flex: 1 0 auto; width: 100%; }
+/* Đích của liên kết "Bỏ qua menu" (tabIndex -1), không phải phần tử tương tác. */
+.ui-shell__main:focus { outline: none; }
+.ui-shell__main:not(.ui-shell__main--legacy) { color: var(--ink); font-family: var(--font-sans); }
+
+/*
+ * Trang chưa làm lại (main còn các lớp main-content, main-theme-..., app-overview-palette cho CSS cũ bám): bỏ lề trái của
+ * sidebar cũ, bỏ nền riêng của khung cũ, giữ khung nội dung 1440px như trước.
+ */
+.ui-shell .ui-shell__main--legacy {
+  min-height: 0;
+  margin-left: 0;
+  padding: var(--space-5) var(--gutter) var(--space-7);
+  background: var(--bg);
+}
+.ui-shell .ui-shell__main--legacy > .page,
+.ui-shell .ui-shell__main--legacy > .assistant-page {
+  max-width: 1440px;
+  margin-right: auto;
+  margin-left: auto;
+  padding-right: 0;
+  padding-left: 0;
+}
+
+/* Menu trên: dính đầu trang, nền trang, kẻ dưới mảnh. */
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 60;
+  border-bottom: 1px solid var(--line);
+  color: var(--ink);
+  background: var(--bg);
+  font-family: var(--font-sans);
+}
+.site-header__inner {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  max-width: var(--content-max);
+  min-height: 72px;
+  margin: 0 auto;
+  padding: var(--space-3) var(--gutter);
+}
+.site-header__brand {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  min-height: var(--control-h);
+  color: var(--ink);
+  text-decoration: none;
+}
+.site-header__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-left: auto;
+}
+
+/* Nhóm liên kết dạng viên: khung surface-2, mục 40px; đang chọn nền surface, chữ action-text. */
+.site-nav { display: flex; flex: 1 1 auto; justify-content: center; min-width: 0; }
+.site-nav__pills {
+  display: flex;
+  gap: var(--space-1);
+  margin: 0;
+  padding: var(--space-1);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-pill);
+  background: var(--surface-2);
+  list-style: none;
+}
+.site-nav__link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+  padding: 0 var(--space-4);
+  border: 1px solid transparent;
+  border-radius: var(--radius-pill);
+  color: var(--ink-2);
+  font-size: var(--fs-small);
+  font-weight: 500;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: color var(--duration-fast) var(--ease-out), background-color var(--duration-fast) var(--ease-out);
+}
+.site-nav__link:hover { color: var(--ink); }
+.site-nav__link.is-active {
+  border-color: var(--line);
+  color: var(--action-text);
+  background: var(--surface);
+  font-weight: 600;
+}
+
+.site-header__menu-button { display: none; }
+
+/* Menu thu gọn (≤ 1200px): danh sách ngay dưới thanh menu. */
+.site-mobile-nav { border-top: 1px solid var(--line); background: var(--bg); }
+.site-mobile-nav[hidden] { display: none; }
+.site-mobile-nav ul {
+  display: grid;
+  gap: var(--space-1);
+  max-width: var(--content-max);
+  margin: 0 auto;
+  padding: var(--space-3) var(--gutter) var(--space-4);
+  list-style: none;
+}
+.site-mobile-nav .site-nav__link {
+  width: 100%;
+  min-height: var(--control-h-lg);
+  border-radius: var(--radius-field);
+  font-size: var(--fs-body);
+}
+
+@media (max-width: 1200px) {
+  .site-nav { display: none; }
+  .site-header__menu-button { display: inline-grid; }
+}
+
+@media (min-width: 1201px) {
+  .site-mobile-nav { display: none; }
+}
+
+/* Menu tài khoản. */
+.account-menu { position: relative; }
+.account-menu__button {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--control-h);
+  padding: 0 var(--space-3) 0 var(--space-1);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-pill);
+  color: var(--ink);
+  background: var(--surface);
+  font-family: var(--font-sans);
+  font-size: var(--fs-small);
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color var(--duration-fast) var(--ease-out);
+}
+.account-menu__button:hover,
+.account-menu__button[aria-expanded="true"] { border-color: var(--border-input); }
+.account-menu__avatar {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  color: var(--on-action);
+  background: var(--action);
+  font-weight: 600;
+}
+.account-menu__name { max-width: 14ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.account-menu__chevron { width: 20px; height: 20px; color: var(--muted); stroke-width: 1.75; }
+.account-menu__panel {
+  position: absolute;
+  top: calc(100% + var(--space-2));
+  right: 0;
+  z-index: 70;
+  width: max-content;
+  min-width: 240px;
+  max-width: calc(100vw - 2 * var(--gutter));
+  padding: var(--space-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  background: var(--surface);
+  box-shadow: var(--shadow-overlay);
+}
+.account-menu__panel[hidden] { display: none; }
+.account-menu__who {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+  padding: var(--space-2) var(--space-3) var(--space-3);
+  border-bottom: 1px solid var(--line);
+}
+.account-menu__who-name { color: var(--ink); font-size: var(--fs-small); font-weight: 600; }
+.account-menu__who-email { color: var(--muted); font-size: var(--fs-label); overflow-wrap: anywhere; }
+.account-menu__list { display: grid; gap: 2px; margin: var(--space-2) 0 0; padding: 0; list-style: none; }
+.account-menu__item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  min-height: var(--control-h);
+  padding: 0 var(--space-3);
+  border: 0;
+  border-radius: var(--radius-sm);
+  color: var(--ink);
+  background: transparent;
+  font-family: var(--font-sans);
+  font-size: var(--fs-small);
+  font-weight: 500;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+.account-menu__item:hover { background: var(--surface-2); }
+.account-menu__item svg { width: 20px; height: 20px; color: var(--muted); stroke-width: 1.75; }
+
+@media (max-width: 639px) {
+  .site-header__inner { gap: var(--space-2); min-height: 64px; }
+  .site-header__actions { gap: var(--space-1); }
+  .account-menu__button { justify-content: center; width: var(--control-h); padding: 0; }
+  .account-menu__name,
+  .account-menu__chevron { display: none; }
+}
+
+/* Footer: nền surface-2, kẻ trên; chỉ liên kết tới trang có thật. */
+.site-footer {
+  border-top: 1px solid var(--line);
+  color: var(--ink);
+  background: var(--surface-2);
+  font-family: var(--font-sans);
+}
+.site-footer__inner {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) repeat(3, minmax(0, 1fr));
+  gap: var(--space-6);
+  max-width: var(--content-max);
+  margin: 0 auto;
+  padding: var(--space-7) var(--gutter) var(--space-6);
+}
+.site-footer__brand { display: grid; align-content: start; gap: var(--space-3); max-width: 38ch; }
+.site-footer__logo {
+  display: inline-flex;
+  align-items: center;
+  justify-self: start;
+  min-height: var(--control-h);
+  color: var(--ink);
+  text-decoration: none;
+}
+.site-footer__tagline { margin: 0; color: var(--ink); font-family: var(--font-serif); font-size: var(--fs-h3); font-weight: 500; line-height: var(--lh-h3); }
+.site-footer__title { margin: 0 0 var(--space-2); color: var(--ink); font-family: var(--font-sans); font-size: var(--fs-small); font-weight: 600; }
+.site-footer__group ul { display: grid; gap: 0; margin: 0; padding: 0; list-style: none; }
+.site-footer__link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+  color: var(--ink-2);
+  font-size: var(--fs-small);
+  text-decoration: none;
+}
+.site-footer__link:hover { color: var(--ink); text-decoration: underline; text-underline-offset: 3px; }
+.site-footer__bottom {
+  max-width: var(--content-max);
+  margin: 0 auto;
+  padding: var(--space-4) var(--gutter) var(--space-5);
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: var(--fs-label);
+}
+
+@media (max-width: 1023px) {
+  .site-footer__inner { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .site-footer__brand { grid-column: 1 / -1; }
+}
+
+@media (max-width: 639px) {
+  .site-footer__inner { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-5) var(--space-4); padding-top: var(--space-6); }
+}

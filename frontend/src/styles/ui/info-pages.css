@@ -1,0 +1,19 @@
+/* Trang tĩnh ngắn: Chính sách bảo mật, Điều khoản sử dụng. Chỉ dùng token. */
+
+.info-page {
+  display: grid;
+  gap: var(--space-7);
+  max-width: 760px;
+  margin: 0 auto;
+  padding: var(--space-7) var(--gutter) var(--space-8);
+}
+.info-page__section { display: grid; gap: var(--space-3); }
+.info-page__list {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding-left: 1.25em;
+  color: var(--ink-2);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+}

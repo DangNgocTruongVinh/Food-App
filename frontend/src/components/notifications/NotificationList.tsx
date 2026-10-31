@@ -1,6 +1,6 @@
-import { Bell } from "lucide-react";
 import { groupNotifications } from "../../features/notifications/notifications.logic";
 import type { AppNotification } from "../../types";
+import { EmptyState, ErrorState, LoadingState, Skeleton } from "../ui";
 import NotificationItem from "./NotificationItem";
 
 export default function NotificationList({
@@ -18,31 +18,25 @@ export default function NotificationList({
 }) {
   if (isLoading) {
     return (
-      <div className="notification-loading" aria-label="Đang tải thông báo">
-        <i /><i /><i />
+      <div className="notification-state">
+        <LoadingState label="Đang tải thông báo">
+          {[0, 1, 2].map((row) => (
+            <div key={row} className="notification-skeleton">
+              <Skeleton kind="block" width={36} height={36} />
+              <span><Skeleton width="70%" /><Skeleton width="45%" /></span>
+            </div>
+          ))}
+        </LoadingState>
       </div>
     );
   }
 
   if (error) {
-    return (
-      <div className="notification-empty">
-        <Bell />
-        <strong>Chưa thể tải thông báo</strong>
-        <span>{error}</span>
-        <button type="button" onClick={onRetry}>Thử lại</button>
-      </div>
-    );
+    return <div className="notification-state"><ErrorState message={`Chưa tải được thông báo. ${error}`} onRetry={onRetry} /></div>;
   }
 
   if (!notifications.length) {
-    return (
-      <div className="notification-empty">
-        <Bell />
-        <strong>Bạn đã xem hết rồi!</strong>
-        <span>Hiện tại không có thông báo mới.</span>
-      </div>
-    );
+    return <EmptyState message="Không có thông báo nào ở mục này." />;
   }
 
   return (

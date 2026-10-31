@@ -1,0 +1,9 @@
+/* Trang Quản trị (làm đầy đủ ở UI-9, UI-10). Chỉ dùng token. */
+
+.admin-placeholder {
+  display: grid;
+  gap: var(--space-6);
+  max-width: var(--content-max);
+  margin: 0 auto;
+  padding: var(--space-6) var(--gutter) var(--space-8);
+}

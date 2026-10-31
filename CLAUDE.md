@@ -200,7 +200,17 @@ Quy tắc (ngoài DESIGN.md):
   - Trang `/dev/ui` (chỉ khi `import.meta.env.DEV`; bản build không có mã/CSS của trang): mọi thành phần ở cả hai chế độ. Nghiệm thu Playwright 35/35 (phông, không cuộn ngang 320/390/1440, Tab 39 điểm dừng đều thấy focus, hộp xác nhận, vùng bấm ≥ 44px, không nháy màu, lỗi localStorage).
   - Đã sửa (sau UI-1): ứng dụng sập khi trình duyệt chặn localStorage (getter ném lỗi ở `auth.storage.ts`). Mọi lần đọc/ghi/xóa storage trong `auth.storage.ts` đi qua hàm bọc try/catch; không ghi được vào đâu thì phiên giữ trong bộ nhớ của tab (mất khi tải lại). Có test (chặn hoàn toàn, ghi bị từ chối, xóa key cũ lỗi).
   - Chưa có ảnh mockup trong `docs/design/mockups/` (DESIGN.md nhắc tới); cần trước UI-3 (Tổng quan), UI-4 (Công thức), UI-5 (Kho).
-- [ ] UI-2 — Khung chung: menu trên (logo, nhóm liên kết dạng viên, chế độ tối, chuông, tài khoản), footer (DESIGN.md mục 13).
+- [x] UI-2 — Khung chung (DESIGN.md mục 13):
+  - `components/layout/`: `SiteHeader` (logo, nhóm liên kết dạng viên, `ThemeToggle`, `NotificationCenter`, `AccountMenu`; ≤ 1200px liên kết thu vào nút "Menu điều hướng" mở danh sách ngay dưới, bàn phím dùng được, Esc đóng và trả focus, đóng khi chuyển trang/bấm ra ngoài/Tab ra ngoài), `AccountMenu` (Hồ sơ / Quản trị chỉ ADMIN / Đăng xuất), `SiteFooter` (chỉ trang có thật; © 2026 Nouri · Đồ án tốt nghiệp), `PublicHeader`, `AdminRoute`. Hook `features/layout/useDisclosure.ts`; logic + test `features/layout/layout.logic.ts`. Liên kết "Bỏ qua menu, tới nội dung".
+  - "Hồ sơ" chuyển từ menu chính sang menu tài khoản. `User.role` (FE) tùy chọn; phiên cũ không có role → USER.
+  - `/admin` (AdminRoute; USER → về `/dashboard`): trang tạm "đang xây dựng". `/privacy`, `/terms`: trang tĩnh ngắn (`pages/info/`, `PublicLayout`), nội dung theo dữ liệu thật Nouri lưu/gửi (đã đối chiếu schema và ngữ cảnh gửi OpenAI).
+  - Landing: footer cũ → `SiteFooter`; bỏ `FooterBotanical`, `footerGroups`, hiệu ứng GSAP của footer, CSS `.landing-footer*`; Landing cố định chế độ sáng (`data-theme="light"`) tới UI-11.
+  - Thông báo: giữ logic `NotificationCenter`; chuông dùng chấm `--dot` (số chưa đọc nằm trong tên đọc), bỏ "→", bảng đầy đủ chuyển sang `<dialog>` (khóa focus, Esc), trạng thái tải/lỗi/trống dùng `components/ui`, icon `Sparkles` → `Lightbulb`, bỏ câu cảm thán. CSS mới `styles/ui/notifications.css`.
+  - Đã gỡ `20-notifications.css`, `21-navigation.css`, `23-app-navbar.css`. Khung mới: `styles/ui/shell.css` (nền `--bg`, menu dính đầu trang); `info-pages.css`, `admin.css`.
+  - **Trang chưa làm lại:** `<main>` giữ lớp `main-content main-theme-* app-overview-palette` và khung giữ `topbar-layout` chỉ để CSS cũ bám; nội dung trang cố định chế độ sáng (`data-theme="light"`) vì CSS cũ đặt chữ tối thẳng trên nền. Mỗi lượt UI thêm route của trang vào `REDESIGNED_ROUTES` (`layout.logic.ts`) và gỡ các lớp này. Nền gradient bên trong từng trang cũ (`17-unified-palette.css`) gỡ khi làm lại trang.
+  - Focus chung đổi sang `:focus-visible` (thay viền xanh nhạt tương phản thấp của `01-base.css`).
+  - Nghiệm thu Playwright 58/58 (`docs/design/screens/UI-2/`): 7 trang cũ trong khung mới có nội dung, không cuộn ngang ở 320/390/1440; menu thu gọn, menu tài khoản theo vai trò, `/admin`, chuông/bảng thông báo, Tab 11 điểm dừng ở menu đều thấy focus, bỏ qua menu, 10 liên kết footer đều tới trang thật, Landing.
+  - **Còn lại, có từ trước:** (1) đăng xuất xóa cache truy vấn khi trang còn hiển thị → vài request 401 ở `/login` (để GĐ4, khi làm lại đăng xuất); (2) trang Kho ở điện thoại: dòng bảng rộng 870px bị cắt trong khung 350px, và trang có `<main>` lồng (để UI-5).
 - [ ] UI-3 — Tổng quan.
 - [ ] UI-4 — Công thức + Chi tiết công thức.
 - [ ] UI-5 — Kho thực phẩm.

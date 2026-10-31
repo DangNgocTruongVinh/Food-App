@@ -1,6 +1,6 @@
 # Bảng đo tương phản token màu
 
-Đo theo WCAG 2.x từ `frontend/src/styles/ui/tokens.css` (cùng công thức với test `frontend/src/features/ui/contrast.test.ts`; test chạy trong `npm test`, đổi token mà cặp nào dưới ngưỡng thì test báo lỗi). Cập nhật 31/10/2026, lượt UI-1.
+Đo theo WCAG 2.x từ `frontend/src/styles/ui/tokens.css` (cùng công thức với test `frontend/src/features/ui/contrast.test.ts`; test chạy trong `npm test`, đổi token mà cặp nào dưới ngưỡng thì test báo lỗi). Cập nhật 31/10/2026, lượt UI-2.
 
 Ngưỡng: chữ thường 4.5:1; chữ lớn (≥ 24px, hoặc đậm ≥ 19px) và thành phần phi văn bản (viền focus) 3:1.
 
@@ -11,6 +11,7 @@ Ngưỡng: chữ thường 4.5:1; chữ lớn (≥ 24px, hoặc đậm ≥ 19px)
 | `--ink` | `--surface-2` | 4.5:1 | 12.45 | 12.75 | Chữ chính trên nền phụ |
 | `--ink-2` | `--bg` | 4.5:1 | 8.37 | 11.63 | Đoạn văn phụ trên nền trang |
 | `--ink-2` | `--surface` | 4.5:1 | 8.74 | 10.64 | Đoạn văn phụ trên card |
+| `--ink-2` | `--surface-2` | 4.5:1 | 7.74 | 9.44 | Liên kết footer, mục menu chưa chọn trên nền phụ |
 | `--muted` | `--bg` | 4.5:1 | 5.22 | 8.18 | Nhãn, chú thích trên nền trang |
 | `--muted` | `--surface` | 4.5:1 | 5.45 | 7.48 | Nhãn, chú thích trên card |
 | `--muted` | `--surface-2` | 4.5:1 | 4.82 | 6.64 | Nhãn trên nền phụ (skeleton, footer) |

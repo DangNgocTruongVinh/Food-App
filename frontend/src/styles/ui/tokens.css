@@ -125,8 +125,11 @@
   }
 }
 
-/* Focus bàn phím chung (mục 7): mọi phần tử tương tác; độ ưu tiên thấp để thành phần có thể tinh chỉnh. */
-:where(a, button, input, select, textarea, summary, [tabindex], [contenteditable="true"]):focus-visible {
+/*
+ * Focus bàn phím chung (mục 7). Cùng độ ưu tiên với :focus-visible cũ trong 01-base.css (viền xanh nhạt, tương phản thấp)
+ * nhưng đặt sau nên thay được nó; quy tắc riêng của thành phần (vd. .ui-input) vẫn ưu tiên hơn.
+ */
+:focus-visible {
   outline: 2px solid var(--action-text);
   outline-offset: 3px;
 }

@@ -37,6 +37,7 @@ export const CONTRAST_PAIRS: { fg: string; bg: string; min: number; use: string 
   { fg: "ink", bg: "surface-2", min: 4.5, use: "Chữ chính trên nền phụ" },
   { fg: "ink-2", bg: "bg", min: 4.5, use: "Đoạn văn phụ trên nền trang" },
   { fg: "ink-2", bg: "surface", min: 4.5, use: "Đoạn văn phụ trên card" },
+  { fg: "ink-2", bg: "surface-2", min: 4.5, use: "Liên kết footer, mục menu chưa chọn trên nền phụ" },
   { fg: "muted", bg: "bg", min: 4.5, use: "Nhãn, chú thích trên nền trang" },
   { fg: "muted", bg: "surface", min: 4.5, use: "Nhãn, chú thích trên card" },
   { fg: "muted", bg: "surface-2", min: 4.5, use: "Nhãn trên nền phụ (skeleton, footer)" },

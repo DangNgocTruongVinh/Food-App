@@ -7,7 +7,7 @@ import { describe, expect, it } from "vitest";
 // Khi một trang được làm lại, thêm thư mục CSS/component của trang đó vào danh sách bên dưới.
 const srcRoot = fileURLToPath(new URL("../..", import.meta.url));
 const NEW_CSS_DIRS = ["styles/ui"];
-const NEW_COMPONENT_DIRS = ["components/ui", "components/dev-ui", "pages/dev"];
+const NEW_COMPONENT_DIRS = ["components/ui", "components/dev-ui", "components/layout", "components/notifications", "pages/dev", "pages/admin", "pages/info", "layouts"];
 
 function filesIn(dir: string, extensions: string[]): string[] {
   return readdirSync(join(srcRoot, dir), { withFileTypes: true }).flatMap((entry) => {
@@ -43,8 +43,9 @@ describe("new UI CSS uses tokens only", () => {
 describe("new UI components (checklist mục 3.1)", () => {
   const sources = NEW_COMPONENT_DIRS.flatMap((dir) => filesIn(dir, [".ts", ".tsx"])).map((file) => [file, withoutTsComments(read(file))] as const);
 
+  // ©, ®, ™ thuộc Extended_Pictographic nhưng là ký hiệu văn bản (vd. "© 2026 Nouri"), không phải emoji.
   it("contain no emoji or sparkle icons", () => {
-    const offenders = sources.filter(([, text]) => /\p{Extended_Pictographic}|Sparkle/u.test(text)).map(([file]) => file);
+    const offenders = sources.filter(([, text]) => /(?![©®™])\p{Extended_Pictographic}|Sparkle/u.test(text)).map(([file]) => file);
     expect(sources.length).toBeGreaterThan(5);
     expect(offenders).toEqual([]);
   });

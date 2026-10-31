@@ -8,8 +8,8 @@ import {
   PackageMinus,
   PackageX,
   Reply,
+  Lightbulb,
   Salad,
-  Sparkles,
   UserPlus,
   type LucideIcon,
 } from "lucide-react";
@@ -30,7 +30,7 @@ const iconByType: Record<NotificationType, LucideIcon> = {
   COMMUNITY_COMMENT: MessageCircle,
   COMMUNITY_REPLY: Reply,
   COMMUNITY_FOLLOW: UserPlus,
-  AI_RECIPE_SUGGESTION: Sparkles,
+  AI_RECIPE_SUGGESTION: Lightbulb,
   AI_EXPIRY_SUGGESTION: Bot,
   AI_NUTRITION_SUGGESTION: Bot,
 };
@@ -57,7 +57,8 @@ export default function NotificationItem({
         <span>{notification.message}</span>
         <time dateTime={notification.createdAt}>{time}</time>
       </span>
-      {!notification.isRead && <span className="notification-unread-dot" aria-label="Chưa đọc" />}
+      {!notification.isRead && <span className="notification-unread-dot" aria-hidden="true" />}
+      {!notification.isRead && <span className="ui-visually-hidden">Chưa đọc</span>}
     </button>
   );
 }
