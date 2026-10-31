@@ -65,7 +65,7 @@ export const FOOTER_GROUPS: { title: string; links: NavLinkItem[] }[] = [
  * Trang đã làm lại theo giao diện mới (nội dung đổi theo chế độ sáng/tối). Trang chưa làm lại dùng CSS cũ với chữ tối
  * đặt thẳng trên nền nên vùng nội dung luôn ở chế độ sáng; mỗi lượt UI thêm trang của lượt đó vào danh sách này.
  */
-export const REDESIGNED_ROUTES = ["/admin"];
+export const REDESIGNED_ROUTES = ["/admin", "/dashboard"];
 
 export function isRedesignedRoute(pathname: string) {
   return REDESIGNED_ROUTES.some((route) => pathname === route || pathname.startsWith(`${route}/`));

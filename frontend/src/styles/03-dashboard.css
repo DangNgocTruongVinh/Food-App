@@ -118,7 +118,7 @@
 }
 
 /* Reference-led overview dashboard */
-.reference-dashboard { max-width: 1540px; padding-top: 22px; }
+
 .overview-welcome { min-height: 280px; padding: 38px 42px; border: 1px solid #e4e5de; border-radius: 28px; background: #eef2e6 url("/assets/nutrition-hero.jpg") center / cover no-repeat; overflow: hidden; position: relative; display: flex; align-items: center; }
 .overview-welcome::before { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, rgba(247,247,238,.99) 0%, rgba(244,246,226,.94) 39%, rgba(244,246,226,.15) 70%, transparent); }
 .overview-welcome-copy { width: min(590px, 58%); position: relative; z-index: 1; }
@@ -237,7 +237,7 @@
 }
 
 @media (max-width: 620px) {
-  .reference-dashboard { padding-top: 14px; }
+  
   .overview-welcome { min-height: 430px; padding: 27px 22px 160px; align-items: flex-start; background-position: 63% center; }
   .overview-welcome::before { background: linear-gradient(180deg, rgba(247,247,238,.99) 0%, rgba(244,246,226,.94) 53%, rgba(244,246,226,.08) 86%); }
   .overview-welcome-copy { width: 100%; }
@@ -276,7 +276,6 @@ body { background: #f8faf6; }
 
 .main-content { margin-left: 218px; }
 
-.reference-dashboard { max-width: none; padding: 16px 24px 28px; }
 .overview-welcome { min-height: 225px; padding: 29px 34px; border-color: #edf0e7; border-radius: 16px; }
 .overview-welcome::before { background: linear-gradient(90deg, rgba(248,249,236,.99) 0%, rgba(243,248,218,.92) 42%, rgba(243,248,218,.08) 72%, transparent); }
 .overview-welcome-copy { width: min(620px, 62%); }
@@ -334,7 +333,7 @@ body { background: #f8faf6; }
 @media (max-width: 620px) {
 
   .main-content { margin-left: 0; }
-  .reference-dashboard { padding: 10px 12px 25px; }
+  
   .overview-welcome { min-height: 405px; padding: 24px 20px 155px; border-radius: 14px; }
   .overview-welcome-copy { width: 100%; }
   .overview-metrics, .overview-panel, .overview-ai-banner { border-radius: 13px; }

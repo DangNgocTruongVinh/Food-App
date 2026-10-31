@@ -1,28 +1,26 @@
 import type { QueryClient } from "@tanstack/react-query";
-import { Moon, Sun, Sunrise } from "lucide-react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { api } from "../../api/client";
 import { createAppQueryClient } from "../../api/query-client";
 import { queryKeys } from "../../api/query-keys";
-import type { DashboardData, PantryItem } from "../../types";
+import type { DashboardData, MealPlanItem, PantryItem } from "../../types";
 import { getDashboard } from "./dashboard.api";
 import {
-  buildDashboardViewModel,
-  dashboardFallbackRecipes,
-  dashboardMealIcon,
-  dashboardMealImage,
-  dashboardMealLabels,
-  dashboardMealTimes,
+  buildNutritionSummary,
+  daysLeft,
+  daysLeftLabel,
   dashboardRecipeSearchPath,
-  dashboardSuggestionImages,
   dashboardWaterLiters,
   DASHBOARD_MAX_WATER_GLASSES,
-  dashboardDateLabel,
-  dashboardInsightMessage,
+  expiringCountLabel,
+  nextMealId,
   nextWaterGlasses,
-  recommendedRecipeImage,
+  orderTodayMeals,
+  percentOf,
+  recommendationReason,
   recommendedRecipePantryNote,
-  recommendedRecipePath,
+  ringDash,
+  usableTargets,
 } from "./dashboard.logic";
 import { dashboardQueries } from "./dashboard.queries";
 
@@ -118,150 +116,108 @@ describe("Dashboard API and query (no network)", () => {
   });
 });
 
-describe("Dashboard derived view data", () => {
-  it("keeps real Dashboard data and derives current progress values", () => {
-    const view = buildDashboardViewModel(dashboard, "Nguyễn Minh An", new Date("2026-09-15T09:00:00.000Z"));
-    expect(view.todayMeals).toBe(dashboard.todayMeals);
-    expect(view.recommendedRecipes).toEqual(recommendedRecipes.slice(0, 3));
-    expect(view.hasRealRecommendedRecipes).toBe(true);
-    expect(view.expiringItems).toBe(dashboard.expiringItems);
-    expect(view.firstName).toBe("An");
-    expect(view.calorieTarget).toBe(2000);
-    expect(view.consumedCalories).toBe(2100);
-    expect(view.calorieProgress).toBe(100);
-    expect(view.completedMeals).toBe(2);
-    expect(view.mealProgress).toBe(67);
+const planItem = (id: string, macros: { proteinG: number; carbsG: number; fatG: number }, servings = 1) =>
+  ({ id, servings, recipe: { ...macros } }) as unknown as MealPlanItem;
+const targets = { calories: 2000, proteinG: 100, carbsG: 220, fatG: 60 };
+
+describe("today's meals", () => {
+  const meals = [
+    { ...dashboard.todayMeals[2] },
+    { ...dashboard.todayMeals[0] },
+    { ...dashboard.todayMeals[1] },
+    { id: "meal-s", mealType: "SNACK" as const, calories: 150, completed: false, recipe: { id: "r-s", name: "Chè", prepMinutes: 5, cookMinutes: 0 } },
+  ];
+
+  it("orders meals by time of day: breakfast, lunch, snack, dinner", () => {
+    expect(orderTodayMeals(meals).map((meal) => meal.mealType)).toEqual(["BREAKFAST", "LUNCH", "SNACK", "DINNER"]);
   });
 
-  it("keeps Insight limited to two items, joins titles and clamps expired days to zero", () => {
-    const view = buildDashboardViewModel(dashboard, "An", new Date("2026-09-15T00:00:00.000Z"));
-    expect(view.insightItems).toEqual(dashboard.expiringItems.slice(0, 2));
-    expect(view.insightTitle).toBe("Ức gà (2 ngày) và Rau (0 ngày)");
-  });
-
-  it("keeps all current fallback values when API data is absent", () => {
-    const view = buildDashboardViewModel(undefined, undefined, new Date(2026, 8, 15, 9));
-    expect(view).toMatchObject({
-      todayMeals: [],
-      recommendedRecipes: dashboardFallbackRecipes,
-      hasRealRecommendedRecipes: false,
-      expiringItems: [],
-      greeting: "Chào buổi sáng",
-      firstName: "bạn",
-      calorieTarget: 2000,
-      consumedCalories: 0,
-      calorieProgress: 0,
-      completedMeals: 0,
-      mealProgress: 0,
-      insightItems: [],
-      insightTitle: "Kho thực phẩm của bạn đang được cân bằng tốt",
-    });
-  });
-
-  it("uses fallback recipes for an empty API list but limits real recipes to three", () => {
-    expect(buildDashboardViewModel({ ...dashboard, recommendedRecipes: [] }, "An").recommendedRecipes)
-      .toBe(dashboardFallbackRecipes);
-    expect(buildDashboardViewModel(dashboard, "An").recommendedRecipes).toHaveLength(3);
-  });
-
-  it("marks fallback recipes so they are not linked to a recipe detail page", () => {
-    expect(buildDashboardViewModel({ ...dashboard, recommendedRecipes: [] }, "An").hasRealRecommendedRecipes).toBe(false);
-    expect(buildDashboardViewModel(dashboard, "An").hasRealRecommendedRecipes).toBe(true);
-  });
-
-  it.each([
-    [10, "Chào buổi sáng"],
-    [11, "Chào buổi chiều"],
-    [17, "Chào buổi chiều"],
-    [18, "Chào buổi tối"],
-  ])("keeps the greeting boundary at hour %i", (hour, greeting) => {
-    expect(buildDashboardViewModel(undefined, "An", new Date(2026, 8, 15, hour)).greeting).toBe(greeting);
-  });
-
-  it("keeps zero-safe nutrition calculations", () => {
-    const data: DashboardData = {
-      ...dashboard,
-      nutritionTargets: { ...dashboard.nutritionTargets!, calories: 0 },
-      todayMeals: [{ ...dashboard.todayMeals[0], calories: 1 }],
-    };
-    const view = buildDashboardViewModel(data, "An");
-    expect(view.calorieTarget).toBe(0);
-    expect(view.consumedCalories).toBe(1);
-    expect(view.calorieProgress).toBe(100);
-    expect(view.mealProgress).toBe(100);
+  it("picks the first not-eaten meal in that order as the next meal", () => {
+    expect(nextMealId(meals)).toBe("meal-b");
+    expect(nextMealId(meals.map((meal) => ({ ...meal, completed: true })))).toBeNull();
+    expect(nextMealId([])).toBeNull();
   });
 });
 
-describe("Dashboard hardcoded presentation rules", () => {
-  it("keeps the current Recipes search path and blank-search behavior", () => {
-    expect(dashboardRecipeSearchPath("  ức gà  ")).toBe("/recipes?q=%E1%BB%A9c%20g%C3%A0");
+describe("nutrition summary", () => {
+  it("sums calories of eaten meals and macros of their recipes × servings from the plan", () => {
+    const summary = buildNutritionSummary(dashboard.todayMeals, targets, [
+      planItem("meal-a", { proteinG: 20, carbsG: 60, fatG: 10 }),
+      planItem("meal-b", { proteinG: 40, carbsG: 50, fatG: 15 }),
+      planItem("meal-c", { proteinG: 35, carbsG: 30, fatG: 20 }, 2),
+    ]);
+    expect(summary.calories).toEqual({ consumed: 2100, target: 2000, percent: 105 });
+    expect(summary.macros).toEqual({
+      protein: { consumed: 90, target: 100, percent: 90 },
+      carbs: { consumed: 120, target: 220, percent: 55 },
+      fat: { consumed: 50, target: 60, percent: 83 },
+    });
+    expect(summary.plannedCalories).toBe(2600);
+    expect(summary.remainingAfterPlan).toBe(-600);
+  });
+
+  it("leaves macros empty until the plan detail is loaded, and is zero-safe without meals", () => {
+    expect(buildNutritionSummary(dashboard.todayMeals, targets).macros).toBeNull();
+    const empty = buildNutritionSummary([], targets, []);
+    expect(empty.calories).toEqual({ consumed: 0, target: 2000, percent: 0 });
+    expect(empty.macros?.protein).toEqual({ consumed: 0, target: 100, percent: 0 });
+    expect(empty.plannedCalories).toBe(0);
+  });
+
+  it("uses targets only when the profile has a calorie target", () => {
+    expect(usableTargets(null)).toBeNull();
+    expect(usableTargets({ calories: 0, proteinG: 0, carbsG: 0, fatG: 0 })).toBeNull();
+    expect(usableTargets(dashboard.nutritionTargets)).toEqual({ calories: 2000, proteinG: 100, carbsG: 220, fatG: 60 });
+    expect(percentOf(5, 0)).toBe(0);
+  });
+
+  it("draws the calorie ring proportionally, capped at a full circle", () => {
+    const half = ringDash(50, 52);
+    expect(half.offset).toBeCloseTo(half.circumference / 2, 6);
+    expect(ringDash(140, 52).offset).toBe(0);
+    expect(ringDash(-5, 52).offset).toBeCloseTo(ringDash(0, 52).circumference, 6);
+  });
+});
+
+describe("pantry snapshot", () => {
+  const now = new Date("2026-09-15T08:00:00");
+
+  it("counts calendar days left and words them in Vietnamese", () => {
+    expect(daysLeft("2026-09-17T00:00:00", now)).toBe(2);
+    expect(daysLeft(null, now)).toBeNull();
+    expect([daysLeftLabel(3), daysLeftLabel(0), daysLeftLabel(-1), daysLeftLabel(null)])
+      .toEqual(["Còn 3 ngày", "Hết hạn hôm nay", "Đã hết hạn", "Chưa có hạn sử dụng"]);
+  });
+
+  it("shows 5+ when the API list (max 5 items) is full", () => {
+    expect([expiringCountLabel(0), expiringCountLabel(4), expiringCountLabel(5)]).toEqual(["0", "4", "5+"]);
+  });
+});
+
+describe("recommendation wording (from real data only)", () => {
+  it("explains the suggested dish by expiring ingredients, then pantry ingredients, then the profile", () => {
+    expect(recommendationReason({ expiringIngredientCount: 2, pantryIngredientCount: 3 }, true)).toBe("Dùng 2 nguyên liệu sắp hết hạn trong tủ bếp của bạn.");
+    expect(recommendationReason({ expiringIngredientCount: 0, pantryIngredientCount: 3 }, true)).toBe("Dùng 3 nguyên liệu bạn đang có trong tủ bếp.");
+    expect(recommendationReason({}, true)).toBe("Hợp với chế độ ăn, dị ứng và món không thích trong hồ sơ của bạn.");
+    expect(recommendationReason({}, false)).toBeNull();
+  });
+
+  it("words the pantry line from real counts, preferring expiring ingredients", () => {
+    expect(recommendedRecipePantryNote({ expiringIngredientCount: 2, pantryIngredientCount: 3 })).toBe("Dùng 2 nguyên liệu sắp hết hạn");
+    expect(recommendedRecipePantryNote({ pantryIngredientCount: 3 })).toBe("Dùng 3 nguyên liệu trong kho");
+    expect(recommendedRecipePantryNote({})).toBeNull();
+  });
+});
+
+describe("search and water", () => {
+  it("keeps the Recipes search path and blank-search behavior", () => {
+    expect(dashboardRecipeSearchPath("  ức gà ")).toBe(`/recipes?q=${encodeURIComponent("ức gà")}`);
     expect(dashboardRecipeSearchPath("   ")).toBeNull();
   });
 
-  it("keeps all local meal image rules", () => {
-    expect(dashboardMealImage("Yến mạch chuối")).toBe("/assets/recipe-oats.jpg");
-    expect(dashboardMealImage("Cá ngừ")).toBe("/assets/recipe-salmon.jpg");
-    expect(dashboardMealImage("Bowl rau nấm")).toBe("/assets/recipe-vegan-bowl.jpg");
-    expect(dashboardMealImage("Ức gà")).toBe("/assets/nutrition-hero.jpg");
-  });
-
-  it("keeps meal icon, label and time mappings", () => {
-    expect(dashboardMealIcon("BREAKFAST")).toBe(Sunrise);
-    expect(dashboardMealIcon("DINNER")).toBe(Moon);
-    expect(dashboardMealIcon("LUNCH")).toBe(Sun);
-    expect(dashboardMealIcon("SNACK")).toBe(Sun);
-    expect(dashboardMealLabels).toEqual({ BREAKFAST: "Sáng", LUNCH: "Trưa", DINNER: "Tối", SNACK: "Bữa phụ" });
-    expect(dashboardMealTimes).toEqual({ BREAKFAST: "08:00", LUNCH: "12:30", DINNER: "19:00", SNACK: "15:30" });
-  });
-
-  it("keeps the exact fallback recommendation data and fixed local images", () => {
-    expect(dashboardFallbackRecipes).toHaveLength(3);
-    expect(dashboardFallbackRecipes.map((recipe) => recipe.id)).toEqual([
-      "fallback-ga-xao-sa-ot", "fallback-ga-teriyaki", "fallback-bo-xao-bong-cai",
-    ]);
-    // Tên trùng với món trong bộ seed (backend/prisma/seed-data.ts).
-    expect(dashboardFallbackRecipes.map((recipe) => recipe.name)).toEqual([
-      "Gà xào sả ớt (kèm cơm)", "Gà teriyaki (kèm cơm)", "Bò xào bông cải",
-    ]);
-    expect(dashboardSuggestionImages).toEqual([
-      "/assets/dashboard-recipe-chicken-quinoa-v4.jpg",
-      "/assets/dashboard-recipe-chicken-pesto-v4.jpg",
-      "/assets/dashboard-recipe-chicken-salad-v4.jpg",
-    ]);
-  });
-
-  it("keeps the local water conversion", () => {
-    expect(dashboardWaterLiters(0)).toBe(0);
+  it("converts glasses to liters and adds one glass up to the maximum", () => {
     expect(dashboardWaterLiters(5)).toBe(1.25);
-    expect(dashboardWaterLiters(8)).toBe(2);
-  });
-});
-
-describe("Dashboard component helpers", () => {
-  it("formats the header date in Vietnamese", () => {
-    expect(dashboardDateLabel(new Date(2026, 9, 30, 9))).toEqual({ iso: "2026-10-30", label: "Thứ Sáu, 30 tháng 10" });
-  });
-  it("links only real recommended recipes to their detail page", () => {
-    expect(recommendedRecipePath("recipe-a", true)).toBe("/recipes/recipe-a");
-    expect(recommendedRecipePath("fallback-ga-teriyaki", false)).toBe("/recipes");
-  });
-  it("uses the recipe imageUrl, else the fixed suggestion images, then an image by name", () => {
-    expect(recommendedRecipeImage(0, { name: "Phở bò", imageUrl: "/assets/pho.jpg" })).toBe("/assets/pho.jpg");
-    expect(recommendedRecipeImage(0, { name: "Phở bò", imageUrl: null })).toBe(dashboardSuggestionImages[0]);
-    expect(recommendedRecipeImage(5, { name: "Cá kho tộ" })).toBe("/assets/recipe-salmon.jpg");
-  });
-  it("words the pantry line from real counts, preferring expiring ingredients", () => {
-    expect(recommendedRecipePantryNote({ pantryIngredientCount: 3, expiringIngredientCount: 2 })).toBe("Dùng 2 nguyên liệu sắp hết hạn");
-    expect(recommendedRecipePantryNote({ pantryIngredientCount: 3, expiringIngredientCount: 0 })).toBe("Dùng 3 nguyên liệu trong kho");
-    expect(recommendedRecipePantryNote({ pantryIngredientCount: 0, expiringIngredientCount: 0 })).toBeNull();
-    expect(recommendedRecipePantryNote({})).toBeNull();
-  });
-  it("words the insight by whether items are expiring", () => {
-    expect(dashboardInsightMessage(true)).toContain("sắp hết hạn");
-    expect(dashboardInsightMessage(false)).toContain("duy trì thói quen");
-  });
-  it("adds one glass of water up to the maximum", () => {
-    expect(nextWaterGlasses(5)).toBe(6);
+    expect(nextWaterGlasses(0)).toBe(1);
     expect(nextWaterGlasses(DASHBOARD_MAX_WATER_GLASSES)).toBe(DASHBOARD_MAX_WATER_GLASSES);
   });
 });

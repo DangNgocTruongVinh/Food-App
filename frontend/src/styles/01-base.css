@@ -198,8 +198,6 @@ h1, h2, h3, .logo { font-family: "Manrope", system-ui, sans-serif; }
 .food-card > strong small { color: var(--legacy-muted); font: 500 10px Manrope; }
 .expiry-line { margin-top: 15px; padding-top: 12px; border-top: 1px solid #edf0ea; color: var(--legacy-muted); display: flex; align-items: center; gap: 7px; font-size: 9px; }
 .expiry-line span { width: 6px; height: 6px; border-radius: 50%; background: #79a08b; box-shadow: 0 0 0 3px rgba(121,160,139,.1); }
-.expiry-line.urgent { color: #b75631; font-weight: 600; }
-.expiry-line.urgent span { background: var(--orange); box-shadow: 0 0 0 3px rgba(255,138,82,.12); }
 
 .state { min-height: 350px; padding: 30px; color: var(--legacy-muted); display: flex; flex-direction: column; align-items: center; justify-content: center; }
 .state-icon { width: 64px; height: 64px; border-radius: 22px 22px 22px 7px; color: var(--green); background: linear-gradient(145deg, #eaf3dc, #deedcc); display: grid; place-items: center; box-shadow: 0 10px 25px rgba(47,114,93,.09); }

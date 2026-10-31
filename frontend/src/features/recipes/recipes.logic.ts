@@ -108,6 +108,15 @@ export function formatScaledIngredientAmount(ingredient: Pick<Ingredient, "quant
   return formatIngredientAmount({ unit: ingredient.unit, quantity: scaleIngredientQuantity(ingredient, recipeServings, servings) });
 }
 
+/** Nhãn chế độ ăn của món bằng tiếng Việt (DESIGN.md mục 9: không trộn tiếng Anh như "Low Carb"). */
+export const RECIPE_DIET_LABELS: Record<string, string> = {
+  BALANCED: "Cân bằng",
+  VEGETARIAN: "Món chay",
+  VEGAN: "Thuần chay",
+  LOW_CARB: "Ít tinh bột",
+  HIGH_PROTEIN: "Giàu đạm",
+};
+
 export function recipeDietLabel(tag: string) {
-  return tag.replaceAll("_", " ");
+  return RECIPE_DIET_LABELS[tag] ?? tag.replaceAll("_", " ");
 }

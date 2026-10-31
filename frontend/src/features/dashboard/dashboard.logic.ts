@@ -1,78 +1,105 @@
-import { differenceInCalendarDays, format } from "date-fns";
-import { vi } from "date-fns/locale";
-import { Moon, Sun, Sunrise } from "lucide-react";
-import type { DashboardData, DashboardRecommendedRecipe, MealType } from "../../types";
-import { IMAGE_WIDTHS, optimizedImageUrl } from "../../utils/images";
-import { recipeDetailPath } from "../recipes/recipes.logic";
+import { differenceInCalendarDays } from "date-fns";
+import type { DashboardData, DashboardRecommendedRecipe, MealPlanItem, MealType } from "../../types";
+
+// Logic thuần của trang Tổng quan (UI-3): chỉ dùng dữ liệu thật của dashboard API và chi tiết thực đơn đang dùng.
+
+export type TodayMeal = DashboardData["todayMeals"][number];
+type Targets = NonNullable<DashboardData["nutritionTargets"]>;
+
+export const MEAL_ORDER: MealType[] = ["BREAKFAST", "LUNCH", "SNACK", "DINNER"];
 
 export const dashboardMealLabels: Record<MealType, string> = {
-  BREAKFAST: "Sáng",
-  LUNCH: "Trưa",
-  DINNER: "Tối",
+  BREAKFAST: "Bữa sáng",
+  LUNCH: "Bữa trưa",
   SNACK: "Bữa phụ",
+  DINNER: "Bữa tối",
 };
 
-export const dashboardMealTimes: Record<MealType, string> = {
-  BREAKFAST: "08:00",
-  LUNCH: "12:30",
-  DINNER: "19:00",
-  SNACK: "15:30",
-};
-
-export const dashboardFallbackRecipes: DashboardData["recommendedRecipes"] = [
-  { id: "fallback-ga-xao-sa-ot", name: "Gà xào sả ớt (kèm cơm)", calories: 600, prepMinutes: 15, cookMinutes: 15, dietTags: ["BALANCED", "HIGH_PROTEIN"] },
-  { id: "fallback-ga-teriyaki", name: "Gà teriyaki (kèm cơm)", calories: 620, prepMinutes: 10, cookMinutes: 20, dietTags: ["BALANCED", "HIGH_PROTEIN"] },
-  { id: "fallback-bo-xao-bong-cai", name: "Bò xào bông cải", calories: 360, prepMinutes: 15, cookMinutes: 10, dietTags: ["LOW_CARB", "HIGH_PROTEIN"] },
-];
-
-export const dashboardSuggestionImages = [
-  "/assets/dashboard-recipe-chicken-quinoa-v4.jpg",
-  "/assets/dashboard-recipe-chicken-pesto-v4.jpg",
-  "/assets/dashboard-recipe-chicken-salad-v4.jpg",
-];
-
-export function dashboardMealImage(name: string) {
-  const normalized = name.toLowerCase();
-  if (normalized.includes("yến mạch") || normalized.includes("sữa chua") || normalized.includes("chuối")) return "/assets/recipe-oats.jpg";
-  if (normalized.includes("cá") || normalized.includes("tôm") || normalized.includes("ngừ")) return "/assets/recipe-salmon.jpg";
-  if (normalized.includes("đậu") || normalized.includes("rau") || normalized.includes("nấm") || normalized.includes("bowl")) return "/assets/recipe-vegan-bowl.jpg";
-  return "/assets/nutrition-hero.jpg";
+/** Các bữa hôm nay theo thứ tự trong ngày (sáng, trưa, phụ, tối). */
+export function orderTodayMeals(meals: TodayMeal[]) {
+  return [...meals].sort((a, b) => MEAL_ORDER.indexOf(a.mealType) - MEAL_ORDER.indexOf(b.mealType));
 }
 
-export function dashboardMealIcon(mealType: MealType) {
-  if (mealType === "BREAKFAST") return Sunrise;
-  if (mealType === "DINNER") return Moon;
-  return Sun;
+/** Bữa kế tiếp = bữa đầu tiên (theo thứ tự trong ngày) chưa đánh dấu đã ăn. */
+export function nextMealId(meals: TodayMeal[]) {
+  return orderTodayMeals(meals).find((meal) => !meal.completed)?.id ?? null;
 }
 
-export function dashboardRecipeSearchPath(search: string) {
-  const normalized = search.trim();
-  return normalized ? `/recipes?q=${encodeURIComponent(normalized)}` : null;
+export function percentOf(value: number, target: number) {
+  return target > 0 ? Math.round((value / target) * 100) : 0;
 }
 
-export function dashboardWaterLiters(waterGlasses: number) {
-  return Number((waterGlasses * 0.25).toFixed(2));
+export type NutrientProgress = { consumed: number; target: number; percent: number };
+
+/**
+ * Dinh dưỡng đã ăn hôm nay. Calo lấy từ các bữa đã đánh dấu (dashboard API); đạm/tinh bột/béo lấy từ công thức của
+ * bữa đó trong chi tiết thực đơn (× khẩu phần). planItems chưa tải → macros = null.
+ */
+export function buildNutritionSummary(meals: TodayMeal[], targets: Targets, planItems?: MealPlanItem[]) {
+  const eaten = meals.filter((meal) => meal.completed);
+  const consumedCalories = eaten.reduce((sum, meal) => sum + meal.calories, 0);
+  const plannedCalories = meals.reduce((sum, meal) => sum + meal.calories, 0);
+  const progress = (consumed: number, target: number): NutrientProgress => ({ consumed: Math.round(consumed), target, percent: percentOf(consumed, target) });
+
+  let macros: { protein: NutrientProgress; carbs: NutrientProgress; fat: NutrientProgress } | null = null;
+  if (planItems) {
+    const byId = new Map(planItems.map((item) => [item.id, item]));
+    const sum = (pick: (item: MealPlanItem) => number) => eaten.reduce((total, meal) => {
+      const item = byId.get(meal.id);
+      return total + (item ? pick(item) * (item.servings || 1) : 0);
+    }, 0);
+    macros = {
+      protein: progress(sum((item) => item.recipe.proteinG), targets.proteinG),
+      carbs: progress(sum((item) => item.recipe.carbsG), targets.carbsG),
+      fat: progress(sum((item) => item.recipe.fatG), targets.fatG),
+    };
+  }
+  return {
+    calories: progress(consumedCalories, targets.calories),
+    plannedCalories,
+    /** Còn lại so với mục tiêu nếu ăn hết các bữa hôm nay (âm = vượt). */
+    remainingAfterPlan: targets.calories - plannedCalories,
+    macros,
+  };
 }
 
-export const DASHBOARD_MAX_WATER_GLASSES = 8;
-
-export function nextWaterGlasses(waterGlasses: number) {
-  return Math.min(DASHBOARD_MAX_WATER_GLASSES, waterGlasses + 1);
+/** Mục tiêu dinh dưỡng dùng được (hồ sơ đã có và đã tính chỉ tiêu). */
+export function usableTargets(targets: DashboardData["nutritionTargets"]): Targets | null {
+  if (!targets || !targets.calories) return null;
+  return { calories: targets.calories, proteinG: targets.proteinG ?? 0, carbsG: targets.carbsG ?? 0, fatG: targets.fatG ?? 0 };
 }
 
-/** Ngày hiển thị ở đầu Dashboard, vd. "Thứ Sáu, 30 tháng 10". */
-export function dashboardDateLabel(now = new Date()) {
-  return { iso: format(now, "yyyy-MM-dd"), label: format(now, "EEEE, dd 'tháng' M", { locale: vi }) };
+/** Vòng calo: độ dài nét theo phần trăm (tối đa đủ vòng khi vượt mục tiêu). */
+export function ringDash(percent: number, radius: number) {
+  const circumference = 2 * Math.PI * radius;
+  const filled = (Math.min(100, Math.max(0, percent)) / 100) * circumference;
+  return { circumference, offset: circumference - filled };
 }
 
-/** Công thức mẫu dự phòng không có trong DB nên chỉ dẫn về danh sách công thức. */
-export function recommendedRecipePath(recipeId: string, isRealRecipe: boolean) {
-  return isRealRecipe ? recipeDetailPath(recipeId) : "/recipes";
+/** Số ngày còn lại tới hạn sử dụng (âm = đã hết hạn). */
+export function daysLeft(expiryDate: string | null, now = new Date()) {
+  return expiryDate ? differenceInCalendarDays(new Date(expiryDate), now) : null;
 }
 
-/** Ảnh công thức (imageUrl) nếu có; món mẫu dự phòng dùng ảnh gợi ý cố định, rồi ảnh theo tên. */
-export function recommendedRecipeImage(index: number, recipe: Pick<DashboardRecommendedRecipe, "name" | "imageUrl">) {
-  return recipe.imageUrl ? optimizedImageUrl(recipe.imageUrl, IMAGE_WIDTHS.card) : (dashboardSuggestionImages[index] ?? dashboardMealImage(recipe.name));
+export function daysLeftLabel(days: number | null) {
+  if (days === null) return "Chưa có hạn sử dụng";
+  if (days < 0) return "Đã hết hạn";
+  if (days === 0) return "Hết hạn hôm nay";
+  return `Còn ${days} ngày`;
+}
+
+/** API trả tối đa 5 món sắp hết hạn (7 ngày tới): đủ 5 thì ghi "5+" để không hiểu nhầm là đúng 5. */
+export const EXPIRING_LIST_LIMIT = 5;
+export function expiringCountLabel(count: number) {
+  return count >= EXPIRING_LIST_LIMIT ? `${EXPIRING_LIST_LIMIT}+` : String(count);
+}
+
+/** Lý do gợi ý món ở đầu trang, dựa trên dữ liệu thật của món. */
+export function recommendationReason(recipe: Pick<DashboardRecommendedRecipe, "pantryIngredientCount" | "expiringIngredientCount">, hasProfile: boolean) {
+  if (recipe.expiringIngredientCount) return `Dùng ${recipe.expiringIngredientCount} nguyên liệu sắp hết hạn trong tủ bếp của bạn.`;
+  if (recipe.pantryIngredientCount) return `Dùng ${recipe.pantryIngredientCount} nguyên liệu bạn đang có trong tủ bếp.`;
+  if (hasProfile) return "Hợp với chế độ ăn, dị ứng và món không thích trong hồ sơ của bạn.";
+  return null;
 }
 
 /** Dòng phụ dưới tên món gợi ý: ưu tiên nguyên liệu sắp hết hạn, rồi nguyên liệu trong kho; không dùng gì trong kho thì ẩn. */
@@ -82,54 +109,20 @@ export function recommendedRecipePantryNote(recipe: Pick<DashboardRecommendedRec
   return null;
 }
 
-export function dashboardInsightMessage(hasExpiringItems: boolean) {
-  return hasExpiringItems
-    ? "sắp hết hạn. Nouri gợi ý món ngon sử dụng cả hai để tránh lãng phí nhé."
-    : "Hãy tiếp tục duy trì thói quen sử dụng nguyên liệu tươi và lên kế hoạch bữa ăn đều đặn.";
+export function dashboardRecipeSearchPath(search: string) {
+  const normalized = search.trim();
+  return normalized ? `/recipes?q=${encodeURIComponent(normalized)}` : null;
 }
 
-export function buildDashboardViewModel(
-  data: DashboardData | undefined,
-  userName: string | undefined,
-  now = new Date(),
-) {
-  const todayMeals = data?.todayMeals ?? [];
-  // Công thức mẫu dự phòng không có trong DB nên không được liên kết tới trang chi tiết.
-  const hasRealRecommendedRecipes = Boolean(data?.recommendedRecipes?.length);
-  const recommendedRecipes = hasRealRecommendedRecipes
-    ? data!.recommendedRecipes.slice(0, 3)
-    : dashboardFallbackRecipes;
-  const expiringItems = data?.expiringItems ?? [];
-  const hour = now.getHours();
-  const greeting = hour < 11 ? "Chào buổi sáng" : hour < 18 ? "Chào buổi chiều" : "Chào buổi tối";
-  const firstName = userName?.split(" ").at(-1) ?? "bạn";
-  const calorieTarget = data?.nutritionTargets?.calories ?? 2000;
-  const consumedCalories = todayMeals
-    .filter((meal) => meal.completed)
-    .reduce((sum, meal) => sum + meal.calories, 0);
-  const calorieProgress = Math.min(100, Math.round((consumedCalories / Math.max(1, calorieTarget)) * 100));
-  const completedMeals = todayMeals.filter((meal) => meal.completed).length;
-  const mealProgress = todayMeals.length ? Math.round((completedMeals / todayMeals.length) * 100) : 0;
-  const insightItems = expiringItems.slice(0, 2);
-  const insightTitle = insightItems.length
-    ? insightItems
-      .map((item) => `${item.name} (${Math.max(0, differenceInCalendarDays(new Date(item.expiryDate!), now))} ngày)`)
-      .join(" và ")
-    : "Kho thực phẩm của bạn đang được cân bằng tốt";
+export const formatNumber = (value: number) => value.toLocaleString("vi-VN");
 
-  return {
-    todayMeals,
-    recommendedRecipes,
-    hasRealRecommendedRecipes,
-    expiringItems,
-    greeting,
-    firstName,
-    calorieTarget,
-    consumedCalories,
-    calorieProgress,
-    completedMeals,
-    mealProgress,
-    insightItems,
-    insightTitle,
-  };
+// Lượng nước: chỉ ghi nhận trong phiên (chưa lưu DB, xem GĐ5). Mỗi ly 250 ml, tối đa 8 ly.
+export const DASHBOARD_MAX_WATER_GLASSES = 8;
+
+export function dashboardWaterLiters(waterGlasses: number) {
+  return Number((waterGlasses * 0.25).toFixed(2));
+}
+
+export function nextWaterGlasses(waterGlasses: number) {
+  return Math.min(DASHBOARD_MAX_WATER_GLASSES, waterGlasses + 1);
 }

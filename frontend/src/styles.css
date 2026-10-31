@@ -11,7 +11,6 @@
 @import "./styles/08-pantry-palette.css";
 @import "./styles/09-dashboard-palette.css";
 @import "./styles/10-pantry-palette-final.css";
-@import "./styles/11-dashboard-palette-final.css";
 @import "./styles/12-meal-plans-palette.css";
 @import "./styles/13-recipes.css";
 @import "./styles/14-assistant.css";
@@ -21,7 +20,6 @@
 @import "./styles/18-community.css";
 @import "./styles/19-logo.css";
 @import "./styles/22-landing.css";
-@import "./styles/24-dashboard-v2.css";
 @import "./styles/25-landing-hero-footer.css";
 @import "./styles/26-login.css";
 @import "./styles/27-pantry-v2.css";
@@ -33,3 +31,4 @@
 @import "./styles/ui/notifications.css";
 @import "./styles/ui/info-pages.css";
 @import "./styles/ui/admin.css";
+@import "./styles/ui/dashboard.css";

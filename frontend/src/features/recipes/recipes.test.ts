@@ -209,7 +209,9 @@ describe("Recipe detail helpers", () => {
   it("builds the detail path and summary values", () => {
     expect(recipeDetailPath("recipe-a")).toBe("/recipes/recipe-a");
     expect(recipeTotalMinutes(recipe())).toBe(30);
-    expect(recipeDietLabel("HIGH_PROTEIN")).toBe("HIGH PROTEIN");
+    expect(["HIGH_PROTEIN", "LOW_CARB", "VEGETARIAN", "VEGAN", "BALANCED"].map(recipeDietLabel))
+      .toEqual(["Giàu đạm", "Ít tinh bột", "Món chay", "Thuần chay", "Cân bằng"]);
+    expect(recipeDietLabel("NEW_TAG")).toBe("NEW TAG");
   });
   it.each([
     [{ quantity: 200, unit: "G" }, "200 g"],

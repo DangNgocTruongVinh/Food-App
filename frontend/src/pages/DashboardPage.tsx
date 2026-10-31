@@ -1,42 +1,70 @@
-import { useGSAP } from "@gsap/react";
-import { useQuery } from "@tanstack/react-query";
-import gsap from "gsap";
-import { useRef, useState, type FormEvent } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
-import InsightCard from "../components/dashboard/InsightCard";
-import OverviewHero from "../components/dashboard/OverviewHero";
-import RecommendedRecipes from "../components/dashboard/RecommendedRecipes";
-import TodayMetrics from "../components/dashboard/TodayMetrics";
-import TodayPlanCard from "../components/dashboard/TodayPlanCard";
-import WaterStrip from "../components/dashboard/WaterStrip";
-import { LoadingState } from "../components/States";
+import { getApiError } from "../api/client";
+import { DashboardHero } from "../components/dashboard/DashboardHero";
+import { DashboardSkeleton } from "../components/dashboard/DashboardSkeleton";
+import { NutritionTodayCard } from "../components/dashboard/NutritionTodayCard";
+import { PantrySnapshot } from "../components/dashboard/PantrySnapshot";
+import { RecommendedRecipes } from "../components/dashboard/RecommendedRecipes";
+import { TodayMealsCard } from "../components/dashboard/TodayMealsCard";
+import { WaterTracker } from "../components/dashboard/WaterTracker";
+import { Button, ErrorState, PageHeader } from "../components/ui";
 import { useAuth } from "../contexts/AuthContext";
-import { buildDashboardViewModel, dashboardRecipeSearchPath, nextWaterGlasses } from "../features/dashboard/dashboard.logic";
+import {
+  buildNutritionSummary, dashboardRecipeSearchPath, nextMealId, nextWaterGlasses, orderTodayMeals, type TodayMeal, usableTargets,
+} from "../features/dashboard/dashboard.logic";
 import { dashboardQueries } from "../features/dashboard/dashboard.queries";
+import { invalidateMealPlanQueries, mealPlanMutations, mealPlanQueries } from "../features/meal-plans/meal-plans.queries";
+import { greetingForHour } from "../features/ui/ui.logic";
+
+type MealStatus = { kind: "done" | "undone" | "error"; meal: TodayMeal; message?: string };
 
 export default function DashboardPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const pageRef = useRef<HTMLDivElement>(null);
+  const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
-  const [waterGlasses, setWaterGlasses] = useState(5);
-  const { data, isLoading } = useQuery(dashboardQueries.overview());
+  const [waterGlasses, setWaterGlasses] = useState(0);
+  const [status, setStatus] = useState<MealStatus | null>(null);
 
-  useGSAP(() => {
-    if (isLoading || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  const overview = useQuery(dashboardQueries.overview());
+  const planId = overview.data?.activePlan?.id ?? null;
+  // Đạm/tinh bột/béo và ảnh món của các bữa hôm nay lấy từ chi tiết thực đơn đang dùng (API có sẵn).
+  const plan = useQuery({ ...mealPlanQueries.detail(planId ?? ""), enabled: Boolean(planId) });
 
-    const intro = gsap.timeline({ defaults: { ease: "power3.out" } });
-    intro
-      .from(".overview-v2-hero-copy > *", { y: 18, autoAlpha: 0, duration: 0.62, stagger: 0.07 })
-      .from(".overview-v2-hero-bowl", { scale: 0.88, rotation: 5, autoAlpha: 0, duration: 0.92 }, 0.08)
-      .from(".overview-v2-hero-leaf, .overview-v2-lemon-cup", { y: 12, scale: 0.82, autoAlpha: 0, duration: 0.58, stagger: 0.06 }, 0.22)
-      .from(".overview-v2-metric", { y: 16, autoAlpha: 0, duration: 0.46, stagger: 0.06 }, 0.3)
-      .from(".overview-v2-insight, .overview-v2-panel, .overview-v2-water-strip", { y: 22, autoAlpha: 0, duration: 0.58, stagger: 0.08 }, 0.5);
+  const updateMeal = useMutation({
+    ...mealPlanMutations.updateMeal(),
+    onSuccess: () => invalidateMealPlanQueries(queryClient, true),
+  });
 
-    return () => intro.kill();
-  }, { scope: pageRef, dependencies: [isLoading], revertOnUpdate: true });
+  const setCompleted = (meal: TodayMeal, completed: boolean) => {
+    updateMeal.mutate({ id: meal.id, completed }, {
+      onSuccess: () => setStatus({ kind: completed ? "done" : "undone", meal }),
+      onError: (error) => setStatus({ kind: "error", meal, message: getApiError(error) }),
+    });
+  };
 
-  if (isLoading) return <LoadingState />;
+  const greeting = greetingForHour(new Date().getHours());
+
+  if (overview.isLoading) return <DashboardSkeleton />;
+  if (overview.isError || !overview.data) {
+    return (
+      <div className="dash-page">
+        <div className="dash-content dash-content--error">
+          <PageHeader size="hero" title={<>Hôm nay<br /><em>nấu gì?</em></>} description={user?.name ? `${greeting}, ${user.name}` : greeting} />
+          <ErrorState message="Chưa tải được dữ liệu Tổng quan." onRetry={() => void overview.refetch()} retrying={overview.isFetching} />
+        </div>
+      </div>
+    );
+  }
+
+  const data = overview.data;
+  const meals = orderTodayMeals(data.todayMeals);
+  const targets = usableTargets(data.nutritionTargets);
+  const planItems = plan.data?.days.flatMap((day) => day.items);
+  const summary = targets ? buildNutritionSummary(meals, targets, planId ? planItems : []) : null;
+  const macrosStatus = !planId || plan.isSuccess ? "ready" : plan.isError ? "error" : "loading";
 
   const submitSearch = (event: FormEvent) => {
     event.preventDefault();
@@ -44,23 +72,41 @@ export default function DashboardPage() {
     if (path) navigate(path);
   };
 
-  const view = buildDashboardViewModel(data, user?.name);
+  return (
+    <div className="dash-page">
+      <DashboardHero greeting={greeting} userName={user?.name} recipes={data.recommendedRecipes} hasProfile={Boolean(targets)} />
 
-  return <div className="page reference-dashboard overview-dashboard-v2" ref={pageRef}>
-    <OverviewHero greeting={view.greeting} firstName={view.firstName} search={search} onSearchChange={setSearch} onSearchSubmit={submitSearch} />
+      <div className="dash-content">
+        <div className="dash-row">
+          <NutritionTodayCard summary={summary} macrosStatus={macrosStatus} onRetryMacros={() => void plan.refetch()} />
+          <div className="dash-stack">
+            <TodayMealsCard
+              planId={planId}
+              meals={meals}
+              nextId={nextMealId(meals)}
+              planItems={planItems}
+              pendingId={updateMeal.isPending ? updateMeal.variables?.id ?? null : null}
+              onMarkEaten={(meal) => setCompleted(meal, true)}
+            />
+            {status && (
+              <p className={status.kind === "error" ? "dash-status dash-status--error" : "dash-status"} role={status.kind === "error" ? "alert" : "status"}>
+                {status.kind === "done" && <>Đã đánh dấu đã ăn: {status.meal.recipe.name}.</>}
+                {status.kind === "undone" && <>Đã bỏ đánh dấu đã ăn: {status.meal.recipe.name}.</>}
+                {status.kind === "error" && <>Chưa cập nhật được bữa {status.meal.recipe.name}. {status.message}</>}
+                {status.kind === "done" && (
+                  <Button className="dash-status__undo" busy={updateMeal.isPending} onClick={() => setCompleted(status.meal, false)}>Hoàn tác</Button>
+                )}
+              </p>
+            )}
+          </div>
+        </div>
 
-    <TodayMetrics
-      expiringCount={view.expiringItems.length} pantryCount={data?.pantryCount ?? 0} mealCount={view.todayMeals.length}
-      consumedCalories={view.consumedCalories} calorieTarget={view.calorieTarget} calorieProgress={view.calorieProgress}
-    />
+        <PantrySnapshot pantryCount={data.pantryCount} expiringItems={data.expiringItems} expiredCount={data.expiredCount} />
 
-    <InsightCard title={view.insightTitle} hasExpiringItems={view.insightItems.length > 0} />
+        <RecommendedRecipes recipes={data.recommendedRecipes} search={search} onSearchChange={setSearch} onSearchSubmit={submitSearch} />
 
-    <section className="overview-v2-main-grid">
-      <RecommendedRecipes recipes={view.recommendedRecipes} areRealRecipes={view.hasRealRecommendedRecipes} />
-      <TodayPlanCard meals={view.todayMeals} completedMeals={view.completedMeals} mealProgress={view.mealProgress} />
-    </section>
-
-    <WaterStrip glasses={waterGlasses} onAddGlass={() => setWaterGlasses(nextWaterGlasses)} />
-  </div>;
+        <WaterTracker glasses={waterGlasses} onAddGlass={() => setWaterGlasses(nextWaterGlasses)} />
+      </div>
+    </div>
+  );
 }
