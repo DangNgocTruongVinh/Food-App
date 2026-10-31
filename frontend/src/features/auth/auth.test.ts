@@ -112,6 +112,51 @@ describe("V1 auth storage", () => {
   });
 });
 
+describe("Auth storage when the browser blocks or rejects storage", () => {
+  const blockStorage = (name: "localStorage" | "sessionStorage") =>
+    Object.defineProperty(globalThis, name, { configurable: true, get() { throw new Error("SecurityError: storage blocked"); } });
+  const throwingStorage = (map: Map<string, string>, failing: "setItem" | "removeItem") => ({
+    ...stubStorage(map),
+    [failing]: () => { throw new Error(failing === "setItem" ? "QuotaExceededError" : "SecurityError"); },
+  });
+  afterEach(() => clearAuthSession());
+
+  it("does not crash when accessing localStorage/sessionStorage throws, and starts logged out with the default preference", () => {
+    blockStorage("localStorage");
+    blockStorage("sessionStorage");
+    expect(getRememberLoginPreference()).toBe(true);
+    expect(getAuthToken()).toBeNull();
+    expect(getStoredUser()).toBeNull();
+    expect(() => { saveRememberLoginPreference(false); clearAuthSession(); }).not.toThrow();
+  });
+
+  it("keeps the session in memory for this tab when nothing can be stored", () => {
+    blockStorage("localStorage");
+    blockStorage("sessionStorage");
+    saveAuthSession(session);
+    expect(getAuthToken()).toBe(session.token);
+    expect(getStoredUser()).toEqual(session.user);
+    updateAuthUser({ ...session.user, name: "Minh Anh mới" });
+    expect(getStoredUser()?.name).toBe("Minh Anh mới");
+    clearAuthSession();
+    expect(getAuthToken()).toBeNull();
+  });
+
+  it("falls back to memory when writing is rejected (quota) and leaves no half-written session", () => {
+    vi.stubGlobal("localStorage", throwingStorage(stored, "setItem"));
+    saveAuthSession(session, true);
+    expect(Object.fromEntries(stored)).toEqual({});
+    expect(getAuthToken()).toBe(session.token);
+  });
+
+  it("does not crash when removing old nutriplan_* keys fails", () => {
+    stored.set("nutriplan_token", session.token);
+    vi.stubGlobal("localStorage", throwingStorage(stored, "removeItem"));
+    expect(() => getAuthToken()).not.toThrow();
+    expect(getAuthToken()).toBe(session.token);
+  });
+});
+
 describe("Auth session and query cache", () => {
   let queryClient: QueryClient;
   beforeEach(() => {

@@ -182,7 +182,7 @@ Thứ tự: (b) → khảo sát dọn code → (a), (c), (d).
 | 22–23/11 | Dự phòng |
 | từ 24/11 | Tài liệu (`REPORT_NOURI.md`) |
 
-Nội dung GĐ3b, GĐ3c **chưa ghi rõ** trong kế hoạch: hỏi người dùng trước khi bắt đầu.
+Nội dung GĐ3b, GĐ3c: xem hai mục "Giai đoạn 3b", "Giai đoạn 3c" (sau GĐ3).
 
 ### Làm lại toàn bộ giao diện (31/10–7/11) — nhánh `ui-moi`
 Quy tắc (ngoài DESIGN.md):
@@ -193,12 +193,12 @@ Quy tắc (ngoài DESIGN.md):
 
 - [x] UI-1 — Nền:
   - `styles/ui/tokens.css`: hai bộ màu đúng DESIGN.md mục 4 (đặt bằng `data-theme` trên `<html>` hoặc trên một vùng con), thang chữ, khoảng cách, bo góc, chuyển động, focus chung `:focus-visible`. CSS cũ đổi tên `--line/--muted/--surface` → `--legacy-*` để không trùng token (CSS build ra giống hệt từng byte khi đổi tên ngược lại; trang Đăng nhập và Landing so điểm ảnh 0 khác).
-  - **Lệch DESIGN.md (chờ xác nhận):** `--action-hover` tối #3A8570 → #3A8270 (chữ trắng 4.40 → 4.56:1); thêm `--action-text` (tối #8FC2AE) cho chữ/viền/focus vì `--action` tối làm chữ trên nền tối chỉ 2.9:1. Thêm `--on-action`, `--shadow-overlay`, `--backdrop`. Chi tiết: `docs/design/contrast.md`.
+  - **Đã duyệt, DESIGN.md mục 4 đã cập nhật:** `--action-hover` tối #3A8570 → #3A8270 (chữ trắng 4.40 → 4.56:1); thêm `--action-text` (tối #8FC2AE) cho chữ/viền/focus vì `--action` tối làm chữ trên nền tối chỉ 2.9:1. `--action` chỉ dùng làm nền. Thêm `--on-action`, `--shadow-overlay`, `--backdrop`. Chi tiết: `docs/design/contrast.md`.
   - Phông: Fraunces + Be Vietnam Pro (Google Fonts, có subset tiếng Việt), dự phòng Noto Serif/Noto Sans; Playwright xác nhận mọi glyph của "Sống uống ặc ữ ỗ ẫ ợ Đậu hũ" ở Be Vietnam Pro 400/500/600/700 + nghiêng 400/500/600 và Fraunces 400/500/600 + nghiêng đều vẽ bằng đúng phông (không rơi về phông hệ thống).
   - Sáng/tối: `features/theme/` (mặc định sáng, khóa `nouri.theme`, đọc/ghi bọc try/catch, đồng bộ giữa các tab); script inline trong `index.html` đặt `data-theme` trước khi tải ứng dụng (không nháy màu); `ThemeToggle` (aria-pressed). Nút chuyển gắn vào menu ở UI-2.
   - `components/ui/`: Button/ButtonLink/IconButton, Field, Chip/Tag, Card, PageHeader, Skeleton/LoadingState/EmptyState/ErrorState, Logo, ConfirmDialog (`<dialog>` gốc: khóa focus, Esc = Hủy, trả focus) + `ConfirmProvider`/`useConfirm` (đã gắn ở `main.tsx`), ThemeToggle. Logic + test: `features/ui/ui.logic.ts`, `features/theme/theme.logic.ts`, `features/ui/contrast.logic.ts`.
   - Trang `/dev/ui` (chỉ khi `import.meta.env.DEV`; bản build không có mã/CSS của trang): mọi thành phần ở cả hai chế độ. Nghiệm thu Playwright 35/35 (phông, không cuộn ngang 320/390/1440, Tab 39 điểm dừng đều thấy focus, hộp xác nhận, vùng bấm ≥ 44px, không nháy màu, lỗi localStorage).
-  - **Lỗi có sẵn (để GĐ4):** khi localStorage bị chặn hoàn toàn (getter ném lỗi), ứng dụng sập ở `auth.storage.ts` (`migrateLegacyKeys` không có try/catch). Chế độ sáng/tối không bị ảnh hưởng.
+  - Đã sửa (sau UI-1): ứng dụng sập khi trình duyệt chặn localStorage (getter ném lỗi ở `auth.storage.ts`). Mọi lần đọc/ghi/xóa storage trong `auth.storage.ts` đi qua hàm bọc try/catch; không ghi được vào đâu thì phiên giữ trong bộ nhớ của tab (mất khi tải lại). Có test (chặn hoàn toàn, ghi bị từ chối, xóa key cũ lỗi).
   - Chưa có ảnh mockup trong `docs/design/mockups/` (DESIGN.md nhắc tới); cần trước UI-3 (Tổng quan), UI-4 (Công thức), UI-5 (Kho).
 - [ ] UI-2 — Khung chung: menu trên (logo, nhóm liên kết dạng viên, chế độ tối, chuông, tài khoản), footer (DESIGN.md mục 13).
 - [ ] UI-3 — Tổng quan.
@@ -300,6 +300,23 @@ Quyết định đã chốt cho GĐ3:
   - Kiểm duyệt community: Admin xóa **bất kỳ** bài/bình luận vi phạm. Dùng chung service xóa bài với "Xóa bài của tôi" (GĐ5); chỉ khác điều kiện quyền (`requireAdmin` thay vì `authorId === userId`).
   - Khi Admin tạo/sửa món có nhãn `VEGETARIAN` hoặc `VEGAN`, backend kiểm tra nguyên liệu bằng logic trong `backend/src/services/dietary.service.ts` (cùng bộ từ khóa thịt/cá/hải sản và nhóm Sữa/Trứng như test dữ liệu seed) và **từ chối** (422) nếu có thành phần không hợp lệ với nhãn.
 - [ ] Route/page Admin ở frontend, guard theo role (gồm trang nhật ký thao tác dùng `GET /api/admin/audit-logs`).
+
+### Giai đoạn 3b — Kho thông minh (8–10/11)
+- [ ] Đánh dấu bữa "đã ăn" → trừ nguyên liệu trong kho theo số khẩu phần:
+  - Màn hình xem trước cho chỉnh lượng trừ trước khi xác nhận.
+  - Trừ món có hạn dùng sớm nhất trước; không trừ xuống dưới 0.
+  - Quy đổi g ↔ kg, ml ↔ l; đơn vị không quy đổi được thì bỏ qua và báo.
+  - Bỏ đánh dấu "đã ăn" thì hoàn lại đúng lượng đã trừ.
+- [ ] Đánh dấu "đã mua" trong danh sách đi chợ → thêm vào kho (gộp với món cùng tên, cùng đơn vị nếu có).
+- [ ] Bảng lịch sử xuất/nhập kho (nguồn: tiêu thụ, mua sắm, nhập tay, quét ảnh) để hoàn tác và hiển thị lịch sử.
+- [ ] Thuật toán tạo thực đơn ưu tiên món dùng nguyên liệu sắp hết hạn.
+- [ ] Trang Kho: nút "Gợi ý món nấu" cho món sắp hết hạn. Trang Công thức: bộ lọc "Phù hợp với tôi" và nhãn cảnh báo trên thẻ món.
+
+### Giai đoạn 3c — Quét hóa đơn (OCR) (11–14/11)
+- [ ] Nút "Quét hóa đơn" nhận ảnh hóa đơn hoặc nhãn sản phẩm; OpenAI đọc ảnh với structured output; trả về tên, số lượng, đơn vị (thuộc `FoodUnit`), nhóm, hạn dùng nếu đọc được, nếu không thì gợi ý hạn ước tính theo nhóm.
+- [ ] Màn hình xem lại bắt buộc: sửa/bỏ từng dòng trước khi thêm hàng loạt vào kho; ghi lịch sử kho nguồn "quét ảnh".
+- [ ] Không lưu ảnh; giới hạn định dạng/dung lượng; không có `OPENAI_API_KEY` thì khóa nút và giải thích.
+- [ ] Bước Tài liệu: kiểm thử trên ~10 hóa đơn thật, ghi tỷ lệ đọc đúng.
 
 ### Giai đoạn 4 — Bảo mật tài khoản
 - [ ] Access token ngắn hạn + refresh token lưu DB, endpoint refresh/logout, interceptor tự refresh.

@@ -85,8 +85,10 @@ Chỉ dùng biến; **không viết mã màu cứng** trong CSS của trang/thà
 | `--ink-2` | #3C4F47 | #CDD1C7 | Đoạn văn phụ |
 | `--muted` | #5E6D66 | #A9B1A6 | Nhãn, chú thích |
 | `--line` | #E3E1D8 | #2A352F | Đường kẻ, viền card |
-| `--action` | #15483C | #2F725D | Nút chính, liên kết, trạng thái chọn |
-| `--action-hover` | #0F3A30 | #3A8570 | Hover nút chính |
+| `--action` | #15483C | #2F725D | **Nền**: nút chính, chip đang chọn |
+| `--action-hover` | #0F3A30 | #3A8270 | Hover nút chính (nền) |
+| `--action-text` | #15483C | #8FC2AE | **Chữ và viền** màu action: liên kết, mục menu đang chọn, chữ nút phụ, viền ô nhập đang focus, outline focus |
+| `--on-action` | #FFFFFF | #FFFFFF | Chữ trên nền `--action` / `--action-hover` |
 | `--accent` | #2F725D | #9CCB8F | Cụm nghiêng ở H1, dấu chấm logo, số liệu tích cực |
 | `--warn` | #A43C18 | #F0A070 | Chữ cảnh báo (sắp/đã hết hạn, dị ứng) |
 | `--warn-bg` | #FBEDE3 | #2E231C | Nền khối/dòng cảnh báo |
@@ -95,6 +97,8 @@ Chỉ dùng biến; **không viết mã màu cứng** trong CSS của trang/thà
 | `--border-input` | #C9D0C6 | #3A4740 | Viền ô nhập, nút phụ |
 | `--focus-ring` | #DFF184 | #DFF184 | Vòng focus ô nhập (3px) |
 | `--dot` | #FF8A52 | #FF8A52 | Chấm thông báo chưa đọc (chỉ chấm, không làm nền chữ) |
+
+Điều chỉnh 31/10/2026 (lượt UI-1, đã duyệt): bản đầu dùng `--action-hover` tối #3A8570 và dùng `--action` cho cả nền lẫn chữ. Ở chế độ tối, chữ trắng trên #3A8570 chỉ đạt 4.40:1, còn #2F725D làm chữ/viền trên nền tối chỉ đạt 2.90:1 (card) và 3.16:1 (nền trang), không đạt quy tắc dưới. Vì vậy: `--action-hover` tối đổi sang #3A8270 (4.56:1, gần như cùng màu) và tách `--action-text` cho chữ/viền (tối #8FC2AE, ≥ 7.3:1). Chế độ sáng không đổi (`--action-text` = `--action`). Ngoài ra có token phụ không phải màu mới: `--shadow-overlay`, `--backdrop` (nền mờ sau hộp thoại). Bảng đo: `docs/design/contrast.md`.
 
 Quy tắc:
 - Mọi cặp chữ/nền ≥ 4.5:1 (chữ ≥ 24px hoặc đậm ≥ 19px: ≥ 3:1). Thêm test hoặc ghi bảng đo vào `docs/design/contrast.md`.
@@ -140,7 +144,7 @@ Quy tắc:
 |---|---|
 | Button | Bo tròn, cao 44px (chính 48px). Chính: nền `--action`, chữ trắng. Phụ: viền `--border-input`. Nguy hiểm: chữ `--warn`, viền `--warn`. Chữ là động từ cụ thể ("Lưu vào kho", không "Gửi"). Tối đa 1 nút chính mỗi vùng |
 | IconButton | 44×44, bắt buộc `aria-label` |
-| Field | Nhãn ở trên, ô cao 48px, bo 12px; focus viền `--action` + vòng `--focus-ring` 3px; lỗi hiện ngay dưới, chữ `--warn`, nói rõ cách sửa |
+| Field | Nhãn ở trên, ô cao 48px, bo 12px; focus viền `--action-text` + vòng `--focus-ring` 3px; lỗi hiện ngay dưới, chữ `--warn`, nói rõ cách sửa |
 | Chip (lọc) | Cao 40–44px, bo tròn; chọn: nền `--action` chữ trắng; có số đếm thật nếu hữu ích |
 | Tag (nhãn) | Nền `--tag-bg`, chữ `--ink`, 13px, không in hoa |
 | Card | Nền `--surface`, viền 1px `--line`, bo 16px, **không bóng**. Không lồng card trong card |
@@ -149,7 +153,7 @@ Quy tắc:
 | Bảng | Hàng ≥ 52px, nhãn cột 13px, cột thao tác 44px; ≤ 760px chuyển thành thẻ |
 | Trạng thái | Loading: skeleton đúng hình nội dung. Empty: 1 câu nói điều gì đang trống + 1 nút hành động. Error: nền `--warn-bg`, nói điều gì sai + "Thử lại"; không xin lỗi, không mơ hồ |
 | Toast | Xác nhận hành động bằng đúng động từ của nút ("Đã lưu vào kho") |
-| Focus | Bàn phím: outline 2px `--action`, offset 3px, ở mọi phần tử tương tác. Không `outline:none` trơn |
+| Focus | Bàn phím: outline 2px `--action-text`, offset 3px, ở mọi phần tử tương tác. Không `outline:none` trơn |
 
 ---
 
@@ -208,7 +212,7 @@ Quy tắc:
 ## 13. Khung chung
 **Menu trên** (sticky, nền `--bg`, kẻ dưới 1px):
 - Trái: logo "nouri." (Fraunces nghiêng, dấu chấm `--accent`).
-- Giữa: nhóm liên kết dạng viên (khung `--surface-2`, viền 1px, bo tròn, mục cao 40px; đang chọn: nền `--surface`, chữ `--action` 600, viền 1px).
+- Giữa: nhóm liên kết dạng viên (khung `--surface-2`, viền 1px, bo tròn, mục cao 40px; đang chọn: nền `--surface`, chữ `--action-text` 600, viền 1px).
 - Phải: nút chế độ tối (aria-pressed), chuông có chấm `--dot`, nút tài khoản (avatar + tên) mở menu: Hồ sơ, Quản trị (chỉ ADMIN), Đăng xuất.
 
 **Footer** (nền `--surface-2`, kẻ trên): cột thương hiệu (logo, "Ăn ngon hơn. Sống khỏe hơn.", 1 câu mô tả) + nhóm liên kết **chỉ gồm trang có thật**. Dải cuối "© 2026 Nouri · Đồ án tốt nghiệp". Bỏ FooterBotanical. Liên kết chưa có trang (/privacy, /terms, Tin tức, mạng xã hội): làm trang tĩnh ngắn hoặc bỏ.

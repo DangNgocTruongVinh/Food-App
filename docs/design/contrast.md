@@ -28,7 +28,7 @@ Ngưỡng: chữ thường 4.5:1; chữ lớn (≥ 24px, hoặc đậm ≥ 19px)
 | `--action-text` | `--bg` | 3:1 | 9.93 | 9.01 | Outline focus bàn phím trên nền trang (phi văn bản) |
 | `--warn` | `--bg` | 4.5:1 | 6.21 | 8.56 | Chữ cảnh báo trên nền trang |
 
-## Điều chỉnh so với bảng màu DESIGN.md (chờ xác nhận)
+## Điều chỉnh so với bảng màu DESIGN.md bản đầu (đã duyệt 31/10/2026, DESIGN.md mục 4 đã cập nhật)
 
 Hai giá trị chế độ tối trong bảng mục 4 không đạt chính quy tắc "mọi cặp chữ/nền ≥ 4.5:1" của mục 4, nên đã chỉnh tối thiểu:
 
