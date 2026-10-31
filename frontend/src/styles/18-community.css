@@ -557,7 +557,7 @@ a.community-recipe-card:hover { border-color: #b9d7a6; box-shadow: 0 8px 18px rg
 .community-recipe-hidden { color: #a0671a; font-size: .6875rem; font-style: normal; font-weight: 700; }
 
 /* GĐ3: ảnh trong bài viết (giao diện tối thiểu, làm lại ở bước chỉnh UI). */
-.community-composer .community-image-tool { min-height: 34px; padding: 6px 10px; border-radius: 9px; color: #78817d; display: inline-flex; align-items: center; gap: 7px; font-size: .75rem; font-weight: 650; cursor: pointer; }
+.community-composer .community-image-tool { margin: 0; min-height: 34px; padding: 6px 10px; border-radius: 9px; color: #78817d; display: inline-flex; align-items: center; gap: 7px; font-size: .75rem; font-weight: 650; cursor: pointer; }
 .community-composer .community-image-tool:hover { color: #4b8a35; background: #f3f8ed; }
 .community-composer .community-image-tool.disabled { opacity: .45; cursor: not-allowed; }
 .community-composer .community-image-tool svg { width: 16px; height: 16px; }
@@ -574,3 +574,13 @@ a.community-recipe-card:hover { border-color: #b9d7a6; box-shadow: 0 8px 18px rg
 .community-post-images.count-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .community-post-images img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; display: block; background: #eef2ec; }
 .community-post-images.count-1 img { aspect-ratio: auto; max-height: 520px; }
+
+/* Màn hình hẹp: hàng công cụ (Ảnh, Công thức) giữ chữ, cụm đếm ký tự + "Đăng bài" xuống hàng riêng; vùng bấm 44px. */
+@media (max-width: 480px) {
+  .community-composer .community-composer-footer { flex-wrap: wrap; align-items: center; row-gap: 8px; }
+  .community-composer .community-composer-tools { flex-wrap: wrap; }
+  .community-composer .community-image-tool,
+  .community-composer .community-composer-tools button { min-height: 44px; white-space: nowrap; }
+  .community-publish-row { flex: 1 0 100%; margin-left: 0; justify-content: space-between; }
+  .community-composer .community-publish { min-height: 44px; white-space: nowrap; }
+}
