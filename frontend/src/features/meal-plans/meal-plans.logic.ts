@@ -1,5 +1,4 @@
 import type { MealPlan, MealPlanItem, MealType, NutritionProfile } from "../../types";
-import { recipeImageSrc } from "../recipes/recipes.logic";
 
 export const mealLabels: Record<MealType, string> = {
   BREAKFAST: "Bữa sáng", LUNCH: "Bữa trưa", DINNER: "Bữa tối", SNACK: "Bữa phụ",
@@ -11,12 +10,6 @@ export const mealTimes: Record<MealType, string> = {
   BREAKFAST: "07:00 – 09:00", LUNCH: "11:30 – 13:30", DINNER: "18:00 – 19:30", SNACK: "15:00 – 16:00",
 };
 export const featuredMealTypes: MealType[] = ["BREAKFAST", "LUNCH", "DINNER"];
-
-// Ảnh của chính công thức (imageUrl, hoặc ảnh tạm theo tên món), không chọn theo bữa.
-export function mealItemImage(item: Pick<MealPlanItem, "recipe">) {
-  return recipeImageSrc(item.recipe);
-}
-
 export function mealTag(item: MealPlanItem) {
   if (item.recipe.dietTags[0]) return item.recipe.dietTags[0].replaceAll("_", " ");
   if (item.recipe.proteinG >= 25) return "Giàu protein";

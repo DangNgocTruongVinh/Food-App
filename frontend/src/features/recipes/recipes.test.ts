@@ -11,7 +11,7 @@ import { getRecipe, getRecipeForYou, listRecipes, normalizeRecipeListParams } fr
 import {
   clampServings, filterAndSortRecipes, formatIngredientAmount, formatScaledIngredientAmount, MAX_RECIPE_SERVINGS,
   roundIngredientQuantity, scaleIngredientQuantity, matchesRecipeCategory, paginateRecipes, recipeDetailPath,
-  recipeDietLabel, recipeImage, recipeImageSrc, recipeTotalMinutes,
+  recipeCategories, recipeCategoryCounts, recipeDietLabel, recipePhotoSrc, recipeTotalMinutes,
 } from "./recipes.logic";
 import { recipeQueries } from "./recipes.queries";
 
@@ -191,20 +191,19 @@ describe("Recipes page business logic", () => {
     });
   });
 
-  it("keeps the existing local image selection rules", () => {
-    expect(recipeImage("Yến mạch chuối")).toBe("/assets/recipe-oats.jpg");
-    expect(recipeImage("Cá ngừ")).toBe("/assets/recipe-salmon.jpg");
-    expect(recipeImage("Bowl rau nấm")).toBe("/assets/recipe-vegan-bowl.jpg");
-    expect(recipeImage("Ức gà")).toBe("/assets/nutrition-hero.jpg");
+  it("labels categories in Vietnamese without emoji and counts real recipes per category", () => {
+    expect(recipeCategories.map((item) => item.label)).toEqual(["Tất cả", "Việt Nam", "Quốc tế", "Ăn sáng", "Cân bằng", "Ít tinh bột", "Món chay"]);
+    const counts = recipeCategoryCounts(recipes);
+    expect(counts.all).toBe(recipes.length);
+    for (const { id } of recipeCategories) expect(counts[id]).toBe(recipes.filter((item) => matchesRecipeCategory(item, id)).length);
   });
 });
 
 describe("Recipe detail helpers", () => {
-  it("prefers an uploaded imageUrl and falls back to the local image by name", () => {
-    expect(recipeImageSrc({ name: "Cá ngừ", imageUrl: "https://cdn.example/ca-ngu.jpg" })).toBe("https://cdn.example/ca-ngu.jpg");
-    expect(recipeImageSrc({ name: "Cá ngừ", imageUrl: null })).toBe("/assets/recipe-salmon.jpg");
-    expect(recipeImageSrc({ name: "Cá ngừ", imageUrl: "" })).toBe("/assets/recipe-salmon.jpg");
-    expect(recipeImageSrc({ name: "Cá ngừ" })).toBe("/assets/recipe-salmon.jpg");
+  it("uses only photos uploaded to Cloudinary (optimized), never group images by name", () => {
+    const uploaded = "https://res.cloudinary.com/nouri/image/upload/v1/nouri/recipes/ca.jpg";
+    expect(recipePhotoSrc({ imageUrl: uploaded }, 640)).toBe("https://res.cloudinary.com/nouri/image/upload/f_auto,q_auto,c_limit,w_640/v1/nouri/recipes/ca.jpg");
+    for (const imageUrl of ["/assets/recipe-salmon.jpg", "https://cdn.example/ca-ngu.jpg", "", null, undefined]) expect(recipePhotoSrc({ imageUrl })).toBeNull();
   });
   it("builds the detail path and summary values", () => {
     expect(recipeDetailPath("recipe-a")).toBe("/recipes/recipe-a");
@@ -254,10 +253,10 @@ describe("Recipe \"Dành cho bạn\" helpers", () => {
     expect(forYouWarnings(forYou.warnings)).toEqual([
       { kind: "allergen", text: "Có thành phần bạn dị ứng: cá, nước mắm" },
       { kind: "disliked", text: "Có món bạn không thích: hành tím" },
-      { kind: "diet", text: "Không hợp chế độ Ăn chay của bạn" },
+      { kind: "diet", text: "Không hợp chế độ ăn chay của bạn" },
     ]);
     expect(forYouWarnings({ allergens: [], dislikedFoods: [], dietConflict: "VEGAN" })).toEqual([
-      { kind: "diet", text: "Không hợp chế độ Thuần chay của bạn" },
+      { kind: "diet", text: "Không hợp chế độ thuần chay của bạn" },
     ]);
     expect(forYouWarnings({ allergens: [], dislikedFoods: [], dietConflict: null })).toEqual([]);
   });

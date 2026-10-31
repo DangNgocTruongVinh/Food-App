@@ -1,7 +1,7 @@
 import { CalendarPlus, Clock3, Flame, Shuffle, UtensilsCrossed } from "lucide-react";
 import { useState } from "react";
 import { formatNumber, recommendationReason } from "../../features/dashboard/dashboard.logic";
-import { recipeDetailPath, recipeImageSrc, recipeTotalMinutes } from "../../features/recipes/recipes.logic";
+import { recipeDetailPath, recipePhotoSrc, recipeTotalMinutes } from "../../features/recipes/recipes.logic";
 import type { DashboardRecommendedRecipe } from "../../types";
 import { IMAGE_WIDTHS } from "../../utils/images";
 import { Button, ButtonLink } from "../ui";
@@ -18,10 +18,12 @@ export function DashboardHero({ greeting, userName, recipes, hasProfile }: Dashb
   const [index, setIndex] = useState(0);
   const recipe = recipes.length ? recipes[index % recipes.length] : null;
   const reason = recipe ? recommendationReason(recipe, hasProfile) : null;
+  // Chỉ ảnh thật (Cloudinary) mới làm ảnh nền đầu trang; chưa có ảnh thì đầu trang chỉ có chữ.
+  const photo = recipe ? recipePhotoSrc(recipe, IMAGE_WIDTHS.hero) : null;
 
   return (
-    <section className={recipe ? "dash-hero dash-hero--image" : "dash-hero"} aria-labelledby="dash-hero-title">
-      {recipe && <img className="dash-hero__image" src={recipeImageSrc(recipe, IMAGE_WIDTHS.hero)} alt={`Ảnh món ${recipe.name}`} />}
+    <section className={photo ? "dash-hero dash-hero--image" : "dash-hero"} aria-labelledby="dash-hero-title">
+      {photo && recipe && <img className="dash-hero__image" src={photo} alt={`Ảnh món ${recipe.name}`} />}
       <div className="dash-hero__inner">
         <div className="dash-hero__copy">
           <p className="dash-hero__greeting">{userName ? `${greeting}, ${userName}` : greeting}</p>

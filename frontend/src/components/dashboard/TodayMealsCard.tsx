@@ -1,27 +1,24 @@
 import { CalendarPlus, Check } from "lucide-react";
 import { Link } from "react-router-dom";
 import { dashboardMealLabels, formatNumber, type TodayMeal } from "../../features/dashboard/dashboard.logic";
-import { recipeDetailPath, recipeImageSrc } from "../../features/recipes/recipes.logic";
+import { recipeDetailPath } from "../../features/recipes/recipes.logic";
 import type { MealPlanItem } from "../../types";
 import { IMAGE_WIDTHS } from "../../utils/images";
-import { Button, ButtonLink, Card, EmptyState } from "../ui";
+import { Button, ButtonLink, Card, EmptyState, RecipeImage } from "../ui";
 
 type TodayMealsCardProps = {
   planId: string | null;
   /** Các bữa hôm nay đã sắp theo thứ tự trong ngày. */
   meals: TodayMeal[];
   nextId: string | null;
-  /** Bữa trong chi tiết thực đơn (lấy ảnh món); chưa tải thì dùng ảnh theo tên món. */
+  /** Bữa trong chi tiết thực đơn (lấy ảnh món đã tải lên); chưa tải thì hiện ô tên món. */
   planItems?: MealPlanItem[];
   pendingId: string | null;
   onMarkEaten: (meal: TodayMeal) => void;
 };
 
 export function TodayMealsCard({ planId, meals, nextId, planItems, pendingId, onMarkEaten }: TodayMealsCardProps) {
-  const imageFor = (meal: TodayMeal) => {
-    const recipe = planItems?.find((item) => item.id === meal.id)?.recipe ?? meal.recipe;
-    return recipeImageSrc(recipe, IMAGE_WIDTHS.thumb);
-  };
+  const recipeFor = (meal: TodayMeal) => planItems?.find((item) => item.id === meal.id)?.recipe ?? meal.recipe;
 
   return (
     <Card as="section" className="dash-card" aria-labelledby="dash-meals-title">
@@ -43,7 +40,7 @@ export function TodayMealsCard({ planId, meals, nextId, planItems, pendingId, on
             const isNext = meal.id === nextId;
             return (
               <li key={meal.id} className={isNext ? "dash-meal is-next" : "dash-meal"}>
-                <img className="dash-meal__image" src={imageFor(meal)} alt="" />
+                <RecipeImage className="dash-meal__image" recipe={recipeFor(meal)} width={IMAGE_WIDTHS.thumb} alt="" />
                 <div className="dash-meal__text">
                   <p className="dash-meal__type">
                     <span>{dashboardMealLabels[meal.mealType]}</span>

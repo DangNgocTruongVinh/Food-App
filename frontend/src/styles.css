@@ -12,7 +12,6 @@
 @import "./styles/09-dashboard-palette.css";
 @import "./styles/10-pantry-palette-final.css";
 @import "./styles/12-meal-plans-palette.css";
-@import "./styles/13-recipes.css";
 @import "./styles/14-assistant.css";
 @import "./styles/15-profile-palette.css";
 @import "./styles/16-assistant-dashboard.css";
@@ -32,3 +31,5 @@
 @import "./styles/ui/info-pages.css";
 @import "./styles/ui/admin.css";
 @import "./styles/ui/dashboard.css";
+@import "./styles/ui/recipes.css";
+@import "./styles/ui/recipe-image-legacy.css";

@@ -268,3 +268,21 @@ textarea.ui-input { min-height: 112px; padding: var(--space-3) var(--space-4); r
   .ui-dialog__actions { flex-direction: column-reverse; }
   .ui-dialog__actions .ui-button { width: 100%; }
 }
+
+/* Ảnh món (RecipeImage): ảnh thật, hoặc ô surface-2 kèm tên món khi chưa có ảnh (DESIGN.md mục 10). Khung chứa đặt kích thước. */
+.ui-recipe-image { display: block; background: var(--surface-2); object-fit: cover; }
+.ui-recipe-image--empty {
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  padding: var(--space-3);
+  color: var(--ink-2);
+  font-family: var(--font-serif);
+  font-weight: 500;
+  line-height: var(--lh-h3);
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+.ui-recipe-image--thumb { padding: 0; font-size: 1.25rem; }
+.ui-recipe-image--card { font-size: var(--fs-h3); }
+.ui-recipe-image--hero { font-size: var(--fs-h2); }

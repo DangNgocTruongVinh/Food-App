@@ -16,7 +16,7 @@ import Logo from "../components/Logo";
 import { SiteFooter } from "../components/layout/SiteFooter";
 import { useAuth } from "../contexts/AuthContext";
 import { landingCategoryCountLabel, type LandingRecipeCategoryId } from "../features/landing/landing.logic";
-import { recipeImageSrc } from "../features/recipes/recipes.logic";
+import { RecipeImage } from "../components/ui";
 import { recipeQueries } from "../features/recipes/recipes.queries";
 
 gsap.registerPlugin(ScrollTrigger, Flip, useGSAP);
@@ -1330,7 +1330,7 @@ export default function LandingPage() {
                   key={slide.id}
                 >
                   <div className="landing-recipe-media">
-                    <img src={recipeImageSrc(recipe)} alt={recipe.name} draggable="false" />
+                    <RecipeImage recipe={recipe} alt={recipe.name} draggable={false} />
                     <span className="landing-featured-badge"><Star /> Nổi bật</span>
                     <button type="button" aria-label={`Lưu ${recipe.name}`} tabIndex={isOutside ? -1 : 0}><Bookmark /></button>
                   </div>

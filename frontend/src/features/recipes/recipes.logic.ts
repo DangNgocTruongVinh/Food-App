@@ -1,26 +1,24 @@
 import type { FoodUnit, Ingredient, Recipe } from "../../types";
-import { IMAGE_WIDTHS, optimizedImageUrl } from "../../utils/images";
+import { IMAGE_WIDTHS, isUploadedImageUrl, optimizedImageUrl } from "../../utils/images";
 import { foodUnitLabel } from "../../utils/units";
 
 export type RecipeCategory = "all" | "vietnamese" | "international" | "breakfast" | "healthy" | "low-carb" | "vegetarian";
 export type RecipeSort = "newest" | "quickest" | "calories" | "protein";
 
-export const recipeCategories: Array<{ id: RecipeCategory; label: string; icon: string }> = [
-  { id: "all", label: "Tất cả", icon: "▦" },
-  { id: "vietnamese", label: "Việt Nam", icon: "🍲" },
-  { id: "international", label: "Quốc tế", icon: "🌍" },
-  { id: "breakfast", label: "Ăn sáng", icon: "☀️" },
-  { id: "healthy", label: "Healthy", icon: "🌿" },
-  { id: "low-carb", label: "Low Carb", icon: "🥗" },
-  { id: "vegetarian", label: "Món chay", icon: "🥬" },
+/** Danh mục lọc (nhãn tiếng Việt, không emoji — DESIGN.md mục 3, 9). "healthy" = món có nhãn Cân bằng. */
+export const recipeCategories: Array<{ id: RecipeCategory; label: string }> = [
+  { id: "all", label: "Tất cả" },
+  { id: "vietnamese", label: "Việt Nam" },
+  { id: "international", label: "Quốc tế" },
+  { id: "breakfast", label: "Ăn sáng" },
+  { id: "healthy", label: "Cân bằng" },
+  { id: "low-carb", label: "Ít tinh bột" },
+  { id: "vegetarian", label: "Món chay" },
 ];
 
-export function recipeImage(name: string) {
-  const normalized = name.toLowerCase();
-  if (normalized.includes("yến mạch") || normalized.includes("sữa chua") || normalized.includes("chuối")) return "/assets/recipe-oats.jpg";
-  if (normalized.includes("cá") || normalized.includes("tôm") || normalized.includes("ngừ")) return "/assets/recipe-salmon.jpg";
-  if (normalized.includes("đậu") || normalized.includes("rau") || normalized.includes("nấm") || normalized.includes("bowl")) return "/assets/recipe-vegan-bowl.jpg";
-  return "/assets/nutrition-hero.jpg";
+/** Số món thật của từng danh mục (trên danh sách đã tải, chưa áp ô tìm kiếm). */
+export function recipeCategoryCounts(recipes: Recipe[]) {
+  return Object.fromEntries(recipeCategories.map(({ id }) => [id, recipes.filter((recipe) => matchesRecipeCategory(recipe, id)).length])) as Record<RecipeCategory, number>;
 }
 
 export function matchesRecipeCategory(recipe: Recipe, category: RecipeCategory) {
@@ -64,10 +62,12 @@ export function paginateRecipes(recipes: Recipe[], pageIndex: number, pageSize: 
   };
 }
 
-// Ảnh do Admin upload (imageUrl) được ưu tiên; chưa có thì dùng ảnh minh họa local theo tên món.
-// Ảnh Cloudinary được tối ưu theo chiều rộng hiển thị (mặc định khổ thẻ).
-export function recipeImageSrc(recipe: Pick<Recipe, "name" | "imageUrl">, width: number = IMAGE_WIDTHS.card) {
-  return optimizedImageUrl(recipe.imageUrl || recipeImage(recipe.name), width);
+/**
+ * Ảnh món: chỉ ảnh Admin đã tải lên Cloudinary (tối ưu theo chiều rộng hiển thị). Chưa có thì trả null để hiện ô
+ * --surface-2 kèm tên món (DESIGN.md mục 10) — không dùng ảnh nhóm /assets/... vì dễ sai món.
+ */
+export function recipePhotoSrc(recipe: Pick<Recipe, "imageUrl">, width: number = IMAGE_WIDTHS.card) {
+  return isUploadedImageUrl(recipe.imageUrl) ? optimizedImageUrl(recipe.imageUrl, width) : null;
 }
 
 export function recipeDetailPath(id: string) {

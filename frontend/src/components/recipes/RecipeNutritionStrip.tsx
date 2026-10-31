@@ -1,18 +1,24 @@
-import { Beef, Droplet, Flame, Leaf, Wheat } from "lucide-react";
+import { formatNumber } from "../../features/dashboard/dashboard.logic";
 import type { Recipe } from "../../types";
 
 type NutritionRecipe = Pick<Recipe, "calories" | "proteinG" | "carbsG" | "fatG" | "fiberG">;
 
+/** Dinh dưỡng 1 khẩu phần (không đổi theo số khẩu phần đang chọn ở phần nguyên liệu). */
 export default function RecipeNutritionStrip({ recipe }: { recipe: NutritionRecipe }) {
   const nutrition = [
-    { icon: Flame, label: "Năng lượng", value: `${recipe.calories} kcal` },
-    { icon: Beef, label: "Protein", value: `${recipe.proteinG} g` },
-    { icon: Wheat, label: "Tinh bột", value: `${recipe.carbsG} g` },
-    { icon: Droplet, label: "Chất béo", value: `${recipe.fatG} g` },
-    { icon: Leaf, label: "Chất xơ", value: `${recipe.fiberG} g` },
+    { label: "Năng lượng", value: `${formatNumber(recipe.calories)} kcal` },
+    { label: "Đạm", value: `${formatNumber(recipe.proteinG)} g` },
+    { label: "Tinh bột", value: `${formatNumber(recipe.carbsG)} g` },
+    { label: "Chất béo", value: `${formatNumber(recipe.fatG)} g` },
+    { label: "Chất xơ", value: `${formatNumber(recipe.fiberG)} g` },
   ];
-  return <section className="recipe-detail-nutrition" aria-label="Dinh dưỡng mỗi khẩu phần">
-    <p className="recipe-detail-nutrition-note">Dinh dưỡng tính cho 1 khẩu phần, không đổi theo số khẩu phần bạn chọn.</p>
-    {nutrition.map(({ icon: Icon, label, value }) => <article key={label}><Icon /><strong>{value}</strong><small>{label}</small></article>)}
-  </section>;
+  return (
+    <section className="recipe-nutrition" aria-labelledby="recipe-nutrition-title">
+      <h2 id="recipe-nutrition-title" className="ui-card-title">Dinh dưỡng mỗi khẩu phần</h2>
+      <dl className="recipe-nutrition__list">
+        {nutrition.map(({ label, value }) => <div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}
+      </dl>
+      <p className="ui-small">Số liệu ước tính, tính cho 1 khẩu phần; không đổi khi bạn chỉnh số khẩu phần ở phần nguyên liệu.</p>
+    </section>
+  );
 }

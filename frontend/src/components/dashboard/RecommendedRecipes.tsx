@@ -2,10 +2,10 @@ import { Clock3, Flame, Search } from "lucide-react";
 import type { FormEvent } from "react";
 import { Link } from "react-router-dom";
 import { formatNumber, recommendedRecipePantryNote } from "../../features/dashboard/dashboard.logic";
-import { recipeDetailPath, recipeDietLabel, recipeImageSrc, recipeTotalMinutes } from "../../features/recipes/recipes.logic";
+import { recipeDetailPath, recipeDietLabel, recipeTotalMinutes } from "../../features/recipes/recipes.logic";
 import type { DashboardRecommendedRecipe } from "../../types";
 import { IMAGE_WIDTHS } from "../../utils/images";
-import { Button, ButtonLink, EmptyState, Tag } from "../ui";
+import { Button, ButtonLink, EmptyState, RecipeImage, Tag } from "../ui";
 
 type RecommendedRecipesProps = {
   recipes: DashboardRecommendedRecipe[];
@@ -40,7 +40,7 @@ export function RecommendedRecipes({ recipes, search, onSearchChange, onSearchSu
             return (
               <li key={recipe.id} className={index === 0 ? "dash-rec dash-rec--featured" : "dash-rec"}>
                 <article className="dash-rec__card">
-                  <img className="dash-rec__image" src={recipeImageSrc(recipe, IMAGE_WIDTHS.card)} alt={`Ảnh món ${recipe.name}`} />
+                  <RecipeImage className="dash-rec__image" recipe={recipe} width={IMAGE_WIDTHS.card} />
                   <div className="dash-rec__body">
                     <h3 className="dash-rec__title"><Link to={recipeDetailPath(recipe.id)}>{recipe.name}</Link></h3>
                     <ul className="dash-specs" aria-label="Thông tin món">

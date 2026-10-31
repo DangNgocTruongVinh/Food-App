@@ -2,7 +2,7 @@ import type { RecipeForYou } from "../../types";
 
 // Nội dung hiển thị của khối "Dành cho bạn" ở trang chi tiết công thức (dữ liệu từ GET /api/recipes/:id/for-you).
 
-const dietConflictLabels: Record<string, string> = { VEGETARIAN: "Ăn chay", VEGAN: "Thuần chay" };
+const dietConflictLabels: Record<string, string> = { VEGETARIAN: "ăn chay", VEGAN: "thuần chay" };
 const numberFormat = new Intl.NumberFormat("vi-VN");
 
 export function pantryCoverage(pantry: RecipeForYou["pantry"]) {

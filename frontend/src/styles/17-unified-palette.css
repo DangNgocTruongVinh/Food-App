@@ -19,7 +19,6 @@
 
 .app-overview-palette > .pantry-page,
 .app-overview-palette > .reference-menu-page,
-.app-overview-palette > .recipes-page,
 .app-overview-palette > .assistant-page,
 .app-overview-palette > .professional-profile-page {
   color: var(--app-ink);
@@ -171,26 +170,6 @@
 .app-overview-palette .menu-shopping-card > div { scrollbar-color: #a9cb99 transparent; }
 
 /* Recipes */
-.app-overview-palette .recipes-page {
-  --recipe-primary: #62b83d;
-  --recipe-secondary: #3e982f;
-  --recipe-background: #f3f9ed;
-  --recipe-ink: #304b35;
-}
-.app-overview-palette .recipes-editorial-hero::after {
-  background: linear-gradient(90deg, #f6faef 0%, rgba(234,245,223,.96) 48%, rgba(224,239,212,.34) 72%, rgba(224,239,212,.03) 100%);
-}
-.app-overview-palette :is(.recipes-page .eyebrow, .recipes-page .recipe-meta svg, .recipes-page .macro-row svg) { color: var(--app-accent); }
-.app-overview-palette :is(.recipes-discovery, .recipes-page .recipe-card, .recipes-page .state) { border-color: var(--app-border); background: var(--app-surface); }
-.app-overview-palette :is(
-  .recipes-category-pills button:hover,
-  .recipes-category-pills button.active,
-  .recipes-results-toolbar button:hover,
-  .recipes-results-toolbar button.active,
-  .recipes-pagination button:hover:not(:disabled),
-  .recipes-pagination button.active
-) { color: var(--app-accent-strong); border-color: #a6d18f; background: #e8f4e2; }
-.app-overview-palette .recipes-page .recipe-tags b { color: var(--app-accent-strong); border-color: #cde3bd; background: rgba(235,246,225,.92); }
 
 /* AI assistant */
 .app-overview-palette .assistant-header { background: linear-gradient(135deg, #62b83d 0%, #4ca337 48%, #2f7f35 100%); box-shadow: 0 16px 38px rgba(55,125,43,.14); }
