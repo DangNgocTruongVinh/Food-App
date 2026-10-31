@@ -4,6 +4,7 @@ import { stripImageMetadata } from "../../services/image-sanitize.js";
 import { deleteImageQuietly, IMAGE_FOLDERS, type UploadedImage, uploadImage } from "../../services/image-upload.service.js";
 import { HIDDEN_RECIPE_MESSAGE, isRecipeHidden } from "../../services/recipe-visibility.js";
 import { HttpError } from "../../utils/http-error.js";
+import { recordAdminAction } from "../admin/admin-audit.service.js";
 import type { CreateCommunityPostBody } from "./community.schema.js";
 
 const COMMUNITY_FEED_LIMIT = 30;
@@ -172,29 +173,51 @@ const POST_NOTIFICATION_TYPES = ["COMMUNITY_LIKE", "COMMUNITY_COMMENT", "COMMUNI
 /**
  * Xóa bài viết — dùng chung cho "Xóa bài của tôi" và Admin kiểm duyệt. Bài không tồn tại hoặc không thuộc quyền → 404
  * (không lộ sự tồn tại). Like/bình luận tự xóa theo bài (Cascade); thông báo liên quan xóa trong cùng transaction.
+ * Admin kiểm duyệt thì ghi thêm nhật ký Admin trong transaction đó (không lưu nội dung bài).
  */
 export async function deleteCommunityPost(postId: string, actor: CommunityActor) {
   const post = await prisma.communityPost.findUnique({
-    where: { id: postId }, select: { id: true, authorId: true, images: { select: { publicId: true } } },
+    where: { id: postId },
+    select: {
+      id: true, authorId: true, recipeId: true, author: { select: { email: true } }, images: { select: { publicId: true } },
+      _count: { select: { likes: true, comments: true } },
+    },
   });
   if (!post || (!actor.isAdmin && post.authorId !== actor.userId)) throw new HttpError(404, POST_NOT_FOUND);
+  const images = post.images ?? [];
   await prisma.$transaction([
     prisma.notification.deleteMany({ where: { relatedId: postId, type: { in: [...POST_NOTIFICATION_TYPES] } } }),
     prisma.communityPost.delete({ where: { id: postId } }),
+    ...(actor.isAdmin ? [recordAdminAction(prisma, {
+      actorId: actor.userId, action: "POST_DELETE", targetType: "COMMUNITY_POST", targetId: postId, targetLabel: post.author?.email,
+      details: {
+        authorId: post.authorId, imageCount: images.length, commentCount: post._count?.comments ?? 0, likeCount: post._count?.likes ?? 0,
+        hasRecipe: Boolean(post.recipeId),
+      },
+    })] : []),
   ]);
   // Sau khi bài đã xóa (ảnh trong DB xóa theo bài): dọn ảnh trên Cloudinary, lỗi chỉ ghi log.
-  await Promise.all((post.images ?? []).map((image) => deleteImageQuietly(image.publicId)));
+  await Promise.all(images.map((image) => deleteImageQuietly(image.publicId)));
 }
 
-/** Xóa bình luận: Admin xóa mọi bình luận, người dùng chỉ bình luận của mình; xóa kèm thông báo của bình luận đó. */
+/**
+ * Xóa bình luận: Admin xóa mọi bình luận, người dùng chỉ bình luận của mình; xóa kèm thông báo của bình luận đó.
+ * Admin kiểm duyệt thì ghi thêm nhật ký Admin trong cùng transaction (không lưu nội dung bình luận).
+ */
 export async function deleteCommunityComment(commentId: string, actor: CommunityActor) {
-  const comment = await prisma.communityComment.findUnique({ where: { id: commentId }, select: { id: true, authorId: true } });
+  const comment = await prisma.communityComment.findUnique({
+    where: { id: commentId }, select: { id: true, authorId: true, postId: true, author: { select: { email: true } } },
+  });
   if (!comment || (!actor.isAdmin && comment.authorId !== actor.userId)) {
     throw new HttpError(404, "Không tìm thấy bình luận.");
   }
   await prisma.$transaction([
     prisma.notification.deleteMany({ where: { dedupeKey: `community-comment:${commentId}` } }),
     prisma.communityComment.delete({ where: { id: commentId } }),
+    ...(actor.isAdmin ? [recordAdminAction(prisma, {
+      actorId: actor.userId, action: "COMMENT_DELETE", targetType: "COMMUNITY_COMMENT", targetId: commentId,
+      targetLabel: comment.author?.email, details: { authorId: comment.authorId, postId: comment.postId },
+    })] : []),
   ]);
 }
 

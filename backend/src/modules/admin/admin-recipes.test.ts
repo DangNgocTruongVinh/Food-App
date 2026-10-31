@@ -1,7 +1,9 @@
 import { Prisma } from "@prisma/client";
 import jwt from "jsonwebtoken";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { prisma } from "../../lib/prisma.js";
 import { getAccountStatus } from "../../services/account-status.service.js";
+import { fakeTransaction } from "../../test/fake-transaction.js";
 import { request, testApp } from "../../test/http-test-utils.js";
 import adminRoutes from "./admin.routes.js";
 
@@ -13,13 +15,19 @@ const mocks = vi.hoisted(() => ({
   create: vi.fn(),
   update: vi.fn(),
   remove: vi.fn(),
+  auditCreate: vi.fn(),
+  transaction: vi.fn(),
 }));
 
 vi.mock("../../config/env.js", () => ({ env: { JWT_SECRET: mocks.secret } }));
-vi.mock("../../lib/prisma.js", () => ({ prisma: { recipe: {
-  count: mocks.count, findMany: mocks.findMany, findUnique: mocks.findUnique,
-  create: mocks.create, update: mocks.update, delete: mocks.remove,
-} } }));
+vi.mock("../../lib/prisma.js", () => ({ prisma: {
+  recipe: {
+    count: mocks.count, findMany: mocks.findMany, findUnique: mocks.findUnique,
+    create: mocks.create, update: mocks.update, delete: mocks.remove,
+  },
+  adminAuditLog: { create: mocks.auditCreate },
+  $transaction: mocks.transaction,
+} }));
 
 const app = testApp("/api/admin", adminRoutes);
 const adminId = "cm11111111111111111111111";
@@ -53,6 +61,9 @@ const stored = {
   createdAt: new Date("2026-10-31T00:00:00.000Z"), updatedAt: new Date("2026-10-31T00:00:00.000Z"),
 };
 const unused = { _count: { mealItems: 0, communityPosts: 0 } };
+const tx = fakeTransaction(() => prisma);
+const auditData = (index = 0) => mocks.auditCreate.mock.calls[index][0].data;
+const loggedInTransaction = (index = 0) => tx.wasCalledInTransaction(mocks.transaction, mocks.auditCreate, index);
 
 beforeEach(() => {
   vi.resetAllMocks();
@@ -63,6 +74,8 @@ beforeEach(() => {
   mocks.create.mockResolvedValue(stored);
   mocks.update.mockResolvedValue(stored);
   mocks.remove.mockResolvedValue(stored);
+  mocks.transaction.mockImplementation(tx.run);
+  mocks.auditCreate.mockResolvedValue({ id: "log" });
 });
 
 const endpoints = [
@@ -75,8 +88,9 @@ const endpoints = [
 ] as const;
 
 describe("Admin recipe API permission matrix", () => {
-  const touchedDatabase = () => [mocks.count, mocks.findMany, mocks.findUnique, mocks.create, mocks.update, mocks.remove]
-    .some((mock) => mock.mock.calls.length > 0);
+  const touchedDatabase = () => [
+    mocks.count, mocks.findMany, mocks.findUnique, mocks.create, mocks.update, mocks.remove, mocks.auditCreate, mocks.transaction,
+  ].some((mock) => mock.mock.calls.length > 0);
 
   it.each(endpoints)("%s %s → 401 without login", async (method, path, body) => {
     expect((await request(app, path, { method, body })).status).toBe(401);
@@ -227,5 +241,79 @@ describe("Admin recipe management", () => {
   it("maps a foreign-key race (recipe used meanwhile) to the same 409", async () => {
     mocks.remove.mockRejectedValue(new Prisma.PrismaClientKnownRequestError("fk", { code: "P2003", clientVersion: "test" }));
     expect((await request(app, `/api/admin/recipes/${recipeId}`, { method: "DELETE", token: token() })).status).toBe(409);
+  });
+});
+
+describe("Admin audit log for recipe actions", () => {
+  it("logs RECIPE_CREATE with the recipe name and slug in the same transaction as the insert", async () => {
+    expect((await request(app, "/api/admin/recipes", { method: "POST", token: token(), body: input })).status).toBe(201);
+    expect(auditData()).toEqual({
+      actorId: adminId, action: "RECIPE_CREATE", targetType: "RECIPE", targetId: recipeId, targetLabel: input.name,
+      details: { slug: "dau-hu-sot-nam" },
+    });
+    expect(loggedInTransaction()).toBe(true);
+  });
+
+  it("logs RECIPE_UPDATE with only the names of changed fields (no values)", async () => {
+    mocks.update.mockResolvedValue({ ...stored, name: "Đậu hũ sốt nấm mới" });
+    const body = { ...input, name: "Đậu hũ sốt nấm mới", calories: 450, ingredients: input.ingredients.slice(0, 2) };
+    expect((await request(app, `/api/admin/recipes/${recipeId}`, { method: "PUT", token: token(), body })).status).toBe(200);
+    expect(auditData()).toEqual({
+      actorId: adminId, action: "RECIPE_UPDATE", targetType: "RECIPE", targetId: recipeId, targetLabel: "Đậu hũ sốt nấm mới",
+      details: { changedFields: ["name", "calories", "ingredients"] },
+    });
+    expect(JSON.stringify(auditData())).not.toContain("450");
+    expect(loggedInTransaction()).toBe(true);
+  });
+
+  it("still logs a save that changed nothing, with an empty field list (diet tags compared regardless of order)", async () => {
+    mocks.findUnique.mockResolvedValue({ ...stored, dietTags: ["VEGETARIAN", "VEGAN"], ...unused });
+    await request(app, `/api/admin/recipes/${recipeId}`, { method: "PUT", token: token(), body: input });
+    expect(auditData().details).toEqual({ changedFields: [] });
+  });
+
+  it("logs RECIPE_HIDE / RECIPE_SHOW only when the visibility actually changes", async () => {
+    const path = `/api/admin/recipes/${recipeId}/visibility`;
+    mocks.update.mockImplementation(async ({ data }) => ({ id: recipeId, hiddenAt: data.hiddenAt }));
+    mocks.findUnique.mockResolvedValue({ id: recipeId, name: input.name, hiddenAt: null });
+    await request(app, path, { method: "PATCH", token: token(), body: { hidden: true } });
+    expect(auditData(0)).toEqual({ actorId: adminId, action: "RECIPE_HIDE", targetType: "RECIPE", targetId: recipeId, targetLabel: input.name });
+    expect(loggedInTransaction(0)).toBe(true);
+
+    mocks.findUnique.mockResolvedValue({ id: recipeId, name: input.name, hiddenAt: new Date() });
+    await request(app, path, { method: "PATCH", token: token(), body: { hidden: true } });
+    expect(mocks.auditCreate).toHaveBeenCalledTimes(1);
+
+    await request(app, path, { method: "PATCH", token: token(), body: { hidden: false } });
+    expect(auditData(1)).toMatchObject({ action: "RECIPE_SHOW", targetId: recipeId });
+  });
+
+  it("logs RECIPE_DELETE in the same transaction as the delete", async () => {
+    mocks.findUnique.mockResolvedValue({ id: recipeId, name: input.name, slug: "dau-hu-sot-nam", ...unused });
+    expect((await request(app, `/api/admin/recipes/${recipeId}`, { method: "DELETE", token: token() })).status).toBe(204);
+    expect(auditData()).toEqual({
+      actorId: adminId, action: "RECIPE_DELETE", targetType: "RECIPE", targetId: recipeId, targetLabel: input.name,
+      details: { slug: "dau-hu-sot-nam" },
+    });
+    expect(loggedInTransaction()).toBe(true);
+    expect(mocks.transaction.mock.calls[0][0]).toHaveLength(2);
+  });
+
+  it("writes no log when the action is rejected (422, 409, 404)", async () => {
+    const vegetarianFish = { ...input, dietTags: ["VEGETARIAN"], ingredients: [{ name: "Nước mắm", quantity: 10, unit: "ML" }] };
+    expect((await request(app, "/api/admin/recipes", { method: "POST", token: token(), body: vegetarianFish })).status).toBe(422);
+    mocks.findUnique.mockResolvedValue({ id: recipeId, name: input.name, slug: "x", _count: { mealItems: 1, communityPosts: 0 } });
+    expect((await request(app, `/api/admin/recipes/${recipeId}`, { method: "DELETE", token: token() })).status).toBe(409);
+    mocks.findUnique.mockResolvedValue(null);
+    expect((await request(app, `/api/admin/recipes/${recipeId}/visibility`, { method: "PATCH", token: token(), body: { hidden: true } })).status).toBe(404);
+    expect(mocks.auditCreate).not.toHaveBeenCalled();
+  });
+
+  it("fails the whole action when the log cannot be written (the transaction is rolled back)", async () => {
+    mocks.auditCreate.mockRejectedValue(new Error("audit insert failed"));
+    const response = await request(app, "/api/admin/recipes", { method: "POST", token: token(), body: input });
+    expect(response.status).toBe(500);
+    expect(mocks.create).toHaveBeenCalled();
+    expect(loggedInTransaction()).toBe(true);
   });
 });

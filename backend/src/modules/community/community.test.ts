@@ -19,6 +19,7 @@ const mocks = vi.hoisted(() => ({
   transaction: vi.fn(),
   findRecipe: vi.fn(),
   deletePost: vi.fn(),
+  createAuditLog: vi.fn(),
 }));
 
 vi.mock("../../config/env.js", () => ({ env: { JWT_SECRET: mocks.secret } }));
@@ -38,6 +39,7 @@ vi.mock("../../lib/prisma.js", () => ({
     user: { findUnique: mocks.findUser },
     recipe: { findUnique: mocks.findRecipe },
     notification: { deleteMany: mocks.deleteNotifications },
+    adminAuditLog: { create: mocks.createAuditLog },
     $transaction: mocks.transaction,
   },
 }));
@@ -98,7 +100,7 @@ beforeEach(() => {
 });
 
 describe("Delete my post (DELETE /api/community/:postId)", () => {
-  it("lets the author delete their own post with its community notifications in one transaction", async () => {
+  it("lets the author delete their own post with its community notifications in one transaction (no Admin audit log)", async () => {
     mocks.findPost.mockResolvedValue({ id: postId, authorId: userId });
     mocks.deletePost.mockResolvedValue({ id: postId });
     const response = await request(app, `/api/community/${postId}`, { method: "DELETE", token: token() });
@@ -108,6 +110,7 @@ describe("Delete my post (DELETE /api/community/:postId)", () => {
     });
     expect(mocks.deletePost).toHaveBeenCalledWith({ where: { id: postId } });
     expect(mocks.transaction).toHaveBeenCalledWith([expect.any(Promise), expect.any(Promise)]);
+    expect(mocks.createAuditLog).not.toHaveBeenCalled();
   });
 
   it("returns 404 for someone else's post and keeps it (no notification touched)", async () => {
@@ -294,6 +297,7 @@ describe("Community HTTP contract (mock Prisma, no database)", () => {
     expect(mocks.deleteLike).toHaveBeenCalledWith({ where: { postId_userId: { postId, userId } } });
     expect(mocks.deleteNotifications).toHaveBeenCalledWith({ where: { dedupeKey: `community-like:${postId}:${userId}` } });
     expect(mocks.transaction).toHaveBeenCalledWith([expect.any(Promise), expect.any(Promise)]);
+    expect(mocks.createAuditLog).not.toHaveBeenCalled();
   });
 
   it("rejects a like when the post does not exist", async () => {

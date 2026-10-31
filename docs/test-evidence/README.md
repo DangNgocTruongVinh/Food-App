@@ -91,3 +91,19 @@ Từ 520px trở lên kích thước các nút không đổi (đo ở 520, 560, 
 ## Hạn chế
 
 - **Ảnh đã xóa vẫn mở được qua CDN trong thời gian ngắn:** sau khi xóa bài (hoặc thay ảnh công thức), ảnh trên Cloudinary bị xóa ngay và backend có yêu cầu xóa bộ nhớ đệm CDN (`invalidate: true`), nhưng link ảnh cũ còn mở được khoảng 1 phút do bộ nhớ đệm CDN. Sau đó link trả 404.
+
+### Lượt 7: nhật ký thao tác Admin (31/10/2026)
+
+Kiểm tra nhanh trên Docker (image build lại có migration `20261031040000_add_admin_audit_log`), bằng script gọi API thật với tài khoản Admin và demo của seed; Cloudinary thật. Kết quả đầy đủ: `2026-10-31_gd3-l7_nhat-ky-admin.txt`.
+
+| # | Kịch bản | Kỳ vọng | Kết quả |
+|---|---|---|---|
+| 1 | `GET /api/admin/audit-logs` không đăng nhập / bằng demo (USER) | 401 / 403 | **ĐẠT** |
+| 2 | Admin tạo, sửa (đổi calo), ẩn, ẩn lại, hiện, đổi ảnh, xóa một món thử | Mỗi thao tác đổi trạng thái ghi đúng 1 dòng; "ẩn lại" không ghi | **ĐẠT**: 6 dòng `RECIPE_CREATE`, `RECIPE_UPDATE` (`changedFields: ["calories"]`), `RECIPE_HIDE`, `RECIPE_SHOW`, `RECIPE_IMAGE_REPLACE`, `RECIPE_DELETE` |
+| 3 | Admin khóa, khóa lại, mở khóa demo | "Khóa lại" không ghi | **ĐẠT**: `USER_LOCK`, `USER_UNLOCK` (nhãn là email) |
+| 4 | Admin xóa bình luận rồi xóa bài của demo; demo tự xóa một bài khác | Kiểm duyệt ghi `COMMENT_DELETE`, `POST_DELETE`; "xóa bài của tôi" không ghi | **ĐẠT**: tổng cộng đúng 10 dòng mới, đúng thứ tự |
+| 5 | Tìm trong toàn bộ nhật ký vừa tạo | Không có mật khẩu (Admin, demo), token, chuỗi bcrypt, nội dung bài/bình luận, publicId ảnh | **ĐẠT** |
+| 6 | Lọc `targetType=RECIPE&targetId=<món thử>`; `pageSize=2&page=2`; `pageSize=51` | 6 dòng; 2 dòng; 422 | **ĐẠT** |
+| 7 | Xóa món có ảnh đã tải lên | Ảnh trên Cloudinary bị xóa theo món | **ĐẠT**: `nouri/recipes` trống (lỗi có từ lượt 5, sửa ở lượt 7) |
+
+Dọn dữ liệu thử: món thử, bài, bình luận đã xóa trong kịch bản; demo đang mở khóa; xóa 10 dòng nhật ký của lần thử (bảng `AdminAuditLog` còn 0 dòng). DB còn 33 món, 0 bài viết.

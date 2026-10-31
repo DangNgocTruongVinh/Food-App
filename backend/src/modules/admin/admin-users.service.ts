@@ -1,6 +1,7 @@
 import type { Prisma } from "@prisma/client";
 import { prisma } from "../../lib/prisma.js";
 import { HttpError } from "../../utils/http-error.js";
+import { recordAdminAction } from "./admin-audit.service.js";
 import type { AdminUserListQuery } from "./admin-users.schema.js";
 
 export async function listUsersForAdmin(query: AdminUserListQuery) {
@@ -29,16 +30,23 @@ export async function listUsersForAdmin(query: AdminUserListQuery) {
 /**
  * Khóa/mở khóa: có hiệu lực ngay ở request kế tiếp (requireAuth đọc lockedAt từ DB). Không tự khóa mình (400),
  * không khóa/mở khóa Admin khác (403). Khóa lại tài khoản đang khóa thì giữ thời điểm khóa ban đầu.
+ * Nhật ký Admin ghi trong cùng transaction, chỉ khi trạng thái thực sự đổi.
  */
 export async function setUserLock(actorId: string, targetId: string, locked: boolean) {
   if (actorId === targetId) throw new HttpError(400, "Bạn không thể tự khóa hoặc mở khóa tài khoản của mình.");
-  const target = await prisma.user.findUnique({ where: { id: targetId }, select: { id: true, role: true, lockedAt: true } });
+  const target = await prisma.user.findUnique({ where: { id: targetId }, select: { id: true, email: true, role: true, lockedAt: true } });
   if (!target) throw new HttpError(404, "Không tìm thấy người dùng.");
   if (target.role === "ADMIN") throw new HttpError(403, "Không thể khóa hoặc mở khóa tài khoản Admin khác.");
 
   const lockedAt = locked ? target.lockedAt ?? new Date() : null;
+  const changed = (target.lockedAt !== null) !== locked;
   return prisma.$transaction(async (tx) => {
     const user = await tx.user.update({ where: { id: targetId }, data: { lockedAt }, select: { id: true, lockedAt: true } });
+    if (changed) {
+      await recordAdminAction(tx, {
+        actorId, action: locked ? "USER_LOCK" : "USER_UNLOCK", targetType: "USER", targetId, targetLabel: target.email,
+      });
+    }
     // GĐ4: khi khóa, thu hồi toàn bộ refresh token của tài khoản trong cùng transaction này
     // (vd. tx.refreshToken.deleteMany({ where: { userId: targetId } })).
     return { ...user, locked: user.lockedAt !== null };

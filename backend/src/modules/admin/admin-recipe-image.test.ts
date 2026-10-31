@@ -1,17 +1,23 @@
 import jwt from "jsonwebtoken";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { prisma } from "../../lib/prisma.js";
 import { getAccountStatus } from "../../services/account-status.service.js";
+import { fakeTransaction } from "../../test/fake-transaction.js";
 import { request, testApp } from "../../test/http-test-utils.js";
 import adminRoutes from "./admin.routes.js";
 
 const mocks = vi.hoisted(() => ({
   env: {} as Record<string, string | undefined>,
-  findUnique: vi.fn(), update: vi.fn(),
+  findUnique: vi.fn(), update: vi.fn(), remove: vi.fn(), auditCreate: vi.fn(), transaction: vi.fn(),
   uploadStream: vi.fn(), destroy: vi.fn(),
 }));
 
 vi.mock("../../config/env.js", () => ({ env: mocks.env }));
-vi.mock("../../lib/prisma.js", () => ({ prisma: { recipe: { findUnique: mocks.findUnique, update: mocks.update } } }));
+vi.mock("../../lib/prisma.js", () => ({ prisma: {
+  recipe: { findUnique: mocks.findUnique, update: mocks.update, delete: mocks.remove },
+  adminAuditLog: { create: mocks.auditCreate },
+  $transaction: mocks.transaction,
+} }));
 vi.mock("cloudinary", () => ({ v2: { config: vi.fn(), uploader: { upload_stream: mocks.uploadStream, destroy: mocks.destroy } } }));
 
 const secret = "nouri-test-only-secret-at-least-32-characters";
@@ -22,6 +28,7 @@ const path = `/api/admin/recipes/${recipeId}/image`;
 const token = () => `Bearer ${jwt.sign({ sub: adminId, email: "admin@nouri.vn" }, secret)}`;
 const accountStatus = vi.mocked(getAccountStatus);
 const cloudUrl = (id: string) => `https://res.cloudinary.com/nouri-cloud/image/upload/v1/${id}.jpg`;
+const tx = fakeTransaction(() => prisma);
 
 const jpg = Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 0x46]);
 const form = (bytes: Buffer, name = "mon-an.jpg", type = "image/jpeg") => {
@@ -40,8 +47,10 @@ beforeEach(() => {
   vi.resetAllMocks();
   configure(true);
   accountStatus.mockResolvedValue({ role: "ADMIN", lockedAt: null });
-  mocks.findUnique.mockResolvedValue({ id: recipeId, imagePublicId: "nouri/recipes/old" });
+  mocks.findUnique.mockResolvedValue({ id: recipeId, name: "Cá kho tộ", imagePublicId: "nouri/recipes/old" });
   mocks.update.mockImplementation(async ({ data }) => ({ id: recipeId, ...data }));
+  mocks.transaction.mockImplementation(tx.run);
+  mocks.auditCreate.mockResolvedValue({ id: "log" });
   mocks.uploadStream.mockImplementation((_options, callback) => ({
     end: () => callback(undefined, { secure_url: cloudUrl("nouri/recipes/new"), public_id: "nouri/recipes/new" }),
   }));
@@ -69,6 +78,16 @@ describe("PUT /api/admin/recipes/:id/image permissions", () => {
     }));
     expect(mocks.destroy).toHaveBeenCalledWith("nouri/recipes/old", { resource_type: "image", invalidate: true });
     expect(mocks.update.mock.invocationCallOrder[0]).toBeLessThan(mocks.destroy.mock.invocationCallOrder[0]);
+  });
+
+  it("logs RECIPE_IMAGE_REPLACE in the same transaction as saving the URL, without the Cloudinary publicId", async () => {
+    await request(app, path, { method: "PUT", form: form(jpg), token: token() });
+    expect(mocks.auditCreate.mock.calls[0][0].data).toEqual({
+      actorId: adminId, action: "RECIPE_IMAGE_REPLACE", targetType: "RECIPE", targetId: recipeId, targetLabel: "Cá kho tộ",
+      details: { replacedUploadedImage: true },
+    });
+    expect(JSON.stringify(mocks.auditCreate.mock.calls[0][0])).not.toContain("nouri/recipes/");
+    expect(tx.wasCalledInTransaction(mocks.transaction, mocks.auditCreate)).toBe(true);
   });
 
   it("does not try to delete anything when the recipe still used a group image (/assets)", async () => {
@@ -122,6 +141,14 @@ describe("Image upload validation", () => {
     expect(mocks.destroy).toHaveBeenCalledWith("nouri/recipes/new", { resource_type: "image", invalidate: true });
   });
 
+  it("treats a failed log write like a failed save: 500, the new upload is deleted and the old image kept", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => undefined);
+    mocks.auditCreate.mockRejectedValue(new Error("audit insert failed"));
+    expect((await request(app, path, { method: "PUT", form: form(jpg), token: token() })).status).toBe(500);
+    expect(mocks.destroy).toHaveBeenCalledTimes(1);
+    expect(mocks.destroy).toHaveBeenCalledWith("nouri/recipes/new", { resource_type: "image", invalidate: true });
+  });
+
   it("still succeeds when deleting the old image fails (only logged)", async () => {
     const log = vi.spyOn(console, "error").mockImplementation(() => undefined);
     mocks.destroy.mockRejectedValue(new Error("network"));
@@ -147,16 +174,41 @@ describe("imageUrl on create/update is limited to project images", () => {
   });
 
   it("accepts a project Cloudinary image and an /assets group image", async () => {
-    mocks.findUnique.mockResolvedValue({ id: recipeId, imageUrl: cloudUrl("nouri/recipes/new"), imagePublicId: "nouri/recipes/new" });
+    mocks.findUnique.mockResolvedValue({ id: recipeId, imageUrl: cloudUrl("nouri/recipes/new"), imagePublicId: "nouri/recipes/new", dietTags: [], mealTypes: [], ingredients: [] });
     for (const imageUrl of [cloudUrl("nouri/recipes/new"), "/assets/recipe-oats.jpg"]) {
       expect((await request(app, `/api/admin/recipes/${recipeId}`, { method: "PUT", token: token(), body: { ...body, imageUrl } })).status).toBe(200);
     }
   });
 
   it("switching back to a group image unlinks and deletes the uploaded image", async () => {
-    mocks.findUnique.mockResolvedValue({ id: recipeId, imageUrl: cloudUrl("nouri/recipes/new"), imagePublicId: "nouri/recipes/new" });
+    mocks.findUnique.mockResolvedValue({ id: recipeId, imageUrl: cloudUrl("nouri/recipes/new"), imagePublicId: "nouri/recipes/new", dietTags: [], mealTypes: [], ingredients: [] });
     await request(app, `/api/admin/recipes/${recipeId}`, { method: "PUT", token: token(), body: { ...body, imageUrl: "/assets/recipe-oats.jpg" } });
     expect(mocks.update.mock.calls[0][0].data).toMatchObject({ imageUrl: "/assets/recipe-oats.jpg", imagePublicId: null });
     expect(mocks.destroy).toHaveBeenCalledWith("nouri/recipes/new", { resource_type: "image", invalidate: true });
+  });
+});
+
+describe("Deleting a recipe removes its uploaded image", () => {
+  const deletePath = `/api/admin/recipes/${recipeId}`;
+  const unused = { _count: { mealItems: 0, communityPosts: 0 } };
+
+  it("deletes the Cloudinary image after the recipe row is deleted", async () => {
+    mocks.findUnique.mockResolvedValue({ id: recipeId, name: "Món thử", slug: "mon-thu", imagePublicId: "nouri/recipes/old", ...unused });
+    mocks.remove.mockResolvedValue({ id: recipeId });
+    expect((await request(app, deletePath, { method: "DELETE", token: token() })).status).toBe(204);
+    expect(mocks.destroy).toHaveBeenCalledWith("nouri/recipes/old", { resource_type: "image", invalidate: true });
+    expect(mocks.remove.mock.invocationCallOrder[0]).toBeLessThan(mocks.destroy.mock.invocationCallOrder[0]);
+  });
+
+  it("keeps the image when the recipe cannot be deleted (409) or the delete fails", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => undefined);
+    mocks.findUnique.mockResolvedValue({
+      id: recipeId, name: "Món thử", slug: "mon-thu", imagePublicId: "nouri/recipes/old", _count: { mealItems: 1, communityPosts: 0 },
+    });
+    expect((await request(app, deletePath, { method: "DELETE", token: token() })).status).toBe(409);
+    mocks.findUnique.mockResolvedValue({ id: recipeId, name: "Món thử", slug: "mon-thu", imagePublicId: "nouri/recipes/old", ...unused });
+    mocks.remove.mockRejectedValue(new Error("database unavailable"));
+    expect((await request(app, deletePath, { method: "DELETE", token: token() })).status).toBe(500);
+    expect(mocks.destroy).not.toHaveBeenCalled();
   });
 });

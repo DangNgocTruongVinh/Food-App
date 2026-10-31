@@ -3,6 +3,8 @@ import { requireAdmin, requireAuth } from "../../middleware/auth.js";
 import { singleImageUpload } from "../../middleware/image-upload.js";
 import { validate } from "../../middleware/validate.js";
 import { asyncHandler } from "../../utils/async-handler.js";
+import { listAdminAuditLogsController } from "./admin-audit.controller.js";
+import { listAdminAuditLogsSchema } from "./admin-audit.schema.js";
 import {
   createAdminRecipeController,
   deleteAdminRecipeController,
@@ -56,5 +58,7 @@ router.delete("/community/posts/:postId", validate(moderatePostSchema), asyncHan
 router.delete("/community/comments/:commentId", validate(moderateCommentSchema), asyncHandler(moderateDeleteCommentController));
 
 router.get("/stats", validate(adminStatsSchema), asyncHandler(adminStatsController));
+
+router.get("/audit-logs", validate(listAdminAuditLogsSchema), asyncHandler(listAdminAuditLogsController));
 
 export default router;

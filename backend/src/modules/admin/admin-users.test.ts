@@ -1,6 +1,8 @@
 import jwt from "jsonwebtoken";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { prisma } from "../../lib/prisma.js";
 import { getAccountStatus } from "../../services/account-status.service.js";
+import { fakeTransaction } from "../../test/fake-transaction.js";
 import { request, testApp } from "../../test/http-test-utils.js";
 import adminRoutes from "./admin.routes.js";
 
@@ -12,6 +14,7 @@ const mocks = vi.hoisted(() => ({
   notificationDeleteMany: vi.fn(),
   planCount: vi.fn(), planFindMany: vi.fn(),
   recipeCount: vi.fn(),
+  auditCreate: vi.fn(),
   transaction: vi.fn(),
 }));
 
@@ -23,6 +26,7 @@ vi.mock("../../lib/prisma.js", () => ({ prisma: {
   notification: { deleteMany: mocks.notificationDeleteMany },
   mealPlan: { count: mocks.planCount, findMany: mocks.planFindMany },
   recipe: { count: mocks.recipeCount },
+  adminAuditLog: { create: mocks.auditCreate },
   $transaction: mocks.transaction,
 } }));
 
@@ -34,24 +38,24 @@ const postId = "cm44444444444444444444444";
 const commentId = "cm55555555555555555555555";
 const token = () => `Bearer ${jwt.sign({ sub: adminId, email: "admin@nouri.vn" }, mocks.secret)}`;
 const accountStatus = vi.mocked(getAccountStatus);
+const tx = fakeTransaction(() => prisma);
+const auditData = (index = 0) => mocks.auditCreate.mock.calls[index][0].data;
+const loggedInTransaction = (index = 0) => tx.wasCalledInTransaction(mocks.transaction, mocks.auditCreate, index);
 
 beforeEach(() => {
   vi.resetAllMocks();
   accountStatus.mockResolvedValue({ role: "ADMIN", lockedAt: null });
   for (const count of [mocks.userCount, mocks.postCount, mocks.planCount, mocks.recipeCount]) count.mockResolvedValue(0);
   for (const list of [mocks.userFindMany, mocks.postFindMany, mocks.planFindMany]) list.mockResolvedValue([]);
-  mocks.userFindUnique.mockResolvedValue({ id: userId, role: "USER", lockedAt: null });
+  mocks.userFindUnique.mockResolvedValue({ id: userId, email: "demo@nouri.vn", role: "USER", lockedAt: null });
   mocks.userUpdate.mockImplementation(async ({ data }) => ({ id: userId, lockedAt: data.lockedAt }));
   mocks.postFindUnique.mockResolvedValue({ id: postId, authorId: userId });
   mocks.commentFindUnique.mockResolvedValue({ id: commentId, authorId: userId });
   mocks.notificationDeleteMany.mockResolvedValue({ count: 2 });
   mocks.postDelete.mockResolvedValue({ id: postId });
   mocks.commentDelete.mockResolvedValue({ id: commentId });
-  mocks.transaction.mockImplementation(async (operation: unknown) => {
-    if (Array.isArray(operation)) return Promise.all(operation);
-    if (typeof operation === "function") return operation({ user: { update: mocks.userUpdate } });
-    throw new Error("Unexpected transaction input");
-  });
+  mocks.auditCreate.mockResolvedValue({ id: "log" });
+  mocks.transaction.mockImplementation(tx.run);
 });
 
 const endpoints = [
@@ -63,7 +67,9 @@ const endpoints = [
   ["GET", "/api/admin/stats", undefined, 200],
 ] as const;
 
-const writes = () => [mocks.userUpdate, mocks.postDelete, mocks.commentDelete, mocks.notificationDeleteMany, mocks.transaction];
+const writes = () => [
+  mocks.userUpdate, mocks.postDelete, mocks.commentDelete, mocks.notificationDeleteMany, mocks.auditCreate, mocks.transaction,
+];
 
 describe("Admin users / moderation / stats permission matrix", () => {
   it.each(endpoints)("%s %s → 401 without login", async (method, path, body) => {
@@ -145,7 +151,7 @@ describe("Admin moderation (shared delete service)", () => {
       where: { relatedId: postId, type: { in: ["COMMUNITY_LIKE", "COMMUNITY_COMMENT", "COMMUNITY_REPLY"] } },
     });
     expect(mocks.postDelete).toHaveBeenCalledWith({ where: { id: postId } });
-    expect(mocks.transaction).toHaveBeenCalledWith([expect.any(Promise), expect.any(Promise)]);
+    expect(mocks.transaction).toHaveBeenCalledWith([expect.any(Promise), expect.any(Promise), expect.any(Promise)]);
   });
 
   it("deletes any comment together with its notification", async () => {
@@ -171,6 +177,71 @@ describe("Admin moderation (shared delete service)", () => {
     const response = await request(app, "/api/admin/community/posts?page=1&pageSize=10", { token: token() });
     expect(response.body).toMatchObject({ total: 1, page: 1, pageSize: 10, items: [{ id: postId, likeCount: 3, commentCount: 0, recipe: null }] });
     expect(mocks.postFindMany).toHaveBeenCalledWith(expect.objectContaining({ orderBy: { createdAt: "desc" }, skip: 0, take: 10 }));
+  });
+});
+
+describe("Admin audit log for user and moderation actions", () => {
+  const lockPath = `/api/admin/users/${userId}/lock`;
+
+  it("logs USER_LOCK / USER_UNLOCK with the email in the same transaction, never the password hash", async () => {
+    mocks.userFindUnique.mockResolvedValue({ id: userId, email: "demo@nouri.vn", passwordHash: "bcrypt-hash-secret", role: "USER", lockedAt: null });
+    await request(app, lockPath, { method: "PATCH", token: token(), body: { locked: true } });
+    expect(auditData(0)).toEqual({ actorId: adminId, action: "USER_LOCK", targetType: "USER", targetId: userId, targetLabel: "demo@nouri.vn" });
+    expect(loggedInTransaction(0)).toBe(true);
+    expect(JSON.stringify(mocks.auditCreate.mock.calls)).not.toContain("bcrypt-hash-secret");
+
+    mocks.userFindUnique.mockResolvedValue({ id: userId, email: "demo@nouri.vn", role: "USER", lockedAt: new Date() });
+    await request(app, lockPath, { method: "PATCH", token: token(), body: { locked: false } });
+    expect(auditData(1)).toMatchObject({ action: "USER_UNLOCK", targetId: userId });
+    expect(loggedInTransaction(1)).toBe(true);
+  });
+
+  it("does not log a lock request that changes nothing, nor refused requests (400, 403, 404)", async () => {
+    mocks.userFindUnique.mockResolvedValue({ id: userId, email: "demo@nouri.vn", role: "USER", lockedAt: new Date() });
+    await request(app, lockPath, { method: "PATCH", token: token(), body: { locked: true } });
+    await request(app, `/api/admin/users/${adminId}/lock`, { method: "PATCH", token: token(), body: { locked: true } });
+    mocks.userFindUnique.mockResolvedValue({ id: otherAdminId, email: "admin2@nouri.vn", role: "ADMIN", lockedAt: null });
+    await request(app, `/api/admin/users/${otherAdminId}/lock`, { method: "PATCH", token: token(), body: { locked: true } });
+    mocks.userFindUnique.mockResolvedValue(null);
+    await request(app, lockPath, { method: "PATCH", token: token(), body: { locked: true } });
+    expect(mocks.auditCreate).not.toHaveBeenCalled();
+  });
+
+  it("logs POST_DELETE with counts in the delete transaction, without the post content", async () => {
+    mocks.postFindUnique.mockResolvedValue({
+      id: postId, authorId: userId, recipeId: "cm66666666666666666666666", content: "Nội dung vi phạm cần xóa",
+      author: { email: "demo@nouri.vn" }, images: [{ publicId: "nouri/posts/a" }], _count: { likes: 3, comments: 2 },
+    });
+    expect((await request(app, `/api/admin/community/posts/${postId}`, { method: "DELETE", token: token() })).status).toBe(204);
+    expect(auditData()).toEqual({
+      actorId: adminId, action: "POST_DELETE", targetType: "COMMUNITY_POST", targetId: postId, targetLabel: "demo@nouri.vn",
+      details: { authorId: userId, imageCount: 1, commentCount: 2, likeCount: 3, hasRecipe: true },
+    });
+    expect(loggedInTransaction()).toBe(true);
+    const logged = JSON.stringify(mocks.auditCreate.mock.calls);
+    expect(logged).not.toContain("Nội dung vi phạm");
+    expect(logged).not.toContain("nouri/posts/a");
+  });
+
+  it("logs COMMENT_DELETE in the delete transaction, without the comment content", async () => {
+    mocks.commentFindUnique.mockResolvedValue({
+      id: commentId, authorId: userId, postId, content: "Bình luận vi phạm", author: { email: "demo@nouri.vn" },
+    });
+    expect((await request(app, `/api/admin/community/comments/${commentId}`, { method: "DELETE", token: token() })).status).toBe(204);
+    expect(auditData()).toEqual({
+      actorId: adminId, action: "COMMENT_DELETE", targetType: "COMMUNITY_COMMENT", targetId: commentId, targetLabel: "demo@nouri.vn",
+      details: { authorId: userId, postId },
+    });
+    expect(loggedInTransaction()).toBe(true);
+    expect(JSON.stringify(mocks.auditCreate.mock.calls)).not.toContain("Bình luận vi phạm");
+  });
+
+  it("does not log when the post or comment does not exist", async () => {
+    mocks.postFindUnique.mockResolvedValue(null);
+    mocks.commentFindUnique.mockResolvedValue(null);
+    await request(app, `/api/admin/community/posts/${postId}`, { method: "DELETE", token: token() });
+    await request(app, `/api/admin/community/comments/${commentId}`, { method: "DELETE", token: token() });
+    expect(mocks.auditCreate).not.toHaveBeenCalled();
   });
 });
 

@@ -102,8 +102,50 @@ model User {
   communityLikes    CommunityLike[]
   communityComments CommunityComment[]
   notifications     Notification[]
+  adminAuditLogs    AdminAuditLog[]
   createdAt         DateTime           @default(now())
   updatedAt         DateTime           @updatedAt
+}
+
+enum AdminAuditAction {
+  RECIPE_CREATE
+  RECIPE_UPDATE
+  RECIPE_HIDE
+  RECIPE_SHOW
+  RECIPE_DELETE
+  RECIPE_IMAGE_REPLACE
+  USER_LOCK
+  USER_UNLOCK
+  POST_DELETE
+  COMMENT_DELETE
+}
+
+enum AdminAuditTargetType {
+  RECIPE
+  USER
+  COMMUNITY_POST
+  COMMUNITY_COMMENT
+}
+
+// Nhật ký thao tác Admin, ghi trong cùng transaction với thao tác. Không lưu mật khẩu, token, nội dung bài/bình luận.
+model AdminAuditLog {
+  id          String               @id @default(cuid())
+  // Restrict: tài khoản Admin đã có nhật ký không bị xóa mất dấu vết (hiện chưa có chức năng xóa tài khoản).
+  actorId     String
+  actor       User                 @relation(fields: [actorId], references: [id], onDelete: Restrict)
+  action      AdminAuditAction
+  targetType  AdminAuditTargetType
+  // Không có FK: đối tượng (món, bài, bình luận) có thể đã bị xóa nhưng nhật ký vẫn phải còn.
+  targetId    String
+  // Tên món hoặc email người dùng/tác giả tại thời điểm thao tác.
+  targetLabel String?
+  // Chi tiết theo từng loại thao tác (danh sách trường cố định, xem admin-audit.service.ts).
+  details     Json?
+  createdAt   DateTime             @default(now())
+
+  @@index([createdAt])
+  @@index([actorId, createdAt])
+  @@index([targetType, targetId, createdAt])
 }
 
 model CommunityPost {

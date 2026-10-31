@@ -236,9 +236,21 @@ Quyết định đã chốt cho GĐ3:
   - Test: quá 4 ảnh, sai định dạng, quá 5 MB, bài chỉ có ảnh, JSON cũ vẫn chạy, tạo bài lỗi/ảnh sau lỗi thì xóa ảnh đã tải, xóa bài thì xóa ảnh, chưa cấu hình → 503 nhưng bài không ảnh vẫn đăng, ảnh gửi lên Cloudinary không còn EXIF/GPS và đã xoay đúng.
   - Đã kiểm tra trên Docker với Cloudinary thật (dữ liệu Docker đã chuyển sang ổ D:; sau mỗi lần build chạy `docker builder prune -f`): demo đăng bài qua giao diện kèm JPEG 1200×800 có GPS + tag xoay 6 và một PNG → 201 multipart; bản gốc tải từ Cloudinary không còn EXIF/XMP/GPS, ảnh 1 thành 800×1200 (đúng chiều); máy tính và điện thoại hiện bản `w_640`, không cuộn ngang; "xóa bài của tôi" (gọi API, chưa có giao diện) → 204, `nouri/posts` trống, URL ảnh (gốc và bản tối ưu) 404 sau khi CDN xóa cache. Đã dọn dữ liệu thử (33 món, 0 bài).
   - Đã sửa hàng nút ô đăng bài (`c83d837`): ≤ 480px cụm "Đăng bài" xuống hàng riêng, "Ảnh"/"Công thức" giữ chữ, vùng bấm 44px; nút "Ảnh" bỏ lề thừa của `.community-composer label`. Bằng chứng và ảnh so sánh trong `docs/test-evidence/README.md` (mục Giai đoạn 3).
-- [ ] Upload ảnh Cloudinary.
-- [ ] Đăng ảnh trong bài viết (làm ngay sau hạ tầng upload): lưu URL ảnh vào bài viết, hiện lại nút "Ảnh".
-- [ ] Admin: CRUD công thức, quản lý user (khóa/mở), kiểm duyệt community, thống kê.
+- [x] Lượt 7 — Nhật ký thao tác Admin:
+  - Migration `20261031040000_add_admin_audit_log`: model `AdminAuditLog` (`actorId` FK `Restrict`, `action`, `targetType`, `targetId` không FK để nhật ký còn sau khi đối tượng bị xóa, `targetLabel`, `details` JSON, `createdAt`; index theo thời gian, người thực hiện, đối tượng); enum `AdminAuditAction` (10 loại), `AdminAuditTargetType`.
+  - `modules/admin/admin-audit.service.ts`: `recordAdminAction(tx | prisma, entry)` ghi trong **cùng transaction** với thao tác (thao tác lỗi thì không có nhật ký; ghi nhật ký lỗi thì thao tác bị hủy, ảnh vừa tải bị xóa). `details` theo danh sách trường cố định, không chép body request.
+  - Ghi ở: tạo (`slug`), sửa (`changedFields` chỉ tên trường), ẩn/hiện, xóa, đổi ảnh món (`replacedUploadedImage`); khóa/mở khóa (nhãn = email); Admin xóa bài (`authorId`, số ảnh/bình luận/like, có công thức) và bình luận (`authorId`, `postId`). Ẩn lại/khóa lại không đổi trạng thái thì **không** ghi. "Xóa bài của tôi" không ghi nhật ký Admin.
+  - Không lưu: mật khẩu/hash, token, nội dung bài/bình luận, publicId ảnh, giá trị trường món.
+  - `GET /api/admin/audit-logs`: mới nhất trước, `page`, `pageSize` ≤ 50, lọc `action`, `targetType`, `targetId`, `actorId`; kèm người thực hiện (id, tên, email).
+  - Sửa kèm: xóa hẳn món có ảnh đã tải lên thì xóa luôn ảnh trên Cloudinary (lỗi có từ lượt 5, trước đây ảnh bị bỏ lại).
+  - Test: helper `src/test/fake-transaction.ts` kiểm tra lệnh ghi nhật ký đi qua `tx` hoặc nằm trong mảng `$transaction` (đã thử cố ý ghi ngoài transaction → test báo lỗi); phân quyền API mới; nội dung từng loại nhật ký; không ghi khi bị từ chối (422/409/404/400/403) hoặc không đổi trạng thái; ghi nhật ký lỗi → 500; không có mật khẩu/nội dung/publicId trong nhật ký.
+  - Đã kiểm tra trên Docker (`docs/test-evidence/2026-10-31_gd3-l7_nhat-ky-admin.txt`): 10 thao tác → đúng 10 dòng, đúng thứ tự; USER 403; lọc/phân trang đúng; không chứa mật khẩu, token, nội dung, publicId; `nouri/recipes` trống sau khi xóa món có ảnh. Đã dọn dữ liệu thử (cả 10 dòng nhật ký).
+
+**Backend GĐ3 đã xong** (lượt 1–7). Còn lại của GĐ3: chốt hướng thiết kế UI, rồi frontend Admin.
+
+- [x] Upload ảnh Cloudinary (lượt 5).
+- [x] Đăng ảnh trong bài viết (lượt 6): lưu URL ảnh vào bài viết, hiện lại nút "Ảnh".
+- [x] Admin (backend): CRUD công thức, quản lý user (khóa/mở), kiểm duyệt community, thống kê, nhật ký thao tác (lượt 1–4, 7). Giao diện Admin: xem mục dưới.
   - Công thức: Admin thêm/sửa món và upload ảnh thật (thay ảnh tạm theo nhóm món của seed). Công thức **đã được dùng** thì chỉ **ẩn**, không xóa hẳn: cần trường đánh dấu ẩn (migration mới). Món chưa từng được dùng thì được xóa hẳn.
   - **Quy tắc chung cho món bị ẩn** (áp dụng cho cả thực đơn và bài viết cộng đồng):
     - "Đã được dùng" = có `MealPlanItem` **hoặc** `CommunityPost` tham chiếu (cả hai FK đều chặn xóa hẳn).
@@ -247,7 +259,7 @@ Quyết định đã chốt cho GĐ3:
     - Ẩn các nút "Chia sẻ lên cộng đồng" và "Thêm vào thực đơn" trên trang chi tiết của món bị ẩn.
   - Kiểm duyệt community: Admin xóa **bất kỳ** bài/bình luận vi phạm. Dùng chung service xóa bài với "Xóa bài của tôi" (GĐ5); chỉ khác điều kiện quyền (`requireAdmin` thay vì `authorId === userId`).
   - Khi Admin tạo/sửa món có nhãn `VEGETARIAN` hoặc `VEGAN`, backend kiểm tra nguyên liệu bằng logic trong `backend/src/services/dietary.service.ts` (cùng bộ từ khóa thịt/cá/hải sản và nhóm Sữa/Trứng như test dữ liệu seed) và **từ chối** (422) nếu có thành phần không hợp lệ với nhãn.
-- [ ] Route/page Admin ở frontend, guard theo role.
+- [ ] Route/page Admin ở frontend, guard theo role (gồm trang nhật ký thao tác dùng `GET /api/admin/audit-logs`).
 
 ### Giai đoạn 4 — Bảo mật tài khoản
 - [ ] Access token ngắn hạn + refresh token lưu DB, endpoint refresh/logout, interceptor tự refresh.
