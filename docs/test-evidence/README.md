@@ -1,8 +1,14 @@
-# Bằng chứng kiểm thử: Giai đoạn 2c
+# Bằng chứng kiểm thử
 
-Ảnh chụp màn hình kiểm thử thủ công trên trình duyệt (Playwright MCP), dùng cho chương Kiểm thử.
+Ảnh chụp màn hình và file kiểm thử thủ công trên trình duyệt, dùng cho chương Kiểm thử.
 
-Thông tin chung của cả hai lượt:
+- [Giai đoạn 2c](#giai-đoạn-2c): bộ món mới và lọc thực đơn (29/10/2026).
+- [Giai đoạn 3](#giai-đoạn-3): ảnh trong bài viết, xóa EXIF/GPS, hàng nút ô đăng bài (31/10/2026).
+- [Hạn chế](#hạn-chế)
+
+## Giai đoạn 2c
+
+Kiểm thử bằng Playwright MCP. Thông tin chung của cả hai lượt:
 
 | Thông tin | Giá trị |
 |---|---|
@@ -12,7 +18,7 @@ Thông tin chung của cả hai lượt:
 | Tài khoản | Tài khoản demo của seed |
 | Hồ sơ gốc của tài khoản demo | Nữ, 24 tuổi, 162 cm, 55 kg, vận động vừa, duy trì vóc dáng, Cân bằng, 3 bữa/ngày, không dị ứng, không thích "Cần tây"; chỉ tiêu 1986 kcal / 124 g đạm / 233 g tinh bột / 62 g béo (tính bằng `calculateNutritionTargets`) |
 
-## Lượt 1: bộ món mới và lọc thực đơn
+### Lượt 1: bộ món mới và lọc thực đơn
 
 Nhánh `giai-doan-2c` tại `832f71b`; database đã reset và seed lại. Hồ sơ: hồ sơ gốc đổi sang **4 bữa/ngày**, đổi kiểu ăn hoặc dị ứng theo từng ca. Ở ca 2–4 chỉ kiểm tra ngày hiển thị trong ảnh (Th 6, 30/10/2026).
 
@@ -28,7 +34,7 @@ Nhánh `giai-doan-2c` tại `832f71b`; database đã reset và seed lại. Hồ 
 
 \* Giá trị ô "Dị ứng thực phẩm" không được lưu trong snapshot của Playwright; dị ứng "Hải sản" ghi theo kịch bản kiểm thử.
 
-## Lượt 2: kiểm tra lại sau khi sửa
+### Lượt 2: kiểm tra lại sau khi sửa
 
 Nhánh `giai-doan-2c` tại `1289998` cùng bản sửa luồng xóa thực đơn (chưa commit). Image Docker được build lại bằng `npm ci` với lockfile; seed chạy lại (33/33 món, không trùng slug). Ở ca 5 kiểm tra **cả 7 ngày** qua `GET /api/meal-plans/:id`, không chỉ ngày trong ảnh.
 
@@ -46,6 +52,42 @@ Nhánh `giai-doan-2c` tại `1289998` cùng bản sửa luồng xóa thực đơ
 
 Sau lượt 2: đã xóa hết thực đơn thử và trả hồ sơ demo về đúng hồ sơ gốc ở bảng đầu.
 
-## Phát hiện còn mở
+### Phát hiện còn mở
 
 - **Món bữa tối lặp lại ở bữa trưa hôm sau** (ca 5): ví dụ Gà teriyaki ở bữa tối 30/10 rồi bữa trưa 31/10, Thịt kho trứng ở bữa tối 31/10 rồi bữa trưa 01/11. Điều này không vi phạm quy tắc "không lặp trong cùng ngày". Nguyên nhân: bữa trưa và bữa tối chọn xoay vòng trên gần như cùng một danh sách món, chỉ lệch nhau 1 vị trí. "Phở bò" cũng không xuất hiện trong tuần vì có 8 món bữa sáng cho 7 ngày.
+
+## Giai đoạn 3
+
+### Lượt 6: ảnh trong bài viết, xóa EXIF/GPS (31/10/2026)
+
+| Thông tin | Giá trị |
+|---|---|
+| Môi trường | Docker Compose (frontend `:8080`, backend `:4000`, PostgreSQL 16), image build lại từ nhánh `giai-doan-3` tại `a5beb0e`; Cloudinary thật |
+| Công cụ | Script Playwright (`playwright-core` 1.52, Chromium), không qua Playwright MCP; đọc metadata ảnh bằng `sharp` 0.34.5; kiểm tra thư mục trên Cloudinary bằng Admin API (chạy trong container backend) |
+| Tài khoản | Tài khoản demo của seed |
+| Ảnh thử | (1) JPEG 1200×800 có EXIF: hãng máy "NouriTestCam", GPS 10°46'N 106°41'E (TP.HCM), tag xoay 6 (xoay 90°); (2) PNG 900×900 không có EXIF |
+
+| # | Bằng chứng | Kịch bản | Kỳ vọng | Kết quả |
+|---|---|---|---|---|
+| 1 | `2026-10-31_gd3-l6_01_xem-truoc-anh_1440.png` | Chọn 2 ảnh ở ô đăng bài | Xem trước 2 ảnh, mỗi ảnh có nút bỏ | **ĐẠT** |
+| 2 | (kiểm qua API) | Bấm "Đăng bài" | Gửi multipart; bài trả về `images` theo đúng thứ tự | **ĐẠT**: 201, `images` vị trí 0 (jpg), 1 (png); DB có 2 dòng `CommunityPostImage`; Cloudinary `nouri/posts` có đúng 2 ảnh |
+| 3 | `2026-10-31_gd3-l6_exif-gps.txt`, `..._anh-dau-vao-co-gps.jpg`, `..._anh-cloudinary-ban-goc.jpg` | Tải **bản gốc** (URL không có tham số biến đổi) từ Cloudinary, đọc metadata | Không còn EXIF, GPS; ảnh vẫn đúng chiều | **ĐẠT**: đầu vào có EXIF 346 byte + khối GPS + chuỗi hãng máy; bản trên Cloudinary không có EXIF, GPS, XMP, chuỗi hãng máy; kích thước 800×1200 (đã xoay theo tag 6) |
+| 4 | `2026-10-31_gd3-l6_02_bai-co-anh_1440.png` | Xem bài trên máy tính (1440px) | Hiện 2 ảnh bằng bản Cloudinary tối ưu | **ĐẠT**: `f_auto,q_auto,c_limit,w_640`, ảnh 1 tải về 640×960 (đứng) |
+| 5 | `2026-10-31_gd3-l6_03_bai-co-anh_390.png` | Xem bài trên điện thoại (390px) | Hiện 2 ảnh, không cuộn ngang | **ĐẠT**: không cuộn ngang |
+| 6 | (kiểm qua API) | "Xóa bài của tôi": `DELETE /api/community/:postId` bằng token demo (giao diện để GĐ5); xóa lần hai | Bài, ảnh trong DB và ảnh trên Cloudinary đều bị xóa | **ĐẠT**: 204, lần hai 404; DB 0 bài, 0 ảnh; Admin API báo `nouri/posts` trống. URL ảnh (gốc và bản `w_640`) còn 200 khoảng 1 phút rồi 404 (xem [Hạn chế](#hạn-chế)) |
+| 7 | (không có ảnh) | Dọn dữ liệu thử | Không còn dữ liệu thử | **ĐẠT**: 33 món, 0 bài viết, 0 ảnh bài viết, 0 thông báo cộng đồng |
+
+### Lượt 6: hàng nút ô đăng bài (31/10/2026)
+
+Phát hiện khi kiểm thử lượt 6 và sửa ở commit `c83d837`. So ảnh trên Vite dev server (cùng backend Docker), trạng thái ô đăng bài có chữ, gắn công thức và 2 ảnh.
+
+| # | Ảnh | Kịch bản | Trước khi sửa | Sau khi sửa |
+|---|---|---|---|---|
+| 1 | `2026-10-31_gd3-l6_o-dang-bai_390_truoc.png` / `..._390_sau.png` | Điện thoại 390px | "Công thức", "Đăng bài" xuống 2 dòng (thêm nút "Ảnh" làm hàng chật); ở 320px trang cuộn ngang 10px | Số ký tự + "Đăng bài" xuống hàng riêng; "Ảnh", "Công thức" giữ chữ một dòng; ba nút cao 44px; 320–480px không cuộn ngang |
+| 2 | `2026-10-31_gd3-l6_o-dang-bai_1440_truoc.png` / `..._1440_sau.png` | Máy tính 1440px | Nút "Ảnh" lệch lên 4,5px so với "Công thức" (nhận lề của quy tắc `.community-composer label`) | Hai nút thẳng hàng; ô đăng bài thấp đi 11px; ngoài ra không đổi |
+
+Từ 520px trở lên kích thước các nút không đổi (đo ở 520, 560, 620, 700, 768, 900, 1100, 1440px).
+
+## Hạn chế
+
+- **Ảnh đã xóa vẫn mở được qua CDN trong thời gian ngắn:** sau khi xóa bài (hoặc thay ảnh công thức), ảnh trên Cloudinary bị xóa ngay và backend có yêu cầu xóa bộ nhớ đệm CDN (`invalidate: true`), nhưng link ảnh cũ còn mở được khoảng 1 phút do bộ nhớ đệm CDN. Sau đó link trả 404.

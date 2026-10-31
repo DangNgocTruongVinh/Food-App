@@ -1,0 +1,40 @@
+Kiểm tra EXIF/GPS — GĐ3 lượt 6 (ảnh trong bài viết), 31/10/2026
+Đọc bằng sharp 0.34.5. Ảnh Cloudinary là bản gốc (URL không có tham số biến đổi), tải về ngay sau khi đăng bài.
+
+[Đầu vào 1] Ảnh người dùng chọn: JPEG có GPS (10°46'N 106°41'E, TP.HCM), hãng máy, tag xoay 6
+  file: 2026-10-31_gd3-l6_anh-dau-vao-co-gps.jpg (37935 byte)
+  định dạng: jpeg, kích thước: 1200x800
+  tag xoay (Orientation): 6
+  EXIF: 346 byte
+  khối GPS (tag 0x8825): CÓ
+  XMP: không có, ICC: có
+  chuỗi "NouriTestCam" (hãng máy) trong file: CÓ
+
+[Cloudinary 1] res.cloudinary.com/<cloud>/image/upload/v1793421847/nouri/posts/gne3iwpznv6rwddmiyvd.jpg
+  file: 2026-10-31_gd3-l6_anh-cloudinary-ban-goc.jpg (28775 byte)
+  định dạng: jpeg, kích thước: 800x1200
+  tag xoay (Orientation): không có
+  EXIF: không có
+  khối GPS (tag 0x8825): không có
+  XMP: không có, ICC: không có
+  chuỗi "NouriTestCam" (hãng máy) trong file: không có
+
+[Đầu vào 2] Ảnh PNG không có EXIF
+  file: (không lưu, PNG tạo bằng sharp) (49469 byte)
+  định dạng: png, kích thước: 900x900
+  tag xoay (Orientation): không có
+  EXIF: không có
+  khối GPS (tag 0x8825): không có
+  XMP: không có, ICC: không có
+  chuỗi "NouriTestCam" (hãng máy) trong file: không có
+
+[Cloudinary 2] res.cloudinary.com/<cloud>/image/upload/v1793421848/nouri/posts/vamrxa2wiamj4xfzciek.png
+  file: (không lưu) (49469 byte)
+  định dạng: png, kích thước: 900x900
+  tag xoay (Orientation): không có
+  EXIF: không có
+  khối GPS (tag 0x8825): không có
+  XMP: không có, ICC: không có
+  chuỗi "NouriTestCam" (hãng máy) trong file: không có
+
+Kết luận: bản lưu trên Cloudinary không còn EXIF/GPS/XMP; ảnh 1 đã được xoay thành 800x1200 nên vẫn đúng chiều khi bỏ tag xoay.
