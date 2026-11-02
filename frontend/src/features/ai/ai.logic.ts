@@ -1,32 +1,16 @@
 import { differenceInCalendarDays, format } from "date-fns";
-import type { ChatMessage } from "../../types";
-
-export const assistantSuggestions = [
-  "Gợi ý bữa tối từ thực phẩm sắp hết hạn",
-  "Làm sao để đạt đủ protein hôm nay?",
-  "Tôi nên chuẩn bị gì cho bữa sáng nhanh?",
-];
-
-export const assistantQuickActions = [
-  { id: "meal", title: "Gợi ý bữa ăn", copy: "Theo mục tiêu dinh dưỡng của bạn", prompt: "Gợi ý bữa ăn phù hợp với mục tiêu dinh dưỡng hôm nay", tone: "meal" },
-  { id: "plan", title: "Lập thực đơn", copy: "Kế hoạch 1–7 ngày phù hợp thể trạng", prompt: "Hãy lập cho tôi một thực đơn lành mạnh trong 7 ngày", tone: "plan" },
-  { id: "pantry", title: "Nấu từ thực phẩm trong kho", copy: "Tận dụng nguyên liệu sẵn có", prompt: "Gợi ý món ăn từ thực phẩm hiện có trong kho của tôi", tone: "pantry" },
-  { id: "recipe", title: "Gợi ý công thức", copy: "Món ngon, lành mạnh và dễ làm", prompt: "Gợi ý cho tôi một công thức lành mạnh và dễ làm", tone: "recipe" },
-] as const;
-
-export const assistantPromptPills = ["Món dưới 30 phút", "Món ít calo", "Tăng cơ, nhiều protein", "Ăn chay", "Giảm cân"];
-export const assistantFallbackHistory = ["Gợi ý bữa tối giàu protein", "Thực đơn giảm cân 3 ngày", "Dùng thực phẩm trong kho", "Giá trị dinh dưỡng của ức gà"];
+import type { ChatMessage, DashboardData, NutritionProfile } from "../../types";
 
 const dietLabels: Record<string, string> = {
   BALANCED: "Ăn cân bằng",
   VEGETARIAN: "Ăn chay",
   VEGAN: "Thuần chay",
-  LOW_CARB: "Low Carb",
-  HIGH_PROTEIN: "Giàu protein",
+  LOW_CARB: "Ít tinh bột",
+  HIGH_PROTEIN: "Giàu đạm",
 };
 
 export function assistantDietLabel(dietType?: string) {
-  return dietLabels[dietType ?? ""] ?? "Ăn lành mạnh";
+  return dietLabels[dietType ?? ""] ?? "Chưa chọn";
 }
 
 export const RECENT_HISTORY_LIMIT = 4;
@@ -45,9 +29,44 @@ export function chatHistoryTime(createdAt: string, now = new Date()) {
   return `${days} ngày trước`;
 }
 
+/** Thời gian dưới mỗi tin nhắn (createdAt thật): hôm nay chỉ ghi giờ, ngày khác ghi kèm ngày. */
+export function chatMessageTime(createdAt: string, now = new Date()) {
+  const date = new Date(createdAt);
+  return differenceInCalendarDays(now, date) <= 0 ? format(date, "HH:mm") : format(date, "HH:mm, dd/MM/yyyy");
+}
+
 export function normalizeChatMessage(message: string) {
   const normalized = message.trim();
   return normalized || null;
+}
+
+type AssistantContextInput = {
+  profile: NutritionProfile | null | undefined;
+  dashboard: Pick<DashboardData, "expiringItems" | "pantryCount" | "nutritionTargets"> | undefined;
+};
+
+/**
+ * Câu hỏi gợi ý dựa trên dữ liệu thật: món sắp hết hạn trong kho, chỉ tiêu đạm, chế độ ăn, dị ứng.
+ * Thiếu dữ liệu thì dùng câu hỏi chung (không bịa tên món hay con số). Tối đa 4 câu.
+ */
+export function assistantPromptSuggestions({ profile, dashboard }: AssistantContextInput, now = new Date()) {
+  const prompts: string[] = [];
+  const expiring = dashboard?.expiringItems?.[0];
+  if (expiring) {
+    const days = expiring.expiryDate ? differenceInCalendarDays(new Date(expiring.expiryDate), now) : null;
+    const when = days === null ? "" : days <= 0 ? " (hết hạn hôm nay)" : ` (còn ${days} ngày)`;
+    prompts.push(`Nấu gì với ${expiring.name.toLocaleLowerCase("vi")}${when} cho bữa tối nay?`);
+  }
+  const protein = profile?.proteinTargetG ?? dashboard?.nutritionTargets?.proteinG;
+  if (protein) prompts.push(`Làm sao ăn đủ ${protein} g đạm hôm nay?`);
+  if (profile?.dietType === "VEGETARIAN" || profile?.dietType === "VEGAN") {
+    prompts.push(`Bữa sáng ${profile.dietType === "VEGAN" ? "thuần chay" : "chay"} nào đủ no trong 15 phút?`);
+  }
+  const allergy = profile?.allergies?.find((item) => item.trim());
+  if (allergy) prompts.push(`Món nào thay thế được khi tôi dị ứng ${allergy.trim().toLocaleLowerCase("vi")}?`);
+  if (dashboard?.pantryCount) prompts.push("Từ những gì đang có trong kho, tôi nấu được món nào?");
+  const generic = ["Bữa tối dưới 500 kcal nên ăn gì?", "Gợi ý bữa sáng nhanh, nhiều đạm."];
+  return [...prompts, ...generic].slice(0, 4);
 }
 
 type ChatScrollContainer = { scrollHeight: number; scrollTo: (options: ScrollToOptions) => void };

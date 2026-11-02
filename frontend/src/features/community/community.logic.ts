@@ -1,18 +1,6 @@
-import { formatDistanceToNow } from "date-fns";
+import { format, formatDistanceToNow } from "date-fns";
 import { vi } from "date-fns/locale";
 import type { CommunityPost, CommunityRecipeSummary, Recipe } from "../../types";
-
-export const suggestedTopics = [
-  { label: "Bữa ăn hôm nay", count: 128 },
-  { label: "Mẹo bảo quản", count: 86 },
-  { label: "Công thức lành mạnh", count: 256 },
-  { label: "Hành trình của tôi", count: 112 },
-];
-
-export const featuredMembers = [
-  { name: "Linh Nhi", role: "Chuyên gia dinh dưỡng" },
-  { name: "Minh An", role: "Thành viên tích cực" },
-];
 
 export const COMMUNITY_POST_MAX_LENGTH = 2000;
 export const COMMUNITY_COMMENT_MAX_LENGTH = 500;
@@ -33,6 +21,30 @@ export function communityInitials(name: string) {
 
 export function communityRelativeTime(value: string) {
   return formatDistanceToNow(new Date(value), { addSuffix: true, locale: vi });
+}
+
+/** Thời gian đầy đủ (hiện khi rê chuột lên "5 phút trước"). */
+export function communityExactTime(value: string) {
+  return format(new Date(value), "HH:mm, dd/MM/yyyy");
+}
+
+/** Bài của chính người đang đăng nhập (so theo id tác giả, không theo tên). */
+export function isOwnPost(post: Pick<CommunityPost, "author">, userId: string | undefined) {
+  return Boolean(userId) && post.author.id === userId;
+}
+
+/** Hộp xác nhận "Xóa bài": nói rõ xóa cả ảnh, bình luận, lượt thích (khớp service xóa dùng chung ở backend). */
+export function deletePostConfirm(post: Pick<CommunityPost, "images" | "commentCount" | "likeCount">) {
+  const parts = [
+    post.images.length ? `${post.images.length} ảnh` : null,
+    `${post.commentCount} bình luận`,
+    `${post.likeCount} lượt thích`,
+  ].filter(Boolean).join(", ");
+  return {
+    title: "Xóa bài viết này?",
+    description: `Bài viết sẽ bị xóa cùng ${parts} của bài. Không hoàn tác được.`,
+    confirmLabel: "Xóa bài",
+  };
 }
 
 export function normalizeCommunityContent(value: string) {
@@ -104,13 +116,6 @@ export function communityShareRecipePath(recipeId: string) {
 export function communityShareText(post: Pick<CommunityPost, "content" | "recipe">) {
   if (post.content) return post.content;
   return post.recipe ? `Công thức: ${post.recipe.name}` : "";
-}
-
-export function toggleCommunitySelection(current: Set<string>, value: string) {
-  const next = new Set(current);
-  if (next.has(value)) next.delete(value);
-  else next.add(value);
-  return next;
 }
 
 interface CommunityShareTarget {

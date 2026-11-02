@@ -1,5 +1,6 @@
 import { X } from "lucide-react";
 import { useEffect, useMemo } from "react";
+import { IconButton } from "../ui";
 
 type ComposerImagePreviewsProps = { images: File[]; onRemove: (index: number) => void };
 
@@ -9,10 +10,14 @@ export default function ComposerImagePreviews({ images, onRemove }: ComposerImag
   useEffect(() => () => previews.forEach((preview) => URL.revokeObjectURL(preview.url)), [previews]);
 
   if (!previews.length) return null;
-  return <ul className="community-image-previews" aria-label="Ảnh sẽ đăng">
-    {previews.map(({ file, url }, index) => <li key={url}>
-      <img src={url} alt={`Ảnh ${index + 1}: ${file.name}`} />
-      <button type="button" onClick={() => onRemove(index)} aria-label={`Bỏ ảnh ${file.name}`}><X /></button>
-    </li>)}
-  </ul>;
+  return (
+    <ul className="cm-previews" aria-label="Ảnh sẽ đăng">
+      {previews.map(({ file, url }, index) => (
+        <li key={url} className="cm-previews__item">
+          <img src={url} alt={`Ảnh ${index + 1}: ${file.name}`} />
+          <IconButton className="cm-previews__remove" label={`Bỏ ảnh ${file.name}`} icon={<X />} onClick={() => onRemove(index)} />
+        </li>
+      ))}
+    </ul>
+  );
 }

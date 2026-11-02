@@ -6,8 +6,8 @@ import { queryKeys } from "../../api/query-keys";
 import type { ChatMessage, DashboardData } from "../../types";
 import { getAIStatus, getAssistantDashboard, getChatHistory, sendChatMessage } from "./ai.api";
 import {
-  assistantDietLabel, assistantFallbackHistory, assistantPromptPills, assistantQuickActions,
-  assistantSuggestions, chatHistoryTime, normalizeChatMessage, recentUserHistory, scrollChatToLatest,
+  assistantDietLabel, assistantPromptSuggestions, chatHistoryTime, chatMessageTime, normalizeChatMessage, recentUserHistory,
+  scrollChatToLatest,
 } from "./ai.logic";
 import { aiMutations, aiQueries, invalidateAIHistory } from "./ai.queries";
 
@@ -137,18 +137,37 @@ describe("AI assistant page business logic", () => {
     expect(chatHistoryTime(new Date(2026, 9, 24, 8, 0).toISOString(), now)).toBe("4 ngày trước");
   });
 
-  it("keeps the existing diet labels and default", () => {
+  it("labels diets in Vietnamese only", () => {
     expect(assistantDietLabel("BALANCED")).toBe("Ăn cân bằng");
-    expect(assistantDietLabel("HIGH_PROTEIN")).toBe("Giàu protein");
-    expect(assistantDietLabel("UNKNOWN")).toBe("Ăn lành mạnh");
-    expect(assistantDietLabel()).toBe("Ăn lành mạnh");
+    expect(assistantDietLabel("LOW_CARB")).toBe("Ít tinh bột");
+    expect(assistantDietLabel("HIGH_PROTEIN")).toBe("Giàu đạm");
+    expect(assistantDietLabel("UNKNOWN")).toBe("Chưa chọn");
+    expect(assistantDietLabel()).toBe("Chưa chọn");
   });
 
-  it("preserves all visible suggestion, quick-action and fallback copy", () => {
-    expect(assistantSuggestions).toHaveLength(3);
-    expect(assistantQuickActions.map((item) => item.id)).toEqual(["meal", "plan", "pantry", "recipe"]);
-    expect(assistantPromptPills).toEqual(["Món dưới 30 phút", "Món ít calo", "Tăng cơ, nhiều protein", "Ăn chay", "Giảm cân"]);
-    expect(assistantFallbackHistory).toEqual(["Gợi ý bữa tối giàu protein", "Thực đơn giảm cân 3 ngày", "Dùng thực phẩm trong kho", "Giá trị dinh dưỡng của ức gà"]);
+  it("shows the real message time, with the date for older days", () => {
+    const now = new Date(2026, 9, 28, 15, 0);
+    expect(chatMessageTime(new Date(2026, 9, 28, 9, 5).toISOString(), now)).toBe("09:05");
+    expect(chatMessageTime(new Date(2026, 9, 26, 21, 40).toISOString(), now)).toBe("21:40, 26/10/2026");
+  });
+
+  it("builds question suggestions from real pantry and profile data", () => {
+    const now = new Date(2026, 9, 28, 12, 0);
+    const profile = { dietType: "VEGAN", allergies: [" Đậu phộng "], proteinTargetG: 90 } as Parameters<typeof assistantPromptSuggestions>[0]["profile"];
+    const expiring = { id: "p1", name: "Ức gà", expiryDate: "2026-10-30T00:00:00.000Z" } as DashboardData["expiringItems"][number];
+    expect(assistantPromptSuggestions({ profile, dashboard: { ...dashboard, expiringItems: [expiring] } }, now)).toEqual([
+      "Nấu gì với ức gà (còn 2 ngày) cho bữa tối nay?",
+      "Làm sao ăn đủ 90 g đạm hôm nay?",
+      "Bữa sáng thuần chay nào đủ no trong 15 phút?",
+      "Món nào thay thế được khi tôi dị ứng đậu phộng?",
+    ]);
+  });
+
+  it("falls back to general questions without inventing data", () => {
+    const suggestions = assistantPromptSuggestions({ profile: null, dashboard: undefined });
+    expect(suggestions).toEqual(["Bữa tối dưới 500 kcal nên ăn gì?", "Gợi ý bữa sáng nhanh, nhiều đạm."]);
+    expect(assistantPromptSuggestions({ profile: null, dashboard: { ...dashboard, nutritionTargets: null } })[0])
+      .toBe("Từ những gì đang có trong kho, tôi nấu được món nào?");
   });
 });
 

@@ -121,15 +121,8 @@ body { background: #f4f5ef; }
 .meal-card { border-radius: 14px; }
 .shopping-grid label { border-radius: 14px; }
 
-.assistant-page { max-width: 1120px; padding-top: 38px; }
-.assistant-header { border: 0; }
 .assistant-avatar { color: #173a31; background: var(--lime); box-shadow: none; }
-.chat-window { margin: 8px 0 14px; padding: 28px; border: 1px solid #e1e5dd; border-radius: 28px; background: rgba(255,255,255,.75); }
-.chat-welcome > span { color: white; background: var(--green); box-shadow: none; }
-.message > span { color: #173a31; background: var(--lime); }
-.message.user > div { background: var(--green); }
-.chat-input { border-radius: 20px; box-shadow: 0 12px 30px rgba(24,60,49,.1); }
-.chat-input button { color: #173a31; background: var(--lime); }
+
 
 .profile-form { border-radius: 26px; }
 .target-card { background: var(--green); box-shadow: none; }
@@ -176,7 +169,7 @@ body { background: #f4f5ef; }
   .metric-grid { grid-template-columns: 1fr 1fr; }
   .metric:nth-child(3), .metric.nutrition { grid-column: span 2; }
   
-  .chat-window { margin-top: 4px; padding: 18px 10px; border-radius: 22px; }
+  
   .auth-panel { min-height: 100vh; padding: 16px; }
   .auth-card { padding: 28px 22px; }
   .auth-mobile-logo { display: block; }

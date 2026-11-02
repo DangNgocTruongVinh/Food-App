@@ -1,0 +1,116 @@
+/*
+ * Trang Trợ lý AI (UI-7) — DESIGN.md mục 14 "Trợ lý AI" (chưa có mockup). Chỉ dùng token. Tiền tố lớp: as-.
+ * Khung chat là phần chính, cao theo màn hình, cuộn bên trong; ô nhập luôn ở đáy khung.
+ */
+
+.as-view {
+  display: grid;
+  gap: var(--space-5);
+  width: 100%;
+  max-width: var(--content-max);
+  margin: 0 auto;
+  padding: var(--space-7) var(--gutter) var(--space-8);
+}
+.as-hero { display: grid; gap: var(--space-3); }
+.as-hero .ui-text { max-width: 64ch; }
+
+.as-layout { display: grid; grid-template-columns: minmax(0, 8fr) minmax(0, 4fr); gap: var(--space-5); align-items: start; }
+.as-side { display: grid; gap: var(--space-5); min-width: 0; }
+
+/* Khung chat. */
+.as-chat {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto auto;
+  height: clamp(480px, calc(100dvh - 240px), 760px);
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  background: var(--bg);
+}
+.as-chat--loading.ui-skeleton { display: block; }
+.as-chat__window { min-height: 0; padding: var(--space-5); overflow-y: auto; overscroll-behavior: contain; }
+.as-chat__window:focus-visible { outline: 2px solid var(--action-text); outline-offset: -2px; }
+.as-chat__list { display: grid; gap: var(--space-4); margin: 0; padding: 0; list-style: none; }
+.as-chat__error { padding: 0 var(--space-5) var(--space-3); }
+
+.as-msg { display: grid; gap: var(--space-1); max-width: min(78%, 640px); }
+.as-msg--user { justify-self: end; justify-items: end; }
+.as-msg--assistant { justify-self: start; justify-items: start; }
+.as-msg__bubble {
+  margin: 0;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-card);
+  color: var(--ink);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.as-msg--user .as-msg__bubble { border-bottom-right-radius: var(--radius-sm); background: var(--surface-2); }
+.as-msg--assistant .as-msg__bubble { border: 1px solid var(--line); border-bottom-left-radius: var(--radius-sm); background: var(--surface); }
+.as-msg__bubble--pending { color: var(--ink-2); font-style: italic; }
+.as-msg__time { color: var(--muted); font-size: var(--fs-label); font-variant-numeric: tabular-nums; }
+
+.as-chat__empty { display: grid; align-content: center; gap: var(--space-4); min-height: 100%; }
+.as-chat__empty-text { margin: 0; color: var(--ink); font-size: var(--fs-body); }
+
+/* Gợi ý câu hỏi (trong khung trống và ở cột phải). */
+.as-prompts { display: grid; gap: var(--space-2); margin: 0; padding: 0; list-style: none; }
+.as-prompt {
+  width: 100%;
+  min-height: var(--control-h);
+  padding: var(--space-2) var(--space-4);
+  border: 1px solid var(--border-input);
+  border-radius: var(--radius-field);
+  color: var(--ink);
+  background: var(--surface);
+  font-family: var(--font-sans);
+  font-size: var(--fs-small);
+  line-height: var(--lh-small);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color var(--duration-fast) var(--ease-out);
+}
+.as-prompt:hover { border-color: var(--action-text); }
+
+/* Ô nhập ở đáy khung. */
+.as-composer {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: var(--space-2) var(--space-3);
+  padding: var(--space-3) var(--space-4) var(--space-4);
+  border-top: 1px solid var(--line);
+  background: var(--surface);
+}
+.as-composer__input.ui-input { min-height: var(--control-h-lg); max-height: 160px; padding-top: var(--space-3); padding-bottom: var(--space-3); resize: none; }
+.as-composer__hint { grid-column: 1 / -1; margin: 0; color: var(--muted); font-size: var(--fs-label); line-height: var(--lh-label); }
+
+/* Cột phải. */
+.as-card { display: grid; gap: var(--space-3); }
+.as-card__header { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: var(--space-2); }
+.as-card__title { margin: 0; color: var(--ink); font-family: var(--font-serif); font-size: 1.5rem; font-weight: 500; line-height: var(--lh-h2); }
+.as-card__more { min-height: var(--control-h); padding: 0; border: 0; background: transparent; font-family: var(--font-sans); font-size: var(--fs-small); cursor: pointer; }
+.as-context { display: grid; gap: var(--space-3); margin: 0; }
+.as-context__item { display: grid; gap: var(--space-1); padding-top: var(--space-3); border-top: 1px solid var(--line); }
+.as-context__item:first-child { padding-top: 0; border-top: 0; }
+.as-context dt { color: var(--ink); font-size: var(--fs-small); font-weight: 600; }
+.as-context dd { display: grid; gap: 2px; margin: 0; color: var(--ink-2); font-size: var(--fs-small); line-height: var(--lh-small); }
+.as-history { display: grid; margin: 0; padding: 0; list-style: none; }
+.as-history li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--space-3); padding: var(--space-2) 0; border-top: 1px solid var(--line); }
+.as-history li:first-child { border-top: 0; }
+.as-history__text { overflow: hidden; color: var(--ink); font-size: var(--fs-small); text-overflow: ellipsis; white-space: nowrap; }
+.as-history__time { color: var(--muted); font-size: var(--fs-label); white-space: nowrap; }
+
+@media (max-width: 1024px) {
+  .as-layout { grid-template-columns: minmax(0, 1fr); }
+}
+
+@media (max-width: 640px) {
+  .as-view { gap: var(--space-4); padding-top: var(--space-6); }
+  .as-chat { height: clamp(420px, calc(100dvh - 200px), 640px); }
+  .as-chat__window { padding: var(--space-4); }
+  .as-msg { max-width: 88%; }
+  .as-composer { padding: var(--space-3); }
+}

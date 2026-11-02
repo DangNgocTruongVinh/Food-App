@@ -6,6 +6,7 @@ import { queryKeys } from "../../api/query-keys";
 import type { CommunityComment, CommunityPost } from "../../types";
 import {
   addCommunityComment,
+  deleteCommunityPost,
   listCommunityPosts,
   publishCommunityPost,
   toggleCommunityLike,
@@ -28,16 +29,17 @@ import {
   toCommunityPublishInput,
   toCommunityRecipeSummary,
   communityRelativeTime,
-  featuredMembers,
+  communityExactTime,
+  deletePostConfirm,
+  isOwnPost,
   normalizeCommunityContent,
   shareCommunityPost,
-  suggestedTopics,
-  toggleCommunitySelection,
 } from "./community.logic";
 import {
   appendCommunityComment,
   communityQueries,
   prependCommunityPost,
+  removeCommunityPost,
   updateCommunityLike,
 } from "./community.queries";
 
@@ -199,21 +201,35 @@ describe("Community page business logic", () => {
     expect(communityRelativeTime("2026-09-15T08:00:00.000Z")).toContain("trước");
   });
 
-  it("keeps save/follow selection local and immutable", () => {
-    const selected = new Set(["post-a"]);
-    const removed = toggleCommunitySelection(selected, "post-a");
-    const added = toggleCommunitySelection(selected, "post-b");
-    expect(selected).toEqual(new Set(["post-a"]));
-    expect(removed).toEqual(new Set());
-    expect(added).toEqual(new Set(["post-a", "post-b"]));
+  it("offers delete only on the signed-in user's own posts (by author id)", () => {
+    expect(isOwnPost(post, "user-a")).toBe(true);
+    expect(isOwnPost(post, "user-b")).toBe(false);
+    expect(isOwnPost(post, undefined)).toBe(false);
+    expect(isOwnPost({ author: { id: "", name: "Minh An" } }, "")).toBe(false);
   });
 
-  it("keeps the static topic/member data used by the existing UI", () => {
-    expect(suggestedTopics).toHaveLength(4);
-    expect(featuredMembers).toEqual([
-      { name: "Linh Nhi", role: "Chuyên gia dinh dưỡng" },
-      { name: "Minh An", role: "Thành viên tích cực" },
-    ]);
+  it("states what deleting a post also removes", () => {
+    const withImages = deletePostConfirm({ images: [{ url: "a", position: 0 }, { url: "b", position: 1 }], commentCount: 3, likeCount: 5 });
+    expect(withImages).toEqual({
+      title: "Xóa bài viết này?",
+      description: "Bài viết sẽ bị xóa cùng 2 ảnh, 3 bình luận, 5 lượt thích của bài. Không hoàn tác được.",
+      confirmLabel: "Xóa bài",
+    });
+    expect(deletePostConfirm({ images: [], commentCount: 0, likeCount: 0 }).description).toBe("Bài viết sẽ bị xóa cùng 0 bình luận, 0 lượt thích của bài. Không hoàn tác được.");
+  });
+
+  it("shows the exact post time", () => {
+    expect(communityExactTime(new Date(2026, 9, 31, 8, 5).toISOString())).toBe("08:05, 31/10/2026");
+  });
+
+  it("deletes through the existing endpoint and drops the post from the feed cache", async () => {
+    const adapter = vi.fn(async (config) => ({ config, data: undefined, status: 204, statusText: "No Content", headers: {} }));
+    api.defaults.adapter = adapter;
+    await deleteCommunityPost("post-a");
+    expect(adapter.mock.calls[0][0]).toMatchObject({ method: "delete", url: "/community/post-a" });
+    client.setQueryData(queryKeys.community.feed(), [post, { ...post, id: "post-b" }]);
+    removeCommunityPost(client, "post-a");
+    expect(client.getQueryData<CommunityPost[]>(queryKeys.community.feed())?.map((item) => item.id)).toEqual(["post-b"]);
   });
 
   it("uses Web Share when available", async () => {

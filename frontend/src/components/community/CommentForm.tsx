@@ -1,6 +1,7 @@
 import { Send } from "lucide-react";
 import type { FormEvent } from "react";
 import { COMMUNITY_COMMENT_MAX_LENGTH, communityCommentInputId, communityInitials } from "../../features/community/community.logic";
+import { IconButton } from "../ui";
 
 type CommentFormProps = {
   postId: string;
@@ -13,18 +14,19 @@ type CommentFormProps = {
 };
 
 export default function CommentForm({ postId, postAuthorName, userName, value, onChange, onSubmit, isPending }: CommentFormProps) {
-  return <form className="community-comment-form" onSubmit={onSubmit}>
-    <span className="community-avatar small">{communityInitials(userName ?? "N")}</span>
-    <div>
+  return (
+    <form className="cm-comment-form" onSubmit={onSubmit}>
+      <span className="cm-avatar cm-avatar--small" aria-hidden="true">{communityInitials(userName ?? "N")}</span>
       <input
         id={communityCommentInputId(postId)}
+        className="ui-input cm-comment-form__input"
         maxLength={COMMUNITY_COMMENT_MAX_LENGTH}
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        placeholder="Viết bình luận..."
+        placeholder="Viết bình luận"
         aria-label={`Bình luận bài viết của ${postAuthorName}`}
       />
-      <button aria-label="Gửi bình luận" disabled={!value.trim() || isPending}><Send /></button>
-    </div>
-  </form>;
+      <IconButton type="submit" label="Gửi bình luận" icon={<Send />} disabled={!value.trim() || isPending} />
+    </form>
+  );
 }

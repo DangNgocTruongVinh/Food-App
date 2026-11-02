@@ -1,7 +1,9 @@
-import { BookOpen, ImagePlus, Send } from "lucide-react";
+import { BookOpen, ImagePlus } from "lucide-react";
 import type { FormEvent, ReactNode } from "react";
 import { COMMUNITY_IMAGE_TYPES, COMMUNITY_MAX_IMAGES, COMMUNITY_POST_MAX_LENGTH, communityInitials } from "../../features/community/community.logic";
+import { cx } from "../../features/ui/ui.logic";
 import type { CommunityRecipeSummary } from "../../types";
+import { Button, Card } from "../ui";
 import ComposerImagePreviews from "./ComposerImagePreviews";
 import RecipeAttachmentCard from "./RecipeAttachmentCard";
 
@@ -24,52 +26,62 @@ type PostComposerProps = {
   imageError: string | null;
   onAddImages: (files: File[]) => void;
   onRemoveImage: (index: number) => void;
+  /** Lỗi khi đăng (từ API), hiện ngay trong ô đăng bài. */
+  error?: ReactNode;
 };
 
+/** Ô đăng bài: chữ (tối đa 2000 ký tự), tối đa 4 ảnh, gắn một công thức có sẵn. */
 export default function PostComposer(props: PostComposerProps) {
   const { userName, value, onChange, onSubmit, isPending, canPublish, attachedRecipe } = props;
-  return <form className="community-composer" onSubmit={onSubmit}>
-    <span className="community-avatar">{communityInitials(userName ?? "N")}</span>
-    <div className="community-composer-body">
-      <label htmlFor={COMMUNITY_POST_INPUT_ID}>Chia sẻ với cộng đồng</label>
-      <textarea
-        id={COMMUNITY_POST_INPUT_ID}
-        rows={3}
-        maxLength={COMMUNITY_POST_MAX_LENGTH}
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        placeholder="Hôm nay bạn đã nấu món gì, học được mẹo nào hay?"
-      />
-      {props.isPickerOpen && props.picker}
-      {attachedRecipe && <RecipeAttachmentCard recipe={attachedRecipe} onRemove={props.onRemoveRecipe} />}
-      <ComposerImagePreviews images={props.images} onRemove={props.onRemoveImage} />
-      {props.imageError && <p className="community-image-error" role="alert">{props.imageError}</p>}
-      <footer className="community-composer-footer">
-        <div className="community-composer-tools" aria-label="Loại nội dung">
-          <label className={`community-image-tool${props.images.length >= COMMUNITY_MAX_IMAGES ? " disabled" : ""}`} title="Thêm ảnh">
-            <ImagePlus /> <span>Ảnh</span>
-            <input
-              type="file" accept={COMMUNITY_IMAGE_TYPES.join(",")} multiple hidden disabled={props.images.length >= COMMUNITY_MAX_IMAGES}
-              onChange={(event) => {
-                props.onAddImages(Array.from(event.target.files ?? []));
-                event.target.value = "";
-              }}
-            />
-          </label>
-          <button
-            type="button" className="community-recipe-tool" title="Chia sẻ công thức"
-            aria-expanded={props.isPickerOpen} onClick={props.onTogglePicker}
-          >
-            <BookOpen /> <span>Công thức</span>
-          </button>
+  const imagesFull = props.images.length >= COMMUNITY_MAX_IMAGES;
+  return (
+    <Card as="section" className="cm-composer" aria-labelledby="cm-composer-title">
+      <form onSubmit={onSubmit} className="cm-composer__form">
+        <div className="cm-composer__head">
+          <span className="cm-avatar" aria-hidden="true">{communityInitials(userName ?? "N")}</span>
+          <label id="cm-composer-title" className="cm-composer__label" htmlFor={COMMUNITY_POST_INPUT_ID}>Chia sẻ với cộng đồng</label>
         </div>
-        <div className="community-publish-row">
-          <small>{value.length}/{COMMUNITY_POST_MAX_LENGTH}</small>
-          <button className="community-publish" disabled={!canPublish || isPending}>
-            <Send /> {isPending ? "Đang đăng..." : "Đăng bài"}
-          </button>
+        <textarea
+          id={COMMUNITY_POST_INPUT_ID}
+          className="ui-input cm-composer__input"
+          rows={3}
+          maxLength={COMMUNITY_POST_MAX_LENGTH}
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
+          placeholder="Hôm nay bạn nấu món gì, có mẹo nào muốn chia sẻ?"
+          aria-describedby="cm-composer-count"
+        />
+        {props.isPickerOpen && props.picker}
+        {attachedRecipe && <RecipeAttachmentCard recipe={attachedRecipe} onRemove={props.onRemoveRecipe} />}
+        <ComposerImagePreviews images={props.images} onRemove={props.onRemoveImage} />
+        {props.imageError && <p className="cm-composer__error" role="alert">{props.imageError}</p>}
+        {props.error}
+        <div className="cm-composer__footer">
+          <div className="cm-composer__tools" role="group" aria-label="Thêm vào bài viết">
+            <label className={cx("ui-button ui-button--secondary cm-tool", imagesFull && "is-disabled")} aria-disabled={imagesFull || undefined}>
+              <ImagePlus aria-hidden="true" />
+              <span>Ảnh</span>
+              <span className="ui-visually-hidden">(tối đa {COMMUNITY_MAX_IMAGES} ảnh JPG, PNG, WEBP, mỗi ảnh tối đa 5 MB)</span>
+              <input
+                type="file"
+                className="cm-tool__file"
+                accept={COMMUNITY_IMAGE_TYPES.join(",")}
+                multiple
+                disabled={imagesFull}
+                onChange={(event) => {
+                  props.onAddImages(Array.from(event.target.files ?? []));
+                  event.target.value = "";
+                }}
+              />
+            </label>
+            <Button className="cm-tool" icon={<BookOpen />} aria-expanded={props.isPickerOpen} onClick={props.onTogglePicker}>Công thức</Button>
+          </div>
+          <div className="cm-composer__publish">
+            <span id="cm-composer-count" className="cm-composer__count">{value.length}/{COMMUNITY_POST_MAX_LENGTH}</span>
+            <Button type="submit" variant="primary" disabled={!canPublish} busy={isPending}>{isPending ? "Đang đăng..." : "Đăng bài"}</Button>
+          </div>
         </div>
-      </footer>
-    </div>
-  </form>;
+      </form>
+    </Card>
+  );
 }

@@ -3,6 +3,7 @@ import { queryKeys } from "../../api/query-keys";
 import type { CommunityComment, CommunityPost } from "../../types";
 import {
   addCommunityComment,
+  deleteCommunityPost,
   listCommunityPosts,
   publishCommunityPost,
   toggleCommunityLike,
@@ -17,7 +18,12 @@ export const communityMutations = {
   publish: () => mutationOptions({ mutationFn: publishCommunityPost }),
   toggleLike: () => mutationOptions({ mutationFn: toggleCommunityLike }),
   addComment: () => mutationOptions({ mutationFn: addCommunityComment }),
+  remove: () => mutationOptions({ mutationFn: deleteCommunityPost }),
 };
+
+export function removeCommunityPost(queryClient: QueryClient, postId: string) {
+  queryClient.setQueryData<CommunityPost[]>(queryKeys.community.feed(), (posts = []) => posts.filter((post) => post.id !== postId));
+}
 
 export function prependCommunityPost(queryClient: QueryClient, post: CommunityPost) {
   queryClient.setQueryData<CommunityPost[]>(queryKeys.community.feed(), (posts = []) => [post, ...posts]);

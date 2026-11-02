@@ -7,11 +7,8 @@
 @import "./styles/05-profile.css";
 @import "./styles/06-type-scale.css";
 @import "./styles/09-dashboard-palette.css";
-@import "./styles/14-assistant.css";
 @import "./styles/15-profile-palette.css";
-@import "./styles/16-assistant-dashboard.css";
 @import "./styles/17-unified-palette.css";
-@import "./styles/18-community.css";
 @import "./styles/19-logo.css";
 @import "./styles/22-landing.css";
 @import "./styles/25-landing-hero-footer.css";
@@ -27,4 +24,6 @@
 @import "./styles/ui/recipes.css";
 @import "./styles/ui/pantry.css";
 @import "./styles/ui/meal-plans.css";
+@import "./styles/ui/community.css";
+@import "./styles/ui/assistant.css";
 @import "./styles/ui/recipe-image-legacy.css";

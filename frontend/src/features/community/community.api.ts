@@ -37,6 +37,11 @@ export async function toggleCommunityLike(postId: string) {
   return (await api.post<CommunityLikeResult>(`/community/${postId}/like`)).data;
 }
 
+/** "Xóa bài của tôi": backend chỉ cho tác giả xóa (bài người khác → 404), xóa cả ảnh, bình luận, lượt thích, thông báo. */
+export async function deleteCommunityPost(postId: string) {
+  await api.delete(`/community/${postId}`);
+}
+
 export async function addCommunityComment({ postId, content }: AddCommunityCommentInput) {
   return (await api.post<CommunityComment>(`/community/${postId}/comments`, { content })).data;
 }

@@ -275,41 +275,11 @@ h1, h2, h3, .logo { font-family: "Manrope", system-ui, sans-serif; }
 .shopping-grid label.checked strong { text-decoration: line-through; }
 .shopping-grid label.checked > span { color: white; border-color: var(--green); background: var(--green); }
 
-.assistant-page { width: 100%; max-width: 1060px; height: 100vh; min-height: 650px; margin: auto; padding: 30px clamp(24px, 5vw, 70px) 14px; display: grid; grid-template-rows: auto 1fr auto auto; animation: page-in .42s ease both; }
-.assistant-header { padding: 0 3px 20px; border-bottom: 1px solid var(--legacy-line); display: flex; align-items: center; gap: 14px; }
 .assistant-avatar { position: relative; width: 54px; height: 54px; border-radius: 19px 19px 19px 7px; color: var(--lime); background: linear-gradient(145deg, #1c5a49, #103b31); display: grid; place-items: center; box-shadow: 0 10px 24px rgba(21,72,60,.16); }
 .assistant-avatar::after { content: ""; position: absolute; right: -2px; bottom: -2px; width: 11px; height: 11px; border: 3px solid var(--cream); border-radius: 50%; background: #62a675; }
-.assistant-header h1 { margin: 2px 0; font-size: 20px; }
-.assistant-header p { margin: 0; color: var(--legacy-muted); font-size: 10px; }
-.online { color: #4f8065; display: flex; align-items: center; gap: 5px; font-size: 8px; }
-.online i { width: 6px; height: 6px; border-radius: 50%; background: #63a477; }
-.chat-window { overflow-y: auto; padding: 26px 4px; scrollbar-width: thin; scrollbar-color: #c4d2c6 transparent; }
-.chat-welcome { padding: clamp(40px, 8vh, 85px) 20px; text-align: center; }
-.chat-welcome > span { width: 68px; height: 68px; margin: auto; border-radius: 23px 23px 23px 8px; color: var(--green); background: linear-gradient(145deg, var(--lime-bright), #d2e975); display: grid; place-items: center; box-shadow: 0 15px 30px rgba(121,150,59,.15); }
-.chat-welcome h2 { margin: 20px 0 7px; font-size: 24px; letter-spacing: -.8px; }
-.chat-welcome p { color: var(--legacy-muted); }
-.chat-welcome > div { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
-.chat-welcome button { padding: 9px 13px; border: 1px solid var(--legacy-line); border-radius: 999px; color: #536a61; background: #fff; font-size: 10px; box-shadow: 0 5px 15px rgba(20,58,48,.035); }
-.chat-welcome button:hover { color: var(--green); border-color: #aec5b3; background: #f8fbf5; transform: translateY(-1px); }
-.message { margin: 13px 0; display: flex; align-items: flex-start; gap: 10px; animation: message-in .25s ease both; }
-.message > span { width: 32px; height: 32px; flex: 0 0 32px; border-radius: 11px 11px 11px 4px; color: var(--lime); background: var(--green); display: grid; place-items: center; }
-.message > span svg { width: 15px; }
-.message > div { max-width: 72%; padding: 13px 16px; border: 1px solid var(--legacy-line); border-radius: 5px 16px 16px 16px; white-space: pre-wrap; color: #30473f; background: white; font-size: 12px; line-height: 1.7; box-shadow: 0 5px 15px rgba(20,58,48,.035); }
-.message.user { flex-direction: row-reverse; }
-.message.user > span { color: var(--green); background: #e2eadf; border-radius: 11px 11px 4px 11px; }
-.message.user > div { color: white; border-color: var(--green); border-radius: 16px 5px 16px 16px; background: var(--green); }
-.typing { display: flex; gap: 4px; }
-.typing i { width: 5px; height: 5px; border-radius: 50%; background: #82968e; animation: pulse 1s infinite; }
-.typing i:nth-child(2) { animation-delay: .15s; }
-.typing i:nth-child(3) { animation-delay: .3s; }
-.chat-input { padding: 8px; border: 1px solid #cbd7cd; border-radius: 18px; background: white; box-shadow: 0 10px 32px rgba(24,60,49,.13); display: flex; align-items: flex-end; }
-.chat-input:focus-within { border-color: #7ca18f; box-shadow: 0 0 0 4px rgba(62,115,93,.08), 0 12px 35px rgba(24,60,49,.14); }
-.chat-input textarea { min-height: 40px; max-height: 120px; padding: 10px; border: 0; outline: 0; resize: none; flex: 1; color: #1d3a32; background: transparent; }
-.chat-input button { width: 42px; height: 42px; border: 0; border-radius: 13px; color: white; background: linear-gradient(145deg, #1d5c4b, #123f35); display: grid; place-items: center; }
+
+
 .chat-input button:hover:not(:disabled) { transform: translateY(-1px) rotate(-2deg); }
-.chat-input button:disabled { opacity: .38; cursor: default; }
-.chat-input button svg { width: 17px; }
-.ai-disclaimer { margin: 8px 0 0; color: #8b9591; text-align: center; font-size: 8px; }
 
 .profile-layout { display: grid; grid-template-columns: minmax(0, 1fr) 290px; gap: 18px; align-items: start; }
 .profile-form { padding: 29px; }
@@ -358,11 +328,9 @@ h1, h2, h3, .logo { font-family: "Manrope", system-ui, sans-serif; }
 
 @keyframes page-in { from { opacity: 0; transform: translateY(7px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes modal-in { from { opacity: 0; transform: translateY(12px) scale(.98); } to { opacity: 1; transform: none; } }
-@keyframes message-in { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: none; } }
 @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
 @keyframes spin { to { transform: rotate(360deg); } }
 @keyframes orbit { to { transform: rotate(360deg); } }
-@keyframes pulse { 50% { opacity: .25; transform: translateY(-3px); } }
 
 @media (max-width: 1180px) {
 
@@ -433,13 +401,12 @@ h1, h2, h3, .logo { font-family: "Manrope", system-ui, sans-serif; }
   .plan-toolbar select { max-width: 190px; }
   .plan-toolbar > div { align-items: flex-end; flex-direction: column; }
   .shopping-grid { grid-template-columns: 1fr 1fr; }
-  .assistant-page { height: calc(100dvh - 138px); min-height: 460px; padding: 17px 13px 10px; }
-  .assistant-header { padding-bottom: 15px; }
-  .assistant-header p { max-width: 260px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .chat-welcome { padding: 45px 5px; }
-  .chat-welcome h2 { font-size: 21px; }
-  .chat-welcome p { font-size: 12px; }
-  .message > div { max-width: 83%; }
+  
+  
+  
+  
+  
+  
   .profile-form { padding: 20px; }
   .auth-panel { padding: 20px; }
   .auth-card { padding: 0; }

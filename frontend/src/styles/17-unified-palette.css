@@ -17,7 +17,6 @@
   background: #f3f9ed;
 }
 
-.app-overview-palette > .assistant-page,
 .app-overview-palette > .professional-profile-page {
   color: var(--app-ink);
   background:
@@ -28,8 +27,6 @@
 
 /* Shared primary actions */
 .app-overview-palette :is(
-  .chat-input > button,
-  .assistant-send,
   .profile-save-top,
   .profile-save-bottom
 ) {
@@ -39,28 +36,9 @@
   box-shadow: 0 9px 22px rgba(66,145,46,.17);
 }
 .app-overview-palette :is(
-  .chat-input > button,
-  .assistant-send,
   .profile-save-top,
   .profile-save-bottom
 ):hover:not(:disabled) { color: white; background: #348529; }
-
-/* Recipes */
-
-/* AI assistant */
-.app-overview-palette .assistant-header { background: linear-gradient(135deg, #62b83d 0%, #4ca337 48%, #2f7f35 100%); box-shadow: 0 16px 38px rgba(55,125,43,.14); }
-.app-overview-palette :is(.assistant-avatar::after, .online i) { border-color: var(--app-accent-strong); background: #d9f795; }
-.app-overview-palette :is(.assistant-chat-shell, .assistant-context-bar, .assistant-insights > section, .chat-input) { border-color: var(--app-border); background: rgba(255,255,255,.88); box-shadow: 0 10px 30px rgba(65,104,48,.05); }
-.app-overview-palette :is(.assistant-context-bar > div span, .assistant-action-grid > button > span) { color: var(--app-accent-strong); background: #e8f4e2; }
-.app-overview-palette :is(.assistant-context-bar > div:nth-child(2) span, .assistant-context-bar > div:nth-child(3) span, .assistant-context-bar > div:nth-child(4) span) { color: var(--app-accent-strong); background: #e8f4e2; }
-.app-overview-palette :is(.chat-welcome .assistant-action-grid > button, .chat-welcome .assistant-action-grid > button.plan, .chat-welcome .assistant-action-grid > button.pantry, .chat-welcome .assistant-action-grid > button.recipe) {
-  color: var(--app-ink);
-  border-color: var(--app-border);
-  background: linear-gradient(145deg, #f7fbf3, #fff);
-}
-.app-overview-palette .chat-welcome .assistant-action-grid > button:hover { border-color: #8fc477; box-shadow: 0 12px 24px rgba(65,118,47,.08); }
-.app-overview-palette :is(.message > span, .chat-welcome > span) { background: linear-gradient(145deg, #62b83d, #367f2c); }
-.app-overview-palette .chat-input:focus-within { border-color: var(--app-accent); box-shadow: 0 0 0 4px rgba(85,173,56,.12), 0 13px 34px rgba(55,125,43,.09); }
 
 /* Profile */
 .app-overview-palette :is(.professional-profile-header .eyebrow, .profile-summary-tags svg, .profile-form-actions svg, .profile-ai-card small, .profile-ai-card a) { color: var(--app-accent-strong); }
