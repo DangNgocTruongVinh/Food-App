@@ -27,8 +27,9 @@ export default function PrivacyPage() {
       <section className="info-page__section">
         <h2 className="ui-section-title">Dữ liệu gửi cho OpenAI</h2>
         <p className="ui-text">
-          Khi hệ thống bật OpenAI, câu hỏi bạn gửi Trợ lý AI được gửi kèm hồ sơ dinh dưỡng và danh sách kho để câu trả lời sát với
-          bạn; khi tạo thực đơn, chỉ tiêu dinh dưỡng, chế độ ăn, dị ứng, món không thích, kho và danh sách món được gửi để xếp bữa.
+          Khi hệ thống bật OpenAI, câu hỏi bạn gửi Trợ lý AI được gửi kèm hồ sơ dinh dưỡng, danh sách kho và tóm tắt thực đơn
+          đang áp dụng (tên món, bữa, calo, đã ăn hay chưa của hôm nay và 2 ngày tới) để câu trả lời sát với bạn; khi tạo thực
+          đơn, chỉ tiêu dinh dưỡng, chế độ ăn, dị ứng, món không thích, kho và danh sách món được gửi để xếp bữa.
           Họ tên, email và mật khẩu không được gửi đi. Khi OpenAI
           không bật, Nouri dùng câu trả lời mẫu và thuật toán gợi ý, không gửi dữ liệu ra ngoài.
         </p>

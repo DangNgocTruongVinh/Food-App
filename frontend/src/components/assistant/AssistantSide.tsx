@@ -12,8 +12,8 @@ type AssistantContextCardProps = {
 const listOrNone = (items: string[] | undefined) => (items?.length ? items.join(", ") : "không có");
 
 /**
- * Ngữ cảnh trợ lý thật sự nhận (backend /ai/chat gửi hồ sơ dinh dưỡng và thực phẩm còn trong kho).
- * Thực đơn không được gửi: ghi rõ để người dùng hiểu câu trả lời dựa trên gì.
+ * Ngữ cảnh trợ lý thật sự nhận (backend /ai/chat, chat-context.ts): hồ sơ dinh dưỡng, thực phẩm còn trong kho và tóm tắt
+ * thực đơn đang áp dụng (bữa hôm nay và 2 ngày tới). Ghi rõ để người dùng hiểu câu trả lời dựa trên gì.
  */
 export function AssistantContextCard({ profile, dashboard }: AssistantContextCardProps) {
   const expiring = dashboard?.expiringItems.slice(0, 3).map((item) => item.name) ?? [];
@@ -45,10 +45,16 @@ export function AssistantContextCard({ profile, dashboard }: AssistantContextCar
         </div>
         <div className="as-context__item">
           <dt>Thực đơn</dt>
-          <dd>
-            <span>Chưa gửi cho trợ lý.</span>
-            {dashboard?.activePlan && <span>Hôm nay có {dashboard.todayMeals.length} bữa trong “{dashboard.activePlan.name}”.</span>}
-          </dd>
+          {dashboard?.activePlan ? (
+            <dd>
+              <span>“{dashboard.activePlan.name}” đang áp dụng.</span>
+              <span>
+                Trợ lý xem các bữa hôm nay và 2 ngày tới (tên món, calo, đã ăn hay chưa); hôm nay có {dashboard.todayMeals.length} bữa.
+              </span>
+            </dd>
+          ) : (
+            <dd>{dashboard ? "Chưa có thực đơn đang áp dụng." : "Đang tải..."}</dd>
+          )}
         </div>
       </dl>
     </Card>

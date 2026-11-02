@@ -10,6 +10,7 @@ const mocks = vi.hoisted(() => ({
   listHistory: vi.fn(),
   findProfile: vi.fn(),
   listPantry: vi.fn(),
+  findPlan: vi.fn(),
   createMessages: vi.fn(),
   requestMealPlan: vi.fn(),
   requestNutritionAnswer: vi.fn(),
@@ -22,6 +23,7 @@ vi.mock("../../lib/prisma.js", () => ({
     chatMessage: { findMany: mocks.listHistory, createMany: mocks.createMessages },
     nutritionProfile: { findUnique: mocks.findProfile },
     pantryItem: { findMany: mocks.listPantry },
+    mealPlan: { findFirst: mocks.findPlan },
   },
 }));
 vi.mock("./openai.service.js", () => ({
@@ -45,6 +47,7 @@ beforeEach(() => {
   mocks.listHistory.mockResolvedValue(messages);
   mocks.findProfile.mockResolvedValue(profile);
   mocks.listPantry.mockResolvedValue(pantry);
+  mocks.findPlan.mockResolvedValue(null);
   mocks.createMessages.mockResolvedValue({ count: 2 });
   mocks.requestNutritionAnswer.mockResolvedValue("Bạn có thể ăn ức gà.");
   mocks.requestMealPlan.mockResolvedValue({ summary: "Kế hoạch", days: [] });
@@ -61,7 +64,7 @@ describe("AI chat HTTP contract (no database or OpenAI request)", () => {
     });
   });
 
-  it("builds chat context from the token owner's profile and positive Pantry items", async () => {
+  it("builds chat context from the token owner's profile, positive Pantry items and active meal plan", async () => {
     const response = await request(app, "/api/ai/chat", {
       method: "POST", token: token(), body: { message: "Tôi nên ăn gì?", userId: "user-b" },
     });
@@ -71,7 +74,11 @@ describe("AI chat HTTP contract (no database or OpenAI request)", () => {
       where: { userId, quantity: { gt: 0 } },
       select: { name: true, quantity: true, unit: true, expiryDate: true },
     });
-    expect(mocks.requestNutritionAnswer).toHaveBeenCalledWith({ profile, pantry }, "Tôi nên ăn gì?");
+    expect(mocks.findPlan).toHaveBeenCalledWith(expect.objectContaining({ where: expect.objectContaining({ userId, status: "ACTIVE" }) }));
+    expect(mocks.requestNutritionAnswer).toHaveBeenCalledWith(
+      { profile: { dietType: "BALANCED", allergies: ["Tôm"] }, pantry, mealPlan: { status: "chưa có thực đơn" } },
+      "Tôi nên ăn gì?",
+    );
     expect(mocks.createMessages).toHaveBeenCalledWith({ data: [
       { userId, role: "user", content: "Tôi nên ăn gì?" },
       { userId, role: "assistant", content: "Bạn có thể ăn ức gà." },

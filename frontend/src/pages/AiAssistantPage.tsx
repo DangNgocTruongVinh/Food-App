@@ -58,7 +58,7 @@ export default function AiAssistantPage() {
       {aiStatus && !aiStatus.available && (
         <p className="ui-notice" role="status">
           Chưa cấu hình OpenAI: trợ lý đang dùng câu trả lời mẫu (cùng một câu cho mọi câu hỏi),
-          chưa đọc câu hỏi, hồ sơ hay kho.
+          chưa đọc câu hỏi, hồ sơ, kho hay thực đơn.
         </p>
       )}
 
