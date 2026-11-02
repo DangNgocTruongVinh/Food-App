@@ -9,12 +9,19 @@ type DateInputProps = {
   onChange: (value: string, status: DateDraftStatus) => void;
   required?: boolean;
   "aria-label"?: string;
+  /** Dùng khi đặt trong Field (components/ui): id, liên kết lỗi và lớp của ô nhập mới. */
+  id?: string;
+  "aria-describedby"?: string;
+  "aria-invalid"?: boolean;
+  className?: string;
+  inputClassName?: string;
 };
 
 const invalidMessage = "Nhập ngày theo dạng dd/mm/yyyy.";
 
 // Ô ngày luôn hiển thị dd/mm/yyyy, không phụ thuộc locale trình duyệt như input type="date".
-export default function DateInput({ value, onChange, required, "aria-label": ariaLabel }: DateInputProps) {
+export default function DateInput(props: DateInputProps) {
+  const { value, onChange, required, "aria-label": ariaLabel, id, className, inputClassName } = props;
   const textRef = useRef<HTMLInputElement>(null);
   const pickerRef = useRef<HTMLInputElement>(null);
   const [draft, setDraft] = useState(() => isoDateToDisplay(value));
@@ -47,10 +54,11 @@ export default function DateInput({ value, onChange, required, "aria-label": ari
     }
   };
 
-  return <span className="date-input">
+  return <span className={className ? `date-input ${className}` : "date-input"}>
     <input
       ref={textRef}
-      className="date-input-text"
+      id={id}
+      className={inputClassName ? `date-input-text ${inputClassName}` : "date-input-text"}
       type="text"
       inputMode="numeric"
       autoComplete="off"
@@ -58,7 +66,8 @@ export default function DateInput({ value, onChange, required, "aria-label": ari
       maxLength={10}
       required={required}
       aria-label={ariaLabel}
-      aria-invalid={invalid}
+      aria-invalid={invalid || props["aria-invalid"]}
+      aria-describedby={props["aria-describedby"]}
       title={invalid ? invalidMessage : undefined}
       value={draft}
       onChange={(event) => changeText(event.target.value)}

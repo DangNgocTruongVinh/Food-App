@@ -17,7 +17,6 @@
   background: #f3f9ed;
 }
 
-.app-overview-palette > .pantry-page,
 .app-overview-palette > .reference-menu-page,
 .app-overview-palette > .assistant-page,
 .app-overview-palette > .professional-profile-page {
@@ -30,8 +29,6 @@
 
 /* Shared primary actions */
 .app-overview-palette :is(
-  .pantry-add-button,
-  .pantry-scan-card button,
   .menu-generate-controls > button,
   .menu-hero-empty button,
   .menu-toolbar-actions > a,
@@ -47,8 +44,6 @@
   box-shadow: 0 9px 22px rgba(66,145,46,.17);
 }
 .app-overview-palette :is(
-  .pantry-add-button,
-  .pantry-scan-card button,
   .menu-generate-controls > button,
   .menu-hero-empty button,
   .menu-toolbar-actions > a,
@@ -58,30 +53,6 @@
   .profile-save-top,
   .profile-save-bottom
 ):hover:not(:disabled) { color: white; background: #348529; }
-
-/* Pantry */
-.app-overview-palette .pantry-hero { border-color: var(--app-border); background-color: #eef7e8; }
-.app-overview-palette .pantry-hero::before {
-  background: linear-gradient(90deg, rgba(247,251,242,.99) 0%, rgba(234,246,223,.95) 43%, rgba(214,237,195,.17) 73%, transparent);
-}
-.app-overview-palette :is(.pantry-title > svg, .pantry-hero .eyebrow, .pantry-scan-icon) { color: var(--app-accent); }
-.app-overview-palette :is(.pantry-title, .pantry-title h1, .pantry-filter-panel h2, .pantry-inventory-panel h2, .pantry-insights h2) { color: var(--app-ink-strong); }
-.app-overview-palette :is(.pantry-global-search, .pantry-filter-panel, .pantry-inventory-panel, .pantry-insights > section) {
-  border-color: var(--app-border);
-  background: var(--app-surface);
-  box-shadow: 0 8px 24px rgba(65,104,48,.04);
-}
-.app-overview-palette .pantry-global-search:focus-within { color: var(--app-accent); border-color: #8ec67a; box-shadow: 0 0 0 3px rgba(82,171,57,.1); }
-.app-overview-palette :is(
-  .pantry-filter-panel button:hover,
-  .pantry-filter-panel button.active,
-  .pantry-tabs button:hover,
-  .pantry-tabs button.active,
-  .pantry-view-toggle button:hover,
-  .pantry-view-toggle button.active,
-  .pantry-pagination button.active
-) { color: var(--app-accent-strong); border-color: #a6d18f; background: #e8f4e2; }
-.app-overview-palette .pantry-tips-card { background: linear-gradient(145deg, #fbfdf8, #edf6e7) !important; }
 
 /* Meal plans */
 .app-overview-palette .reference-menu-page {

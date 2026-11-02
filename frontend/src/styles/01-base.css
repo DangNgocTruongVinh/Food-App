@@ -102,8 +102,7 @@ h1, h2, h3, .logo { font-family: "Manrope", system-ui, sans-serif; }
 .button.primary:hover { background: linear-gradient(135deg, #236b57, #174a3e); box-shadow: 0 13px 28px rgba(20,72,60,.24); }
 .button.secondary { color: var(--green); background: #eaf1e5; border-color: #dce8d7; }
 .button.secondary:hover { background: #e2ecd9; }
-.button.ghost { color: var(--legacy-muted); background: transparent; }
-.button.ghost:hover { color: var(--green); background: #f0f3ec; }
+
 .button.wide { width: 100%; }
 .button.small { min-height: 34px; padding: 7px 12px; font-size: 11px; }
 
@@ -183,15 +182,10 @@ h1, h2, h3, .logo { font-family: "Manrope", system-ui, sans-serif; }
 .search-box input { width: 100%; padding: 8px; border: 0; outline: 0; color: #1d3a32; background: transparent; }
 .search-box:focus-within { color: var(--green-2); }
 .toolbar-count { padding: 7px 11px; border-radius: 10px; color: var(--legacy-muted); background: #f4f6f1; display: flex; align-items: center; gap: 6px; font-size: 10px; font-weight: 600; }
-.pantry-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(195px, 1fr)); gap: 15px; }
 .food-card { position: relative; min-height: 220px; padding: 18px; border-radius: 20px; transition: .25s ease; }
 .food-card-head { display: flex; align-items: center; justify-content: space-between; }
 .category { padding: 6px 9px; border-radius: 999px; color: var(--green-2); background: #ecf4e8; font-size: 9px; font-weight: 700; }
-.icon-button { width: 34px; height: 34px; padding: 0; border: 0; border-radius: 10px; color: var(--legacy-muted); background: transparent; display: grid; place-items: center; }
-.icon-button:hover { color: var(--green); background: #edf2ec; }
-.icon-button.danger { opacity: 0; }
-.food-card:hover .icon-button.danger, .icon-button.danger:focus-visible { opacity: 1; }
-.icon-button.danger:hover { color: #bd4b39; background: #fff0ed; }
+
 .food-emoji { width: 56px; height: 56px; margin: 20px 0 15px; border-radius: 18px 18px 18px 6px; color: var(--green); background: linear-gradient(145deg, #f0f5e9, #e4efdc); display: grid; place-items: center; font: 800 22px Manrope; }
 .food-card h3 { margin: 0 0 4px; font-size: 16px; }
 .food-card > strong { font: 800 21px Manrope; letter-spacing: -.5px; }
@@ -205,16 +199,9 @@ h1, h2, h3, .logo { font-family: "Manrope", system-ui, sans-serif; }
 .state p { max-width: 420px; text-align: center; line-height: 1.6; }
 .spin { animation: spin .8s linear infinite; }
 
-.modal-backdrop { position: fixed; inset: 0; z-index: 100; padding: 20px; background: rgba(10,35,29,.64); backdrop-filter: blur(7px); display: grid; place-items: center; animation: fade-in .2s ease both; }
-.modal { width: min(580px, 100%); max-height: 90vh; overflow: auto; padding: 30px; border: 1px solid rgba(255,255,255,.5); border-radius: 25px; background: #fff; box-shadow: 0 30px 80px rgba(7,31,25,.35); animation: modal-in .28s ease both; }
-.modal-head { display: flex; justify-content: space-between; }
-.modal-head h2 { margin: 5px 0 22px; }
-.modal-actions { margin-top: 23px; display: flex; justify-content: flex-end; gap: 8px; }
-.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-.form-grid .span-2 { grid-column: span 2; }
-.form-grid label, .auth-card label { color: #405a51; font-size: 11px; font-weight: 700; }
-.form-grid label small { color: var(--legacy-muted); font-weight: 400; }
-.form-grid input, .form-grid select, .form-grid textarea, .auth-card input, .generate-controls input {
+.auth-card label { color: #405a51; font-size: 11px; font-weight: 700; }
+
+.auth-card input, .generate-controls input {
   width: 100%;
   margin-top: 7px;
   padding: 12px 13px;
@@ -224,9 +211,9 @@ h1, h2, h3, .logo { font-family: "Manrope", system-ui, sans-serif; }
   color: #1d3a32;
   background: #fbfcf8;
 }
-.form-grid textarea { resize: vertical; }
-.form-grid input:hover, .form-grid select:hover, .form-grid textarea:hover, .auth-card input:hover { border-color: #bfcfc2; }
-.form-grid input:focus, .form-grid select:focus, .form-grid textarea:focus, .auth-card input:focus, .generate-controls input:focus { border-color: #6e9d88; background: #fff; box-shadow: 0 0 0 4px rgba(62,115,93,.09); }
+
+.auth-card input:hover { border-color: #bfcfc2; }
+.auth-card input:focus, .generate-controls input:focus { border-color: #6e9d88; background: #fff; box-shadow: 0 0 0 4px rgba(62,115,93,.09); }
 .form-error, .form-success, .form-notice { margin: 13px 0; padding: 11px 13px; border-radius: 11px; font-size: 11px; line-height: 1.45; }
 .form-error { color: #a94435; background: #fff0ed; border: 1px solid #f8d8d1; }
 .form-success { color: #39734b; background: #e8f4e8; border: 1px solid #d4ead7; }
@@ -234,7 +221,7 @@ h1, h2, h3, .logo { font-family: "Manrope", system-ui, sans-serif; }
 
 /* Ô ngày dd/mm/yyyy dùng chung (components/DateInput.tsx) */
 .date-input { position: relative; display: block; }
-.form-grid .date-input { margin-top: 7px; }
+
 .date-input .date-input-text { margin-top: 0; padding-right: 38px; }
 .date-input .date-input-text[aria-invalid="true"] { border-color: #e0a093; }
 .date-input .date-input-picker { position: absolute; top: 50%; right: 7px; width: 28px; height: 28px; padding: 0; border: 0; border-radius: 8px; color: #6f817a; background: none; box-shadow: none; display: grid; place-items: center; transform: translateY(-50%); cursor: pointer; }
@@ -435,16 +422,15 @@ h1, h2, h3, .logo { font-family: "Manrope", system-ui, sans-serif; }
   .metric:nth-child(3), .metric.nutrition { grid-column: span 2; }
   .metric-icon { display: none; }
   .card { padding: 19px; }
-  .form-grid { grid-template-columns: 1fr; }
-  .form-grid .span-2 { grid-column: span 1; }
-  .modal { padding: 24px 18px; border-radius: 21px; }
-  .modal-actions .button { flex: 1; }
+  
+  
+  
+  
   .toolbar { min-height: 55px; }
   .toolbar-count { padding: 6px 8px; white-space: nowrap; }
   .toolbar-count svg { display: none; }
-  .pantry-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
   .food-card { min-height: 205px; padding: 15px; }
-  .food-card .icon-button.danger { opacity: 1; }
+  
   .food-emoji { width: 48px; height: 48px; margin: 17px 0 13px; }
   .generate-controls { width: 100%; }
   .generate-controls input { min-width: 0; flex: 1; }
@@ -472,7 +458,7 @@ h1, h2, h3, .logo { font-family: "Manrope", system-ui, sans-serif; }
 }
 
 @media (max-width: 390px) {
-  .pantry-grid, .shopping-grid { grid-template-columns: 1fr; }
+  .shopping-grid { grid-template-columns: 1fr; }
   .food-card { min-height: auto; }
   .macro { padding: 0 7px; }
   .generate-controls { flex-direction: column; }

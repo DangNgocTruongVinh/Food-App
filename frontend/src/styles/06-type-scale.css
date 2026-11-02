@@ -2,45 +2,6 @@
 
 /* Readable type scale for Dashboard, Pantry and Profile */
 
-.pantry-page .pantry-title h1 { font-size: 21px; }
-.pantry-page .pantry-global-search input { font-size: 12px; }
-.pantry-page .pantry-add-button { font-size: 11px; }
-.pantry-page .pantry-hero-copy .eyebrow { font-size: 9px; }
-.pantry-page .pantry-hero-copy h2 { font-size: 22px; }
-.pantry-page .pantry-hero-copy p { font-size: 11px; }
-.pantry-page .pantry-hero-stats strong { font-size: 20px; }
-.pantry-page .pantry-hero-stats b { font-size: 10px; }
-.pantry-page .pantry-hero-stats small { font-size: 8px; }
-.pantry-page .pantry-filter-panel h2,
-.pantry-page .pantry-inventory-panel h2,
-.pantry-page .pantry-insights h2 { font-size: 12px; }
-.pantry-page .pantry-filter-panel button { font-size: 10px; }
-.pantry-page .pantry-filter-panel button b { font-size: 9px; }
-.pantry-page .pantry-filters label { font-size: 9px; }
-.pantry-page .pantry-filters select { font-size: 10px; }
-.pantry-page .pantry-tabs button { font-size: 9px; }
-.pantry-page .pantry-table { min-width: 735px; }
-.pantry-page .pantry-table-head { font-size: 8px; }
-.pantry-page .pantry-table-row,
-.pantry-page .pantry-table-row > strong { font-size: 9px; }
-.pantry-page .pantry-food-name strong { font-size: 10px; }
-.pantry-page .pantry-expiry small,
-.pantry-page .pantry-status { font-size: 8px; }
-.pantry-page .pantry-item-card > small,
-.pantry-page .pantry-item-card footer em { font-size: 8px; }
-.pantry-page .pantry-item-card h3 { font-size: 13px; }
-.pantry-page .pantry-item-card > b { font-size: 11px; }
-.pantry-page .pantry-pagination { font-size: 8px; }
-.pantry-page .pantry-pagination button { font-size: 9px; }
-.pantry-page .pantry-donut strong { font-size: 21px; }
-.pantry-page .pantry-donut small { font-size: 8px; }
-.pantry-page .pantry-overview-card li,
-.pantry-page .pantry-overview-card li b { font-size: 8px; }
-.pantry-page .pantry-tips-card b { font-size: 9px; }
-.pantry-page .pantry-tips-card small,
-.pantry-page .pantry-scan-card p { font-size: 8px; }
-.pantry-page .pantry-scan-card button { font-size: 9px; }
-
 .professional-profile-page .professional-profile-header .eyebrow { font-size: 10px; }
 .professional-profile-page .professional-profile-header p { font-size: 12px; }
 .professional-profile-page .profile-save-top,
@@ -78,62 +39,16 @@
 .professional-profile-page .profile-ai-card a { font-size: 9px; }
 
 @media (max-width: 620px) {
-  .pantry-page .pantry-add-button,
-.professional-profile-page .profile-save-top { font-size: 0; }
-  .pantry-page .pantry-table-row > [data-label]::before { font-size: 8px; }
+  .professional-profile-page .profile-save-top { font-size: 0; }
+  
 }
 
 /* Standards-based accessible type scale: 12 / 14 / 16 / 20 / 24 / 40 */
-.pantry-page,
 .professional-profile-page { font-size: 1rem; line-height: 1.5; }
 
 /* Dashboard */
 
 /* Pantry */
-.pantry-page .pantry-title h1 { font-size: 1.5rem; }
-.pantry-page .pantry-global-search { height: 46px; }
-.pantry-page .pantry-global-search input { font-size: 1rem; }
-.pantry-page .pantry-add-button { min-height: 44px; font-size: .875rem; }
-.pantry-page .pantry-hero { min-height: 225px; }
-.pantry-page .pantry-hero-copy .eyebrow { font-size: .75rem; }
-.pantry-page .pantry-hero-copy h2 { font-size: 1.5rem; line-height: 1.3; }
-.pantry-page .pantry-hero-copy p { font-size: .875rem; line-height: 1.5; }
-.pantry-page .pantry-hero-stats article { min-height: 88px; }
-.pantry-page .pantry-hero-stats strong { font-size: 1.5rem; }
-.pantry-page .pantry-hero-stats b { font-size: .875rem; }
-.pantry-page .pantry-hero-stats small { font-size: .75rem; }
-.pantry-page .pantry-layout { grid-template-columns: 205px minmax(0, 1fr) 270px; }
-.pantry-page .pantry-filter-panel h2,
-.pantry-page .pantry-inventory-panel h2,
-.pantry-page .pantry-insights h2 { font-size: 1rem; line-height: 1.4; }
-.pantry-page .pantry-filter-panel button { min-height: 42px; font-size: .875rem; }
-.pantry-page .pantry-filter-panel button b { font-size: .75rem; }
-.pantry-page .pantry-filters { gap: 15px; }
-.pantry-page .pantry-filters label { font-size: .875rem; }
-.pantry-page .pantry-filters select { height: 42px; font-size: .875rem; }
-.pantry-page .pantry-inventory-toolbar { min-height: 64px; }
-.pantry-page .pantry-tabs button { min-height: 38px; font-size: .8125rem; }
-.pantry-page .pantry-table { min-width: 920px; grid-template-columns: minmax(155px, 1.35fr) minmax(100px, .82fr) 88px 120px 112px 108px 54px; }
-.pantry-page .pantry-table-head { min-height: 44px; font-size: .75rem; }
-.pantry-page .pantry-table-row { min-height: 76px; font-size: .8125rem; }
-.pantry-page .pantry-table-row > strong { font-size: .8125rem; }
-.pantry-page .pantry-food-name strong { font-size: .875rem; }
-.pantry-page .pantry-expiry small,
-.pantry-page .pantry-status { font-size: .75rem; }
-.pantry-page .pantry-item-card > small,
-.pantry-page .pantry-item-card footer em { font-size: .75rem; }
-.pantry-page .pantry-item-card h3 { font-size: 1rem; line-height: 1.4; }
-.pantry-page .pantry-item-card > b { font-size: .875rem; }
-.pantry-page .pantry-pagination { min-height: 60px; font-size: .75rem; }
-.pantry-page .pantry-pagination button { min-width: 32px; height: 32px; font-size: .8125rem; }
-.pantry-page .pantry-donut strong { font-size: 1.5rem; }
-.pantry-page .pantry-donut small { font-size: .75rem; }
-.pantry-page .pantry-overview-card li,
-.pantry-page .pantry-overview-card li b { font-size: .75rem; }
-.pantry-page .pantry-tips-card b { font-size: .875rem; }
-.pantry-page .pantry-tips-card small,
-.pantry-page .pantry-scan-card p { font-size: .75rem; line-height: 1.5; }
-.pantry-page .pantry-scan-card button { min-height: 40px; font-size: .875rem; }
 
 /* Profile */
 .professional-profile-page .professional-profile-header .eyebrow { font-size: .75rem; }
@@ -174,20 +89,11 @@
 .professional-profile-page .profile-ai-card p { font-size: .8125rem; line-height: 1.55; }
 .professional-profile-page .profile-ai-card a { font-size: .8125rem; }
 
-@media (max-width: 1350px) {
-  .pantry-page .pantry-layout { grid-template-columns: 205px minmax(0, 1fr); }
-}
-
-@media (max-width: 1040px) {
-  .pantry-page .pantry-layout { grid-template-columns: 1fr; }
-}
-
 @media (max-width: 620px) {
   .professional-profile-page .professional-profile-header h1 { font-size: 2rem; }
-  .pantry-page .pantry-add-button,
-.professional-profile-page .profile-save-top { font-size: 0; }
-  .pantry-page .pantry-hero { min-height: 400px; }
-  .pantry-page .pantry-table { min-width: 0; }
-  .pantry-page .pantry-table-row { font-size: .875rem; }
-  .pantry-page .pantry-table-row > [data-label]::before { font-size: .75rem; }
+  .professional-profile-page .profile-save-top { font-size: 0; }
+  
+  
+  
+  
 }

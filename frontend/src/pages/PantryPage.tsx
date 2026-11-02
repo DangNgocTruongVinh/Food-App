@@ -1,233 +1,157 @@
-import { useGSAP } from "@gsap/react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import gsap from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { X } from "lucide-react";
-import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { getApiError } from "../api/client";
-import PantryAlerts from "../components/pantry/PantryAlerts";
-import PantryCardGrid from "../components/pantry/PantryCardGrid";
-import PantryHeader from "../components/pantry/PantryHeader";
-import PantryInsights from "../components/pantry/PantryInsights";
-import PantryItemForm from "../components/pantry/PantryItemForm";
-import PantryPagination from "../components/pantry/PantryPagination";
-import PantrySummary from "../components/pantry/PantrySummary";
-import PantryTable from "../components/pantry/PantryTable";
-import PantryToolbar from "../components/pantry/PantryToolbar";
-import { EmptyState, LoadingState } from "../components/States";
-import { toPantryFormValues } from "../features/pantry/pantry.api";
+import { PantryCategoryChips, PantryToolbar } from "../components/pantry/PantryFilterBar";
+import { PantryHero } from "../components/pantry/PantryHero";
+import { PantryItemDialog } from "../components/pantry/PantryItemDialog";
+import { PantryGrid, PantryTable } from "../components/pantry/PantryItems";
+import { PantryPager } from "../components/pantry/PantryPager";
+import { PantryCookIdeas, PantrySoonCard } from "../components/pantry/PantrySide";
+import { PantrySkeleton } from "../components/pantry/PantrySkeleton";
+import { PantryStats } from "../components/pantry/PantryStats";
+import { Button, Card, EmptyState, ErrorState, Toast, useConfirm } from "../components/ui";
 import {
-  estimatedSavings, filterAndSortPantry, getPantryStatus, initialPantryForm, PANTRY_PAGE_SIZE, pantryCategories, pantryCounts,
-  pantryItemPage, type PantryStatusFilter, type PantryView,
+  activeStatFilter, applyStatFilter, filterAndSortPantry, itemsToUseSoon, PANTRY_PAGE_SIZE, pantryCategories, pantryCounts, pantryDoneMessage,
+  type PantryStatusFilter, type PantryView,
 } from "../features/pantry/pantry.logic";
 import { invalidatePantryQueries, pantryMutations, pantryQueries } from "../features/pantry/pantry.queries";
+import { usePantryItemFocus } from "../features/pantry/usePantryItemFocus";
 import type { PantryItem, StorageLocation } from "../types";
 
-gsap.registerPlugin(ScrollTrigger);
+type DialogState = { item: PantryItem | null } | null;
 
+// "Quét hóa đơn" (GĐ3c) và "Gợi ý món" trên dòng sắp hết hạn (GĐ3b) chưa hiện.
 export default function PantryPage() {
-  const pageRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
+  const confirm = useConfirm();
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<PantryStatusFilter>("all");
+  const [lowStock, setLowStock] = useState(false);
   const [category, setCategory] = useState("all");
   const [storage, setStorage] = useState<StorageLocation | "all">("all");
   const [sortBy, setSortBy] = useState("expiry");
   const [view, setView] = useState<PantryView>("list");
   const [page, setPage] = useState(1);
-  const [showForm, setShowForm] = useState(false);
-  const [editingItem, setEditingItem] = useState<PantryItem | null>(null);
-  const [form, setForm] = useState(initialPantryForm);
-  const [formError, setFormError] = useState("");
-  const [deleteError, setDeleteError] = useState("");
-  const [expiryDateInvalid, setExpiryDateInvalid] = useState(false);
-  const [searchParams, setSearchParams] = useSearchParams();
-  const focusParam = searchParams.get("item");
-  const [focusedItemId, setFocusedItemId] = useState<string | null>(null);
-  const [focusMissing, setFocusMissing] = useState(false);
-  const [focusRequest, setFocusRequest] = useState(0);
-  const pendingPageFocus = useRef<string | null>(null);
-  const pendingScroll = useRef<string | null>(null);
+  const [dialog, setDialog] = useState<DialogState>(null);
+  const [toast, setToast] = useState("");
+  const clearToast = useCallback(() => setToast(""), []);
 
-  const { data = [], isLoading } = useQuery(pantryQueries.list());
-
+  const list = useQuery(pantryQueries.list());
+  const data = useMemo(() => list.data ?? [], [list.data]);
   const counts = useMemo(() => pantryCounts(data), [data]);
   const categories = useMemo(() => pantryCategories(data), [data]);
+  const soon = useMemo(() => itemsToUseSoon(data), [data]);
   const filtered = useMemo(
-    () => filterAndSortPantry(data, { search, status, category, storage, sortBy }),
-    [category, data, search, sortBy, status, storage],
+    () => filterAndSortPantry(data, { search, status, category, storage, sortBy, lowStock }),
+    [category, data, lowStock, search, sortBy, status, storage],
   );
-
   const pageCount = Math.max(1, Math.ceil(filtered.length / PANTRY_PAGE_SIZE));
   const visibleItems = useMemo(() => filtered.slice((page - 1) * PANTRY_PAGE_SIZE, page * PANTRY_PAGE_SIZE), [filtered, page]);
 
-  const addItem = useMutation({
-    ...pantryMutations.create(form),
-    onSuccess: () => {
-      invalidatePantryQueries(queryClient);
-      setForm(initialPantryForm);
-      setEditingItem(null);
-      setShowForm(false);
-    },
-    onError: (err) => setFormError(getApiError(err)),
-  });
-
-  const updateItem = useMutation({
-    ...pantryMutations.update(),
-    onSuccess: () => {
-      invalidatePantryQueries(queryClient);
-      setForm(initialPantryForm);
-      setEditingItem(null);
-      setShowForm(false);
-    },
-    onError: (err) => setFormError(getApiError(err)),
-  });
-
-  const removeItem = useMutation({
-    ...pantryMutations.remove(),
-    onSuccess: () => {
-      invalidatePantryQueries(queryClient);
-      setDeleteError("");
-    },
-    onError: (err) => setDeleteError(getApiError(err)),
-  });
-
-  // Liên kết từ thông báo (/pantry?item=...): bỏ bộ lọc để item chắc chắn hiện ra, rồi xóa tham số khỏi URL.
-  useEffect(() => {
-    if (!focusParam || isLoading) return;
-    if (data.some((item) => item.id === focusParam)) {
-      setSearch(""); setStatus("all"); setCategory("all"); setStorage("all");
-      setFocusedItemId(focusParam);
-      setFocusMissing(false);
-      pendingPageFocus.current = focusParam;
-      setFocusRequest((value) => value + 1);
-    } else {
-      setFocusedItemId(null);
-      setFocusMissing(true);
-    }
-    setSearchParams((params) => { params.delete("item"); return params; }, { replace: true });
-  }, [data, focusParam, isLoading, setSearchParams]);
-
-  useEffect(() => setPage(1), [category, search, sortBy, status, storage]);
-  // Đặt sau effect về trang 1 để trang của item được focus là giá trị cuối cùng trong cùng lần commit.
-  useEffect(() => {
-    const itemId = pendingPageFocus.current;
-    if (!itemId) return;
-    const targetPage = pantryItemPage(filtered, itemId, PANTRY_PAGE_SIZE);
-    if (targetPage === null) return;
-    pendingPageFocus.current = null;
-    pendingScroll.current = itemId;
-    setPage(targetPage);
-  }, [filtered, focusRequest]);
+  const clearFilters = useCallback(() => {
+    setSearch(""); setStatus("all"); setLowStock(false); setCategory("all"); setStorage("all");
+  }, []);
+  useEffect(() => setPage(1), [category, lowStock, search, sortBy, status, storage]);
+  const focus = usePantryItemFocus({ items: data, ready: list.isSuccess, filtered, visibleItems, clearFilters, setPage });
   useEffect(() => { if (page > pageCount) setPage(pageCount); }, [page, pageCount]);
-  useEffect(() => {
-    const itemId = pendingScroll.current;
-    if (!itemId || !visibleItems.some((item) => item.id === itemId)) return;
-    pendingScroll.current = null;
-    const frame = requestAnimationFrame(() => {
-      document.getElementById(`pantry-item-${itemId}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
+
+  const remove = useMutation({
+    ...pantryMutations.remove(),
+    onSuccess: () => invalidatePantryQueries(queryClient),
+  });
+  const confirmRemove = async (item: PantryItem) => {
+    const confirmed = await confirm({
+      title: `Xóa “${item.name}” khỏi kho?`,
+      description: "Thực phẩm sẽ không còn trong danh sách và Nouri thôi nhắc hạn sử dụng của nó. Không hoàn tác được.",
+      confirmLabel: "Xóa thực phẩm",
+      tone: "danger",
     });
-    return () => cancelAnimationFrame(frame);
-  }, [visibleItems]);
-  useEffect(() => {
-    if (!showForm) return;
-    const closeOnEscape = (event: KeyboardEvent) => { if (event.key === "Escape") setShowForm(false); };
-    document.addEventListener("keydown", closeOnEscape);
-    return () => document.removeEventListener("keydown", closeOnEscape);
-  }, [showForm]);
-
-  useGSAP(() => {
-    if (isLoading) return;
-    const motion = gsap.matchMedia();
-    motion.add("(prefers-reduced-motion: no-preference)", () => {
-      gsap.timeline({ defaults: { ease: "power3.out" } })
-        .from(".pantry-v2-header > *", { y: 16, autoAlpha: 0, duration: .55, stagger: .07 })
-        .from(".pantry-v2-metric", { y: 20, autoAlpha: 0, duration: .5, stagger: .06 }, "-=.28")
-        .from(".pantry-v2-alert-pane", { y: 14, autoAlpha: 0, duration: .45, stagger: .08 }, "-=.22");
-
-      gsap.fromTo(".pantry-v2-hero-media", { scale: .88, autoAlpha: .68 }, {
-        scale: 1,
-        autoAlpha: 1,
-        ease: "none",
-        scrollTrigger: { trigger: ".pantry-v2-summary", start: "top 88%", end: "bottom 42%", scrub: .65 },
-      });
-
-      gsap.utils.toArray<HTMLElement>(".pantry-v2-stack-card").forEach((card, index) => {
-        gsap.from(card, {
-          y: -Math.min(34, index * 18),
-          scale: 1 - index * .018,
-          autoAlpha: .3,
-          ease: "power2.out",
-          scrollTrigger: { trigger: card, start: "top 92%", end: "top 66%", scrub: .5 },
-        });
-      });
-    });
-    return () => motion.revert();
-  }, { scope: pageRef, dependencies: [isLoading], revertOnUpdate: true });
-
-  const closeForm = () => { setShowForm(false); setEditingItem(null); setFormError(""); };
-  const openAddForm = () => {
-    setEditingItem(null); setForm(initialPantryForm); setFormError(""); setExpiryDateInvalid(false); setShowForm(true);
+    if (!confirmed) return;
+    remove.mutate(item.id, { onSuccess: () => setToast(pantryDoneMessage("delete", item.name)) });
   };
-  const openEditForm = (item: PantryItem) => {
-    setEditingItem(item); setForm(toPantryFormValues(item)); setFormError(""); setExpiryDateInvalid(false); setShowForm(true);
+
+  if (list.isLoading) return <PantrySkeleton />;
+  if (list.isError) {
+    return (
+      <div className="kho-view">
+        <ErrorState message="Chưa tải được kho thực phẩm." onRetry={() => void list.refetch()} retrying={list.isFetching} />
+      </div>
+    );
+  }
+
+  const selectStat = (stat: Parameters<typeof applyStatFilter>[0]) => {
+    const next = applyStatFilter(stat, { status, lowStock });
+    setStatus(next.status); setLowStock(next.lowStock);
   };
-  const submit = (event: FormEvent) => {
-    event.preventDefault();
-    setFormError("");
-    // Ô trống = không có hạn dùng (gửi null, kể cả khi sửa để xóa hạn cũ); nhập sai thì không được lưu.
-    if (expiryDateInvalid) { setFormError("Hạn sử dụng chưa hợp lệ. Nhập theo dạng dd/mm/yyyy hoặc để trống."); return; }
-    if (editingItem) updateItem.mutate({ id: editingItem.id, form });
-    else addItem.mutate();
+  const itemProps = {
+    items: visibleItems,
+    focusedItemId: focus.focusedItemId,
+    deletingId: remove.isPending ? remove.variables ?? null : null,
+    onEdit: (item: PantryItem) => setDialog({ item }),
+    onDelete: (item: PantryItem) => void confirmRemove(item),
   };
-  const confirmRemove = (item: PantryItem) => {
-    if (window.confirm(`Xóa “${item.name}” khỏi kho thực phẩm?`)) {
-      setDeleteError("");
-      removeItem.mutate(item.id);
-    }
-  };
-  const expiringItems = data.filter((item) => getPantryStatus(item) === "expiring").slice(0, 2);
-  const expiredItems = data.filter((item) => getPantryStatus(item) === "expired").slice(0, 2);
 
-  if (isLoading) return <LoadingState />;
+  return (
+    <div className="kho-view">
+      <PantryHero search={search} onSearchChange={setSearch} onAdd={() => setDialog({ item: null })} />
 
-  return <div className="page pantry-page pantry-page-v2 max-w-full" ref={pageRef}>
-    <PantryHeader search={search} onSearchChange={setSearch} onAdd={openAddForm} />
+      {focus.focusMissing && (
+        <p className="kho-notice" role="status">
+          <span>Thực phẩm này không còn trong kho.</span>
+          <Button onClick={focus.dismissMissing}>Đóng</Button>
+        </p>
+      )}
+      {remove.isError && <ErrorState message={`Chưa xóa được thực phẩm: ${getApiError(remove.error)}`} />}
 
-    {deleteError && <div className="form-error" role="alert">{deleteError}</div>}
-    {focusMissing && <div className="form-notice pantry-focus-missing" role="status">
-      <span>Thực phẩm này không còn trong kho.</span>
-      <button type="button" onClick={() => setFocusMissing(false)} aria-label="Đóng thông báo"><X /></button>
-    </div>}
+      <PantryStats counts={counts} active={activeStatFilter({ status, lowStock })} onSelect={selectStat} />
 
-    <PantrySummary counts={counts} />
-    <PantryAlerts counts={counts} expiringItems={expiringItems} expiredItems={expiredItems} onShowStatus={setStatus} />
+      <div className="kho-layout">
+        <section className="kho-main" aria-labelledby="kho-list-title">
+          <h2 id="kho-list-title" className="ui-visually-hidden">Danh sách thực phẩm</h2>
+          <PantryCategoryChips total={counts.total} categories={categories} category={category} onChange={setCategory} />
+          <Card variant="flush" className="kho-panel">
+            <PantryToolbar
+              status={status} storage={storage} sortBy={sortBy} view={view}
+              onStatusChange={setStatus} onStorageChange={setStorage} onSortChange={setSortBy} onViewChange={setView}
+            />
+            {!data.length ? (
+              <EmptyState
+                message="Kho chưa có thực phẩm nào."
+                action={<Button variant="primary" onClick={() => setDialog({ item: null })}>Thêm thực phẩm</Button>}
+              />
+            ) : !filtered.length ? (
+              <EmptyState
+                message="Không có thực phẩm nào khớp với từ khóa và bộ lọc đang chọn."
+                action={<Button onClick={clearFilters}>Xóa bộ lọc</Button>}
+              />
+            ) : (
+              <>
+                {view === "list" ? <PantryTable {...itemProps} /> : <PantryGrid {...itemProps} />}
+                <PantryPager page={page} pageCount={pageCount} pageSize={PANTRY_PAGE_SIZE} total={filtered.length} onPageChange={setPage} />
+              </>
+            )}
+          </Card>
+        </section>
 
-    <div className="pantry-layout pantry-v2-layout">
-      <main className="pantry-inventory-panel pantry-v2-inventory">
-        <PantryToolbar
-          total={counts.total} categories={categories} category={category} status={status} storage={storage} sortBy={sortBy} view={view}
-          onCategoryChange={setCategory} onStatusChange={setStatus} onStorageChange={setStorage} onSortChange={setSortBy} onViewChange={setView}
+        <aside className="kho-side" aria-label="Gợi ý từ kho">
+          <PantrySoonCard
+            expiring={soon.expiring}
+            expired={soon.expired}
+            onOpen={(item) => focus.focusItem(item.id)}
+            onShowAll={(next) => { clearFilters(); setStatus(next); }}
+          />
+          <PantryCookIdeas />
+        </aside>
+      </div>
+
+      {dialog && (
+        <PantryItemDialog
+          item={dialog.item}
+          onClose={() => setDialog(null)}
+          onSaved={(message) => { setDialog(null); setToast(message); }}
         />
-
-        {visibleItems.length ? view === "list"
-          ? <PantryTable items={visibleItems} focusedItemId={focusedItemId} deleting={removeItem.isPending} onEdit={openEditForm} onDelete={confirmRemove} />
-          : <PantryCardGrid items={visibleItems} focusedItemId={focusedItemId} onEdit={openEditForm} onDelete={confirmRemove} />
-          : <EmptyState title="Không tìm thấy thực phẩm">Thử thay đổi từ khóa hoặc bộ lọc để xem thêm thực phẩm.</EmptyState>}
-
-        {filtered.length > 0 && <PantryPagination
-          page={page} pageCount={pageCount} pageSize={PANTRY_PAGE_SIZE} total={filtered.length} onPageChange={setPage}
-        />}
-      </main>
-
-      <PantryInsights counts={counts} tipItems={data.slice(0, 3)} savings={estimatedSavings(counts)} />
+      )}
+      <Toast message={toast} onDone={clearToast} />
     </div>
-
-    {showForm && <PantryItemForm
-      form={form} editing={Boolean(editingItem)} error={formError} saving={addItem.isPending || updateItem.isPending}
-      onChange={setForm} onExpiryStatusChange={(expiryStatus) => setExpiryDateInvalid(expiryStatus === "invalid")}
-      onSubmit={submit} onClose={closeForm}
-    />}
-  </div>;
+  );
 }

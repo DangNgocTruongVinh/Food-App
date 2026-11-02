@@ -258,13 +258,72 @@ textarea.ui-input { min-height: 112px; padding: var(--space-3) var(--space-4); r
 .ui-dialog__description { margin: 0; color: var(--ink-2); font-size: var(--fs-small); line-height: var(--lh-small); }
 .ui-dialog__actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: var(--space-3); margin-top: var(--space-3); }
 
+/* Hộp thoại có nội dung (Dialog): rộng hơn, cuộn bên trong khi cao hơn màn hình. */
+.ui-dialog--form {
+  width: min(600px, calc(100vw - 2 * var(--gutter)));
+  max-height: calc(100dvh - 2 * var(--gutter));
+  padding: var(--space-6);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.ui-dialog__header { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-4); margin-bottom: var(--space-5); }
+.ui-dialog__heading { display: grid; gap: var(--space-2); min-width: 0; }
+.ui-dialog__form-title { margin: 0; color: var(--ink); font-family: var(--font-serif); font-size: var(--fs-h2); font-weight: 500; line-height: var(--lh-h2); }
+.ui-dialog__header .ui-icon-button { flex: 0 0 auto; margin: calc(-1 * var(--space-2)) calc(-1 * var(--space-2)) 0 0; }
+
+/* Ô ngày dd/mm/yyyy (components/DateInput) đặt trong Field. */
+.ui-date { position: relative; display: block; }
+.ui-date .date-input-text.ui-input { margin: 0; padding-right: 56px; }
+.ui-date .date-input-text.ui-input[aria-invalid="true"] { border-color: var(--warn); }
+.ui-date .date-input-picker {
+  position: absolute;
+  top: 50%;
+  right: 2px;
+  display: grid;
+  place-items: center;
+  width: var(--control-h);
+  height: var(--control-h);
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-field);
+  color: var(--ink-2);
+  background: transparent;
+  box-shadow: none;
+  transform: translateY(-50%);
+  cursor: pointer;
+}
+.ui-date .date-input-picker:hover { color: var(--ink); background: var(--surface-2); }
+.ui-date .date-input-picker svg { width: 20px; height: 20px; stroke-width: 1.75; }
+
+/* Toast: xác nhận hành động, góc dưới màn hình, tự ẩn. */
+.ui-toast-region { position: fixed; right: var(--gutter); bottom: var(--gutter); left: var(--gutter); z-index: 60; display: flex; justify-content: center; pointer-events: none; }
+.ui-toast {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  max-width: 480px;
+  margin: 0;
+  padding: var(--space-3) var(--space-5);
+  border-radius: var(--radius-card);
+  color: var(--on-action);
+  background: var(--action);
+  box-shadow: var(--shadow-overlay);
+  font-family: var(--font-sans);
+  font-size: var(--fs-small);
+  font-weight: 500;
+  pointer-events: auto;
+  animation: ui-dialog-in var(--duration-dialog) var(--ease-out);
+}
+.ui-toast svg { width: 20px; height: 20px; flex: 0 0 auto; stroke-width: 2; }
+
 @keyframes ui-dialog-in {
   from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: none; }
 }
 
 @media (max-width: 639px) {
-  .ui-card { padding: var(--space-4); }
+  .ui-card:not(:where(.ui-card--flush)) { padding: var(--space-4); }
+  .ui-dialog--form { padding: var(--space-5) var(--space-4); }
   .ui-dialog__actions { flex-direction: column-reverse; }
   .ui-dialog__actions .ui-button { width: 100%; }
 }
