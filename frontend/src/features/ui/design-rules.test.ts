@@ -7,7 +7,7 @@ import { describe, expect, it } from "vitest";
 // Khi một trang được làm lại, thêm thư mục CSS/component của trang đó vào danh sách bên dưới.
 const srcRoot = fileURLToPath(new URL("../..", import.meta.url));
 const NEW_CSS_DIRS = ["styles/ui"];
-const NEW_COMPONENT_DIRS = ["components/ui", "components/dev-ui", "components/layout", "components/notifications", "components/dashboard", "components/recipes", "components/pantry", "components/meal-plans", "components/community", "components/assistant", "components/profile", "components/auth", "pages/dev", "pages/admin", "pages/info", "layouts"];
+const NEW_COMPONENT_DIRS = ["components/ui", "components/dev-ui", "components/layout", "components/notifications", "components/dashboard", "components/recipes", "components/pantry", "components/meal-plans", "components/community", "components/assistant", "components/profile", "components/auth", "components/admin", "pages/dev", "pages/admin", "pages/info", "layouts"];
 
 function filesIn(dir: string, extensions: string[]): string[] {
   return readdirSync(join(srcRoot, dir), { withFileTypes: true }).flatMap((entry) => {

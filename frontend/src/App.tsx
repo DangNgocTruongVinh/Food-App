@@ -4,7 +4,6 @@ import { AdminRoute } from "./components/layout/AdminRoute";
 import ScrollToTop from "./components/ScrollToTop";
 import AppLayout from "./layouts/AppLayout";
 import PublicLayout from "./layouts/PublicLayout";
-import AdminHomePage from "./pages/admin/AdminHomePage";
 import AiAssistantPage from "./pages/AiAssistantPage";
 import CommunityPage from "./pages/CommunityPage";
 import DashboardPage from "./pages/DashboardPage";
@@ -20,6 +19,12 @@ import TermsPage from "./pages/info/TermsPage";
 import { getAuthToken } from "./features/auth/auth.storage";
 
 // Trang mẫu thành phần giao diện: chỉ có ở môi trường dev (bản build production loại bỏ cả route lẫn mã của trang).
+// Trang Quản trị (kèm Recharts) chỉ Admin dùng: tải riêng để không làm nặng gói của người dùng thường.
+const AdminLayout = lazy(() => import("./layouts/AdminLayout"));
+const AdminStatsPage = lazy(() => import("./pages/admin/AdminStatsPage"));
+const AdminRecipesPage = lazy(() => import("./pages/admin/AdminRecipesPage"));
+const AdminRecipeEditorPage = lazy(() => import("./pages/admin/AdminRecipeEditorPage"));
+const AdminPlaceholderPage = lazy(() => import("./pages/admin/AdminPlaceholderPage"));
 const DevUiPage = import.meta.env.DEV ? lazy(() => import("./pages/dev/DevUiPage")) : null;
 
 function ProtectedRoute() {
@@ -48,7 +53,15 @@ export default function App() {
           <Route path="assistant" element={<AiAssistantPage />} />
           <Route path="profile" element={<ProfilePage />} />
           <Route element={<AdminRoute />}>
-            <Route path="admin" element={<AdminHomePage />} />
+            <Route path="admin" element={<Suspense fallback={null}><AdminLayout /></Suspense>}>
+              <Route index element={<Suspense fallback={null}><AdminStatsPage /></Suspense>} />
+              <Route path="recipes" element={<Suspense fallback={null}><AdminRecipesPage /></Suspense>} />
+              <Route path="recipes/new" element={<Suspense fallback={null}><AdminRecipeEditorPage /></Suspense>} />
+              <Route path="recipes/:id/edit" element={<Suspense fallback={null}><AdminRecipeEditorPage /></Suspense>} />
+              <Route path="users" element={<Suspense fallback={null}><AdminPlaceholderPage title="Người dùng" /></Suspense>} />
+              <Route path="moderation" element={<Suspense fallback={null}><AdminPlaceholderPage title="Kiểm duyệt" /></Suspense>} />
+              <Route path="audit-logs" element={<Suspense fallback={null}><AdminPlaceholderPage title="Nhật ký" /></Suspense>} />
+            </Route>
           </Route>
         </Route>
       </Route>

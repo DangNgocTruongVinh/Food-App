@@ -1,6 +1,7 @@
 export type FoodUnit = "G" | "KG" | "ML" | "L" | "ITEM" | "PACKAGE";
 export type StorageLocation = "REFRIGERATOR" | "FREEZER" | "DRY_STORAGE";
 export type MealType = "BREAKFAST" | "LUNCH" | "DINNER" | "SNACK";
+export type DietTag = "BALANCED" | "VEGETARIAN" | "VEGAN" | "LOW_CARB" | "HIGH_PROTEIN";
 export type MealPlanStatus = "DRAFT" | "ACTIVE" | "COMPLETED";
 
 /** role: phiên lưu trước khi có phân quyền không có trường này → coi như USER. */

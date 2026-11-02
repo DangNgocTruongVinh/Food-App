@@ -25,6 +25,12 @@ export const queryKeys = {
     all: ["community"] as const,
     feed: () => ["community", "feed"] as const,
   },
+  admin: {
+    all: ["admin"] as const,
+    stats: ["admin", "stats"] as const,
+    recipes: (query: { search?: string; status: string; page: number; pageSize: number }) => ["admin", "recipes", query] as const,
+    recipe: (id: string) => ["admin", "recipe", id] as const,
+  },
   notifications: {
     all: ["notifications"] as const,
     lists: ["notifications", "list"] as const,
