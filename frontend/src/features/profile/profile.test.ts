@@ -9,7 +9,7 @@ import { invalidateProfileQueries, profileMutations, profileQueries } from "./pr
 const form: ProfileFormValues = {
   name: "  Minh Anh  ", age: "25", gender: "FEMALE", heightCm: "165", weightKg: "55.5",
   targetWeightKg: "52", activityLevel: "MODERATE", goal: "MAINTAIN", dietType: "BALANCED",
-  mealsPerDay: "3", allergies: " shrimp, , milk ", dislikedFoods: "", preferredCuisines: "Vietnam, Japan",
+  mealsPerDay: "3", allergies: [" shrimp", "", "milk "], dislikedFoods: [], preferredCuisines: ["Vietnam", "Japan"],
 };
 const profile = { id: "user-a", name: "Minh Anh", email: "demo@nouri.vn", profile: null };
 const originalAdapter = api.defaults.adapter;

@@ -48,6 +48,7 @@ describe("isRedesignedRoute", () => {
     expect(isRedesignedRoute("/pantry")).toBe(true);
     expect(isRedesignedRoute("/meal-plans/plan-a")).toBe(true);
     expect(isRedesignedRoute("/community")).toBe(true);
-    expect(isRedesignedRoute("/profile")).toBe(false);
+    expect(isRedesignedRoute("/profile")).toBe(true);
+    expect(isRedesignedRoute("/profiles")).toBe(false);
   });
 });

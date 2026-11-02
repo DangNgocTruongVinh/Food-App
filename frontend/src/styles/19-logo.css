@@ -50,9 +50,6 @@
 .mobile-header .logo.logo-wordmark { gap: 9px; font-size: 16px; letter-spacing: .18em; }
 .mobile-header .logo-symbol { width: 34px; height: 34px; flex-basis: 34px; }
 .mobile-header .logo-symbol svg { width: 17px; height: 17px; }
-.auth-story .logo.logo-wordmark { color: #fff; font-size: 22px; }
-.auth-story .logo-symbol { border-color: rgba(255,255,255,.2); color: #a9dc72; background: rgba(255,255,255,.08); }
-.auth-mobile-logo .logo.logo-wordmark { margin: 0 auto; justify-content: center; }
 
 @media (max-width: 620px) {
   .mobile-header .logo.logo-wordmark { font-size: 15px; }

@@ -2,25 +2,24 @@ import { api } from "../../api/client";
 import type { ProfileResponse, ProfileUpdateInput } from "../../types";
 
 export type ProfileFormValues = Record<
-  "name" | "age" | "gender" | "heightCm" | "weightKg" | "targetWeightKg" |
-  "activityLevel" | "goal" | "dietType" | "mealsPerDay" |
-  "allergies" | "dislikedFoods" | "preferredCuisines", string
->;
+  "name" | "age" | "gender" | "heightCm" | "weightKg" | "targetWeightKg" | "activityLevel" | "goal" | "dietType" | "mealsPerDay", string
+> & Record<"allergies" | "dislikedFoods" | "preferredCuisines", string[]>;
 
-const split = (value: string) => value.split(",").map((item) => item.trim()).filter(Boolean);
+const clean = (items: string[]) => items.map((item) => item.trim()).filter(Boolean);
+const numberOrNull = (value: string) => (value.trim() ? Number(value) : null);
 
 export function toProfileUpdate(form: ProfileFormValues): ProfileUpdateInput {
   return {
     ...form,
-    age: form.age ? Number(form.age) : null,
+    age: numberOrNull(form.age),
     gender: form.gender as ProfileUpdateInput["gender"],
-    heightCm: form.heightCm ? Number(form.heightCm) : null,
-    weightKg: form.weightKg ? Number(form.weightKg) : null,
-    targetWeightKg: form.targetWeightKg ? Number(form.targetWeightKg) : null,
+    heightCm: numberOrNull(form.heightCm),
+    weightKg: numberOrNull(form.weightKg),
+    targetWeightKg: numberOrNull(form.targetWeightKg),
     mealsPerDay: Number(form.mealsPerDay),
-    allergies: split(form.allergies),
-    dislikedFoods: split(form.dislikedFoods),
-    preferredCuisines: split(form.preferredCuisines),
+    allergies: clean(form.allergies),
+    dislikedFoods: clean(form.dislikedFoods),
+    preferredCuisines: clean(form.preferredCuisines),
   };
 }
 

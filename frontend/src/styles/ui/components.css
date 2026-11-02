@@ -145,6 +145,30 @@ textarea.ui-input { min-height: 112px; padding: var(--space-3) var(--space-4); r
 .ui-field__error { margin: 0; color: var(--warn); font-size: var(--fs-small); font-weight: 500; line-height: var(--lh-small); }
 
 /* Chip lọc (bấm chọn) và nhãn (tag). */
+/* Nhóm radio dạng nút viên (ChoiceGroup): chọn một, cùng hình với Chip. */
+.ui-choice { display: grid; gap: var(--space-2); min-width: 0; margin: 0; padding: 0; border: 0; }
+.ui-choice legend { padding: 0; margin-bottom: var(--space-2); }
+.ui-choice__options { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.ui-choice__option { position: relative; display: inline-flex; cursor: pointer; }
+.ui-choice__option input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
+.ui-choice__option span {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--control-h);
+  padding: 0 var(--space-4);
+  border: 1px solid var(--border-input);
+  border-radius: var(--radius-pill);
+  color: var(--ink);
+  background: var(--surface);
+  font-family: var(--font-sans);
+  font-size: var(--fs-small);
+  font-weight: 500;
+  transition: background-color var(--duration-fast) var(--ease-out), border-color var(--duration-fast) var(--ease-out);
+}
+.ui-choice__option:hover span { border-color: var(--action-text); }
+.ui-choice__option input:checked + span { border-color: var(--action); color: var(--on-action); background: var(--action); font-weight: 600; }
+.ui-choice__option input:focus-visible + span { outline: 2px solid var(--action-text); outline-offset: 3px; }
+
 .ui-chip {
   display: inline-flex;
   align-items: center;

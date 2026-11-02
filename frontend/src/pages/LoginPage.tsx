@@ -1,192 +1,76 @@
-import { useGSAP } from "@gsap/react";
-import gsap from "gsap";
-import {
-  ArrowRight,
-  CalendarDays,
-  Check,
-  Eye,
-  EyeOff,
-  Leaf,
-  LockKeyhole,
-  Mail,
-  Sparkles,
-  Sprout,
-  UserRound,
-} from "lucide-react";
-import { useRef, useState, type FormEvent } from "react";
+import { type FormEvent, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { getApiError } from "../api/client";
-import Logo from "../components/Logo";
+import { AuthForm } from "../components/auth/AuthForm";
+import { Logo, ThemeToggle } from "../components/ui";
 import { useAuth } from "../contexts/AuthContext";
+import { type AuthFormValues, type AuthMode, authErrorMessage, validateAuthForm } from "../features/auth/auth.logic";
 import { getRememberLoginPreference } from "../features/auth/auth.storage";
-
-const authBenefits = [
-  { icon: Sprout, text: "Ưu tiên thực phẩm sạch, lành mạnh" },
-  { icon: UserRound, text: "Cá nhân hóa theo mục tiêu của bạn" },
-  { icon: CalendarDays, text: "Lập kế hoạch 7 ngày bằng AI thông minh" },
-];
 
 export default function LoginPage() {
   const navigate = useNavigate();
-  const pageRef = useRef<HTMLElement>(null);
-  const [registerMode, setRegisterMode] = useState(false);
-  const [form, setForm] = useState({ name: "", email: "", password: "" });
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-  const [rememberLogin, setRememberLogin] = useState(getRememberLoginPreference);
   const auth = useAuth();
-
-  useGSAP(() => {
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-
-    const intro = gsap.timeline({ defaults: { ease: "power3.out" } });
-    intro
-      .from(".auth-scene img", { scale: 1.06, opacity: 0.7, duration: 1.35 })
-      .from(".auth-brand", { y: -18, opacity: 0, duration: 0.58 }, 0.12)
-      .from(".auth-story-copy > *", { y: 24, opacity: 0, duration: 0.68, stagger: 0.09 }, 0.24)
-      .from(".auth-benefit", { x: -20, opacity: 0, duration: 0.52, stagger: 0.08 }, 0.55)
-      .from(".auth-quote", { y: 14, opacity: 0, duration: 0.5 }, 0.76)
-      .from(".auth-card", { x: 28, y: 12, scale: 0.975, opacity: 0, duration: 0.82 }, 0.28);
-  }, { scope: pageRef });
+  const [mode, setMode] = useState<AuthMode>("login");
+  const [form, setForm] = useState<AuthFormValues>({ name: "", email: "", password: "" });
+  const [submitted, setSubmitted] = useState(false);
+  const [serverError, setServerError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [rememberLogin, setRememberLogin] = useState(getRememberLoginPreference);
+  const errors = submitted ? validateAuthForm(form, mode) : {};
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();
-    setError("");
+    setSubmitted(true);
+    setServerError("");
+    if (Object.keys(validateAuthForm(form, mode)).length) {
+      requestAnimationFrame(() => document.querySelector<HTMLElement>("#auth-form [aria-invalid='true']")?.focus());
+      return;
+    }
     setLoading(true);
     try {
-      if (registerMode) {
-        await auth.register(form.name, form.email, form.password);
-      } else {
-        await auth.login(form.email, form.password, rememberLogin);
-      }
+      if (mode === "register") await auth.register(form.name.trim(), form.email.trim(), form.password);
+      else await auth.login(form.email.trim(), form.password, rememberLogin);
       navigate("/dashboard", { replace: true });
-    } catch (err) {
-      setError(getApiError(err));
+    } catch (error) {
+      setServerError(authErrorMessage(error, mode));
     } finally {
       setLoading(false);
     }
   };
 
   const toggleMode = () => {
-    setRegisterMode((value) => !value);
-    setError("");
+    setMode((value) => (value === "login" ? "register" : "login"));
+    setSubmitted(false);
+    setServerError("");
   };
 
-  return <main className="auth-page auth-page-v2" ref={pageRef}>
-    <div className="auth-scene" aria-hidden="true">
-      <img src="/assets/login-hero-salmon-v1.png" alt="" />
+  return (
+    <div className="dn-page">
+      <header className="dn-top">
+        <Link to="/" className="dn-top__logo" aria-label="Về trang chủ Nouri"><Logo /></Link>
+        <ThemeToggle />
+      </header>
+      <main id="noi-dung-chinh" className="dn-layout">
+        <section className="dn-panel" aria-label={mode === "register" ? "Đăng ký" : "Đăng nhập"}>
+          <AuthForm
+            mode={mode}
+            form={form}
+            errors={errors}
+            serverError={serverError}
+            loading={loading}
+            remember={rememberLogin}
+            onChange={(key, value) => setForm((current) => ({ ...current, [key]: value }))}
+            onRememberChange={setRememberLogin}
+            onSubmit={(event) => void submit(event)}
+            onToggleMode={toggleMode}
+          />
+        </section>
+        {/* Chưa có ảnh món ăn thật: khối --surface-2 kèm một câu giới thiệu cụ thể (DESIGN.md mục 10). */}
+        <aside className="dn-aside" aria-label="Giới thiệu Nouri">
+          <p className="dn-aside__text">
+            Nouri ghi lại thực phẩm trong tủ bếp, nhắc món sắp hết hạn và xếp thực đơn 7 ngày theo calo, chế độ ăn và dị ứng của bạn.
+          </p>
+        </aside>
+      </main>
     </div>
-
-    <section className="auth-story" aria-label="Giới thiệu Nouri">
-      <Link className="auth-brand" to="/" aria-label="Về trang chủ Nouri"><Logo /></Link>
-
-      <div className="auth-story-copy">
-        <span className="auth-kicker"><Sparkles /> Dinh dưỡng thông minh mỗi ngày</span>
-        <h1>Ăn ngon hơn.<br /><em>Sống khỏe hơn.</em></h1>
-        <span className="auth-brush" aria-hidden="true" />
-        <p>Biến những lựa chọn lành mạnh thành thói quen dễ dàng, ngon miệng và không tốn kém.</p>
-
-        <div className="auth-benefits">
-          {authBenefits.map(({ icon: Icon, text }) => <div className="auth-benefit" key={text}>
-            <span><Icon aria-hidden="true" /></span>
-            <p>{text}</p>
-          </div>)}
-        </div>
-      </div>
-
-      <blockquote className="auth-quote">
-        <span aria-hidden="true">“</span>
-        <p>You are what you eat.</p>
-      </blockquote>
-    </section>
-
-    <section className="auth-panel" aria-label={registerMode ? "Đăng ký" : "Đăng nhập"}>
-      <form className="auth-card" onSubmit={submit}>
-        <div className="auth-mobile-logo"><Link to="/"><Logo /></Link></div>
-        <div className="auth-card-mark" aria-hidden="true"><Leaf /></div>
-        <span className="auth-card-greeting">{registerMode ? "Bắt đầu hành trình mới" : "Chào mừng trở lại!"}</span>
-        <h2>{registerMode ? "Tạo tài khoản" : "Đăng nhập"}</h2>
-        <p>{registerMode
-          ? "Thiết lập hồ sơ dinh dưỡng của bạn chỉ trong vài phút."
-          : "Tiếp tục hành trình dinh dưỡng thông minh của bạn."}</p>
-
-        <div className="auth-fields">
-          {registerMode && <label>
-            <span>Họ và tên</span>
-            <div className="auth-input-shell">
-              <UserRound aria-hidden="true" />
-              <input
-                required
-                minLength={2}
-                autoComplete="name"
-                value={form.name}
-                onChange={(event) => setForm({ ...form, name: event.target.value })}
-                placeholder="Nguyễn Minh Anh"
-              />
-            </div>
-          </label>}
-
-          <label>
-            <span>Email</span>
-            <div className="auth-input-shell">
-              <Mail aria-hidden="true" />
-              <input
-                required
-                type="email"
-                autoComplete="email"
-                value={form.email}
-                onChange={(event) => setForm({ ...form, email: event.target.value })}
-                placeholder="name@gmail.com"
-              />
-            </div>
-          </label>
-
-          <label>
-            <span>Mật khẩu</span>
-            <div className="auth-input-shell password-field">
-              <LockKeyhole aria-hidden="true" />
-              <input
-                required
-                type={showPassword ? "text" : "password"}
-                minLength={8}
-                autoComplete={registerMode ? "new-password" : "current-password"}
-                value={form.password}
-                onChange={(event) => setForm({ ...form, password: event.target.value })}
-                placeholder="Tối thiểu 8 ký tự"
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword((value) => !value)}
-                aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
-              >{showPassword ? <EyeOff /> : <Eye />}</button>
-            </div>
-          </label>
-        </div>
-
-        {!registerMode && <div className="auth-options">
-          <label className="auth-remember">
-            <input type="checkbox" checked={rememberLogin} onChange={(event) => setRememberLogin(event.target.checked)} />
-            <span><Check /></span>
-            Nhớ đăng nhập
-          </label>
-          <span className="auth-security-note">Thông tin được bảo mật</span>
-        </div>}
-
-        {error && <div className="form-error" role="alert">{error}</div>}
-
-        <button className="auth-submit" disabled={loading}>
-          <span>{loading ? "Đang xử lý..." : registerMode ? "Tạo tài khoản" : "Đăng nhập"}</span>
-          <ArrowRight aria-hidden="true" />
-        </button>
-
-        <p className="auth-switch">
-          {registerMode ? "Đã có tài khoản?" : "Chưa có tài khoản?"}
-          <button type="button" onClick={toggleMode}>{registerMode ? "Đăng nhập" : "Đăng ký miễn phí"}</button>
-        </p>
-
-        <small className="auth-legal">Bằng cách tiếp tục, bạn đồng ý với điều khoản và chính sách bảo mật của Nouri.</small>
-      </form>
-    </section>
-  </main>;
+  );
 }

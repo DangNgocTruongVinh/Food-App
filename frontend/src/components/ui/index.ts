@@ -2,6 +2,7 @@
 export { Button, ButtonLink, IconButton } from "./Button";
 export { Card } from "./Card";
 export { Chip, Tag } from "./Chip";
+export { ChoiceGroup } from "./ChoiceGroup";
 export { ConfirmDialog, ConfirmProvider, useConfirm } from "./ConfirmDialog";
 export { Dialog } from "./Dialog";
 export { Field, type FieldControlProps } from "./Field";

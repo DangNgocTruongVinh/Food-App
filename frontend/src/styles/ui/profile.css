@@ -1,0 +1,107 @@
+/*
+ * Trang Hồ sơ (UI-8) — DESIGN.md mục 14 "Hồ sơ" (chưa có mockup). Chỉ dùng token. Tiền tố lớp: hs-.
+ * ≥ 1024px: form bên trái, chỉ tiêu bên phải (dính khi cuộn). Điện thoại: chỉ tiêu ở trên cùng.
+ */
+
+.hs-view {
+  display: grid;
+  gap: var(--space-6);
+  width: 100%;
+  max-width: var(--content-max);
+  margin: 0 auto;
+  padding: var(--space-7) var(--gutter) var(--space-8);
+}
+.hs-hero { display: grid; gap: var(--space-3); }
+.hs-hero .ui-text { max-width: 64ch; }
+
+.hs-layout { display: grid; grid-template-columns: minmax(0, 8fr) minmax(0, 4fr); gap: var(--space-6); align-items: start; }
+.hs-layout > .hs-targets { grid-column: 2; grid-row: 1; position: sticky; top: calc(var(--space-8) + var(--space-5)); }
+.hs-layout > .hs-form { grid-column: 1; grid-row: 1; }
+
+/* Form: các nhóm phân tách bằng khoảng trắng + đường kẻ mảnh, không lồng card. */
+.hs-form { display: grid; gap: var(--space-6); min-width: 0; }
+.hs-section { display: grid; gap: var(--space-4); padding-top: var(--space-5); border-top: 1px solid var(--line); }
+.hs-section:first-child { padding-top: 0; border-top: 0; }
+.hs-section__head { display: grid; gap: var(--space-1); }
+.hs-section__title { margin: 0; color: var(--ink); font-family: var(--font-serif); font-size: var(--fs-h2); font-weight: 500; line-height: var(--lh-h2); }
+.hs-section__fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-4) var(--space-5); align-items: start; }
+.hs-wide { grid-column: 1 / -1; }
+
+.hs-email { display: grid; gap: var(--space-1); margin: 0; color: var(--ink-2); font-size: var(--fs-body); }
+.hs-unit { position: relative; display: block; }
+.hs-unit .ui-input { padding-right: 64px; }
+.hs-unit__label { position: absolute; top: 50%; right: var(--space-4); color: var(--muted); font-size: var(--fs-small); transform: translateY(-50%); pointer-events: none; }
+
+/* Ô nhập thẻ (TagField). */
+.hs-tags__list { display: flex; flex-wrap: wrap; gap: var(--space-2); margin: 0; padding: 0; list-style: none; }
+.hs-tags__item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-height: var(--control-h);
+  padding-left: var(--space-4);
+  border-radius: var(--radius-pill);
+  color: var(--ink);
+  background: var(--tag-bg);
+  font-size: var(--fs-small);
+  font-weight: 500;
+}
+.hs-tags__remove {
+  display: inline-grid;
+  place-items: center;
+  width: var(--control-h);
+  height: var(--control-h);
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  color: var(--ink-2);
+  background: transparent;
+  cursor: pointer;
+}
+.hs-tags__remove:hover { color: var(--warn); background: var(--surface); }
+.hs-tags__remove svg { width: 18px; height: 18px; stroke-width: 2; }
+.hs-tags__entry { display: flex; gap: var(--space-2); }
+.hs-tags__entry .ui-input { flex: 1 1 auto; min-width: 0; }
+.hs-tags__suggestions { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.hs-tags__suggestion {
+  min-height: var(--control-h);
+  padding: 0 var(--space-3);
+  border: 1px dashed var(--border-input);
+  border-radius: var(--radius-pill);
+  color: var(--ink-2);
+  background: transparent;
+  font-family: var(--font-sans);
+  font-size: var(--fs-small);
+  cursor: pointer;
+}
+.hs-tags__suggestion:hover { border-color: var(--action-text); color: var(--ink); }
+
+/* Một nút "Lưu hồ sơ" ở cuối form. */
+.hs-actions { display: grid; gap: var(--space-3); padding-top: var(--space-4); border-top: 1px solid var(--line); }
+.hs-actions__bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-3); }
+.hs-actions__note { margin: 0; color: var(--ink-2); font-size: var(--fs-small); }
+
+/* Chỉ tiêu dinh dưỡng. */
+.hs-targets { display: grid; gap: var(--space-4); }
+.hs-targets__title { margin: 0; color: var(--ink); font-family: var(--font-serif); font-size: 1.5rem; font-weight: 500; line-height: var(--lh-h2); }
+.hs-targets__calories { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-2); margin: 0; }
+.hs-targets__number { color: var(--ink); font-family: var(--font-serif); font-size: var(--fs-stat); font-weight: 500; line-height: 1; font-variant-numeric: tabular-nums; }
+.hs-targets__unit { color: var(--ink-2); font-size: var(--fs-small); }
+.hs-targets__macros { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-2); margin: 0; }
+.hs-targets__macros div { display: grid; gap: var(--space-1); padding: var(--space-3); border-radius: var(--radius-field); background: var(--surface-2); }
+.hs-targets__macros dt { color: var(--ink-2); font-size: var(--fs-label); }
+.hs-targets__macros dd { margin: 0; color: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums; }
+.hs-targets__dirty { margin: 0; padding: var(--space-2) var(--space-3); border-radius: var(--radius-field); color: var(--ink); background: var(--warn-bg); font-size: var(--fs-small); }
+.hs-targets__how { line-height: var(--lh-small); }
+
+@media (max-width: 1024px) {
+  .hs-layout { grid-template-columns: minmax(0, 1fr); }
+  .hs-layout > .hs-targets { grid-column: 1; grid-row: 1; position: static; }
+  .hs-layout > .hs-form { grid-row: 2; }
+}
+
+@media (max-width: 640px) {
+  .hs-view { gap: var(--space-5); padding-top: var(--space-6); }
+  .hs-section__fields { grid-template-columns: minmax(0, 1fr); }
+  .hs-actions__bar .ui-button { flex: 1 1 auto; }
+}

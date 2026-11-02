@@ -1,0 +1,81 @@
+/*
+ * Đăng nhập / Đăng ký (UI-8) — DESIGN.md mục 14 (chưa có mockup). Chỉ dùng token. Tiền tố lớp: dn-.
+ * ≥ 1024px hai cột: trái form, phải khối --surface-2 (chưa có ảnh món ăn thật). Điện thoại: chỉ form.
+ */
+
+.dn-page { display: grid; grid-template-rows: auto 1fr; min-height: 100dvh; color: var(--ink); background: var(--bg); font-family: var(--font-sans); }
+.dn-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  width: 100%;
+  max-width: var(--content-max);
+  margin: 0 auto;
+  padding: var(--space-4) var(--gutter);
+}
+.dn-top__logo { display: inline-flex; align-items: center; min-height: var(--control-h); color: inherit; text-decoration: none; }
+
+.dn-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
+  gap: var(--space-7);
+  align-items: stretch;
+  width: 100%;
+  max-width: var(--content-max);
+  margin: 0 auto;
+  padding: var(--space-5) var(--gutter) var(--space-8);
+}
+.dn-panel { display: grid; align-content: center; min-width: 0; }
+.dn-form { display: grid; gap: var(--space-4); width: 100%; max-width: 440px; }
+.dn-form__head { display: grid; gap: var(--space-3); margin-bottom: var(--space-2); }
+
+.dn-password { position: relative; display: block; }
+.dn-password .ui-input { padding-right: 56px; }
+.dn-password__toggle {
+  position: absolute;
+  top: 50%;
+  right: 2px;
+  display: grid;
+  place-items: center;
+  width: var(--control-h);
+  height: var(--control-h);
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-field);
+  color: var(--ink-2);
+  background: transparent;
+  transform: translateY(-50%);
+  cursor: pointer;
+}
+.dn-password__toggle:hover { color: var(--ink); background: var(--surface-2); }
+.dn-password__toggle svg { width: 20px; height: 20px; stroke-width: 1.75; }
+
+.dn-remember { display: inline-flex; align-items: center; gap: var(--space-3); min-height: var(--control-h); color: var(--ink); font-size: var(--fs-small); cursor: pointer; }
+.dn-remember input { width: 20px; height: 20px; margin: 0; accent-color: var(--action); cursor: pointer; }
+.dn-remember input:focus-visible { outline: 2px solid var(--action-text); outline-offset: 3px; }
+
+.dn-switch { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: var(--space-2); margin: 0; color: var(--ink-2); font-size: var(--fs-small); }
+.dn-switch__button { min-height: var(--control-h); padding: 0 var(--space-1); border: 0; background: transparent; font-family: var(--font-sans); font-size: var(--fs-small); cursor: pointer; }
+.dn-legal { text-align: center; }
+
+.dn-aside {
+  display: grid;
+  align-content: end;
+  min-height: 520px;
+  padding: var(--space-7);
+  border-radius: var(--radius-card);
+  background: var(--surface-2);
+}
+.dn-aside__text { max-width: 22ch; margin: 0; color: var(--ink); font-family: var(--font-serif); font-size: var(--fs-h2); font-weight: 500; line-height: var(--lh-h2); }
+
+@media (max-width: 1024px) {
+  .dn-layout { grid-template-columns: minmax(0, 1fr); gap: 0; }
+  .dn-panel { justify-items: center; }
+  .dn-aside { display: none; }
+}
+
+@media (max-width: 640px) {
+  .dn-layout { padding-top: var(--space-4); }
+  .dn-panel { justify-items: stretch; }
+}
