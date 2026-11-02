@@ -1,6 +1,6 @@
 import { AxiosError } from "axios";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { api, getApiError } from "./client";
+import { api, getApiError, isAccountLockedError } from "./client";
 import { getAuthToken, saveAuthSession } from "../features/auth/auth.storage";
 
 const originalAdapter = api.defaults.adapter;
@@ -56,6 +56,27 @@ describe("HTTP client compatibility (no network)", () => {
     api.defaults.adapter = async () => { throw failure; };
     await expect(api.put("/profile", {})).rejects.toBe(failure);
     expect(getApiError(failure)).toBe("Dữ liệu gửi lên chưa hợp lệ.");
+    expect(getAuthToken()).toBe("token-a"); expect(location.href).toBe("/profile");
+  });
+
+  it("logs out and explains when the account was locked by an Admin (403 ACCOUNT_LOCKED)", async () => {
+    saveAuthSession({ token: "token-a", user: { id: "a", name: "A", email: "a@nouri.vn" } });
+    api.defaults.adapter = async (config) => {
+      const data = { message: "Tài khoản đã bị khóa.", details: { code: "ACCOUNT_LOCKED" } };
+      throw new AxiosError("Forbidden", "ERR_BAD_REQUEST", config, undefined, { config, data, status: 403, statusText: "Forbidden", headers: {} });
+    };
+    const failure = await api.get("/pantry").catch((error: unknown) => error);
+    expect(isAccountLockedError(failure)).toBe(true);
+    expect(getAuthToken()).toBeNull(); expect(location.href).toBe("/login?locked=1");
+  });
+
+  it("keeps the session on other 403 errors (e.g. USER calling an Admin API)", async () => {
+    saveAuthSession({ token: "token-a", user: { id: "a", name: "A", email: "a@nouri.vn" } });
+    api.defaults.adapter = async (config) => {
+      throw new AxiosError("Forbidden", "ERR_BAD_REQUEST", config, undefined, { config, data: { message: "Không có quyền" }, status: 403, statusText: "Forbidden", headers: {} });
+    };
+    const failure = await api.get("/admin/stats").catch((error: unknown) => error);
+    expect(isAccountLockedError(failure)).toBe(false);
     expect(getAuthToken()).toBe("token-a"); expect(location.href).toBe("/profile");
   });
 

@@ -1,5 +1,5 @@
 import { type FormEvent, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { AuthForm } from "../components/auth/AuthForm";
 import { Logo, ThemeToggle } from "../components/ui";
 import { useAuth } from "../contexts/AuthContext";
@@ -9,10 +9,15 @@ import { getRememberLoginPreference } from "../features/auth/auth.storage";
 export default function LoginPage() {
   const navigate = useNavigate();
   const auth = useAuth();
+  const [params] = useSearchParams();
+  // Bị Admin khóa khi đang dùng: client đăng xuất và chuyển về đây kèm ?locked=1 (api/client.ts).
+  const lockedNotice = params.get("locked") === "1";
   const [mode, setMode] = useState<AuthMode>("login");
   const [form, setForm] = useState<AuthFormValues>({ name: "", email: "", password: "" });
   const [submitted, setSubmitted] = useState(false);
-  const [serverError, setServerError] = useState("");
+  const [serverError, setServerError] = useState(() => (
+    lockedNotice ? "Tài khoản của bạn đã bị khóa nên đã bị đăng xuất. Liên hệ quản trị viên Nouri để được mở lại." : ""
+  ));
   const [loading, setLoading] = useState(false);
   const [rememberLogin, setRememberLogin] = useState(getRememberLoginPreference);
   const errors = submitted ? validateAuthForm(form, mode) : {};

@@ -1,10 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ChevronLeft, ChevronRight, Plus, Search } from "lucide-react";
+import { Plus } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { getApiError } from "../../api/client";
+import { AdminPager, AdminSearch } from "../../components/admin/AdminListParts";
 import { AdminRecipeTable } from "../../components/admin/AdminRecipeTable";
-import { ButtonLink, Card, Chip, EmptyState, ErrorState, IconButton, LoadingState, Skeleton, Toast, useConfirm } from "../../components/ui";
+import { ButtonLink, Card, Chip, EmptyState, ErrorState, LoadingState, Skeleton, Toast, useConfirm } from "../../components/ui";
 import type { AdminRecipeStatus, AdminRecipeSummary } from "../../features/admin/admin.api";
 import { adminMutations, adminQueries, invalidateAdminRecipeQueries } from "../../features/admin/admin.queries";
 
@@ -72,7 +73,6 @@ export default function AdminRecipesPage() {
   };
 
   const data = list.data;
-  const pageCount = data ? Math.max(1, Math.ceil(data.total / PAGE_SIZE)) : 1;
   const pendingId = visibility.isPending ? visibility.variables?.id ?? null : remove.isPending ? remove.variables ?? null : null;
 
   return (
@@ -82,24 +82,14 @@ export default function AdminRecipesPage() {
         <ButtonLink variant="primary" icon={<Plus />} to="/admin/recipes/new">Tạo món</ButtonLink>
       </div>
       <div className="ad-toolbar">
-        <div className="ad-search" role="search">
-          <label className="ui-visually-hidden" htmlFor="ad-recipe-search">Tìm món theo tên</label>
-          <Search className="ad-search__icon" aria-hidden="true" />
-          <input
-            id="ad-recipe-search"
-            className="ui-input ad-search__input"
-            type="search"
-            value={search}
-            placeholder="Tìm món theo tên"
-            onChange={(event) => setSearch(event.target.value)}
-          />
-        </div>
+        <AdminSearch id="ad-recipe-search" label="Tìm món theo tên" value={search} onChange={setSearch} />
         <div className="ad-filter" role="group" aria-label="Lọc theo trạng thái">
           {STATUS_OPTIONS.map(([value, label]) => (
             <Chip key={value} selected={status === value} onClick={() => { setStatus(value); setPage(1); }}>{label}</Chip>
           ))}
         </div>
       </div>
+      <p className="ui-small">Món đã dùng trong thực đơn hoặc bài viết chỉ ẩn được, không xóa được.</p>
       {actionError && <ErrorState message={actionError} />}
       <Card variant="flush" className="ad-panel">
         {list.isLoading ? (
@@ -116,17 +106,7 @@ export default function AdminRecipesPage() {
               onToggleHidden={(recipe) => void toggleHidden(recipe)}
               onDelete={(recipe) => void deleteRecipe(recipe)}
             />
-            <footer className="ad-pager">
-              <p className="ad-pager__count" aria-live="polite">
-                {data.total} món, trang {page}/{pageCount}. Món đã dùng trong thực đơn hoặc bài viết chỉ ẩn được, không xóa được.
-              </p>
-              {pageCount > 1 && (
-                <nav className="ad-pager__nav" aria-label="Phân trang công thức">
-                  <IconButton quiet label="Trang trước" icon={<ChevronLeft />} disabled={page === 1} onClick={() => setPage(page - 1)} />
-                  <IconButton quiet label="Trang sau" icon={<ChevronRight />} disabled={page === pageCount} onClick={() => setPage(page + 1)} />
-                </nav>
-              )}
-            </footer>
+            <AdminPager label="Phân trang công thức" summary={`${data.total} món`} page={page} total={data.total} pageSize={PAGE_SIZE} onPageChange={setPage} />
           </>
         )}
       </Card>

@@ -24,7 +24,9 @@ const AdminLayout = lazy(() => import("./layouts/AdminLayout"));
 const AdminStatsPage = lazy(() => import("./pages/admin/AdminStatsPage"));
 const AdminRecipesPage = lazy(() => import("./pages/admin/AdminRecipesPage"));
 const AdminRecipeEditorPage = lazy(() => import("./pages/admin/AdminRecipeEditorPage"));
-const AdminPlaceholderPage = lazy(() => import("./pages/admin/AdminPlaceholderPage"));
+const AdminUsersPage = lazy(() => import("./pages/admin/AdminUsersPage"));
+const AdminModerationPage = lazy(() => import("./pages/admin/AdminModerationPage"));
+const AdminAuditLogsPage = lazy(() => import("./pages/admin/AdminAuditLogsPage"));
 const DevUiPage = import.meta.env.DEV ? lazy(() => import("./pages/dev/DevUiPage")) : null;
 
 function ProtectedRoute() {
@@ -58,9 +60,9 @@ export default function App() {
               <Route path="recipes" element={<Suspense fallback={null}><AdminRecipesPage /></Suspense>} />
               <Route path="recipes/new" element={<Suspense fallback={null}><AdminRecipeEditorPage /></Suspense>} />
               <Route path="recipes/:id/edit" element={<Suspense fallback={null}><AdminRecipeEditorPage /></Suspense>} />
-              <Route path="users" element={<Suspense fallback={null}><AdminPlaceholderPage title="Người dùng" /></Suspense>} />
-              <Route path="moderation" element={<Suspense fallback={null}><AdminPlaceholderPage title="Kiểm duyệt" /></Suspense>} />
-              <Route path="audit-logs" element={<Suspense fallback={null}><AdminPlaceholderPage title="Nhật ký" /></Suspense>} />
+              <Route path="users" element={<Suspense fallback={null}><AdminUsersPage /></Suspense>} />
+              <Route path="moderation" element={<Suspense fallback={null}><AdminModerationPage /></Suspense>} />
+              <Route path="audit-logs" element={<Suspense fallback={null}><AdminAuditLogsPage /></Suspense>} />
             </Route>
           </Route>
         </Route>

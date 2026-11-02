@@ -63,3 +63,56 @@ export async function uploadAdminRecipeImage({ id, file }: { id: string; file: F
 export async function deleteAdminRecipe(id: string) {
   await api.delete(`/admin/recipes/${id}`);
 }
+
+// ---------- Người dùng, kiểm duyệt, nhật ký (UI-10) ----------
+
+export type AdminUser = {
+  id: string; name: string; email: string; role: "USER" | "ADMIN"; lockedAt: string | null; createdAt: string;
+  locked: boolean; postCount: number; mealPlanCount: number;
+};
+export type AdminPage<T> = { items: T[]; total: number; page: number; pageSize: number };
+
+export type ModerationPerson = { id: string; name: string; email: string };
+export type ModerationPost = {
+  id: string; content: string; createdAt: string; author: ModerationPerson;
+  recipe: { id: string; name: string; imageUrl: string | null; calories: number; prepMinutes: number; cookMinutes: number; hidden?: boolean } | null;
+  images: Array<{ url: string; position: number }>;
+  comments: Array<{ id: string; content: string; createdAt: string; author: ModerationPerson }>;
+  likeCount: number; commentCount: number;
+};
+
+export const AUDIT_ACTIONS = [
+  "RECIPE_CREATE", "RECIPE_UPDATE", "RECIPE_HIDE", "RECIPE_SHOW", "RECIPE_DELETE", "RECIPE_IMAGE_REPLACE",
+  "USER_LOCK", "USER_UNLOCK", "POST_DELETE", "COMMENT_DELETE",
+] as const;
+export type AuditAction = (typeof AUDIT_ACTIONS)[number];
+export type AuditTargetType = "RECIPE" | "USER" | "COMMUNITY_POST" | "COMMUNITY_COMMENT";
+export type AuditLog = {
+  id: string; action: AuditAction; targetType: AuditTargetType; targetId: string; targetLabel: string | null;
+  details: Record<string, unknown> | null; createdAt: string; actor: ModerationPerson;
+};
+export type AuditLogQuery = { action?: AuditAction; actorId?: string; page: number; pageSize: number };
+
+export async function listAdminUsers(query: { search?: string; page: number; pageSize: number }) {
+  return (await api.get<AdminPage<AdminUser>>("/admin/users", { params: { ...query, search: query.search?.trim() || undefined } })).data;
+}
+
+export async function setAdminUserLock({ id, locked }: { id: string; locked: boolean }) {
+  return (await api.patch<{ id: string; lockedAt: string | null; locked: boolean }>(`/admin/users/${id}/lock`, { locked })).data;
+}
+
+export async function listModerationPosts(query: { page: number; pageSize: number }) {
+  return (await api.get<AdminPage<ModerationPost>>("/admin/community/posts", { params: query })).data;
+}
+
+export async function moderateDeletePost(postId: string) {
+  await api.delete(`/admin/community/posts/${postId}`);
+}
+
+export async function moderateDeleteComment(commentId: string) {
+  await api.delete(`/admin/community/comments/${commentId}`);
+}
+
+export async function listAuditLogs(query: AuditLogQuery) {
+  return (await api.get<AdminPage<AuditLog>>("/admin/audit-logs", { params: query })).data;
+}

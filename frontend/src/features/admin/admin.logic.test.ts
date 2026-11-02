@@ -106,3 +106,45 @@ describe("Admin API adapters (no network)", () => {
     expect(adapter.mock.calls[3][0].data).toBeInstanceOf(FormData);
   });
 });
+
+describe("Admin people, moderation and audit logic", () => {
+  it("formats Vietnam time regardless of the machine time zone", async () => {
+    const { vietnamTime, vietnamDate } = await import("./admin-people.logic");
+    expect(vietnamTime("2026-11-02T17:05:00.000Z")).toBe("00:05, 03/11/2026");
+    expect(vietnamDate("2026-11-02T17:05:00.000Z")).toBe("03/11/2026");
+  });
+
+  it("hides lock for oneself and other admins, and explains locking", async () => {
+    const { lockBlockedReason, lockConfirm } = await import("./admin-people.logic");
+    expect(lockBlockedReason({ id: "me", role: "ADMIN" }, "me")).toBe("Tài khoản của bạn: không tự khóa được.");
+    expect(lockBlockedReason({ id: "a2", role: "ADMIN" }, "me")).toBe("Tài khoản Admin: không khóa được Admin khác.");
+    expect(lockBlockedReason({ id: "u", role: "USER" }, "me")).toBeNull();
+    const lock = lockConfirm({ name: "Minh Anh", email: "demo@nouri.vn", locked: false });
+    expect(lock.title).toBe("Khóa demo@nouri.vn?");
+    expect(lock.description).toContain("bị đăng xuất");
+    expect(lockConfirm({ name: "Minh Anh", email: "demo@nouri.vn", locked: true }).confirmLabel).toBe("Mở khóa tài khoản");
+  });
+
+  it("says what deleting a post or a comment removes", async () => {
+    const { deletePostConfirmText, deleteCommentConfirmText } = await import("./admin-people.logic");
+    const author = { id: "u", name: "Minh Anh", email: "demo@nouri.vn" };
+    expect(deletePostConfirmText({ author, images: [{ url: "a", position: 0 }], commentCount: 2, likeCount: 3 }).description)
+      .toBe("Bài của demo@nouri.vn bị xóa cùng 1 ảnh (xóa cả trên Cloudinary), 2 bình luận, 3 lượt thích và các thông báo liên quan. Không hoàn tác được.");
+    expect(deleteCommentConfirmText({ author }).title).toBe("Xóa bình luận của Minh Anh?");
+  });
+
+  it("describes audit rows in plain Vietnamese and links only existing targets", async () => {
+    const { AUDIT_ACTION_LABELS, auditDetails, auditTarget, auditTargetLink } = await import("./admin-people.logic");
+    expect(AUDIT_ACTION_LABELS.RECIPE_HIDE).toBe("Ẩn món");
+    expect(AUDIT_ACTION_LABELS.USER_LOCK).toBe("Khóa tài khoản");
+    expect(auditTarget({ targetType: "COMMUNITY_POST", targetLabel: "demo@nouri.vn" })).toBe("Bài viết của demo@nouri.vn");
+    expect(auditDetails({ action: "RECIPE_UPDATE", details: { changedFields: ["calories", "ingredients"] } })).toBe("Đổi calo, nguyên liệu");
+    expect(auditDetails({ action: "POST_DELETE", details: { imageCount: 1, commentCount: 2, likeCount: 0, hasRecipe: true } }))
+      .toBe("1 ảnh, 2 bình luận, 0 lượt thích, có công thức đính kèm");
+    const existing = { recipes: new Set(["r1"]), users: new Set(["u1"]) };
+    expect(auditTargetLink({ targetType: "RECIPE", targetId: "r1", targetLabel: "Phở bò" }, existing)).toBe("/admin/recipes/r1/edit");
+    expect(auditTargetLink({ targetType: "RECIPE", targetId: "gone", targetLabel: "Món cũ" }, existing)).toBeNull();
+    expect(auditTargetLink({ targetType: "USER", targetId: "u1", targetLabel: "demo@nouri.vn" }, existing)).toBe("/admin/users?search=demo%40nouri.vn");
+    expect(auditTargetLink({ targetType: "COMMUNITY_POST", targetId: "p", targetLabel: "x" }, existing)).toBeNull();
+  });
+});

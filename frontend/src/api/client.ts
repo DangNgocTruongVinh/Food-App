@@ -16,9 +16,18 @@ api.interceptors.response.use(
       clearAuthSession();
       if (!location.pathname.startsWith("/login")) location.href = "/login";
     }
+    // Tài khoản bị Admin khóa khi đang dùng: đăng xuất và về trang đăng nhập kèm lời báo (backend chặn mọi API bằng 403 ACCOUNT_LOCKED).
+    if (isAccountLockedError(error)) {
+      clearAuthSession();
+      if (!location.pathname.startsWith("/login")) location.href = "/login?locked=1";
+    }
     return Promise.reject(error);
   },
 );
+
+export function isAccountLockedError(error: unknown) {
+  return axios.isAxiosError(error) && error.response?.status === 403 && error.response.data?.details?.code === "ACCOUNT_LOCKED";
+}
 
 export function getApiError(error: unknown) {
   if (axios.isAxiosError(error)) return error.response?.data?.message ?? "Không thể kết nối máy chủ.";
