@@ -1,6 +1,8 @@
+import type { DietType, MealType } from "@prisma/client";
 import jwt from "jsonwebtoken";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { request, testApp } from "../../test/http-test-utils.js";
+import { pickFeaturedRecipes } from "./featured-recipes.js";
 import recipeRoutes from "./recipes.routes.js";
 
 const mocks = vi.hoisted(() => ({
@@ -215,6 +217,7 @@ describe("Public recipe stats for the Landing page", () => {
   it("keeps the other recipe endpoints behind authentication", async () => {
     expect((await request(app, "/api/recipes")).status).toBe(401);
     expect((await request(app, `/api/recipes/${recipeId}`)).status).toBe(401);
+    expect((await request(app, `/api/recipes/${recipeId}/for-you`)).status).toBe(401);
   });
 
   it("uses the shared error response when counting fails", async () => {
@@ -223,6 +226,54 @@ describe("Public recipe stats for the Landing page", () => {
     expect(await request(app, "/api/recipes/stats")).toEqual({
       status: 500, body: { message: "Máy chủ gặp lỗi. Vui lòng thử lại." },
     });
+  });
+});
+
+describe("Public featured recipes for the Landing page", () => {
+  const SUMMARY_KEYS = ["calories", "cookMinutes", "dietTags", "id", "imageUrl", "mealTypes", "name", "prepMinutes", "slug"];
+  const row = (name: string, mealTypes: MealType[], imagePublicId: string | null = null) => ({
+    id: `id-${name}`, slug: name.toLowerCase(), name, imageUrl: imagePublicId ? `https://res.cloudinary.com/x/${imagePublicId}.jpg` : "/assets/recipe-bowl.jpg",
+    imagePublicId, calories: 400, prepMinutes: 10, cookMinutes: 20, dietTags: ["BALANCED"] as DietType[], mealTypes,
+  });
+
+  it("works without authentication and selects only visible recipes and summary fields", async () => {
+    mocks.findMany.mockResolvedValue([row("Phở bò", ["BREAKFAST", "LUNCH"])]);
+    const response = await request(app, "/api/recipes/featured");
+    expect(response.status).toBe(200);
+    const query = mocks.findMany.mock.calls[0][0];
+    expect(query.where).toEqual({ hiddenAt: null });
+    expect(query.include).toBeUndefined();
+    expect(Object.keys(query.select).sort()).toEqual([...SUMMARY_KEYS, "imagePublicId"].sort());
+    expect(Object.keys(response.body[0]).sort()).toEqual(SUMMARY_KEYS);
+  });
+
+  it("never reads or returns user data, even when a token is sent", async () => {
+    mocks.findMany.mockResolvedValue([row("Phở bò", ["LUNCH"])]);
+    const response = await request(app, "/api/recipes/featured", { token: token() });
+    expect(response.status).toBe(200);
+    expect(mocks.findProfile).not.toHaveBeenCalled();
+    expect(mocks.findPantry).not.toHaveBeenCalled();
+    expect(JSON.stringify(response.body)).not.toMatch(/userId|email|ingredients|instructions|imagePublicId/);
+  });
+
+  it("defaults to 6, accepts up to 12 and rejects other limits before calling Prisma", async () => {
+    mocks.findMany.mockResolvedValue(Array.from({ length: 20 }, (_, index) => row(`Món ${String(index).padStart(2, "0")}`, ["LUNCH"])));
+    expect((await request(app, "/api/recipes/featured")).body).toHaveLength(6);
+    expect((await request(app, "/api/recipes/featured?limit=12")).body).toHaveLength(12);
+    mocks.findMany.mockClear();
+    for (const limit of ["0", "13", "abc", "2.5"]) {
+      expect((await request(app, `/api/recipes/featured?limit=${limit}`)).status).toBe(422);
+    }
+    expect(mocks.findMany).not.toHaveBeenCalled();
+  });
+
+  it("puts recipes with an uploaded photo first, then mixes meals so a short list is not one kind of dish", () => {
+    const picked = pickFeaturedRecipes([
+      row("Bánh mì ốp la", ["BREAKFAST"]), row("Bún chả", ["LUNCH"]), row("Bánh mì đậu hũ", ["BREAKFAST"]),
+      row("Cá kho tộ", ["LUNCH", "DINNER"], "nouri/recipes/ca"), row("Chè đậu đen", ["SNACK"]), row("Gà xào sả", ["DINNER"]),
+    ], 5);
+    expect(picked.map((recipe) => recipe.name)).toEqual(["Cá kho tộ", "Bánh mì đậu hũ", "Bún chả", "Gà xào sả", "Chè đậu đen"]);
+    expect(picked.every((recipe) => !("imagePublicId" in recipe))).toBe(true);
   });
 });
 

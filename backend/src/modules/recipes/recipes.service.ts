@@ -3,6 +3,7 @@ import { prisma } from "../../lib/prisma.js";
 import { calorieShare, matchRecipeToPantry, recipeWarnings } from "../../services/recipe-fit.service.js";
 import { HIDDEN_RECIPE_MESSAGE, isRecipeHidden, visibleRecipeWhere } from "../../services/recipe-visibility.js";
 import { HttpError } from "../../utils/http-error.js";
+import { featuredRecipeSelect, pickFeaturedRecipes } from "./featured-recipes.js";
 import type { RecipeListQuery } from "./recipes.schema.js";
 
 const recipeWithIngredients = { ingredients: true } as const;
@@ -21,6 +22,15 @@ export async function getRecipeStats() {
     prisma.recipe.count({ where: { ...visibleRecipeWhere, dietTags: { has: "HIGH_PROTEIN" } } }),
   ]);
   return { total, breakfast, vegetarian, vegan, lowCarb, highProtein };
+}
+
+/**
+ * Món tiêu biểu cho Landing (công khai): chỉ món đang hiện, chỉ trường tóm tắt, ưu tiên món có ảnh thật.
+ * Bộ món nhỏ (vài chục món) nên lấy hết bản tóm tắt rồi chọn ở ứng dụng; bộ món lớn thì chuyển sang chọn bằng SQL.
+ */
+export async function getFeaturedRecipes(limit: number) {
+  const rows = await prisma.recipe.findMany({ where: visibleRecipeWhere, select: featuredRecipeSelect });
+  return pickFeaturedRecipes(rows, limit);
 }
 
 export function listRecipes(query: RecipeListQuery) {

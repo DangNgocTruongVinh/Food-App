@@ -1,12 +1,17 @@
 import type { Request, Response } from "express";
 import type { AuthenticatedRequest, ValidatedRequest } from "../../types/http.js";
-import type { RecipeIdParams, RecipeListQuery } from "./recipes.schema.js";
-import { getRecipe, getRecipeForYou, getRecipeStats, listRecipes } from "./recipes.service.js";
+import { featuredRecipesSchema, type RecipeIdParams, type RecipeListQuery } from "./recipes.schema.js";
+import { getFeaturedRecipes, getRecipe, getRecipeForYou, getRecipeStats, listRecipes } from "./recipes.service.js";
 
 const authenticatedUserId = (req: Request) => (req as AuthenticatedRequest).userId;
 
 export async function getRecipeStatsController(_req: Request, res: Response) {
   res.json(await getRecipeStats());
+}
+
+// Query đọc lại từ schema để có giá trị mặc định (validate() không ghi đè req.query).
+export async function getFeaturedRecipesController(req: Request, res: Response) {
+  res.json(await getFeaturedRecipes(featuredRecipesSchema.shape.query.parse(req.query).limit));
 }
 
 export async function listRecipesController(

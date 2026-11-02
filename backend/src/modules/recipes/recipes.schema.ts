@@ -13,6 +13,12 @@ export const listRecipesSchema = z.object({
 
 export const recipeStatsSchema = z.object({ body: empty, params: empty, query: empty });
 
+export const featuredRecipesSchema = z.object({
+  body: empty,
+  params: empty,
+  query: z.object({ limit: z.coerce.number().int().min(1).max(12).default(6) }),
+});
+
 export const getRecipeSchema = z.object({
   body: empty,
   params: z.object({ id: z.string().cuid() }),
