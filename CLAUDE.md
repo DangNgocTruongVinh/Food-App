@@ -394,17 +394,43 @@ Quyết định đã chốt cho GĐ3:
   - Khi Admin tạo/sửa món có nhãn `VEGETARIAN` hoặc `VEGAN`, backend kiểm tra nguyên liệu bằng logic trong `backend/src/services/dietary.service.ts` (cùng bộ từ khóa thịt/cá/hải sản và nhóm Sữa/Trứng như test dữ liệu seed) và **từ chối** (422) nếu có thành phần không hợp lệ với nhãn.
 - [x] Route/page Admin ở frontend, guard theo role (gồm trang nhật ký thao tác dùng `GET /api/admin/audit-logs`). Khung, Thống kê, Công thức: UI-9; Người dùng, Kiểm duyệt, Nhật ký: UI-10.
 
-### Giai đoạn 3b — Kho thông minh (8–10/11)
-- [ ] Đánh dấu bữa "đã ăn" → trừ nguyên liệu trong kho theo số khẩu phần:
-  - Màn hình xem trước cho chỉnh lượng trừ trước khi xác nhận.
-  - Trừ món có hạn dùng sớm nhất trước; không trừ xuống dưới 0.
-  - Quy đổi g ↔ kg, ml ↔ l; đơn vị không quy đổi được thì bỏ qua và báo.
-  - Bỏ đánh dấu "đã ăn" thì hoàn lại đúng lượng đã trừ.
-- [ ] Backend điền `ShoppingItem.category` khi tạo thực đơn (dùng chung cho nhóm danh sách đi chợ ở trang Thực đơn và cho bước "đã mua → thêm vào kho"); frontend bỏ phần đoán nhóm theo tên (`shoppingGroupOf` trong `meal-plans.logic.ts`) khi đã có `category`.
-- [ ] Đánh dấu "đã mua" trong danh sách đi chợ → thêm vào kho (gộp với món cùng tên, cùng đơn vị nếu có).
-- [ ] Bảng lịch sử xuất/nhập kho (nguồn: tiêu thụ, mua sắm, nhập tay, quét ảnh) để hoàn tác và hiển thị lịch sử.
-- [ ] Thuật toán tạo thực đơn ưu tiên món dùng nguyên liệu sắp hết hạn.
-- [ ] Trang Kho: nút "Gợi ý món" trên dòng sắp hết hạn (DESIGN.md mục 14; UI-5 chưa hiện). Trang Công thức: bộ lọc "Phù hợp với tôi" và nhãn cảnh báo trên thẻ món.
+### Giai đoạn 3b — Kho thông minh (nhánh `giai-doan-3b`, kế hoạch duyệt 03/11/2026)
+Hiện trạng ghi nhận khi lập kế hoạch: định lượng nguyên liệu tính cho cả món (`Recipe.servings` khẩu phần), danh sách đi chợ đang nhân `quantity × meal.servings` mà không chia `recipe.servings` (33 món seed đều 1 khẩu phần nên chưa sai); hai bộ nhóm thực phẩm lệch nhau (Kho 7 nhóm, đi chợ đoán 8 nhóm); thông báo kho bỏ qua thực phẩm có số lượng ≤ 0; thuật toán thực đơn chỉ dùng kho để phá hòa; lời nhắc chat AI chưa cấm món dị ứng.
+
+**Quyết định đã chốt (03/11):**
+| # | Vấn đề | Quyết định |
+|---|---|---|
+| 1 | Thực phẩm về 0 | Giữ lại, nhãn "Đã dùng hết", có bộ lọc và nút xóa. Ô thống kê "Tất cả" ở Kho không đếm món đã dùng hết |
+| 2 | Thực phẩm đã hết hạn khi trừ kho | Mặc định không trừ, có báo |
+| 3 | Nguyên liệu tùy chọn | Hiện trong hộp xem trước, mặc định không trừ |
+| 4 | Nhóm thực phẩm | Một bộ 8 nhóm dùng chung cho Kho và đi chợ: Rau củ, Thịt & cá, Trứng & sữa, Đậu & hạt, Ngũ cốc (gạo, bún, bánh), Trái cây, Gia vị, Khác |
+| 5 | Hạn/nơi bảo quản gợi ý (tạo thực phẩm từ "Đã mua") | Rau củ 5 ngày ngăn mát; Thịt & cá 2 ngày ngăn mát; Trứng & sữa 7 ngày ngăn mát; Đậu & hạt: đậu hũ, đậu tươi 3 ngày ngăn mát, hạt khô (đậu phộng, mè, đậu xanh/đen khô...) 90 ngày nơi khô ráo (phân biệt theo từ khóa, có test); Ngũ cốc 180 ngày nơi khô ráo; Trái cây 5 ngày ngăn mát; Gia vị 180 ngày nơi khô ráo; Khác không đặt hạn, ngăn mát. Trường `PantryItem.expiryEstimated` (mặc định false): hạn tự gợi ý = true, người dùng sửa hạn = false; giao diện ghi "Hạn ước tính" ở Kho, hộp thoại Sửa, toast; GĐ3c dùng lại |
+| 6 | Bỏ tick "Đã mua" | Xóa thực phẩm do lần mua đó tạo nếu chưa bị thay đổi; còn lại thì trừ (không dưới 0) và báo |
+| 7 | "Đã ăn" ở Tổng quan | Cũng mở hộp xem trước như trang Thực đơn |
+| 8 | Landing, ô chọn công thức khi đăng bài, thẻ công thức trong bài viết | Không lọc theo hồ sơ, không nhãn (không phải gợi ý) |
+| 9 | Thực đơn đã tạo trước khi đổi hồ sơ | Nhãn cảnh báo trên bữa vi phạm, không tự đổi món |
+| 10 | Nén | Chỉ gzip ở nginx frontend |
+
+**Thiết kế chính:**
+- Lượng cần cho một bữa = `ingredient.quantity × item.servings / recipe.servings` (dùng cho trừ kho và danh sách đi chợ).
+- Trừ kho (`services/pantry-consumption.ts`): khớp tên bằng `normalizeFoodText` (dùng chung hàm khớp với `recipe-fit.service.ts`), quy đổi g↔kg, ml↔l (`utils/food-units.ts`), trừ món hạn sớm nhất trước, không dưới 0; trạng thái từng dòng: đủ / thiếu / không có trong kho / khác đơn vị / chỉ còn món hết hạn / tùy chọn. Bỏ "đã ăn" thì hoàn lại theo lịch sử (thực phẩm đã sửa số lượng: vẫn cộng lại phần đã trừ; đổi đơn vị: quy đổi nếu được, không thì báo; đã xóa: không tạo lại, báo).
+- API: `GET /api/meal-plans/items/:id/consumption-preview`; `PATCH /api/meal-plans/items/:id` nhận thêm `consumption: { mode: "deduct", lines: [{ ingredientId, quantity, unit }] } | { mode: "none" }` (bỏ trống = none); server phân bổ lại trong cùng transaction.
+- "Đã mua": gộp vào thực phẩm cùng tên, cùng đơn vị/quy đổi được, chưa hết hạn (món hạn muộn nhất); không có thì tạo mới theo nhóm `category` + hạn/nơi bảo quản gợi ý (quyết định 5). Không mở hộp thoại; toast kèm "Sửa" mở `/pantry?item=`.
+- Lịch sử kho `PantryTransaction` (nguồn: tiêu thụ / mua sắm / nhập tay / sửa tay / xóa tay / quét ảnh; liên kết bữa ăn hoặc dòng đi chợ; dòng hoàn lại trỏ về dòng gốc). Mọi thay đổi kho ghi trong cùng transaction. Kho có phần "Lịch sử" + lịch sử từng thực phẩm trong hộp thoại Sửa.
+- Thực đơn: điểm thưởng món dùng thực phẩm hết hạn ≤ 3 ngày (chỉ các ngày trước hạn, thôi cộng khi thực phẩm đã có món dùng), nhỏ hơn mức phạt lặp món; đo tỷ lệ dùng trước hạn trước/sau.
+- Dị ứng/chế độ ăn: `GET /api/recipes` trả `fit` (dùng `recipeWarnings`); "Tất cả công thức" mặc định ẩn món dị ứng/không hợp chế độ ăn, dòng "Đã ẩn N món… Hiện tất cả", số đếm chip tính từ danh sách đang hiện; món không thích hiện kèm nhãn nhỏ. Lời nhắc chat AI cấm gợi ý món vi phạm + dòng nhắc dưới khung chat. Test chung `test/dietary-matrix.test.ts` cho mọi API gợi ý.
+
+**Các lượt (mỗi lượt một commit):**
+- [ ] Lượt 1 — gzip nginx frontend + đo trước/sau (dễ).
+- [ ] Lượt 2 — `PantryTransaction` + `PantryItem.expiryEstimated` + migration, `utils/food-units.ts`, kho CRUD ghi lịch sử trong cùng transaction, `GET /api/pantry/transactions`, test (trung bình).
+- [ ] Lượt 3 — Trừ kho (backend): xem trước/trừ/hoàn lại, quy đổi, chia `recipe.servings` (kể cả đi chợ), thông báo khi về 0 có mức tối thiểu, test (khó).
+- [ ] Lượt 4 — Trừ kho (frontend): `ConsumeMealDialog` ở Tổng quan và Thực đơn, hoàn tác; Kho: nhãn "Đã dùng hết", bộ lọc, ô "Tất cả" không đếm (trung bình–khó).
+- [ ] Lượt 5 — `food-category.ts` (8 nhóm, phân biệt đậu tươi/hạt khô), điền `ShoppingItem.category`, frontend bỏ đoán nhóm, test 95 tên nguyên liệu seed (trung bình).
+- [ ] Lượt 6 — "Đã mua" → kho (gộp/tạo, hạn ước tính, hoàn lại), toast, test (khó).
+- [ ] Lượt 7 — Giao diện "Lịch sử" ở Kho + lịch sử từng thực phẩm (trung bình).
+- [ ] Lượt 8 — Ưu tiên đồ sắp hết hạn trong thực đơn (đo trước/sau) + "Gợi ý món" ở Kho (trung bình).
+- [ ] Lượt 9 — Dị ứng/chế độ ăn ở mọi nơi: `fit` + ẩn/hiện ở "Tất cả công thức", cảnh báo thực đơn cũ, lời nhắc AI, test chung, gom `asWords` về backend (trung bình–khó).
+- [ ] Lượt 10 — `docs/han-che.md`, `docs/cau-hoi-bao-ve.md`, cập nhật CLAUDE.md (dễ).
 
 ### Giai đoạn 3c — Quét hóa đơn (OCR) (11–14/11)
 - [ ] Nút "Quét hóa đơn" nhận ảnh hóa đơn hoặc nhãn sản phẩm; OpenAI đọc ảnh với structured output; trả về tên, số lượng, đơn vị (thuộc `FoodUnit`), nhóm, hạn dùng nếu đọc được, nếu không thì gợi ý hạn ước tính theo nhóm.
