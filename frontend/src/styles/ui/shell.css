@@ -32,26 +32,7 @@ body:has(.ui-shell) { background: var(--bg); }
 .ui-shell__main { flex: 1 0 auto; width: 100%; }
 /* Đích của liên kết "Bỏ qua menu" (tabIndex -1), không phải phần tử tương tác. */
 .ui-shell__main:focus { outline: none; }
-.ui-shell__main:not(.ui-shell__main--legacy) { color: var(--ink); font-family: var(--font-sans); }
-
-/*
- * Trang chưa làm lại (main còn các lớp main-content, main-theme-..., app-overview-palette cho CSS cũ bám): bỏ lề trái của
- * sidebar cũ, bỏ nền riêng của khung cũ, giữ khung nội dung 1440px như trước.
- */
-.ui-shell .ui-shell__main--legacy {
-  min-height: 0;
-  margin-left: 0;
-  padding: var(--space-5) var(--gutter) var(--space-7);
-  background: var(--bg);
-}
-.ui-shell .ui-shell__main--legacy > .page,
-.ui-shell .ui-shell__main--legacy > .assistant-page {
-  max-width: 1440px;
-  margin-right: auto;
-  margin-left: auto;
-  padding-right: 0;
-  padding-left: 0;
-}
+.ui-shell__main { color: var(--ink); font-family: var(--font-sans); }
 
 /* Menu trên: dính đầu trang, nền trang, kẻ dưới mảnh. */
 .site-header {

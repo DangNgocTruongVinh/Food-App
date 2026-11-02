@@ -49,7 +49,13 @@ export function AdminWeeklyChart({ weekly }: { weekly: AdminStats["weekly"] }) {
               itemStyle={{ color: "var(--ink)" }}
               labelFormatter={(label) => `Tuần từ ${label}`}
             />
-            <Legend verticalAlign="top" height={36} wrapperStyle={{ color: "var(--ink)", fontSize: 14 }} />
+            <Legend
+              verticalAlign="top"
+              height={36}
+              wrapperStyle={{ fontSize: 14 }}
+              // Recharts tô chữ chú thích bằng màu đường (style nội tuyến); bọc span riêng để chữ dùng --ink.
+              formatter={(value: string) => <span className="ad-chart__legend-text">{value}</span>}
+            />
             {STATS_SERIES.map(({ key, label }) => {
               const style = SERIES_STYLE[key];
               return (

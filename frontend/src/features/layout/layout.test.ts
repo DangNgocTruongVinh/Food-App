@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { accountMenuItems, FOOTER_GROUPS, isAdmin, isRedesignedRoute, PRIMARY_NAV, userInitial } from "./layout.logic";
+import { accountMenuItems, FOOTER_GROUPS, isAdmin, PRIMARY_NAV, userInitial } from "./layout.logic";
 
 describe("account menu", () => {
   it("shows Quản trị only to an ADMIN account", () => {
@@ -37,18 +37,5 @@ describe("navigation data", () => {
     const routes = new Set(["/dashboard", "/pantry", "/meal-plans", "/recipes", "/community", "/assistant", "/profile", "/privacy", "/terms"]);
     const links = FOOTER_GROUPS.flatMap((group) => group.links.map((link) => link.to));
     expect(links.filter((to) => !routes.has(to))).toEqual([]);
-  });
-});
-
-describe("isRedesignedRoute", () => {
-  it("matches a redesigned route and its sub-paths only", () => {
-    expect(isRedesignedRoute("/admin")).toBe(true);
-    expect(isRedesignedRoute("/admin/recipes")).toBe(true);
-    expect(isRedesignedRoute("/administrator")).toBe(false);
-    expect(isRedesignedRoute("/pantry")).toBe(true);
-    expect(isRedesignedRoute("/meal-plans/plan-a")).toBe(true);
-    expect(isRedesignedRoute("/community")).toBe(true);
-    expect(isRedesignedRoute("/profile")).toBe(true);
-    expect(isRedesignedRoute("/profiles")).toBe(false);
   });
 });

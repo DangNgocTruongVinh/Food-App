@@ -18,7 +18,7 @@
   margin: 0 auto;
   padding: 0 var(--gutter);
 }
-/* Tiêu đề cấp 3 dùng Be Vietnam Pro (CSS cũ 01-base.css còn đặt phông khác cho h1–h3, gỡ ở UI-12). */
+/* Tiêu đề cấp 3 dùng Be Vietnam Pro (mục 5). */
 .ld-benefit__title,
 .ld-recipe__title,
 .ld-step__title { font-family: var(--font-sans); letter-spacing: 0; }

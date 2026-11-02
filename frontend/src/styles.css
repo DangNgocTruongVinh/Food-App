@@ -1,13 +1,7 @@
-@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Outfit:wght@400;500;600;700&family=Noto+Serif:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600&display=swap");
 
-/* Thứ tự import = thứ tự áp dụng của styles.css cũ; không đổi thứ tự khi chưa kiểm tra giao diện. */
-@import "./styles/01-base.css";
-@import "./styles/02-legacy-pages.css";
-@import "./styles/03-dashboard.css";
-@import "./styles/06-type-scale.css";
-@import "./styles/09-dashboard-palette.css";
-/* Giao diện mới (docs/design/DESIGN.md): token + thành phần dùng chung. Đặt cuối; CSS cũ gỡ dần theo từng lượt UI. */
+/* Giao diện theo docs/design/DESIGN.md: token, nền tảng, thành phần dùng chung, khung, rồi CSS theo module (thứ tự import = thứ tự áp dụng). */
 @import "./styles/ui/tokens.css";
+@import "./styles/ui/base.css";
 @import "./styles/ui/components.css";
 @import "./styles/ui/shell.css";
 @import "./styles/ui/notifications.css";

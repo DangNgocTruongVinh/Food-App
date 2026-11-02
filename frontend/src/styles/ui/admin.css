@@ -62,7 +62,7 @@
 .ad-chart { display: grid; gap: var(--space-2); margin: 0; }
 .ad-chart__caption { color: var(--ink-2); font-size: var(--fs-small); }
 .ad-chart__canvas { height: 340px; }
-.ad-chart .recharts-legend-item-text { color: var(--ink) !important; }
+.ad-chart__legend-text { color: var(--ink); }
 .ad-chart .recharts-default-tooltip { box-shadow: var(--shadow-overlay); }
 
 /* Thanh công cụ danh sách. */
