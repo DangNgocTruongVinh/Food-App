@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { cx } from "../../features/ui/ui.logic";
 
 type PageHeaderProps = {
-  /** H1; được bọc một cụm <em> để in nghiêng màu accent (chỉ một cụm, chỉ ở H1). */
+  /** H1 (không in nghiêng, không tô màu riêng: chữ nghiêng chỉ còn ở logo "nouri."). */
   title: ReactNode;
   /** hero: Tổng quan, Công thức, Landing; page: các trang còn lại. */
   size?: "hero" | "page";

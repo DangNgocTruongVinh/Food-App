@@ -52,7 +52,7 @@ export default function DashboardPage() {
     return (
       <div className="dash-page">
         <div className="dash-content dash-content--error">
-          <PageHeader size="hero" title={<>Hôm nay<br /><em>nấu gì?</em></>} description={user?.name ? `${greeting}, ${user.name}` : greeting} />
+          <PageHeader size="hero" title={<>Hôm nay<br />nấu gì?</>} description={user?.name ? `${greeting}, ${user.name}` : greeting} />
           <ErrorState message="Chưa tải được dữ liệu Tổng quan." onRetry={() => void overview.refetch()} retrying={overview.isFetching} />
         </div>
       </div>

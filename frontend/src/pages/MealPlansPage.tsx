@@ -170,7 +170,7 @@ export default function MealPlansPage() {
       <div className="td-view">
         <header className="td-hero">
           <div className="td-hero__text">
-            <h1 className="ui-title">Thực đơn <em>của bạn</em></h1>
+            <h1 className="ui-title">Thực đơn của bạn</h1>
             <p className="ui-text">
               Nouri xếp bữa sáng, trưa, tối cho 7 ngày theo hồ sơ dinh dưỡng và kho của bạn, kèm danh sách đi chợ.
             </p>

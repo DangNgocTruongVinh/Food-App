@@ -32,7 +32,7 @@ export default function AdminLayout() {
   return (
     <div className="ad-view">
       <header className="ad-head">
-        <h1 className="ui-title ad-head__title">Quản trị <em>Nouri</em></h1>
+        <h1 className="ui-title ad-head__title">Quản trị Nouri</h1>
         <nav ref={tabsRef} className="ad-tabs" aria-label="Mục quản trị">
           {TABS.map((tab) => (
             <NavLink key={tab.to} to={tab.to} end={tab.end} className={({ isActive }) => cx("ad-tab", isActive && "is-active")}>

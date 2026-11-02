@@ -38,8 +38,6 @@
 .ui-hero-title { font-size: var(--fs-hero); line-height: var(--lh-hero); }
 .ui-title { font-size: var(--fs-h1); line-height: var(--lh-h1); }
 .ui-section-title { font-size: var(--fs-h2); line-height: var(--lh-h2); }
-.ui-hero-title em,
-.ui-title em { color: var(--accent); font-style: italic; }
 .ui-card-title { margin: 0; color: var(--ink); font-family: var(--font-sans); font-size: var(--fs-h3); font-weight: 600; line-height: var(--lh-h3); }
 .ui-stat { margin: 0; color: var(--ink); font-family: var(--font-serif); font-size: var(--fs-stat); font-weight: 500; line-height: 1; font-variant-numeric: tabular-nums; }
 .ui-text { margin: 0; color: var(--ink-2); font-family: var(--font-sans); font-size: var(--fs-body); line-height: var(--lh-body); max-width: 70ch; }

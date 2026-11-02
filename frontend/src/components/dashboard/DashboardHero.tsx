@@ -27,7 +27,7 @@ export function DashboardHero({ greeting, userName, recipes, hasProfile }: Dashb
       <div className="dash-hero__inner">
         <div className="dash-hero__copy">
           <p className="dash-hero__greeting">{userName ? `${greeting}, ${userName}` : greeting}</p>
-          <h1 id="dash-hero-title" className="ui-hero-title">Hôm nay<br /><em>nấu gì?</em></h1>
+          <h1 id="dash-hero-title" className="ui-hero-title">Hôm nay<br />nấu gì?</h1>
           {recipe ? (
             <>
               <div className="dash-hero__dish" aria-live="polite">

@@ -24,7 +24,7 @@ export function AuthForm({ mode, form, errors, serverError, loading, remember, o
   return (
     <form id="auth-form" className="dn-form" noValidate onSubmit={onSubmit}>
       <header className="dn-form__head">
-        <h1 className="ui-title">{register ? <>Tạo tài khoản <em>Nouri</em></> : <>Đăng nhập <em>Nouri</em></>}</h1>
+        <h1 className="ui-title">{register ? "Tạo tài khoản Nouri" : "Đăng nhập Nouri"}</h1>
         <p className="ui-text">
           {register
             ? "Tạo xong, bạn điền hồ sơ dinh dưỡng để Nouri tính calo và lọc món theo chế độ ăn, dị ứng."

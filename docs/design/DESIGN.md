@@ -1,6 +1,7 @@
 # DESIGN.md — Hướng thiết kế giao diện Nouri
 
 Phiên bản 2 · chốt 31/10/2026 · nguồn: canvas "Nouri UI mẫu" (artboard TongQuan7s, CongThuc7s, Kho7s, KhoThem7s — "ĐÃ CHỐT").
+Cập nhật 02/11/2026 (UI-12): khớp với giao diện thật sau các lượt UI-1 → UI-11 (mục 3.2, 4, 10, 12, 14, 16).
 Ảnh mẫu đặt trong `docs/design/mockups/`. File này là **nguồn sự thật về giao diện**: mọi lượt làm UI phải đọc trước và tự nghiệm thu theo mục 15.
 
 ---
@@ -65,11 +66,11 @@ Lấy tinh thần của các sản phẩm hiện nay (ứng dụng nấu ăn, s�
 - [ ] Mỗi trang có **một** điểm nhấn thị giác duy nhất (ảnh hero, vòng calo, hoặc tiêu đề lớn) — phần còn lại yên tĩnh.
 - [ ] Thứ bậc thẻ khác nhau: thẻ quan trọng lớn hơn/đặt trước; không phải mọi khối đều là một card cùng bo góc cùng viền.
 - [ ] Khoảng trắng phân tách trước, đường kẻ mảnh sau, khung card sau cùng.
-- [ ] Chữ nghiêng màu accent chỉ dùng **một cụm** trong tiêu đề H1 của trang (không dùng ở H2/H3, không dùng ở mọi trang con).
+- [ ] Chữ nghiêng chỉ dùng ở logo "nouri.". Tiêu đề (H1–H3) không in nghiêng và không tô màu riêng cho một cụm chữ (UI-12 bỏ cụm nghiêng màu accent ở H1 của mọi trang vì đó là dấu hiệu "template").
 - [ ] Lời văn cụ thể dựa trên dữ liệu thật: "Ức gà còn 2 ngày — nấu tối nay?" thay vì "Gợi ý thông minh cho bạn".
 - [ ] Biểu tượng một bộ duy nhất (lucide), nét 1.75–2px, cỡ 20/24px, luôn đi kèm chữ hoặc `aria-label`.
 
-> Ghi chú: hướng đã chốt dùng nền sáng ấm + tiêu đề serif + một cụm chữ nghiêng. Đây là chất liệu dễ bị nhìn thành "template" nếu lạm dụng, nên giới hạn ở mục 3.2 là bắt buộc: chữ nghiêng chỉ ở H1, nền chính gần trắng (#FBFAF6) chứ không phải kem đậm, và điểm nhấn dựa vào ảnh món ăn thật.
+> Ghi chú: hướng đã chốt dùng nền sáng ấm + tiêu đề serif. Đây là chất liệu dễ bị nhìn thành "template" nếu lạm dụng, nên giới hạn ở mục 3.2 là bắt buộc: chữ nghiêng chỉ ở logo, nền chính gần trắng (#FBFAF6) chứ không phải kem đậm, và điểm nhấn dựa vào ảnh món ăn thật hoặc số liệu thật (vòng calo, số món).
 
 ---
 
@@ -89,7 +90,7 @@ Chỉ dùng biến; **không viết mã màu cứng** trong CSS của trang/thà
 | `--action-hover` | #0F3A30 | #3A8270 | Hover nút chính (nền) |
 | `--action-text` | #15483C | #8FC2AE | **Chữ và viền** màu action: liên kết, mục menu đang chọn, chữ nút phụ, viền ô nhập đang focus, outline focus |
 | `--on-action` | #FFFFFF | #FFFFFF | Chữ trên nền `--action` / `--action-hover` |
-| `--accent` | #2F725D | #9CCB8F | Cụm nghiêng ở H1, dấu chấm logo, số liệu tích cực |
+| `--accent` | #2F725D | #9CCB8F | Dấu chấm logo, số liệu tích cực, một đường trong biểu đồ Admin |
 | `--warn` | #A43C18 | #F0A070 | Chữ cảnh báo (sắp/đã hết hạn, dị ứng) |
 | `--warn-bg` | #FBEDE3 | #2E231C | Nền khối/dòng cảnh báo |
 | `--track` | #E9E6DC | #2A352F | Nền thanh/vòng tiến độ |
@@ -188,9 +189,10 @@ Quy tắc:
 
 ## 10. Ảnh
 - Ảnh món Việt thật, cùng phong cách (ánh sáng tự nhiên ấm, nền gỗ/vải/men sứ, không nền trắng studio, không ảnh AI). Nguồn: tự chụp / Unsplash / Pexels, ghi nguồn trong `docs/design/image-sources.md`.
-- Tỉ lệ cố định: thẻ 4:3, hero 16:9 (mobile 4:3), ảnh nhỏ 1:1. `object-fit: cover`.
+- Tỉ lệ: thẻ 4:3, ảnh nhỏ 1:1. Hero Tổng quan: ảnh tràn phải ~58% chiều ngang, cao theo khối chữ. Hero Landing: 4:3 trong cột phải. Thẻ món lớn chiếm 2 cột ở Landing: 16:9. `object-fit: cover`.
 - Hiển thị qua `optimizedImageUrl` (Cloudinary f_auto, q_auto, giới hạn chiều rộng). Có `alt` mô tả món.
-- Chưa có ảnh: ô màu `--surface-2` + tên món, không dùng ảnh minh họa khác món.
+- Chưa có ảnh: ô màu `--surface-2` + tên món (thẻ, danh sách; ảnh nhỏ: chữ cái đầu), không dùng ảnh minh họa khác món. Ngoại lệ: hero (Tổng quan, Landing) chỉ hiện khi món có ảnh thật, chưa có thì chỉ có chữ; thẻ món ở Landing chưa có ảnh thì chỉ có chữ, không vẽ ô, để trang giới thiệu không thành lưới ô xám.
+- Chỉ ảnh đã tải lên Cloudinary mới là "ảnh thật"; ảnh nhóm `/assets/recipe-*.jpg` của dữ liệu mẫu không hiển thị (gây sai món).
 
 ---
 
@@ -204,14 +206,14 @@ Quy tắc:
 
 ## 12. Responsive
 - Kiểm ở 390, 768, 1366, 1920px, cả hai chế độ màu. Không cuộn ngang ở 320px.
-- ≤ 1200px: liên kết menu thu vào nút menu. ≤ 1024px: lưới 2 cột → 1 cột, hero ảnh thành nền mờ phía sau chữ (vẫn đạt tương phản). ≤ 760px: bảng → thẻ.
+- ≤ 1200px: liên kết menu thu vào nút menu. ≤ 1024px: lưới 2 cột → 1 cột; hero Tổng quan: ảnh thành nền phía sau chữ, phủ lớp `--bg` 86% (vẫn đạt tương phản); hero Landing: ảnh xếp dưới chữ. ≤ 760px: bảng → thẻ.
 - Trên điện thoại, hành động chính của trang nằm trong tầm ngón cái (đầu nội dung hoặc thanh dưới).
 
 ---
 
 ## 13. Khung chung
 **Menu trên** (sticky, nền `--bg`, kẻ dưới 1px):
-- Trái: logo "nouri." (Fraunces nghiêng, dấu chấm `--accent`).
+- Trái: logo "nouri." (Fraunces nghiêng — chỗ duy nhất dùng chữ nghiêng, dấu chấm `--accent`).
 - Giữa: nhóm liên kết dạng viên (khung `--surface-2`, viền 1px, bo tròn, mục cao 40px; đang chọn: nền `--surface`, chữ `--action-text` 600, viền 1px).
 - Phải: nút chế độ tối (aria-pressed), chuông có chấm `--dot`, nút tài khoản (avatar + tên) mở menu: Hồ sơ, Quản trị (chỉ ADMIN), Đăng xuất.
 
@@ -222,14 +224,15 @@ Quy tắc:
 ## 14. Từng trang — cấu trúc và tiêu chí đạt
 
 ### Tổng quan (mockup: TongQuan7s)
-- Hero: lời chào theo giờ + H1 "Hôm nay *nấu gì?*" + món gợi ý (ưu tiên dùng đồ sắp hết hạn, nêu lý do bằng dữ liệu) + 2 nút (Xem công thức / Thêm vào thực đơn); ảnh món tràn phải ~60%.
+- Hero: lời chào theo giờ + H1 "Hôm nay nấu gì?" + món gợi ý (ưu tiên dùng đồ sắp hết hạn, nêu lý do bằng dữ liệu) + 2 nút (Xem công thức / Đổi món khác; chưa có món thì "Tạo thực đơn"); ảnh món tràn phải ~58% khi món có ảnh thật. "Thêm vào thực đơn" làm ở GĐ5.
 - Hàng 2: Dinh dưỡng hôm nay (vòng calo + 3 thanh đạm/tinh bột/béo, số thật) | Thực đơn hôm nay (bữa theo thứ tự, nút "Đã ăn" ở bữa kế tiếp).
-- Hàng 3: Tủ bếp (thống kê, món cần dùng sớm, Thêm thực phẩm, Quét hóa đơn).
-- Hàng 4: Gợi ý món hợp hồ sơ (4 thẻ, thẻ đầu lớn hơn).
+- Hàng 3: Tủ bếp (thống kê, món cần dùng sớm, Thêm thực phẩm; "Quét hóa đơn" thêm ở GĐ3c).
+- Hàng 4: Gợi ý món hợp hồ sơ (3 thẻ theo API gợi ý, thẻ đầu lớn hơn) + ô tìm công thức. Lượng nước là khối phụ, chưa lưu DB (GĐ5).
 - Đạt khi: số calo khớp tổng các bữa đã ăn; không còn hero lá/chanh; mobile: hero ảnh nền, nút "Đã ăn" bấm được bằng ngón cái.
 
 ### Công thức (mockup: CongThuc7s)
-- Hero + ô tìm kiếm → chip danh mục (tiếng Việt, có số món thật) + Bộ lọc → Dành cho bạn (1 thẻ lớn + 3 thẻ nhỏ) → Nấu từ tủ bếp → Tất cả công thức (lưới/danh sách, sắp xếp, yêu thích, phân trang).
+- Hero + ô tìm kiếm → chip danh mục (tiếng Việt, có số món thật) + Bộ lọc → Dành cho bạn (1 thẻ lớn + 2 thẻ nhỏ: API gợi ý trả 3 món; thẻ lớn có "Có trong kho / Còn thiếu / % mục tiêu calo") → Tất cả công thức (lưới/danh sách, sắp xếp, phân trang).
+- Không làm "Nấu từ tủ bếp" (cần API so khớp kho theo danh sách; "Dành cho bạn" đã ưu tiên món dùng đồ trong kho) và "Theo chủ đề" (trùng chip danh mục). Nút yêu thích ẩn tới GĐ5 (lưu DB).
 - Đạt khi: không còn nhãn tiếng Anh; thẻ món không dùng chuỗi chấm giữa; số món mỗi chip khớp API.
 
 ### Chi tiết công thức (chưa có mockup)
@@ -240,22 +243,22 @@ Quy tắc:
 - Đạt khi: cảnh báo dị ứng thấy được không cần cuộn trên điện thoại.
 
 ### Kho thực phẩm (mockup: Kho7s, KhoThem7s)
-- Đầu trang gọn: H1 "Tủ bếp *của bạn*" + tìm kiếm + Quét hóa đơn + Thêm thực phẩm.
+- Đầu trang gọn: H1 "Tủ bếp của bạn" + tìm kiếm + Thêm thực phẩm ("Quét hóa đơn" ở GĐ3c).
 - 4 ô thống kê bấm để lọc (Tất cả / Sắp hết hạn / Đã hết hạn / Dưới mức tối thiểu).
-- Bảng: ảnh + tên + nhóm, số lượng (cảnh báo dưới tối thiểu), hạn + "còn N ngày", nơi bảo quản, tình trạng, Sửa (icon bút) / Xóa (thùng rác). Dòng sắp hết hạn tô `--warn-bg` + "Gợi ý món".
+- Bảng: tên + nhóm (thực phẩm không có ảnh), số lượng (cảnh báo dưới tối thiểu), hạn + "còn N ngày", nơi bảo quản, tình trạng, Sửa (icon bút) / Xóa (thùng rác). Dòng sắp hết hạn tô `--warn-bg`; nút "Gợi ý món" trên dòng làm ở GĐ3b. Có thêm dạng lưới.
 - Cột phải: Cần dùng sớm, Nấu gì từ kho?
-- Hộp thoại Thêm/Sửa: đúng các trường PantryItemForm, nơi bảo quản là nút chọn 3 phần, ô ngày dd/mm/yyyy.
-- Bỏ "Tiết kiệm ước tính" (số tự đặt).
+- Hộp thoại Thêm/Sửa: đúng các trường PantryItemForm (kể cả Ghi chú, mockup không có), nơi bảo quản là nút chọn 3 phần, ô ngày dd/mm/yyyy. Bấm nền không đóng hộp thoại (tránh mất dữ liệu đang nhập); Esc và "Hủy" đóng.
+- Bỏ "Tiết kiệm ước tính" (số tự đặt) và "Mẹo bảo quản" (câu chung chung); ô "Bảo quản lạnh" thay bằng "Dưới mức tối thiểu".
 - Đạt khi: link `?item=` vẫn làm nổi bật đúng dòng; điện thoại hiển thị thẻ, không cuộn ngang.
 
 ### Thực đơn (chưa có mockup)
 - Đầu trang: H1 tên thực đơn + chọn thực đơn + Tạo thực đơn (nhãn theo nguồn thật: "Tạo bởi AI" / "Thuật toán gợi ý") + Xóa (ConfirmDialog).
 - Thanh chọn ngày (7 ngày, ngày hôm nay nổi bật) → các bữa của ngày (ảnh, tên món link sang chi tiết, calo, nút "Đã ăn").
-- Cột phải / dưới: Tổng dinh dưỡng ngày so với mục tiêu; Danh sách đi chợ (nhóm theo loại, ô tick "Đã mua").
+- Cột phải / dưới: Tổng dinh dưỡng ngày so với mục tiêu (chỉ tiêu lấy từ hồ sơ; chưa có hồ sơ thì nhắc tạo hồ sơ); Danh sách đi chợ (nhóm theo loại, cả dòng là vùng bấm "Đã mua"). Nhóm hiện đoán theo tên nguyên liệu tới khi backend điền `ShoppingItem.category` (GĐ3b). "Thêm món" làm ở GĐ5.
 - Đạt khi: đổi ngày không tải lại trang; danh sách đi chợ dùng được một tay trên điện thoại.
 
 ### Cộng đồng (chưa có mockup)
-- Cột chính: ô đăng bài (chữ, tối đa 4 ảnh, gắn công thức) → bảng tin. Thẻ bài: tác giả + thời gian, chữ, ảnh (1 ảnh to; 2–4 ảnh lưới), thẻ công thức đính kèm, hành động Thích / Bình luận / Chia sẻ, menu "…" (Xóa bài của tôi).
+- Cột chính: ô đăng bài (chữ, tối đa 4 ảnh, gắn công thức) → bảng tin. Thẻ bài: tác giả + thời gian, chữ, ảnh (1 ảnh to; 2–4 ảnh lưới), thẻ công thức đính kèm, hành động Thích / Bình luận / Chia sẻ, menu "…" chỉ trên bài của mình (Xóa bài). "Lưu bài", "Theo dõi", thành viên/chủ đề nổi bật làm ở GĐ5 khi có dữ liệu thật.
 - Cột phải (≥1024px): hướng dẫn ngắn cách đăng món kèm công thức. Không "thành viên nổi bật" giả.
 - Đạt khi: hàng nút ô đăng bài không vỡ ở 320–390px; ảnh dùng optimizedImageUrl.
 
@@ -267,10 +270,10 @@ Quy tắc:
 
 ### Hồ sơ (chưa có mockup)
 - Form chia nhóm có tiêu đề: Thông tin cơ bản, Mục tiêu, Chế độ ăn & dị ứng, Khẩu vị. Kết quả chỉ tiêu dinh dưỡng hiện bên cạnh (≥1024px), cập nhật sau khi lưu.
-- Một nút "Lưu hồ sơ" cố định cuối form.
+- Một nút "Lưu hồ sơ" ở cuối form (không dính khi cuộn, để không che trường), kèm dòng "Có thay đổi chưa lưu"; dị ứng, món không thích, ẩm thực nhập dạng thẻ.
 
 ### Đăng nhập / Đăng ký (chưa có mockup)
-- Hai cột ≥1024px: trái form, phải ảnh món ăn thật. Điện thoại: chỉ form.
+- Hai cột ≥1024px: trái form, phải khối `--surface-2` với một câu giới thiệu cụ thể về Nouri (thay bằng ảnh món thật khi có). Điện thoại: chỉ form.
 - Checkbox "Nhớ đăng nhập" giữ hành vi hiện có. Lỗi nói rõ ("Email hoặc mật khẩu chưa đúng").
 
 ### Admin (chưa có mockup)
@@ -279,16 +282,36 @@ Quy tắc:
 - Bảng có tìm kiếm, lọc, phân trang. Công thức: form tạo/sửa có upload ảnh (xem trước), báo lỗi nhãn chay theo từng nguyên liệu. Người dùng: Khóa/Mở khóa. Kiểm duyệt: xem bài + xóa. Nhật ký: thời gian, người thực hiện, hành động, đối tượng.
 - Mọi thao tác xóa/khóa dùng ConfirmDialog.
 
-### Landing (làm cuối)
-- Theo cùng token và giọng văn; hero ảnh món thật; chỉ số thật từ `/api/recipes/stats`; không blob/lá/kính mờ.
+### Landing
+- Menu bản cho khách (logo, liên kết neo tới các phần, chế độ tối, Đăng nhập) + footer chung.
+- Hero: một câu nói rõ Nouri làm gì + "Đăng ký miễn phí" / "Đăng nhập"; ảnh món thật nếu có (`GET /api/recipes/featured`), chưa có thì chỉ chữ.
+- Các phần, mỗi phần một ý: Nouri giúp gì (3 việc, không icon) → Món trong Nouri (số thật từ `/api/recipes/stats`, 6 món từ `/featured`; khách bấm món thì sang đăng nhập rồi mở đúng món) → Cách hoạt động (4 bước đánh số: kho → hồ sơ → thực đơn → đi chợ) → Cộng đồng (chỉ mô tả) → lời kêu gọi đăng ký.
+- Không blob/lá/kính mờ, không GSAP, không hiệu ứng khi cuộn, không số minh họa.
 
 ---
 
 ## 15. Nghiệm thu mỗi lượt UI (Claude Code tự làm trước khi báo xong)
 1. Chụp Playwright trước/sau ở 390 và 1440px, **cả sáng và tối**; lưu vào `docs/design/screens/<lượt>/`.
-2. Đi qua checklist mục 3 cho từng trang đã làm, ghi kết quả vào báo cáo.
+2. Đi qua checklist mục 3 cho từng trang đã làm, ghi kết quả vào báo cáo (bảng tổng hợp cuối đợt: `docs/design/nghiem-thu-ui.md`).
 3. Kiểm tương phản các cặp màu mới dùng; kiểm Tab qua toàn trang; không cuộn ngang ở 320px.
 4. Kiểm chữ tiếng Việt có dấu chồng hiển thị đúng ở tiêu đề.
 5. Không còn mã màu cứng trong CSS mới; CSS cũ của trang đã gỡ.
 6. `npm test`, typecheck, build đều đạt; chức năng cũ của trang vẫn chạy (đi lại luồng chính).
 7. Liệt kê chỗ nào lệch so với mockup và lý do.
+
+---
+
+## 16. Chỗ lệch đã chấp nhận (UI-3 → UI-11)
+Các điểm đã ghi vào mục 3–14 ở trên; tóm tắt để tra nhanh. Việc còn thiếu do chưa có chức năng sẽ làm ở giai đoạn ghi trong ngoặc.
+
+| Trang | Khác với bản đầu / mockup | Lý do |
+|---|---|---|
+| Mọi trang | Bỏ cụm chữ nghiêng màu accent ở H1 (UI-12) | Dấu hiệu "template"; chữ nghiêng chỉ còn ở logo |
+| Tổng quan | Chưa có "Quét hóa đơn" (GĐ3c), "Thêm vào thực đơn" (GĐ5); nước chưa lưu DB (GĐ5) | Chức năng chưa có |
+| Công thức | "Dành cho bạn" 1 lớn + 2 nhỏ; bỏ "Nấu từ tủ bếp", "Theo chủ đề"; ẩn yêu thích (GĐ5) | API gợi ý trả 3 món; tránh chép logic so khớp kho ở frontend; trùng chip |
+| Kho | Không ảnh thực phẩm; "Gợi ý món" trên dòng (GĐ3b); "Quét hóa đơn" (GĐ3c); có Ghi chú; bấm nền không đóng hộp thoại | Dữ liệu không có ảnh; chức năng chưa có; giữ đủ trường; tránh mất dữ liệu |
+| Thực đơn | Nhóm đi chợ đoán theo tên (tới GĐ3b) | Backend chưa điền `category` |
+| Cộng đồng | Không Lưu bài/Theo dõi/thành viên nổi bật (GĐ5) | Trước đây chỉ là state giả |
+| Hồ sơ | Nút lưu không dính | Thanh dính che trường cuối trên điện thoại |
+| Đăng nhập | Cột phải là khối chữ, chưa có ảnh | Chưa có ảnh món thật |
+| Landing | Hero 4:3; ≤ 1024px ảnh xếp dưới chữ; thẻ chưa có ảnh chỉ có chữ | Cân với cột chữ; không phủ lớp mờ lên ảnh; tránh lưới ô xám |

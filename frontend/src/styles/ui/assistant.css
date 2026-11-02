@@ -49,7 +49,7 @@
 }
 .as-msg--user .as-msg__bubble { border-bottom-right-radius: var(--radius-sm); background: var(--surface-2); }
 .as-msg--assistant .as-msg__bubble { border: 1px solid var(--line); border-bottom-left-radius: var(--radius-sm); background: var(--surface); }
-.as-msg__bubble--pending { color: var(--ink-2); font-style: italic; }
+.as-msg__bubble--pending { color: var(--ink-2); }
 .as-msg__time { color: var(--muted); font-size: var(--fs-label); font-variant-numeric: tabular-nums; }
 
 .as-chat__empty { display: grid; align-content: center; gap: var(--space-4); min-height: 100%; }

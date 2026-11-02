@@ -14,7 +14,7 @@ export function LandingHero({ signedIn, photo }: { signedIn: boolean; photo: Fea
     <section className={cx("ld-hero", photo && "ld-hero--photo")} aria-labelledby="ld-hero-title">
       <div className="ld-hero__inner">
         <div className="ld-hero__copy">
-          <h1 id="ld-hero-title" className="ui-hero-title">Biết tủ bếp còn gì, <em>tuần này ăn gì.</em></h1>
+          <h1 id="ld-hero-title" className="ui-hero-title">Biết tủ bếp còn gì,<br /> tuần này ăn gì.</h1>
           <p className="ld-hero__lead">
             Nouri ghi lại thực phẩm trong tủ bếp kèm hạn sử dụng, xếp thực đơn 7 ngày theo calo, chế độ ăn và dị ứng trong hồ sơ
             của bạn, và nhắc dùng trước những món sắp hết hạn.

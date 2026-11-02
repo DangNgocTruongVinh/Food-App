@@ -23,7 +23,7 @@ export function MealPlanHeader({ plan, plans, onSelectPlan, onActivate, activati
     <header className="td-hero">
       <div className="td-hero__main">
         <div className="td-hero__text">
-          <h1 className="ui-title">{title.lead}{title.emphasis && <> <em>{title.emphasis}</em></>}</h1>
+          <h1 className="ui-title">{title.emphasis ? `${title.lead} ${title.emphasis}` : title.lead}</h1>
           <ul className="td-hero__meta" aria-label="Thông tin thực đơn">
             <li><Tag className={plan.status === "ACTIVE" ? "td-tag--active" : undefined}>{mealPlanStatusLabels[plan.status]}</Tag></li>
             <li><Tag>{mealPlanSourceLabel(plan.aiGenerated)}</Tag></li>

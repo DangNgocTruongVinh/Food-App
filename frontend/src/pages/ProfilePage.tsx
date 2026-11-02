@@ -61,7 +61,7 @@ export default function ProfilePage() {
   return (
     <div className="hs-view">
       <header className="hs-hero">
-        <h1 className="ui-title">Hồ sơ <em>của bạn</em></h1>
+        <h1 className="ui-title">Hồ sơ của bạn</h1>
         <p className="ui-text">Nouri dùng hồ sơ này để tính chỉ tiêu dinh dưỡng, lọc món theo chế độ ăn và dị ứng, và xếp thực đơn.</p>
       </header>
       {profile.isLoading ? (

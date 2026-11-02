@@ -43,11 +43,11 @@ export function DevUiShowcase({ theme }: { theme: Theme }) {
         <Logo />
         <PageHeader
           size="hero"
-          title={<>Hôm nay <em>nấu gì?</em></>}
+          title="Hôm nay nấu gì?"
           description="Ức gà còn 2 ngày trong kho. Món gợi ý dùng hết phần còn lại."
           actions={<><Button variant="primary" icon={<UtensilsCrossed />}>Xem công thức</Button><Button icon={<CalendarPlus />}>Thêm vào thực đơn</Button></>}
         />
-        <PageHeader title={<>Tủ bếp <em>của bạn</em></>} actions={<Button variant="primary">Thêm thực phẩm</Button>} />
+        <PageHeader title="Tủ bếp của bạn" actions={<Button variant="primary">Thêm thực phẩm</Button>} />
       </Section>
 
       <Section title="Chữ">

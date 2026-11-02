@@ -8,7 +8,7 @@ export function PantryHero({ search, onSearchChange, onAdd }: PantryHeroProps) {
   return (
     <header className="kho-hero">
       <div className="kho-hero__text">
-        <h1 className="ui-title">Tủ bếp <em>của bạn</em></h1>
+        <h1 className="ui-title">Tủ bếp của bạn</h1>
         <p className="ui-text">Theo dõi số lượng và hạn sử dụng để dùng kịp trước khi hỏng.</p>
       </div>
       <div className="kho-hero__actions">

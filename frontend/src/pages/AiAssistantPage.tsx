@@ -52,7 +52,7 @@ export default function AiAssistantPage() {
   return (
     <div className="as-view">
       <header className="as-hero">
-        <h1 className="ui-title">Hỏi <em>Nouri</em></h1>
+        <h1 className="ui-title">Hỏi Nouri</h1>
         <p className="ui-text">Hỏi về bữa ăn, dinh dưỡng hoặc cách dùng thực phẩm trong kho của bạn.</p>
       </header>
       {aiStatus && !aiStatus.available && (
