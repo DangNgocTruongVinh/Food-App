@@ -421,7 +421,7 @@ Hiện trạng ghi nhận khi lập kế hoạch: định lượng nguyên liệ
 - Dị ứng/chế độ ăn: `GET /api/recipes` trả `fit` (dùng `recipeWarnings`); "Tất cả công thức" mặc định ẩn món dị ứng/không hợp chế độ ăn, dòng "Đã ẩn N món… Hiện tất cả", số đếm chip tính từ danh sách đang hiện; món không thích hiện kèm nhãn nhỏ. Lời nhắc chat AI cấm gợi ý món vi phạm + dòng nhắc dưới khung chat. Test chung `test/dietary-matrix.test.ts` cho mọi API gợi ý.
 
 **Các lượt (mỗi lượt một commit):**
-- [ ] Lượt 1 — gzip nginx frontend + đo trước/sau (dễ).
+- [x] Lượt 1 — gzip nginx frontend (`frontend/nginx.conf`: HTML, JS, CSS, SVG, JSON kể cả API) + đo trước/sau (`docs/test-evidence/2026-11-03_gd3b-l1_gzip.txt`): JS gói chính nhận về 563 → 172 KB, CSS 105 → 17 KB; điện thoại giả lập chậm FCP ~4,5–5 s → ~2 s, dung lượng mỗi trang ~1,0–1,1 MB → ~0,5–0,6 MB.
 - [ ] Lượt 2 — `PantryTransaction` + `PantryItem.expiryEstimated` + migration, `utils/food-units.ts`, kho CRUD ghi lịch sử trong cùng transaction, `GET /api/pantry/transactions`, test (trung bình).
 - [ ] Lượt 3 — Trừ kho (backend): xem trước/trừ/hoàn lại, quy đổi, chia `recipe.servings` (kể cả đi chợ), thông báo khi về 0 có mức tối thiểu, test (khó).
 - [ ] Lượt 4 — Trừ kho (frontend): `ConsumeMealDialog` ở Tổng quan và Thực đơn, hoàn tác; Kho: nhãn "Đã dùng hết", bộ lọc, ô "Tất cả" không đếm (trung bình–khó).
