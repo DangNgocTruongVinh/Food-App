@@ -182,10 +182,8 @@
   .ad-form__row--5 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 
-/* ≤ 760px: bảng thành thẻ; form một cột. */
-@media (max-width: 760px) {
-  .ad-view { padding-top: var(--space-5); }
-  .ad-chart__canvas { height: 280px; }
+/* ≤ 1023px: bảng thành thẻ (bảng Công thức có 8 cột, ở 768px đã tràn khung). */
+@media (max-width: 1023px) {
   .ad-table thead { display: none; }
   .ad-table,
   .ad-table tbody { display: block; }
@@ -201,6 +199,12 @@
   .ad-table--audit .ad-row__time { grid-column: 1 / -1; min-width: 0; }
   .ad-row__details { max-width: none; }
   .ad-note { min-width: 0; max-width: none; }
+}
+
+/* ≤ 760px: form hai cột, lọc chiếm hết hàng. */
+@media (max-width: 760px) {
+  .ad-view { padding-top: var(--space-5); }
+  .ad-chart__canvas { height: 280px; }
   .ad-toolbar--filters .ad-filter-field { flex: 1 1 100%; }
   .ad-filter-field .ui-input { width: 100%; }
   .ad-comment { flex-direction: column; }

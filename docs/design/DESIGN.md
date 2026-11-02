@@ -206,7 +206,7 @@ Quy tắc:
 
 ## 12. Responsive
 - Kiểm ở 390, 768, 1366, 1920px, cả hai chế độ màu. Không cuộn ngang ở 320px.
-- ≤ 1200px: liên kết menu thu vào nút menu. ≤ 1024px: lưới 2 cột → 1 cột; hero Tổng quan: ảnh thành nền phía sau chữ, phủ lớp `--bg` 86% (vẫn đạt tương phản); hero Landing: ảnh xếp dưới chữ. ≤ 760px: bảng → thẻ.
+- ≤ 1200px: liên kết menu thu vào nút menu. ≤ 1024px: lưới 2 cột → 1 cột; hero Tổng quan: ảnh thành nền phía sau chữ, phủ lớp `--bg` 86% (vẫn đạt tương phản); hero Landing: ảnh xếp dưới chữ. ≤ 760px: bảng → thẻ (bảng Admin: ≤ 1023px, vì bảng Công thức có 8 cột).
 - Trên điện thoại, hành động chính của trang nằm trong tầm ngón cái (đầu nội dung hoặc thanh dưới).
 
 ---
@@ -314,4 +314,5 @@ Các điểm đã ghi vào mục 3–14 ở trên; tóm tắt để tra nhanh. V
 | Cộng đồng | Không Lưu bài/Theo dõi/thành viên nổi bật (GĐ5) | Trước đây chỉ là state giả |
 | Hồ sơ | Nút lưu không dính | Thanh dính che trường cuối trên điện thoại |
 | Đăng nhập | Cột phải là khối chữ, chưa có ảnh | Chưa có ảnh món thật |
+| Admin | Bảng thành thẻ từ ≤ 1023px (không phải 760px) | Bảng Công thức 8 cột tràn khung ở 768px |
 | Landing | Hero 4:3; ≤ 1024px ảnh xếp dưới chữ; thẻ chưa có ảnh chỉ có chữ | Cân với cột chữ; không phủ lớp mờ lên ảnh; tránh lưới ô xám |

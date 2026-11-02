@@ -19,7 +19,7 @@ export const vietnamDate = (value: string) => VN_DATE.format(new Date(value));
 /** Vì sao không có nút khóa: chính mình hoặc Admin khác (khớp quy tắc backend 400/403); khóa được thì null. */
 export function lockBlockedReason(user: Pick<AdminUser, "id" | "role">, currentUserId: string | undefined) {
   if (user.id === currentUserId) return "Tài khoản của bạn: không tự khóa được.";
-  if (user.role === "ADMIN") return "Tài khoản Admin: không khóa được Admin khác.";
+  if (user.role === "ADMIN") return "Tài khoản quản trị viên: không khóa được quản trị viên khác.";
   return null;
 }
 

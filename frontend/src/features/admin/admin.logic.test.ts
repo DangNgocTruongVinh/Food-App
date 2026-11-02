@@ -117,7 +117,7 @@ describe("Admin people, moderation and audit logic", () => {
   it("hides lock for oneself and other admins, and explains locking", async () => {
     const { lockBlockedReason, lockConfirm } = await import("./admin-people.logic");
     expect(lockBlockedReason({ id: "me", role: "ADMIN" }, "me")).toBe("Tài khoản của bạn: không tự khóa được.");
-    expect(lockBlockedReason({ id: "a2", role: "ADMIN" }, "me")).toBe("Tài khoản Admin: không khóa được Admin khác.");
+    expect(lockBlockedReason({ id: "a2", role: "ADMIN" }, "me")).toBe("Tài khoản quản trị viên: không khóa được quản trị viên khác.");
     expect(lockBlockedReason({ id: "u", role: "USER" }, "me")).toBeNull();
     const lock = lockConfirm({ name: "Minh Anh", email: "demo@nouri.vn", locked: false });
     expect(lock.title).toBe("Khóa demo@nouri.vn?");
