@@ -75,7 +75,14 @@ export function ProfileForm({ form, email, errors, dirty, saving, saveError, onC
       </Section>
 
       <Section id="hs-diet" title="Chế độ ăn và dị ứng" description="Món không hợp chế độ ăn hoặc có thứ bạn dị ứng sẽ không được gợi ý và có cảnh báo.">
-        <ChoiceGroup className="hs-wide" legend="Chế độ ăn" name="dietType" options={DIET_OPTIONS} value={form.dietType} onChange={(value) => onChange("dietType", value)} />
+        <ChoiceGroup
+          className="hs-wide"
+          legend="Chế độ ăn"
+          name="dietType"
+          options={DIET_OPTIONS}
+          value={form.dietType}
+          onChange={(value) => onChange("dietType", value)}
+        />
         <ChoiceGroup
           className="hs-wide"
           legend="Số bữa mỗi ngày"

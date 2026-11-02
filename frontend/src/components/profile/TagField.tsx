@@ -49,7 +49,12 @@ export function TagField({ label, itemName, tags, onChange, max, placeholder, hi
           {tags.map((tag) => (
             <li key={tag} className="hs-tags__item">
               <span>{tag}</span>
-              <button type="button" className="hs-tags__remove" aria-label={`Bỏ ${itemName} ${tag}`} onClick={() => onChange(tags.filter((item) => item !== tag))}>
+              <button
+                type="button"
+                className="hs-tags__remove"
+                aria-label={`Bỏ ${itemName} ${tag}`}
+                onClick={() => onChange(tags.filter((item) => item !== tag))}
+              >
                 <X aria-hidden="true" />
               </button>
             </li>

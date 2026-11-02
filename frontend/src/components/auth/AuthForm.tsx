@@ -39,7 +39,14 @@ export function AuthForm({ mode, form, errors, serverError, loading, remember, o
       )}
       <Field label="Email" error={errors.email}>
         {(control) => (
-          <input {...control} type="email" autoComplete="email" inputMode="email" value={form.email} onChange={(event) => onChange("email", event.target.value)} />
+          <input
+            {...control}
+            type="email"
+            autoComplete="email"
+            inputMode="email"
+            value={form.email}
+            onChange={(event) => onChange("email", event.target.value)}
+          />
         )}
       </Field>
       <Field label="Mật khẩu" error={errors.password} hint={register ? "Ít nhất 8 ký tự." : undefined}>
