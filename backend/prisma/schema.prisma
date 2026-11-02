@@ -51,6 +51,16 @@ enum StorageLocation {
   DRY_STORAGE
 }
 
+// Nguồn của một dòng lịch sử kho (GĐ3b): tiêu thụ (đã ăn), mua sắm (đã mua), nhập/sửa/xóa tay, quét ảnh (GĐ3c).
+enum PantryTransactionSource {
+  CONSUMPTION
+  PURCHASE
+  MANUAL_ADD
+  MANUAL_EDIT
+  MANUAL_DELETE
+  RECEIPT_SCAN
+}
+
 enum MealType {
   BREAKFAST
   LUNCH
@@ -96,6 +106,7 @@ model User {
   lockedAt          DateTime?
   profile           NutritionProfile?
   pantryItems       PantryItem[]
+  pantryTransactions PantryTransaction[]
   mealPlans         MealPlan[]
   chatMessages      ChatMessage[]
   communityPosts    CommunityPost[]
@@ -259,11 +270,45 @@ model PantryItem {
   purchasedAt  DateTime  @default(now())
   minimumStock Float     @default(0)
   note         String?
+  // Hạn do hệ thống gợi ý theo nhóm (đã mua, quét ảnh), chưa được người dùng xác nhận; người dùng sửa hạn thì về false.
+  expiryEstimated Boolean @default(false)
+  transactions PantryTransaction[]
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 
   @@index([userId, expiryDate])
   @@index([userId, category])
+}
+
+// Lịch sử xuất/nhập kho. Ghi cùng transaction với thay đổi kho. Chụp lại tên và đơn vị lúc ghi để lịch sử còn đọc được
+// sau khi thực phẩm bị sửa/xóa (pantryItemId về null khi xóa). delta: + nhập, − xuất, theo `unit`; quantityAfter: số lượng
+// sau thay đổi. Dòng hoàn lại (bỏ "đã ăn"/"đã mua") trỏ về dòng gốc qua reversalOfId; dòng gốc có reversedAt.
+model PantryTransaction {
+  id             String                  @id @default(cuid())
+  userId         String
+  user           User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  pantryItemId   String?
+  pantryItem     PantryItem?             @relation(fields: [pantryItemId], references: [id], onDelete: SetNull)
+  itemName       String
+  unit           FoodUnit
+  delta          Float
+  quantityAfter  Float
+  source         PantryTransactionSource
+  note           String?
+  mealPlanItemId String?
+  mealPlanItem   MealPlanItem?           @relation(fields: [mealPlanItemId], references: [id], onDelete: SetNull)
+  shoppingItemId String?
+  shoppingItem   ShoppingItem?           @relation(fields: [shoppingItemId], references: [id], onDelete: SetNull)
+  reversalOfId   String?
+  reversalOf     PantryTransaction?      @relation("PantryTransactionReversal", fields: [reversalOfId], references: [id], onDelete: SetNull)
+  reversals      PantryTransaction[]     @relation("PantryTransactionReversal")
+  reversedAt     DateTime?
+  createdAt      DateTime                @default(now())
+
+  @@index([userId, createdAt])
+  @@index([pantryItemId, createdAt])
+  @@index([mealPlanItemId])
+  @@index([shoppingItemId])
 }
 
 model Recipe {
@@ -351,6 +396,7 @@ model MealPlanItem {
   servings  Float       @default(1)
   completed Boolean     @default(false)
   calories  Int
+  pantryTransactions PantryTransaction[]
 
   @@index([dayId, mealType])
 }
@@ -364,6 +410,7 @@ model ShoppingItem {
   unit       FoodUnit
   purchased  Boolean  @default(false)
   category   String?
+  pantryTransactions PantryTransaction[]
 
   @@index([mealPlanId, purchased])
 }

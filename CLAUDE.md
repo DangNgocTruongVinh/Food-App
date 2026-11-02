@@ -422,7 +422,14 @@ Hiện trạng ghi nhận khi lập kế hoạch: định lượng nguyên liệ
 
 **Các lượt (mỗi lượt một commit):**
 - [x] Lượt 1 — gzip nginx frontend (`frontend/nginx.conf`: HTML, JS, CSS, SVG, JSON kể cả API) + đo trước/sau (`docs/test-evidence/2026-11-03_gd3b-l1_gzip.txt`): JS gói chính nhận về 563 → 172 KB, CSS 105 → 17 KB; điện thoại giả lập chậm FCP ~4,5–5 s → ~2 s, dung lượng mỗi trang ~1,0–1,1 MB → ~0,5–0,6 MB.
-- [ ] Lượt 2 — `PantryTransaction` + `PantryItem.expiryEstimated` + migration, `utils/food-units.ts`, kho CRUD ghi lịch sử trong cùng transaction, `GET /api/pantry/transactions`, test (trung bình).
+- [x] Lượt 2 — Lịch sử kho (backend):
+  - Migration `20261103000000_add_pantry_transactions`: enum `PantryTransactionSource`, model `PantryTransaction` (FK người dùng Cascade; thực phẩm, bữa ăn, dòng đi chợ, dòng gốc của dòng hoàn lại: SetNull; chụp `itemName`, `unit`), `PantryItem.expiryEstimated` (mặc định false). Chỉ thêm, không sửa dữ liệu cũ.
+  - `utils/food-units.ts`: `convertQuantity` (g↔kg, ml↔l; cái/gói không quy đổi), `roundQuantity` (3 chữ số).
+  - `modules/pantry/pantry-history.service.ts`: `recordPantryChange(tx, …)` (gọi bằng `tx` của transaction đang đổi kho, lượt 3/6 dùng lại), `manualEditChange` (chỉ ghi khi số lượng/đơn vị đổi; đổi đơn vị quy đổi được → delta theo đơn vị mới, không quy đổi được → đặt lại kèm ghi chú "Đổi đơn vị: 2 cái → 300 g"), `listPantryTransactions`.
+  - Kho CRUD: tạo → MANUAL_ADD; sửa → đọc bản hiện tại (404 nếu không thuộc người dùng) rồi MANUAL_EDIT khi đổi số lượng/đơn vị; xóa → MANUAL_DELETE ghi trước khi xóa. Đổi hạn thật sự (khác ngày cũ) thì `expiryEstimated = false`; client không gửi được `expiryEstimated`. Ghi lịch sử lỗi → cả thay đổi lỗi (500).
+  - `GET /api/pantry/transactions?source=&pantryItemId=&page=&pageSize=` (≤ 50/trang): chỉ của người đăng nhập, mới nhất trước, kèm liên kết bữa ăn (`mealPlanItem`: bữa, món, ngày, thực đơn) hoặc dòng đi chợ.
+  - Test: `food-units.test.ts`, `pantry.test.ts` (ghi trong cùng transaction qua `fake-transaction`, từng loại thay đổi, không ghi khi chỉ đổi tên/ghi chú, đổi đơn vị, lỗi ghi lịch sử → 500, cờ hạn ước tính, API lịch sử: chủ sở hữu, lọc, phân trang, kiểm tra tham số), an toàn migration.
+  - Kiểm trên Docker 11/11 (`docs/test-evidence/2026-11-03_gd3b-l2_lich-su-kho.txt`). Thực phẩm có từ trước lượt này không có dòng "Nhập tay" ban đầu (lịch sử bắt đầu từ migration).
 - [ ] Lượt 3 — Trừ kho (backend): xem trước/trừ/hoàn lại, quy đổi, chia `recipe.servings` (kể cả đi chợ), thông báo khi về 0 có mức tối thiểu, test (khó).
 - [ ] Lượt 4 — Trừ kho (frontend): `ConsumeMealDialog` ở Tổng quan và Thực đơn, hoàn tác; Kho: nhãn "Đã dùng hết", bộ lọc, ô "Tất cả" không đếm (trung bình–khó).
 - [ ] Lượt 5 — `food-category.ts` (8 nhóm, phân biệt đậu tươi/hạt khô), điền `ShoppingItem.category`, frontend bỏ đoán nhóm, test 95 tên nguyên liệu seed (trung bình).

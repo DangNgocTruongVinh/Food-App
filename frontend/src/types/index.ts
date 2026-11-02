@@ -76,6 +76,8 @@ export type ProfileUpdateInput = Partial<Pick<NutritionProfile,
 export interface PantryItem {
   id: string; name: string; category: string; quantity: number; unit: FoodUnit;
   storageLocation: StorageLocation; expiryDate: string | null; minimumStock: number; note?: string | null;
+  /** Hạn do hệ thống gợi ý (đã mua, quét ảnh), chưa được người dùng xác nhận (GĐ3b). */
+  expiryEstimated?: boolean;
 }
 
 export interface PantryInput {

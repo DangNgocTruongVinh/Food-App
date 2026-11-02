@@ -31,6 +31,20 @@ export const deletePantrySchema = z.object({
   query: empty,
 });
 
+export const PANTRY_TRANSACTION_SOURCES = ["CONSUMPTION", "PURCHASE", "MANUAL_ADD", "MANUAL_EDIT", "MANUAL_DELETE", "RECEIPT_SCAN"] as const;
+
+export const listPantryTransactionsSchema = z.object({
+  body: empty,
+  params: empty,
+  query: z.object({
+    source: z.enum(PANTRY_TRANSACTION_SOURCES).optional(),
+    pantryItemId: z.string().cuid().optional(),
+    page: z.coerce.number().int().min(1).max(10_000).default(1),
+    pageSize: z.coerce.number().int().min(1).max(50).default(20),
+  }),
+});
+
 export type CreatePantryInput = z.infer<typeof createPantrySchema>["body"];
 export type UpdatePantryInput = z.infer<typeof updatePantrySchema>["body"];
 export type PantryIdParams = z.infer<typeof updatePantrySchema>["params"];
+export type PantryTransactionsQuery = z.infer<typeof listPantryTransactionsSchema>["query"];

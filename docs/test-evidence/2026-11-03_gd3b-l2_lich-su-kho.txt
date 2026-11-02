@@ -1,0 +1,19 @@
+GĐ3b lượt 2 — lịch sử kho (PantryTransaction) — kiểm trên Docker (03/11/2026)
+
+Môi trường: docker compose (backend build lại, migration 20261103000000_add_pantry_transactions áp dụng khi khởi động),
+giao diện nginx :8080, tài khoản demo@nouri.vn. Script Playwright thao tác qua giao diện Kho rồi đọc GET /api/pantry/transactions.
+
+Kết quả 11/11:
+- Thêm "Thử GĐ3b Đậu hũ non" 500 g → 1 dòng MANUAL_ADD, delta +500, còn 500 g.
+- Sửa số lượng 500 → 320 → dòng MANUAL_EDIT, delta −180, còn 320.
+- Chỉ sửa ghi chú (form gửi đủ trường) → không sinh dòng mới.
+- Đổi 320 g → 0,32 kg → dòng MANUAL_EDIT, delta 0, ghi chú "Đổi đơn vị: 320 g → 0,32 kg".
+- Xóa (hộp xác nhận) → dòng MANUAL_DELETE, delta −0,32 kg, còn 0; cả 4 dòng giữ tên sau khi xóa (pantryItemId = null).
+- Thứ tự mới nhất trước; lọc ?source=MANUAL_EDIT đúng 2 dòng; tài khoản Admin không thấy lịch sử của demo.
+- DB: đúng 4 dòng mới trong lượt thử; không lỗi trang.
+
+Lần chạy đầu 9/11 do script giả định đơn vị mặc định là gram (hộp thoại mặc định "cái"); dòng ghi chú "320 cái → 0,32 kg"
+cho thấy nhánh đổi đơn vị không quy đổi được hoạt động đúng. Sửa script, chạy lại đạt.
+
+Dọn dữ liệu: xóa thực phẩm thử qua giao diện; xóa bằng SQL đúng các dòng lịch sử có itemName của thực phẩm thử, tạo sau thời
+điểm bắt đầu lượt thử. Sau cùng: kho demo 5 thực phẩm (như trước), bảng PantryTransaction 0 dòng.
