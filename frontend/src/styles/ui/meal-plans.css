@@ -1,0 +1,193 @@
+/*
+ * Trang Thực đơn (UI-6) — DESIGN.md mục 14 "Thực đơn" (chưa có mockup; cùng ngôn ngữ với Tổng quan, Công thức, Kho). Chỉ dùng token.
+ * Điểm nhấn: tiêu đề lớn; vòng calo dùng chung (components.css). Đổi ngày chỉ đổi state, không tải lại trang.
+ */
+
+.td-view {
+  display: grid;
+  gap: var(--space-5);
+  width: 100%;
+  max-width: var(--content-max);
+  margin: 0 auto;
+  padding: var(--space-7) var(--gutter) var(--space-8);
+}
+
+/* Đầu trang: H1 + nhãn bên trái, ô tạo thực đơn bên phải; dưới là thanh chọn thực đơn/áp dụng/xóa. */
+.td-hero { display: grid; gap: var(--space-5); }
+.td-hero__main { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: var(--space-5); }
+.td-hero__text { display: grid; gap: var(--space-3); min-width: 0; }
+.td-hero__text > .ui-text { max-width: 60ch; }
+.td-hero__meta { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-3); margin: 0; padding: 0; list-style: none; }
+.td-hero__dates { color: var(--ink-2); font-size: var(--fs-small); font-variant-numeric: tabular-nums; }
+.td-tag--active { color: var(--on-action); background: var(--action); }
+
+.td-create { display: flex; flex-wrap: wrap; align-items: flex-start; gap: var(--space-3); }
+.td-create__date { width: 200px; }
+.td-create__action { display: grid; gap: var(--space-1); justify-items: start; padding-top: 30px; }
+.td-create__source { white-space: nowrap; }
+
+.td-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-4) 0;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+.td-toolbar__field { display: grid; gap: var(--space-1); min-width: 0; }
+.td-toolbar__label { color: var(--muted); font-size: var(--fs-label); font-weight: 600; line-height: var(--lh-label); }
+.td-toolbar__select.ui-input { width: auto; max-width: 100%; min-height: var(--control-h); padding-right: var(--space-6); }
+.td-toolbar__actions { display: flex; flex-wrap: wrap; gap: var(--space-3); }
+
+/*
+ * Bố cục ≥ 1024px: các bữa và danh sách đi chợ bên trái (8 phần), dinh dưỡng + gợi ý bên phải (4 phần, kéo dài hai hàng).
+ * Nhỏ hơn: một cột theo thứ tự các bữa, dinh dưỡng, gợi ý, đi chợ.
+ */
+.td-layout { display: grid; grid-template-columns: minmax(0, 8fr) minmax(0, 4fr); gap: var(--space-5); align-items: start; }
+.td-main { grid-column: 1; grid-row: 1; display: grid; gap: var(--space-4); min-width: 0; }
+.td-side { grid-column: 2; grid-row: 1 / span 2; display: grid; gap: var(--space-5); min-width: 0; }
+.td-layout > .td-shopping { grid-column: 1; grid-row: 2; }
+
+/* Thanh 7 ngày. */
+.td-days { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: var(--space-2); }
+.td-day {
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  min-height: 64px;
+  padding: var(--space-2) var(--space-1);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-field);
+  color: var(--ink-2);
+  background: var(--surface);
+  font-family: var(--font-sans);
+  cursor: pointer;
+  transition: border-color var(--duration-fast) var(--ease-out), background-color var(--duration-fast) var(--ease-out);
+}
+.td-day:hover { border-color: var(--action-text); }
+.td-day__name { font-size: var(--fs-small); font-weight: 600; white-space: nowrap; }
+.td-day__date { font-size: var(--fs-label); font-variant-numeric: tabular-nums; }
+.td-day__narrow { display: none; }
+.td-day--today { border-color: var(--action-text); color: var(--action-text); box-shadow: inset 0 -3px 0 var(--action-text); }
+.td-day[aria-selected="true"] { border-color: var(--action); color: var(--on-action); background: var(--action); box-shadow: none; }
+
+/* Các bữa của ngày. */
+.td-day-panel { display: grid; gap: var(--space-2); }
+.td-day-panel__title { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-3); margin: var(--space-2) 0 0; color: var(--ink); font-family: var(--font-serif); font-size: var(--fs-h2); font-weight: 500; line-height: var(--lh-h2); }
+.td-day-panel__today { color: var(--action-text); font-family: var(--font-sans); font-size: var(--fs-small); font-weight: 600; }
+.td-meals { display: grid; margin: 0; padding: 0; list-style: none; }
+.td-meal {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-2) var(--space-4);
+  padding: var(--space-4) 0;
+  border-top: 1px solid var(--line);
+}
+.td-meal__image { width: 72px; height: 72px; border-radius: var(--radius-field); background: var(--surface-2); object-fit: cover; }
+.td-meal__text { display: grid; gap: var(--space-1); min-width: 0; }
+.td-meal__type { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-3); margin: 0; color: var(--muted); font-size: var(--fs-label); font-weight: 600; }
+.td-meal__state { display: inline-flex; align-items: center; gap: var(--space-1); color: var(--action-text); }
+.td-meal__state svg { width: 16px; height: 16px; stroke-width: 2; }
+.td-meal__name { color: var(--ink); font-size: var(--fs-h3); font-weight: 600; line-height: var(--lh-h3); text-decoration: none; overflow-wrap: anywhere; }
+.td-meal__name:hover { color: var(--action-text); text-decoration: underline; text-underline-offset: 3px; }
+.td-meal.is-done .td-meal__name { color: var(--ink-2); font-weight: 500; }
+.td-meal__facts { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-4); margin: 0; color: var(--ink-2); font-size: var(--fs-small); font-variant-numeric: tabular-nums; }
+.td-meal__action { display: flex; justify-content: flex-end; }
+
+/* Món cùng bữa ở ngày khác (giữ chức năng trang cũ). */
+.td-meal__others { grid-column: 2 / -1; font-size: var(--fs-small); }
+.td-meal__others summary {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--control-h);
+  color: var(--action-text);
+  font-weight: 600;
+  cursor: pointer;
+}
+.td-meal__others summary:focus-visible { outline: 2px solid var(--action-text); outline-offset: 3px; border-radius: var(--radius-sm); }
+.td-meal__others ul { display: grid; gap: var(--space-2); margin: 0; padding: 0; list-style: none; }
+.td-other { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-2) var(--space-4); padding: var(--space-2) var(--space-3); border-radius: var(--radius-field); background: var(--surface-2); }
+.td-other__text { display: grid; gap: 2px; min-width: 0; }
+.td-other__name { color: var(--ink); font-weight: 600; text-decoration: none; }
+.td-other__name:hover { text-decoration: underline; text-underline-offset: 3px; }
+.td-other__meta { color: var(--ink-2); }
+
+/* Cột phải. */
+.td-card { display: grid; gap: var(--space-4); align-content: start; }
+.td-card__header { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: var(--space-2) var(--space-4); }
+.td-card__title { margin: 0; color: var(--ink); font-family: var(--font-serif); font-size: 1.5rem; font-weight: 500; line-height: var(--lh-h2); }
+.td-card__link { justify-self: start; }
+.td-nutrition { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-5); }
+.td-week { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-3); margin: 0; }
+.td-week div { display: grid; gap: var(--space-1); padding: var(--space-3); border-radius: var(--radius-field); background: var(--surface-2); }
+.td-week dt { color: var(--ink-2); font-size: var(--fs-label); }
+.td-week dd { margin: 0; color: var(--ink); font-size: var(--fs-body); font-weight: 600; font-variant-numeric: tabular-nums; }
+.td-suggestions { display: grid; gap: var(--space-3); margin: 0; padding-left: var(--space-5); color: var(--ink-2); font-size: var(--fs-small); line-height: var(--lh-small); }
+
+/* Danh sách đi chợ: cả dòng là vùng bấm. */
+.td-shopping__count { margin: 0; color: var(--ink-2); font-size: var(--fs-small); font-weight: 600; font-variant-numeric: tabular-nums; }
+.td-shop-groups { columns: 2; column-gap: var(--space-6); }
+.td-shop-group { display: grid; gap: var(--space-1); padding-bottom: var(--space-4); break-inside: avoid; }
+.td-shop-group__title { margin: 0; color: var(--muted); font-size: var(--fs-label); font-weight: 600; }
+.td-shop-list { display: grid; margin: 0; padding: 0; list-style: none; }
+.td-shop-item {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: 52px;
+  padding: var(--space-2) var(--space-2);
+  margin: 0 calc(-1 * var(--space-2));
+  border-radius: var(--radius-field);
+  cursor: pointer;
+  transition: background-color var(--duration-fast) var(--ease-out);
+}
+.td-shop-item:hover { background: var(--surface-2); }
+.td-shop-item input { width: 22px; height: 22px; margin: 0; accent-color: var(--action); cursor: pointer; }
+.td-shop-item input:focus-visible { outline: 2px solid var(--action-text); outline-offset: 3px; }
+.td-shop-item__name { color: var(--ink); font-size: var(--fs-body); overflow-wrap: anywhere; }
+.td-shop-item__qty { color: var(--ink-2); font-size: var(--fs-small); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.td-shop-item.is-bought .td-shop-item__name { color: var(--muted); text-decoration: line-through; }
+.td-shop-item.is-bought .td-shop-item__qty { color: var(--muted); }
+
+/* Chưa có thực đơn, đang tải. */
+.td-empty { padding: var(--space-6) var(--space-5); border: 1px solid var(--line); border-radius: var(--radius-card); background: var(--surface); }
+.td-empty .ui-empty { justify-items: start; text-align: left; }
+.td-skeleton { display: grid; gap: var(--space-5); }
+.td-skeleton__meals { display: grid; gap: var(--space-3); }
+
+@media (max-width: 1024px) {
+  .td-layout { grid-template-columns: minmax(0, 1fr); }
+  .td-main,
+  .td-side,
+  .td-layout > .td-shopping { grid-column: 1; grid-row: auto; }
+}
+
+@media (max-width: 640px) {
+  .td-shop-groups { columns: 1; }
+}
+
+@media (max-width: 760px) {
+  .td-view { gap: var(--space-4); padding-top: var(--space-6); }
+  .td-hero__main { align-items: stretch; }
+  .td-create { width: 100%; }
+  .td-create__date { flex: 1 1 160px; width: auto; }
+  .td-toolbar__field { flex: 1 1 100%; }
+  .td-toolbar__select.ui-input { width: 100%; }
+  .td-days { gap: var(--space-1); }
+  .td-day { padding: var(--space-2) 0; }
+  .td-day__name { font-size: var(--fs-label); }
+  .td-meal { grid-template-columns: 56px minmax(0, 1fr); }
+  .td-meal__image { width: 56px; height: 56px; }
+  .td-meal__action { grid-column: 2; justify-content: flex-start; }
+  .td-meal__others { grid-column: 1 / -1; }
+}
+
+@media (max-width: 480px) {
+  .td-day__wide { display: none; }
+  .td-day__narrow { display: inline; }
+  .td-week { grid-template-columns: minmax(0, 1fr); }
+}

@@ -96,7 +96,7 @@ export default function PantryPage() {
       <PantryHero search={search} onSearchChange={setSearch} onAdd={() => setDialog({ item: null })} />
 
       {focus.focusMissing && (
-        <p className="kho-notice" role="status">
+        <p className="ui-notice" role="status">
           <span>Thực phẩm này không còn trong kho.</span>
           <Button onClick={focus.dismissMissing}>Đóng</Button>
         </p>

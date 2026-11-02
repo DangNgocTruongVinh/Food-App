@@ -53,33 +53,9 @@
 .dash-card__header { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: var(--space-2) var(--space-4); }
 .dash-card__note { margin: 0; }
 
-/* Vòng calo. */
+/* Vòng calo + ba thanh. */
 .dash-nutrition { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-6); }
-.dash-ring { position: relative; flex: 0 0 auto; width: 148px; height: 148px; }
-.dash-ring svg { display: block; width: 100%; height: 100%; }
-.dash-ring__track,
-.dash-ring__value { fill: none; stroke-width: 9; }
-.dash-ring__track { stroke: var(--track); }
-.dash-ring__value { stroke: var(--accent); stroke-linecap: round; transition: stroke-dashoffset 900ms var(--ease-out); }
-.dash-ring__label { position: absolute; inset: 0; display: grid; place-content: center; justify-items: center; text-align: center; }
-.dash-ring__number { color: var(--ink); font-family: var(--font-serif); font-size: 2rem; font-weight: 500; line-height: 1; font-variant-numeric: tabular-nums; }
-.dash-ring__target { margin-top: var(--space-1); color: var(--muted); font-size: var(--fs-label); }
-
-@media (prefers-reduced-motion: reduce) {
-  .dash-ring__value { transition: none; }
-}
-
-/* Ba thanh đạm / tinh bột / béo (màu biểu đồ theo DESIGN.md mục 4). */
-.dash-macros { display: grid; flex: 1 1 220px; gap: var(--space-4); margin: 0; }
-.dash-macro { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--space-2) var(--space-3); }
-.dash-macro dt { color: var(--ink); font-size: var(--fs-small); font-weight: 600; }
-.dash-macro dd { display: flex; justify-content: flex-end; gap: var(--space-3); margin: 0; color: var(--ink-2); font-size: var(--fs-small); font-variant-numeric: tabular-nums; }
-.dash-macro__percent { min-width: 3.5ch; color: var(--muted); text-align: right; }
-.dash-bar { grid-column: 1 / -1; height: 8px; overflow: hidden; border-radius: var(--radius-pill); background: var(--track); }
-.dash-bar__fill { display: block; height: 100%; border-radius: inherit; }
-.dash-bar__fill--protein { background: var(--accent); }
-.dash-bar__fill--carbs { background: var(--warn); }
-.dash-bar__fill--fat { background: var(--muted); }
+/* Vòng calo, thanh đạm/tinh bột/béo: components.css (.ui-ring, .ui-macros). */
 
 /* Thực đơn hôm nay. */
 .dash-meals { display: grid; margin: 0; padding: 0; list-style: none; }
@@ -102,21 +78,6 @@
 .dash-meal.is-next .dash-meal__name { color: var(--ink); font-weight: 600; }
 .dash-meal__end { display: flex; align-items: center; gap: var(--space-4); }
 .dash-meal__kcal { color: var(--ink-2); font-size: var(--fs-small); white-space: nowrap; font-variant-numeric: tabular-nums; }
-
-.dash-status {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-2) var(--space-4);
-  margin: 0;
-  padding: var(--space-3) var(--space-4);
-  border-radius: var(--radius-card);
-  color: var(--ink);
-  background: var(--surface-2);
-  font-size: var(--fs-small);
-}
-.dash-status--error { background: var(--warn-bg); }
 
 /* Tủ bếp. */
 .dash-pantry { display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 8fr); gap: var(--space-6); align-items: start; }

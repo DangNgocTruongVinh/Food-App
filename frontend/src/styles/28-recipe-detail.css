@@ -1,4 +1,0 @@
-/* Phần còn lại của CSS chi tiết công thức cũ: chỉ quy tắc link món trong trang Thực đơn (gỡ ở UI-6). Thứ tự import trong styles.css quyết định thứ tự áp dụng. */
-
-
-.menu-featured-copy h2 a:hover, .menu-snack-strip strong a:hover { color: var(--green-2); text-decoration: underline; text-underline-offset: 3px; }

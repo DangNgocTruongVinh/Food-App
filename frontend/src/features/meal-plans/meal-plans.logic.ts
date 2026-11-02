@@ -1,30 +1,55 @@
-import type { MealPlan, MealPlanItem, MealType, NutritionProfile } from "../../types";
+import type { MealPlan, MealPlanDay, MealPlanItem, MealPlanStatus, MealType, NutritionProfile, ShoppingItem } from "../../types";
 
 export const mealLabels: Record<MealType, string> = {
   BREAKFAST: "Bữa sáng", LUNCH: "Bữa trưa", DINNER: "Bữa tối", SNACK: "Bữa phụ",
 };
-export const mealShortLabels: Record<MealType, string> = {
-  BREAKFAST: "Sáng", LUNCH: "Trưa", DINNER: "Tối", SNACK: "Bữa phụ",
-};
-export const mealTimes: Record<MealType, string> = {
-  BREAKFAST: "07:00 – 09:00", LUNCH: "11:30 – 13:30", DINNER: "18:00 – 19:30", SNACK: "15:00 – 16:00",
-};
-export const featuredMealTypes: MealType[] = ["BREAKFAST", "LUNCH", "DINNER"];
-export function mealTag(item: MealPlanItem) {
-  if (item.recipe.dietTags[0]) return item.recipe.dietTags[0].replaceAll("_", " ");
-  if (item.recipe.proteinG >= 25) return "Giàu protein";
-  if (item.recipe.fatG <= 15) return "Ít chất béo";
-  return "Cân bằng";
-}
+/** Thứ tự bữa trong ngày (cùng thứ tự với Tổng quan). */
+export const MEAL_ORDER: MealType[] = ["BREAKFAST", "LUNCH", "SNACK", "DINNER"];
 
-export function percentage(value: number, target: number) {
-  return Math.min(100, Math.round(value / Math.max(target, 1) * 100));
+export function orderDayMeals(items: MealPlanItem[]) {
+  return [...items].sort((a, b) => MEAL_ORDER.indexOf(a.mealType) - MEAL_ORDER.indexOf(b.mealType));
 }
 
 export function selectMealPlanDay(plan: MealPlan | undefined, selectedDayIndex: number) {
   return plan?.days[selectedDayIndex] ?? plan?.days[0];
 }
 
+/** Ngày lịch của một ngày trong thực đơn (server lưu 00:00 UTC): lấy phần yyyy-MM-dd, không đổi múi giờ. */
+export function planDayDate(day: Pick<MealPlanDay, "date">) {
+  const [year, month, date] = day.date.slice(0, 10).split("-").map(Number);
+  return new Date(year, month - 1, date);
+}
+
+const isSameLocalDay = (a: Date, b: Date) => a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+
+/** Vị trí của hôm nay trong thực đơn; -1 nếu hôm nay không thuộc thực đơn. */
+export function todayDayIndex(plan: Pick<MealPlan, "days"> | undefined, now = new Date()) {
+  return plan?.days.findIndex((day) => isSameLocalDay(planDayDate(day), now)) ?? -1;
+}
+
+/** Ngày mở sẵn khi vào một thực đơn: hôm nay nếu có trong thực đơn, không thì ngày đầu. */
+export function initialDayIndex(plan: Pick<MealPlan, "days"> | undefined, now = new Date()) {
+  return Math.max(0, todayDayIndex(plan, now));
+}
+
+const WEEKDAYS = ["Chủ nhật", "Thứ Hai", "Thứ Ba", "Thứ Tư", "Thứ Năm", "Thứ Sáu", "Thứ Bảy"];
+const WEEKDAYS_SHORT = ["CN", "T2", "T3", "T4", "T5", "T6", "T7"];
+const pad = (value: number) => String(value).padStart(2, "0");
+
+export function planDayLabels(day: Pick<MealPlanDay, "date">) {
+  const date = planDayDate(day);
+  return { weekday: WEEKDAYS[date.getDay()], short: WEEKDAYS_SHORT[date.getDay()], date: `${pad(date.getDate())}/${pad(date.getMonth() + 1)}` };
+}
+
+/** Tên thực đơn từ backend có dạng "Thực đơn 2/11/2026": tách phần sau "Thực đơn" để in nghiêng ở H1. */
+export function planTitleParts(name: string) {
+  const match = name.match(/^(Thực đơn)\s+(.+)$/);
+  return match ? { lead: match[1], emphasis: match[2] } : { lead: name, emphasis: "" };
+}
+
+export const mealPlanStatusLabels: Record<MealPlanStatus, string> = { ACTIVE: "Đang áp dụng", DRAFT: "Bản nháp", COMPLETED: "Đã hoàn thành" };
+
+/** Thống kê cả tuần (bữa đã ăn, đã mua, trung bình mỗi ngày). */
 export function summarizeMealPlan(plan: MealPlan | undefined) {
   const planMeals = plan?.days.flatMap((day) => day.items) ?? [];
   const completedMeals = planMeals.filter((item) => item.completed).length;
@@ -44,39 +69,43 @@ export function summarizeMealPlan(plan: MealPlan | undefined) {
     fat: Math.round(nutrition.fat / dayCount),
     fiber: Math.round(nutrition.fiber / dayCount),
   };
+  return { planMeals, completedMeals, purchasedItems, nutrition, averages };
+}
+
+export type PlanTargets = { calories: number; protein: number; carbs: number; fat: number };
+
+/** Chỉ tiêu từ hồ sơ dinh dưỡng; chưa có hồ sơ (hoặc chưa tính chỉ tiêu) → null, không dùng số tự đặt. */
+export function planTargets(profile: NutritionProfile | null | undefined): PlanTargets | null {
+  if (!profile?.dailyCalorieTarget) return null;
+  return { calories: profile.dailyCalorieTarget, protein: profile.proteinTargetG ?? 0, carbs: profile.carbTargetG ?? 0, fat: profile.fatTargetG ?? 0 };
+}
+
+const percentOf = (value: number, target: number) => (target > 0 ? Math.round((value / target) * 100) : 0);
+const progress = (value: number, target: number) => ({ consumed: Math.round(value), target, percent: percentOf(value, target) });
+
+/** Tổng dinh dưỡng các bữa trong ngày (calo đã tính khẩu phần; đạm/tinh bột/béo = công thức × khẩu phần) so với chỉ tiêu. */
+export function dayNutrition(items: MealPlanItem[], targets: PlanTargets) {
+  const sum = (pick: (item: MealPlanItem) => number) => items.reduce((total, item) => total + pick(item) * (item.servings || 1), 0);
+  const calories = items.reduce((total, item) => total + item.calories, 0);
+  const eaten = items.filter((item) => item.completed);
   return {
-    planMeals,
-    completedMeals,
-    purchasedItems,
-    nutrition,
-    averages,
-    completionRate: Math.round(completedMeals / Math.max(planMeals.length, 1) * 100),
+    calories: progress(calories, targets.calories),
+    macros: {
+      protein: progress(sum((item) => item.recipe.proteinG), targets.protein),
+      carbs: progress(sum((item) => item.recipe.carbsG), targets.carbs),
+      fat: progress(sum((item) => item.recipe.fatG), targets.fat),
+    },
+    eatenCount: eaten.length,
+    eatenCalories: eaten.reduce((total, item) => total + item.calories, 0),
+    mealCount: items.length,
   };
 }
 
-export function mealPlanTargets(profile: NutritionProfile | null | undefined, plan: MealPlan | undefined) {
-  return {
-    calories: profile?.dailyCalorieTarget ?? plan?.calorieTarget ?? 2000,
-    protein: profile?.proteinTargetG ?? 80,
-    carbs: profile?.carbTargetG ?? 250,
-    fat: profile?.fatTargetG ?? 65,
-    fiber: 30,
-  };
-}
-
-export function hasBalancedCalories(averageCalories: number, targetCalories: number) {
-  return Math.abs(averageCalories - targetCalories) <= targetCalories * .15;
-}
-
+/** Món cùng bữa ở các ngày khác trong tuần (tối đa 2), kèm ngày của món. */
 export function alternativeMeals(plan: MealPlan, mealType: MealType, primaryId?: string) {
-  return plan.days.flatMap((day) => day.items)
-    .filter((item) => item.mealType === mealType && item.id !== primaryId)
+  return plan.days.flatMap((day) => day.items.map((item) => ({ item, day })))
+    .filter(({ item }) => item.mealType === mealType && item.id !== primaryId)
     .slice(0, 2);
-}
-
-export function recipeSearchPath(search: string) {
-  const normalized = search.trim();
-  return `/recipes${normalized ? `?q=${encodeURIComponent(normalized)}` : ""}`;
 }
 
 export function mealPlanPath(id?: string | null) {
@@ -100,12 +129,65 @@ export function nextMealPlanIdAfterDelete(plans: PlanOrderFields[], deletedId: s
   return latestMealPlanId(plans, deletedId);
 }
 
-export function mealPlanDeleteConfirmMessage(plan: Pick<MealPlan, "name" | "status">) {
-  const activeWarning = plan.status === "ACTIVE" ? " Thực đơn này đang được áp dụng." : "";
-  return `Xóa thực đơn “${plan.name}”?${activeWarning} Toàn bộ bữa ăn và danh sách mua sắm của thực đơn sẽ bị xóa và không thể khôi phục.`;
+/** Hộp xác nhận xóa: nêu tên, nói rõ nếu đang áp dụng và hậu quả. */
+export function mealPlanDeleteConfirm(plan: Pick<MealPlan, "name" | "status">) {
+  const activeWarning = plan.status === "ACTIVE" ? "Thực đơn này đang được áp dụng. " : "";
+  return {
+    title: `Xóa “${plan.name}”?`,
+    description: `${activeWarning}Toàn bộ bữa ăn, đánh dấu đã ăn và danh sách đi chợ của thực đơn sẽ bị xóa. Không hoàn tác được.`,
+    confirmLabel: "Xóa thực đơn",
+  };
 }
 
-export type MealPlanSuggestion = { key: string; image: string; alt: string; text: string };
+// ---------- Danh sách đi chợ ----------
+
+export const SHOPPING_GROUPS = ["Rau củ", "Thịt & cá", "Trứng & sữa", "Đậu & hạt", "Gạo, bún & bánh", "Trái cây", "Gia vị", "Khác"] as const;
+export type ShoppingGroup = (typeof SHOPPING_GROUPS)[number];
+
+// Xét theo từ đầu tên nguyên liệu, theo thứ tự (ngoại lệ trước: "đậu bắp" là rau, "cà" khác "cá").
+const GROUP_RULES: Array<[ShoppingGroup, RegExp]> = [
+  ["Rau củ", /^(đậu bắp|đậu hà lan|bắp ngọt|đu đủ xanh|ớt chuông)/],
+  ["Gia vị", /^(muối|đường|tiêu|nước mắm|nước tương|tương|giấm|dầu|mật ong|quế|hoa hồi|lá oregano|mè|hạt nêm|bột ngọt|ô liu)/],
+  ["Thịt & cá", /^(thịt|sườn|xương|đùi gà|ức gà|cánh gà|gà|bò|heo|cá|tôm|mực|cua|nghêu)/],
+  ["Trứng & sữa", /^(trứng|sữa|phô mai|bơ lạt)/],
+  ["Đậu & hạt", /^(đậu|hạt|lạc)/],
+  ["Gạo, bún & bánh", /^(gạo|nếp|bún|bánh|mì|miến|yến mạch|bột)/],
+  ["Trái cây", /^(chuối|chanh|thơm|dứa|quả|táo|cam|xoài|nước dừa|nước cốt dừa|dừa|me)/],
+  ["Rau củ", /^(rau|cải|cà|bí|hành|tỏi|gừng|sả|ớt|nấm|giá|xà lách|dưa|khoai|bông cải|hẹ|ngò|bạc hà|lá|su|măng|đu đủ)/],
+];
+
+/** Nhóm của một món cần mua: dùng category nếu backend có, không thì đoán theo tên (chỉ để trình bày). */
+export function shoppingGroupOf(item: Pick<ShoppingItem, "name"> & { category?: string | null }): string {
+  if (item.category?.trim()) return item.category.trim();
+  const name = item.name.normalize("NFC").toLocaleLowerCase("vi").trim();
+  return GROUP_RULES.find(([, pattern]) => pattern.test(name))?.[0] ?? "Khác";
+}
+
+/** Danh sách đi chợ theo nhóm (thứ tự nhóm cố định), trong nhóm: chưa mua trước, rồi theo tên. */
+export function groupShoppingItems<T extends Pick<ShoppingItem, "name" | "purchased"> & { category?: string | null }>(items: T[]) {
+  const groups = new Map<string, T[]>();
+  items.forEach((item) => {
+    const group = shoppingGroupOf(item);
+    groups.set(group, [...(groups.get(group) ?? []), item]);
+  });
+  const rank = (group: string) => {
+    const index = (SHOPPING_GROUPS as readonly string[]).indexOf(group);
+    return index < 0 ? SHOPPING_GROUPS.length - 1 : index;
+  };
+  return [...groups.entries()]
+    .sort(([a], [b]) => rank(a) - rank(b) || a.localeCompare(b, "vi"))
+    .map(([name, groupItems]) => ({
+      name,
+      items: [...groupItems].sort((a, b) => Number(a.purchased) - Number(b.purchased) || a.name.localeCompare(b.name, "vi")),
+    }));
+}
+
+// ---------- Gợi ý dinh dưỡng ----------
+
+/** Lượng chất xơ khuyến nghị mỗi ngày dùng cho gợi ý (hồ sơ chưa có chỉ tiêu chất xơ). */
+export const FIBER_TARGET_G = 30;
+
+export type MealPlanSuggestion = { key: string; text: string };
 type SuggestionCandidate = MealPlanSuggestion & { excludedDiets?: string[]; conflicts?: string[] };
 
 const asWords = (value: string) => ` ${value.trim().toLocaleLowerCase("vi").replace(/[^\p{L}\p{N}]+/gu, " ").trim()} `;
@@ -120,37 +202,37 @@ function conflictsWithProfile(candidate: SuggestionCandidate, profile: Nutrition
 
 const fatCandidates: SuggestionCandidate[] = [
   {
-    key: "omega3-fish", image: "/assets/recipe-salmon.jpg", alt: "Cá hồi",
-    text: "Bổ sung cá béo như cá hồi, cá thu giúp đa dạng nguồn Omega-3 trong tuần.",
+    key: "omega3-fish", text: "Thêm cá béo như cá hồi, cá thu 1–2 bữa để có thêm Omega-3.",
     excludedDiets: ["VEGETARIAN", "VEGAN"], conflicts: ["hải sản", "thủy sản", "đồ biển", "seafood", "cá"],
   },
   {
-    key: "omega3-plant", image: "/assets/recipe-vegan-bowl.jpg", alt: "Món chay từ đậu",
-    text: "Bổ sung Omega-3 từ thực vật như đậu nành, đậu hũ hoặc hạt óc chó.",
+    key: "omega3-plant", text: "Thêm Omega-3 từ thực vật: đậu nành, đậu hũ hoặc hạt óc chó.",
     conflicts: ["đậu nành", "đậu hũ", "óc chó", "các loại hạt"],
   },
-  {
-    key: "fat-plant-oil", image: "/assets/recipe-vegan-bowl.jpg", alt: "Rau củ",
-    text: "Ưu tiên dầu thực vật khi nấu và giữ lượng chất béo vừa phải trong tuần.",
-  },
+  { key: "fat-plant-oil", text: "Nấu bằng dầu thực vật và giữ lượng chất béo như hiện tại." },
 ];
 
-/** Hai gợi ý ở trang Thực đơn: chất xơ và chất béo, đã loại các gợi ý mâu thuẫn với hồ sơ. */
+const formatGram = (value: number) => `${value.toLocaleString("vi-VN")} g`;
+
+/** Hai gợi ý theo số liệu trung bình của thực đơn: chất xơ và chất béo; đã loại gợi ý mâu thuẫn với hồ sơ. */
 export function mealPlanSuggestions(
   profile: NutritionProfile | null | undefined,
   averages: { fiber: number; fat: number },
-  targets: { fiber: number; fat: number },
+  fatTarget: number | null,
 ): MealPlanSuggestion[] {
+  const fiberHead = `Chất xơ trung bình ${formatGram(averages.fiber)} mỗi ngày`;
   const fiber: MealPlanSuggestion = {
-    key: "fiber", image: "/assets/recipe-vegan-bowl.jpg", alt: "Rau xanh",
-    text: averages.fiber < targets.fiber
-      ? "Thêm 1–2 khẩu phần rau xanh mỗi ngày để cân bằng dinh dưỡng."
-      : "Lượng chất xơ tuần này đang ở mức cân bằng tốt.",
+    key: "fiber",
+    text: averages.fiber < FIBER_TARGET_G
+      ? `${fiberHead}, dưới mức ${formatGram(FIBER_TARGET_G)}: thêm 1–2 khẩu phần rau xanh mỗi ngày.`
+      : `${fiberHead}, đạt mức ${formatGram(FIBER_TARGET_G)}.`,
   };
-  const fat: MealPlanSuggestion = averages.fat > targets.fat
-    ? { key: "fat-reduce", image: "/assets/recipe-vegan-bowl.jpg", alt: "Rau củ", text: "Ưu tiên chất béo tốt và giảm các món chiên trong những ngày tới." }
-    : fatCandidates.find((candidate) => !conflictsWithProfile(candidate, profile))!;
-  return [fiber, fat].map(({ key, image, alt, text }) => ({ key, image, alt, text }));
+  const fatHead = fatTarget ? `Chất béo trung bình ${formatGram(averages.fat)} mỗi ngày (mục tiêu ${formatGram(fatTarget)})` : "";
+  if (fatTarget && averages.fat > fatTarget) {
+    return [fiber, { key: "fat-reduce", text: `${fatHead}: bớt món chiên, ưu tiên hấp, luộc, kho.` }];
+  }
+  const candidate = fatCandidates.find((item) => !conflictsWithProfile(item, profile))!;
+  return [fiber, { key: candidate.key, text: fatHead ? `${fatHead}. ${candidate.text}` : candidate.text }];
 }
 
 /** Nhãn trung thực cho nguồn tạo thực đơn. */
@@ -158,8 +240,11 @@ export function mealPlanSourceLabel(aiGenerated: boolean) {
   return aiGenerated ? "Tạo bởi AI" : "Thuật toán gợi ý";
 }
 
-/** Chỉ nhắc tới AI khi backend xác nhận đã cấu hình OpenAI; chưa biết thì coi như chưa có. */
-export function generateMealPlanLabel(aiAvailable: boolean | undefined, pending: boolean) {
-  if (pending) return aiAvailable ? "AI đang tạo..." : "Đang tạo...";
-  return aiAvailable ? "Tạo thực đơn AI" : "Tạo thực đơn";
+/** Nguồn sẽ dùng khi bấm "Tạo thực đơn": chỉ nhắc tới AI khi backend xác nhận đã cấu hình OpenAI. */
+export function generateSourceLabel(aiAvailable: boolean | undefined) {
+  return mealPlanSourceLabel(Boolean(aiAvailable));
+}
+
+export function generateMealPlanLabel(pending: boolean) {
+  return pending ? "Đang tạo thực đơn..." : "Tạo thực đơn";
 }

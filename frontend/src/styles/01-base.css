@@ -214,20 +214,12 @@ h1, h2, h3, .logo { font-family: "Manrope", system-ui, sans-serif; }
 
 .auth-card input:hover { border-color: #bfcfc2; }
 .auth-card input:focus, .generate-controls input:focus { border-color: #6e9d88; background: #fff; box-shadow: 0 0 0 4px rgba(62,115,93,.09); }
-.form-error, .form-success, .form-notice { margin: 13px 0; padding: 11px 13px; border-radius: 11px; font-size: 11px; line-height: 1.45; }
+.form-error, .form-success { margin: 13px 0; padding: 11px 13px; border-radius: 11px; font-size: 11px; line-height: 1.45; }
 .form-error { color: #a94435; background: #fff0ed; border: 1px solid #f8d8d1; }
 .form-success { color: #39734b; background: #e8f4e8; border: 1px solid #d4ead7; }
-.form-notice { color: #5c6862; background: #f6f8f4; border: 1px solid #e3e9de; }
 
 /* Ô ngày dd/mm/yyyy dùng chung (components/DateInput.tsx) */
-.date-input { position: relative; display: block; }
 
-.date-input .date-input-text { margin-top: 0; padding-right: 38px; }
-.date-input .date-input-text[aria-invalid="true"] { border-color: #e0a093; }
-.date-input .date-input-picker { position: absolute; top: 50%; right: 7px; width: 28px; height: 28px; padding: 0; border: 0; border-radius: 8px; color: #6f817a; background: none; box-shadow: none; display: grid; place-items: center; transform: translateY(-50%); cursor: pointer; }
-.date-input .date-input-picker:hover { color: #3e735d; background: rgba(62,115,93,.08); }
-.date-input .date-input-picker svg { width: 16px; height: 16px; }
-.date-input .date-input-native { position: absolute; bottom: 0; left: 0; width: 1px; height: 1px; margin: 0; padding: 0; border: 0; opacity: 0; pointer-events: none; }
 .page-error { max-width: 620px; margin: -14px 0 20px; }
 
 .generate-controls { display: flex; gap: 8px; }

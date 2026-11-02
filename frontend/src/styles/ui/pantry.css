@@ -20,21 +20,6 @@
 .kho-search__icon { position: absolute; top: 50%; left: var(--space-4); width: 20px; height: 20px; color: var(--muted); stroke-width: 1.75; transform: translateY(-50%); pointer-events: none; }
 .kho-search__input.ui-input { padding-left: 48px; border-radius: var(--radius-pill); }
 
-.kho-notice {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-3);
-  margin: 0;
-  padding: var(--space-3) var(--space-4);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-card);
-  color: var(--ink);
-  background: var(--surface-2);
-  font-size: var(--fs-small);
-}
-
 /* Bốn ô thống kê trong một card; ô là nút lọc (aria-pressed). */
 .kho-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); }
 .kho-stat {

@@ -273,6 +273,7 @@ textarea.ui-input { min-height: 112px; padding: var(--space-3) var(--space-4); r
 
 /* Ô ngày dd/mm/yyyy (components/DateInput) đặt trong Field. */
 .ui-date { position: relative; display: block; }
+.ui-date .date-input-native { position: absolute; bottom: 0; left: 0; width: 1px; height: 1px; margin: 0; padding: 0; border: 0; opacity: 0; pointer-events: none; }
 .ui-date .date-input-text.ui-input { margin: 0; padding-right: 56px; }
 .ui-date .date-input-text.ui-input[aria-invalid="true"] { border-color: var(--warn); }
 .ui-date .date-input-picker {
@@ -327,6 +328,48 @@ textarea.ui-input { min-height: 112px; padding: var(--space-3) var(--space-4); r
   .ui-dialog__actions { flex-direction: column-reverse; }
   .ui-dialog__actions .ui-button { width: 100%; }
 }
+
+/* Dòng nhắc/xác nhận ngay trong trang (kèm nút như "Hoàn tác", "Đóng"). */
+.ui-notice {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2) var(--space-4);
+  margin: 0;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-card);
+  color: var(--ink);
+  background: var(--surface-2);
+  font-size: var(--fs-small);
+}
+.ui-notice--error { background: var(--warn-bg); }
+
+/* Vòng calo + ba thanh đạm / tinh bột / béo (NutritionMeters; màu biểu đồ theo DESIGN.md mục 4). Tổng quan, Thực đơn. */
+.ui-ring { position: relative; flex: 0 0 auto; width: 148px; height: 148px; }
+.ui-ring svg { display: block; width: 100%; height: 100%; }
+.ui-ring__track,
+.ui-ring__value { fill: none; stroke-width: 9; }
+.ui-ring__track { stroke: var(--track); }
+.ui-ring__value { stroke: var(--accent); stroke-linecap: round; transition: stroke-dashoffset 900ms var(--ease-out); }
+.ui-ring__label { position: absolute; inset: 0; display: grid; place-content: center; justify-items: center; text-align: center; }
+.ui-ring__number { color: var(--ink); font-family: var(--font-serif); font-size: 2rem; font-weight: 500; line-height: 1; font-variant-numeric: tabular-nums; }
+.ui-ring__target { margin-top: var(--space-1); color: var(--muted); font-size: var(--fs-label); }
+
+@media (prefers-reduced-motion: reduce) {
+  .ui-ring__value { transition: none; }
+}
+
+.ui-macros { display: grid; flex: 1 1 220px; gap: var(--space-4); margin: 0; }
+.ui-macro { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--space-2) var(--space-3); }
+.ui-macro dt { color: var(--ink); font-size: var(--fs-small); font-weight: 600; }
+.ui-macro dd { display: flex; justify-content: flex-end; gap: var(--space-3); margin: 0; color: var(--ink-2); font-size: var(--fs-small); font-variant-numeric: tabular-nums; }
+.ui-macro__percent { min-width: 3.5ch; color: var(--muted); text-align: right; }
+.ui-bar { grid-column: 1 / -1; height: 8px; overflow: hidden; border-radius: var(--radius-pill); background: var(--track); }
+.ui-bar__fill { display: block; height: 100%; border-radius: inherit; }
+.ui-bar__fill--protein { background: var(--accent); }
+.ui-bar__fill--carbs { background: var(--warn); }
+.ui-bar__fill--fat { background: var(--muted); }
 
 /* Ảnh món (RecipeImage): ảnh thật, hoặc ô surface-2 kèm tên món khi chưa có ảnh (DESIGN.md mục 10). Khung chứa đặt kích thước. */
 .ui-recipe-image { display: block; background: var(--surface-2); object-fit: cover; }

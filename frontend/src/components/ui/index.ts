@@ -6,6 +6,7 @@ export { ConfirmDialog, ConfirmProvider, useConfirm } from "./ConfirmDialog";
 export { Dialog } from "./Dialog";
 export { Field, type FieldControlProps } from "./Field";
 export { Logo } from "./Logo";
+export { CalorieRing, MACROS, MacroList, type MacroValues } from "./NutritionMeters";
 export { PageHeader } from "./PageHeader";
 export { RecipeImage } from "./RecipeImage";
 export { EmptyState, ErrorState, LoadingState, Skeleton } from "./States";

@@ -110,7 +110,7 @@ export interface RecipeStats { total: number; breakfast: number; vegetarian: num
 
 export interface MealPlanItem { id: string; mealType: MealType; servings: number; calories: number; completed: boolean; recipe: Recipe }
 export interface MealPlanDay { id: string; date: string; items: MealPlanItem[] }
-export interface ShoppingItem { id: string; name: string; quantity: number; unit: FoodUnit; purchased: boolean }
+export interface ShoppingItem { id: string; name: string; quantity: number; unit: FoodUnit; purchased: boolean; category?: string | null }
 export interface MealPlan {
   id: string; name: string; startDate: string; endDate: string; status: MealPlanStatus;
   calorieTarget: number; aiGenerated: boolean; summary?: string; days: MealPlanDay[]; shoppingItems: ShoppingItem[];

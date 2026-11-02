@@ -1,50 +1,51 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { addDays, format } from "date-fns";
-import { vi } from "date-fns/locale";
-import {
-  Apple, BadgeCheck, CalendarDays, Check, ChevronDown, ChevronLeft, ChevronRight,
-  CircleCheck, Clock3, Flame, Leaf, ListChecks, LoaderCircle, MoonStar, Plus,
-  Search, ShoppingBasket, Soup, Sparkles, SunMedium, Target, Trash2, Utensils,
-} from "lucide-react";
-import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
-import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
+import { addDays, format } from "date-fns";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { getApiError } from "../api/client";
 import { queryKeys } from "../api/query-keys";
-import DateInput from "../components/DateInput";
-import { EmptyState, LoadingState } from "../components/States";
-import { RecipeImage } from "../components/ui";
-import { IMAGE_WIDTHS } from "../utils/images";
+import { dayTabId, MealDayTabs } from "../components/meal-plans/MealDayTabs";
+import { MealDayList } from "../components/meal-plans/MealDayList";
+import { MealPlanCreateForm } from "../components/meal-plans/MealPlanCreateForm";
+import { MealPlanHeader } from "../components/meal-plans/MealPlanHeader";
+import { MealPlanNutritionCard, MealPlanSuggestionsCard } from "../components/meal-plans/MealPlanSide";
+import { MealPlansSkeleton } from "../components/meal-plans/MealPlansSkeleton";
+import { ShoppingListCard } from "../components/meal-plans/ShoppingListCard";
+import { Button, EmptyState, ErrorState, Toast, useConfirm } from "../components/ui";
+import { aiQueries } from "../features/ai/ai.queries";
 import {
-  alternativeMeals, featuredMealTypes, hasBalancedCalories, mealLabels,
-  generateMealPlanLabel, latestMealPlanId, mealPlanDeleteConfirmMessage, mealPlanSourceLabel, mealPlanPath, mealPlanSuggestions, mealPlanTargets, mealShortLabels, mealTag, mealTimes,
-  nextMealPlanIdAfterDelete, percentage, recipeSearchPath, selectMealPlanDay, summarizeMealPlan,
+  dayNutrition, generateSourceLabel, initialDayIndex, latestMealPlanId, mealPlanDeleteConfirm, mealPlanPath, mealPlanSuggestions,
+  nextMealPlanIdAfterDelete, planTargets, selectMealPlanDay, summarizeMealPlan, todayDayIndex,
 } from "../features/meal-plans/meal-plans.logic";
 import {
   invalidateMealPlanQueries, mealPlanMutations, mealPlanQueries, removeDeletedMealPlan, removeMealPlanDetail,
 } from "../features/meal-plans/meal-plans.queries";
-import { aiQueries } from "../features/ai/ai.queries";
 import { profileQueries } from "../features/profile/profile.queries";
-import { recipeDetailPath } from "../features/recipes/recipes.logic";
-import type { MealPlan } from "../types";
-import { formatDayMonth, formatDisplayDate } from "../utils/date";
-
-const mealIcons = { BREAKFAST: SunMedium, LUNCH: Soup, DINNER: MoonStar, SNACK: Apple };
+import type { MealPlan, MealPlanItem } from "../types";
+import { type DateDraftStatus, formatDisplayDate } from "../utils/date";
 
 type MealPlansLocationState = { notice?: string } | null;
+type MealStatus = { kind: "done" | "undone" | "error"; item: MealPlanItem; message?: string };
+const DAY_PANEL_ID = "td-day-panel";
 
 export default function MealPlansPage() {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const location = useLocation();
+  const confirm = useConfirm();
   const { id: routeId } = useParams();
   const [selectedDayIndex, setSelectedDayIndex] = useState(0);
   const [startDate, setStartDate] = useState(format(addDays(new Date(), 1), "yyyy-MM-dd"));
-  const [search, setSearch] = useState("");
+  const [dateStatus, setDateStatus] = useState<DateDraftStatus>("valid");
   const [error, setError] = useState("");
+  const [mealStatus, setMealStatus] = useState<MealStatus | null>(null);
+  const [toast, setToast] = useState("");
+  const clearToast = useCallback(() => setToast(""), []);
   const notice = (location.state as MealPlansLocationState)?.notice ?? "";
 
-  const { data = [], isLoading } = useQuery(mealPlanQueries.list());
+  const list = useQuery(mealPlanQueries.list());
+  const data = useMemo(() => list.data ?? [], [list.data]);
   const { data: profileData } = useQuery(profileQueries.detail());
   const { data: aiStatus } = useQuery(aiQueries.status());
   // Thực đơn đang chọn lấy từ URL và tải bằng GET /meal-plans/:id; dữ liệu đã có trong danh sách dùng làm dữ liệu ban đầu.
@@ -68,8 +69,6 @@ export default function MealPlansPage() {
     navigate(mealPlanPath(fallbackId), { replace: true, state: { notice: "Không tìm thấy thực đơn này. Đã chuyển về thực đơn mới nhất." } });
   }, [data, detailStatus, navigate, routeId]);
 
-  useEffect(() => setSelectedDayIndex(0), [routeId]);
-
   // Bỏ cache chi tiết của thực đơn vừa xóa khi trang đã rời khỏi nó (điều hướng của React Router chạy trong transition).
   const deletedPlanId = useRef<string | null>(null);
   useEffect(() => {
@@ -80,14 +79,14 @@ export default function MealPlansPage() {
   }, [queryClient, routeId]);
 
   const selected = routeId ? detail.data ?? data.find((plan) => plan.id === routeId) : undefined;
-  const selectedDay = selectMealPlanDay(selected, selectedDayIndex);
-  const { planMeals, purchasedItems, nutrition, averages, completionRate } = useMemo(
-    () => summarizeMealPlan(selected),
-    [selected],
-  );
-  const targets = mealPlanTargets(profileData?.profile, selected);
-  const nutritionScore = hasBalancedCalories(averages.calories, targets.calories);
-  const snack = selectedDay?.items.find((item) => item.mealType === "SNACK");
+  // Mở thực đơn: chọn sẵn hôm nay (nếu thuộc thực đơn); đổi ngày sau đó chỉ đổi state, không tải lại trang.
+  useEffect(() => {
+    if (selected) setSelectedDayIndex(initialDayIndex(selected));
+    setMealStatus(null);
+  }, [selected?.id]); // chỉ khi đổi thực đơn, không chạy lại khi dữ liệu thực đơn được làm mới
+
+  const week = useMemo(() => summarizeMealPlan(selected), [selected]);
+  const targets = planTargets(profileData?.profile);
 
   const generate = useMutation({
     ...mealPlanMutations.generate(startDate),
@@ -95,25 +94,17 @@ export default function MealPlansPage() {
       invalidateMealPlanQueries(queryClient, true);
       navigate(mealPlanPath(plan.id));
       setError("");
+      setToast(`Đã tạo “${plan.name}”.`);
     },
     onError: (err) => setError(getApiError(err)),
   });
-
-  const toggleMeal = useMutation({
-    ...mealPlanMutations.updateMeal(),
-    onSuccess: () => invalidateMealPlanQueries(queryClient, true),
-  });
-
-  const toggleShop = useMutation({
-    ...mealPlanMutations.updateShopping(),
-    onSuccess: () => invalidateMealPlanQueries(queryClient, false),
-  });
-
+  const updateMeal = useMutation({ ...mealPlanMutations.updateMeal(), onSuccess: () => invalidateMealPlanQueries(queryClient, true) });
+  const toggleShop = useMutation({ ...mealPlanMutations.updateShopping(), onSuccess: () => invalidateMealPlanQueries(queryClient, false) });
   const activate = useMutation({
     ...mealPlanMutations.updateStatus(),
-    onSuccess: () => invalidateMealPlanQueries(queryClient, true),
+    onSuccess: (plan) => { invalidateMealPlanQueries(queryClient, true); setToast(`Đã áp dụng “${plan.name}”.`); },
+    onError: (err) => setError(getApiError(err)),
   });
-
   const remove = useMutation({
     ...mealPlanMutations.remove(),
     onSuccess: (_result, deletedId) => {
@@ -126,102 +117,131 @@ export default function MealPlansPage() {
     onError: (err) => setError(getApiError(err)),
   });
 
-  const confirmRemove = (plan: MealPlan) => {
-    if (window.confirm(mealPlanDeleteConfirmMessage(plan))) remove.mutate(plan.id);
+  const setCompleted = (item: MealPlanItem, completed: boolean) => {
+    updateMeal.mutate({ id: item.id, completed }, {
+      onSuccess: () => setMealStatus({ kind: completed ? "done" : "undone", item }),
+      onError: (err) => setMealStatus({ kind: "error", item, message: getApiError(err) }),
+    });
+  };
+  const confirmRemove = async (plan: MealPlan) => {
+    if (!(await confirm({ ...mealPlanDeleteConfirm(plan), tone: "danger" }))) return;
+    remove.mutate(plan.id, { onSuccess: () => setToast(`Đã xóa “${plan.name}”.`) });
   };
 
-  const submitSearch = (event: FormEvent) => {
-    event.preventDefault();
-    navigate(recipeSearchPath(search));
-  };
+  const createForm = (
+    <MealPlanCreateForm
+      startDate={startDate}
+      dateStatus={dateStatus}
+      onStartDateChange={(value, status) => { setStartDate(value); setDateStatus(status); }}
+      onSubmit={() => generate.mutate()}
+      pending={generate.isPending}
+      aiAvailable={aiStatus?.available}
+    />
+  );
+  const generatingNotice = generate.isPending && (
+    <p className="ui-notice" role="status">
+      Đang tạo thực đơn 7 ngày từ {formatDisplayDate(startDate)} ({generateSourceLabel(aiStatus?.available).toLowerCase()}).
+      {aiStatus?.available ? " AI có thể mất tới vài chục giây." : " Thường xong trong vài giây."}
+    </p>
+  );
+  const messages = (
+    <>
+      {error && <ErrorState message={error} />}
+      {notice && <p className="ui-notice" role="status">{notice}</p>}
+      {generatingNotice}
+    </>
+  );
+  const toastRegion = <Toast message={toast} onDone={clearToast} />;
 
-  if (isLoading || (routeId && !selected && detail.isLoading)) return <LoadingState />;
+  if (list.isLoading || (routeId && !selected && detail.isLoading)) {
+    return <div className="td-view"><MealPlansSkeleton /></div>;
+  }
+  if (list.isError || (routeId && !selected && detail.isError && detailStatus !== 404 && detailStatus !== 422)) {
+    const retry = () => void (list.isError ? list.refetch() : detail.refetch());
+    return (
+      <div className="td-view">
+        <ErrorState message="Chưa tải được thực đơn." onRetry={retry} retrying={list.isFetching || detail.isFetching} />
+      </div>
+    );
+  }
 
-  return <div className="page reference-menu-page">
-    <div className="menu-search-row">
-      <form className="menu-global-search" onSubmit={submitSearch}><Search /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Tìm kiếm món ăn, thực đơn..." /><kbd>⌘ K</kbd></form>
-      <div className="menu-generate-controls"><DateInput aria-label="Ngày bắt đầu" value={startDate} onChange={setStartDate} /><button onClick={() => generate.mutate()} disabled={generate.isPending || !startDate}>{generate.isPending ? <LoaderCircle className="spin" /> : <Sparkles />}{generateMealPlanLabel(aiStatus?.available, generate.isPending)}</button></div>
-    </div>
-
-    {error && <div className="form-error menu-page-error">{error}</div>}
-    {notice && <div className="form-notice menu-page-error" role="status">{notice}</div>}
-
-    {!selected ? <div className="menu-empty-shell"><section className="menu-hero menu-hero-empty"><div><span className="eyebrow"><Leaf /> Kế hoạch ăn uống thông minh</span><h1>Thực đơn</h1><p>Lên kế hoạch bữa ăn khoa học, tiết kiệm thời gian và dinh dưỡng mỗi ngày.</p><button onClick={() => generate.mutate()} disabled={generate.isPending || !startDate}><Sparkles /> Tạo thực đơn đầu tiên</button></div></section><EmptyState title="Chưa có thực đơn nào">Chọn ngày bắt đầu và để AI xây dựng kế hoạch ăn uống 7 ngày đầu tiên.</EmptyState></div> : <>
-      <div className="menu-top-grid">
-        <section className="menu-hero">
-          <div><span className="eyebrow"><Leaf /> Kế hoạch ăn uống thông minh</span><h1>Thực đơn</h1><p>Lên kế hoạch bữa ăn khoa học, tiết kiệm thời gian<br />và dinh dưỡng mỗi ngày.</p><span className="menu-plan-note"><Sparkles /> {selected.summary || "Thực đơn được cá nhân hóa dựa trên mục tiêu của bạn."}</span></div>
-        </section>
-
-        <aside className="menu-week-summary">
-          <header><div><span>Tổng quan tuần</span><h2>{formatDayMonth(selected.startDate)} – {formatDisplayDate(selected.endDate)}</h2></div><BadgeCheck /></header>
-          <div className="menu-summary-grid">
-            <article><span className="meals"><Utensils /></span><div><strong>{planMeals.length}</strong><small>Món ăn</small></div></article>
-            <article><span className="calories"><Flame /></span><div><strong>{nutrition.calories.toLocaleString("vi-VN")}</strong><small>kcal</small></div></article>
-            <article><span className="balanced"><CircleCheck /></span><div><strong>{nutritionScore ? "Đủ" : "Gần đủ"}</strong><small>Dinh dưỡng</small></div></article>
-            <article><span className="progress"><Target /></span><div><strong>{completionRate}%</strong><small>Hoàn thành</small></div></article>
+  if (!selected) {
+    return (
+      <div className="td-view">
+        <header className="td-hero">
+          <div className="td-hero__text">
+            <h1 className="ui-title">Thực đơn <em>của bạn</em></h1>
+            <p className="ui-text">
+              Nouri xếp bữa sáng, trưa, tối cho 7 ngày theo hồ sơ dinh dưỡng và kho của bạn, kèm danh sách đi chợ.
+            </p>
           </div>
-        </aside>
+        </header>
+        {messages}
+        {generate.isPending ? <MealPlansSkeleton label="Đang tạo thực đơn" /> : (
+          <div className="td-empty">
+            <EmptyState message="Bạn chưa có thực đơn nào. Chọn ngày bắt đầu rồi bấm Tạo thực đơn." action={createForm} />
+          </div>
+        )}
+        {toastRegion}
       </div>
+    );
+  }
 
-      <div className="menu-content-layout">
-        <main className="menu-schedule-card">
-          <header className="menu-week-toolbar">
-            <div className="menu-week-nav"><button onClick={() => setSelectedDayIndex((value) => Math.max(0, value - 1))} disabled={selectedDayIndex === 0} aria-label="Ngày trước"><ChevronLeft /></button><button onClick={() => setSelectedDayIndex((value) => Math.min(selected.days.length - 1, value + 1))} disabled={selectedDayIndex === selected.days.length - 1} aria-label="Ngày sau"><ChevronRight /></button></div>
-            <label className="menu-plan-select"><CalendarDays /><select value={selected.id} onChange={(event) => navigate(mealPlanPath(event.target.value))}>{data.map((plan) => <option key={plan.id} value={plan.id}>{plan.name}</option>)}</select><ChevronDown /></label>
-            <strong>{formatDayMonth(selected.startDate)} – {formatDisplayDate(selected.endDate)}</strong>
-            <div className="menu-toolbar-actions"><span className={`menu-plan-status ${selected.status.toLowerCase()}`}>{selected.status === "ACTIVE" ? "Đang áp dụng" : selected.status === "COMPLETED" ? "Đã hoàn thành" : "Bản nháp"}</span><span className={`menu-plan-source${selected.aiGenerated ? " ai" : ""}`}>{mealPlanSourceLabel(selected.aiGenerated)}</span>{selected.status === "DRAFT" && <button className="menu-activate-button" onClick={() => activate.mutate({ id: selected.id, status: "ACTIVE" })} disabled={activate.isPending}><Check /> Áp dụng</button>}<Link to="/recipes"><Plus /> Thêm món</Link><button type="button" className="menu-delete-button" onClick={() => confirmRemove(selected)} disabled={remove.isPending}><Trash2 /> {remove.isPending ? "Đang xóa..." : "Xóa thực đơn"}</button></div>
-          </header>
+  const day = selectMealPlanDay(selected, selectedDayIndex)!;
+  const dayIndex = selected.days.indexOf(day);
+  const todayIndex = todayDayIndex(selected);
 
-          <nav className="menu-day-tabs" aria-label="Chọn ngày trong tuần">{selected.days.map((day, index) => {
-            const dayDate = new Date(day.date);
-            const isWeekend = index >= 5;
-            return <button key={day.id} className={`${selectedDayIndex === index ? "active" : ""} ${isWeekend ? "weekend" : ""}`} onClick={() => setSelectedDayIndex(index)}><strong>{format(dayDate, "EEEEEE", { locale: vi }).toUpperCase()}</strong><span>{formatDayMonth(dayDate)}</span></button>;
-          })}</nav>
+  return (
+    <div className="td-view">
+      <MealPlanHeader
+        plan={selected}
+        plans={data}
+        onSelectPlan={(id) => navigate(mealPlanPath(id))}
+        onActivate={() => activate.mutate({ id: selected.id, status: "ACTIVE" })}
+        activating={activate.isPending}
+        onDelete={() => void confirmRemove(selected)}
+        deleting={remove.isPending}
+        createForm={createForm}
+      />
+      {messages}
 
-          <div className="menu-meal-columns">{featuredMealTypes.map((mealType, typeIndex) => {
-            const MealIcon = mealIcons[mealType];
-            const primary = selectedDay?.items.find((item) => item.mealType === mealType);
-            const alternatives = alternativeMeals(selected, mealType, primary?.id);
-            return <article className={`menu-meal-column menu-${mealType.toLowerCase()}`} key={mealType}>
-              <header><span><MealIcon /></span><div><strong>{mealShortLabels[mealType]}</strong><small>{mealTimes[mealType]}</small></div><ChevronRight /></header>
-              {primary ? <>
-                <div className="menu-featured-image"><RecipeImage recipe={primary.recipe} /><button className={primary.completed ? "completed" : ""} onClick={() => toggleMeal.mutate({ id: primary.id, completed: !primary.completed })} aria-label={primary.completed ? `Đánh dấu ${primary.recipe.name} chưa hoàn thành` : `Đánh dấu ${primary.recipe.name} hoàn thành`}><Check /></button></div>
-                <div className="menu-featured-copy"><h2><Link to={recipeDetailPath(primary.recipe.id)}>{primary.recipe.name}</Link></h2><span><Clock3 /> {primary.recipe.prepMinutes + primary.recipe.cookMinutes} phút <i /> {primary.calories} kcal</span><div><b>{mealTag(primary)}</b><b className="secondary">{primary.completed ? "Đã dùng bữa" : "Dễ thực hiện"}</b></div></div>
-                <div className="menu-alternative-list">{alternatives.map((item, index) => <button key={item.id} className={item.completed ? "completed" : ""} onClick={() => toggleMeal.mutate({ id: item.id, completed: !item.completed })}><RecipeImage recipe={item.recipe} width={IMAGE_WIDTHS.thumb} alt="" /><span><strong>{item.recipe.name}</strong><small><Clock3 /> {item.recipe.prepMinutes + item.recipe.cookMinutes} phút · {item.calories} kcal</small></span><i>{item.completed && <Check />}</i></button>)}</div>
-              </> : <div className="menu-missing-meal"><Utensils /><p>Chưa có món cho {mealLabels[mealType].toLowerCase()}.</p><Link to="/recipes">Chọn món</Link></div>}
-            </article>;
-          })}</div>
+      <div className="td-layout">
+        <div className="td-main">
+          <MealDayTabs days={selected.days} selectedIndex={dayIndex} todayIndex={todayIndex} panelId={DAY_PANEL_ID} onSelect={setSelectedDayIndex} />
+          {mealStatus && (
+            <p className={mealStatus.kind === "error" ? "ui-notice ui-notice--error" : "ui-notice"} role={mealStatus.kind === "error" ? "alert" : "status"}>
+              {mealStatus.kind === "done" && <>Đã đánh dấu đã ăn: {mealStatus.item.recipe.name}.</>}
+              {mealStatus.kind === "undone" && <>Đã bỏ đánh dấu đã ăn: {mealStatus.item.recipe.name}.</>}
+              {mealStatus.kind === "error" && <>Chưa cập nhật được bữa {mealStatus.item.recipe.name}. {mealStatus.message}</>}
+              {mealStatus.kind === "done" && <Button busy={updateMeal.isPending} onClick={() => setCompleted(mealStatus.item, false)}>Hoàn tác</Button>}
+            </p>
+          )}
+          <MealDayList
+            plan={selected}
+            day={day}
+            isToday={dayIndex === todayIndex}
+            panelId={DAY_PANEL_ID}
+            labelledBy={dayTabId(dayIndex)}
+            pendingId={updateMeal.isPending ? updateMeal.variables?.id ?? null : null}
+            onToggle={setCompleted}
+          />
+        </div>
 
-          {snack && <div className="menu-snack-strip"><span><Apple /></span><div><small>Bữa phụ hôm nay</small><strong><Link to={recipeDetailPath(snack.recipe.id)}>{snack.recipe.name}</Link></strong></div><b>{snack.calories} kcal</b></div>}
-          <Link className="menu-add-meal" to="/recipes"><Plus /> Thêm món vào thực đơn</Link>
-        </main>
-
-        <aside className="menu-side-column">
-          <section className="menu-nutrition-card">
-            <header><div><span>Dinh dưỡng trung bình</span><h2>Mỗi ngày</h2></div><BadgeCheck /></header>
-            <div className="menu-nutrition-bars">
-              <div><header><span>Năng lượng</span><b>{averages.calories.toLocaleString("vi-VN")} / {targets.calories.toLocaleString("vi-VN")} kcal</b></header><div><span className="energy" style={{ width: `${percentage(averages.calories, targets.calories)}%` }} /></div></div>
-              <div><header><span>Protein</span><b>{averages.protein} / {targets.protein} g</b></header><div><span className="protein" style={{ width: `${percentage(averages.protein, targets.protein)}%` }} /></div></div>
-              <div><header><span>Tinh bột</span><b>{averages.carbs} / {targets.carbs} g</b></header><div><span className="carbs" style={{ width: `${percentage(averages.carbs, targets.carbs)}%` }} /></div></div>
-              <div><header><span>Chất béo</span><b>{averages.fat} / {targets.fat} g</b></header><div><span className="fat" style={{ width: `${percentage(averages.fat, targets.fat)}%` }} /></div></div>
-              <div><header><span>Chất xơ</span><b>{averages.fiber} / {targets.fiber} g</b></header><div><span className="fiber" style={{ width: `${percentage(averages.fiber, targets.fiber)}%` }} /></div></div>
-            </div>
-            <Link to="/profile">Xem mục tiêu dinh dưỡng <ChevronRight /></Link>
-          </section>
-
-          <section className="menu-suggestion-card">
-            <header><Sparkles /><h2>Gợi ý cho bạn</h2></header>
-            {mealPlanSuggestions(profileData?.profile, averages, targets).map((suggestion) => <article key={suggestion.key}><img src={suggestion.image} alt={suggestion.alt} /><p>{suggestion.text}</p></article>)}
-          </section>
-
-          <section className="menu-shopping-card">
-            <header><div><span>Danh sách mua sắm</span><h2>{purchasedItems}/{selected.shoppingItems.length} đã mua</h2></div><ShoppingBasket /></header>
-            {selected.shoppingItems.length ? <div>{selected.shoppingItems.map((item) => <label className={item.purchased ? "checked" : ""} key={item.id}><input type="checkbox" checked={item.purchased} onChange={() => toggleShop.mutate({ id: item.id, purchased: !item.purchased })} /><span><Check /></span><p><strong>{item.name}</strong><small>{item.quantity} {item.unit.toLowerCase()}</small></p></label>)}</div> : <p className="menu-shopping-empty"><ListChecks /> Bạn đã có đủ nguyên liệu.</p>}
-          </section>
-
-          <section className="menu-optimize-card"><CalendarDays /><p>Dựa trên thực phẩm trong kho để gợi ý thực đơn tối ưu.</p><Link to="/assistant">Tối ưu thực đơn <Sparkles /></Link></section>
+        <aside className="td-side" aria-label="Dinh dưỡng của thực đơn">
+          <MealPlanNutritionCard
+            nutrition={targets ? dayNutrition(day.items, targets) : null}
+            week={{ completedMeals: week.completedMeals, totalMeals: week.planMeals.length, averageCalories: week.averages.calories }}
+          />
+          <MealPlanSuggestionsCard suggestions={mealPlanSuggestions(profileData?.profile, week.averages, targets?.fat ?? null)} />
         </aside>
+
+        <ShoppingListCard
+          items={selected.shoppingItems}
+          pendingId={toggleShop.isPending ? toggleShop.variables?.id ?? null : null}
+          onToggle={(item) => toggleShop.mutate({ id: item.id, purchased: !item.purchased })}
+        />
       </div>
-    </>}
-  </div>;
+      {toastRegion}
+    </div>
+  );
 }

@@ -89,12 +89,12 @@ export default function DashboardPage() {
               onMarkEaten={(meal) => setCompleted(meal, true)}
             />
             {status && (
-              <p className={status.kind === "error" ? "dash-status dash-status--error" : "dash-status"} role={status.kind === "error" ? "alert" : "status"}>
+              <p className={status.kind === "error" ? "ui-notice ui-notice--error" : "ui-notice"} role={status.kind === "error" ? "alert" : "status"}>
                 {status.kind === "done" && <>Đã đánh dấu đã ăn: {status.meal.recipe.name}.</>}
                 {status.kind === "undone" && <>Đã bỏ đánh dấu đã ăn: {status.meal.recipe.name}.</>}
                 {status.kind === "error" && <>Chưa cập nhật được bữa {status.meal.recipe.name}. {status.message}</>}
                 {status.kind === "done" && (
-                  <Button className="dash-status__undo" busy={updateMeal.isPending} onClick={() => setCompleted(status.meal, false)}>Hoàn tác</Button>
+                  <Button busy={updateMeal.isPending} onClick={() => setCompleted(status.meal, false)}>Hoàn tác</Button>
                 )}
               </p>
             )}

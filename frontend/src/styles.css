@@ -6,9 +6,7 @@
 @import "./styles/03-dashboard.css";
 @import "./styles/05-profile.css";
 @import "./styles/06-type-scale.css";
-@import "./styles/07-meal-plans.css";
 @import "./styles/09-dashboard-palette.css";
-@import "./styles/12-meal-plans-palette.css";
 @import "./styles/14-assistant.css";
 @import "./styles/15-profile-palette.css";
 @import "./styles/16-assistant-dashboard.css";
@@ -18,7 +16,6 @@
 @import "./styles/22-landing.css";
 @import "./styles/25-landing-hero-footer.css";
 @import "./styles/26-login.css";
-@import "./styles/28-recipe-detail.css";
 /* Giao diện mới (docs/design/DESIGN.md): token + thành phần dùng chung. Đặt cuối; CSS cũ gỡ dần theo từng lượt UI. */
 @import "./styles/ui/tokens.css";
 @import "./styles/ui/components.css";
@@ -29,4 +26,5 @@
 @import "./styles/ui/dashboard.css";
 @import "./styles/ui/recipes.css";
 @import "./styles/ui/pantry.css";
+@import "./styles/ui/meal-plans.css";
 @import "./styles/ui/recipe-image-legacy.css";

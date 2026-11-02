@@ -1,9 +1,7 @@
 /*
  * Kích thước ô "chưa có ảnh" (RecipeImage) trong trang cũ chưa làm lại; CSS cũ chỉ đặt kích thước cho thẻ img.
- * Gỡ từng dòng khi làm lại trang tương ứng (Cộng đồng UI-7, Thực đơn UI-6, Landing UI-11).
+ * Gỡ từng dòng khi làm lại trang tương ứng (Cộng đồng UI-7, Landing UI-11).
  */
 .community-recipe-card .ui-recipe-image--empty { flex: 0 0 auto; width: 72px; height: 56px; border-radius: 11px; }
 .community-recipe-picker li .ui-recipe-image--empty { flex: 0 0 auto; width: 44px; height: 36px; border-radius: 8px; }
-.menu-featured-image .ui-recipe-image--empty { width: 100%; height: 100%; }
-.menu-alternative-list .ui-recipe-image--empty { width: 54px; height: 48px; border-radius: 9px; }
 .landing-recipe-media .ui-recipe-image--empty { width: 100%; height: 100%; }

@@ -9,9 +9,9 @@ import {
   updateMealPlanStatus, updateShoppingPurchased,
 } from "./meal-plans.api";
 import {
-  alternativeMeals, hasBalancedCalories, mealPlanDeleteConfirmMessage, mealPlanPath, mealPlanTargets,
-  generateMealPlanLabel, latestMealPlanId, mealPlanSourceLabel, mealPlanSuggestions, mealTag, nextMealPlanIdAfterDelete, percentage, recipeSearchPath, selectMealPlanDay,
-  summarizeMealPlan,
+  alternativeMeals, dayNutrition, generateMealPlanLabel, generateSourceLabel, groupShoppingItems, initialDayIndex, latestMealPlanId,
+  mealPlanDeleteConfirm, mealPlanPath, mealPlanSourceLabel, mealPlanSuggestions, nextMealPlanIdAfterDelete, orderDayMeals, planDayLabels,
+  planTargets, planTitleParts, selectMealPlanDay, shoppingGroupOf, summarizeMealPlan, todayDayIndex,
 } from "./meal-plans.logic";
 import { invalidateMealPlanQueries, mealPlanQueries, removeDeletedMealPlan, removeMealPlanDetail } from "./meal-plans.queries";
 
@@ -162,43 +162,65 @@ describe("Meal Plan and Shopping page business logic", () => {
     expect(selectMealPlanDay(plan, 20)).toBe(plan.days[0]);
   });
 
-  it("calculates existing totals, daily averages, progress and Shopping count", () => {
+  it("calculates week totals, daily averages and Shopping count", () => {
     expect(summarizeMealPlan(plan)).toMatchObject({
       completedMeals: 1,
       purchasedItems: 1,
       nutrition: { calories: 1100, protein: 80, carbs: 110, fat: 28, fiber: 14 },
       averages: { calories: 550, protein: 40, carbs: 55, fat: 14, fiber: 7 },
-      completionRate: 33,
     });
   });
 
-  it("uses profile targets first and retains all existing fallback targets", () => {
-    const profile = { dailyCalorieTarget: 1800, proteinTargetG: 90 } as NutritionProfile;
-    expect(mealPlanTargets(profile, plan)).toEqual({ calories: 1800, protein: 90, carbs: 250, fat: 65, fiber: 30 });
-    expect(mealPlanTargets(null, undefined)).toEqual({ calories: 2000, protein: 80, carbs: 250, fat: 65, fiber: 30 });
+  it("uses profile targets only, never made-up defaults", () => {
+    const profile = { dailyCalorieTarget: 1800, proteinTargetG: 90, carbTargetG: 200, fatTargetG: 60 } as NutritionProfile;
+    expect(planTargets(profile)).toEqual({ calories: 1800, protein: 90, carbs: 200, fat: 60 });
+    expect(planTargets(null)).toBeNull();
+    expect(planTargets({ dietType: "BALANCED" } as NutritionProfile)).toBeNull();
   });
 
-  it("keeps the existing nutrition percentage and calorie balance rules", () => {
-    expect(percentage(75, 100)).toBe(75);
-    expect(percentage(150, 100)).toBe(100);
-    expect(percentage(1, 0)).toBe(100);
-    expect(hasBalancedCalories(1700, 2000)).toBe(true);
-    expect(hasBalancedCalories(1699, 2000)).toBe(false);
+  it("sums the day's meals (macros × servings) against the targets", () => {
+    const items = [meal({ servings: 2, calories: 800 }), meal({ id: "meal-x", mealType: "DINNER", completed: false, calories: 500 })];
+    const result = dayNutrition(items, { calories: 2000, protein: 100, carbs: 200, fat: 50 });
+    expect(result.calories).toEqual({ consumed: 1300, target: 2000, percent: 65 });
+    expect(result.macros.protein).toEqual({ consumed: 90, target: 100, percent: 90 });
+    expect(result).toMatchObject({ eatenCount: 1, eatenCalories: 800, mealCount: 2 });
   });
 
-  it("keeps meal tag priority", () => {
-    expect(mealTag(plan.days[0].items[0])).toBe("BALANCED");
-    expect(mealTag(meal({ recipe: recipe({ dietTags: [], proteinG: 25 }) }))).toBe("Giàu protein");
-    expect(mealTag(meal({ recipe: recipe({ dietTags: [], proteinG: 10, fatG: 15 }) }))).toBe("Ít chất béo");
+  it("orders the day's meals breakfast, lunch, snack, dinner", () => {
+    const types = ["DINNER", "SNACK", "BREAKFAST", "LUNCH"] as const;
+    const items = types.map((mealType, index) => meal({ id: `m${index}`, mealType }));
+    expect(orderDayMeals(items).map((item) => item.mealType)).toEqual(["BREAKFAST", "LUNCH", "SNACK", "DINNER"]);
   });
 
-  it("keeps the first two alternative meals and excludes the primary item", () => {
-    expect(alternativeMeals(plan, "BREAKFAST", "meal-a").map((item) => item.id)).toEqual(["meal-b"]);
+  it("opens today when the plan covers it, otherwise the first day", () => {
+    expect(todayDayIndex(plan, new Date(2026, 9, 2, 23, 30))).toBe(1);
+    expect(initialDayIndex(plan, new Date(2026, 9, 2, 0, 5))).toBe(1);
+    expect(todayDayIndex(plan, new Date(2026, 9, 9))).toBe(-1);
+    expect(initialDayIndex(plan, new Date(2026, 9, 9))).toBe(0);
+    expect(planDayLabels(plan.days[0])).toEqual({ weekday: "Thứ Năm", short: "T5", date: "01/10" });
   });
 
-  it("keeps the existing Recipes search navigation", () => {
-    expect(recipeSearchPath("  ức gà  ")).toBe("/recipes?q=%E1%BB%A9c%20g%C3%A0");
-    expect(recipeSearchPath("   ")).toBe("/recipes");
+  it("splits the backend plan name to emphasise its date", () => {
+    expect(planTitleParts("Thực đơn 2/11/2026")).toEqual({ lead: "Thực đơn", emphasis: "2/11/2026" });
+    expect(planTitleParts("Tuần ăn chay")).toEqual({ lead: "Tuần ăn chay", emphasis: "" });
+  });
+
+  it("keeps the first two alternative meals with their day and excludes the primary item", () => {
+    expect(alternativeMeals(plan, "BREAKFAST", "meal-a").map(({ item, day }) => [item.id, day.id])).toEqual([["meal-b", "day-b"]]);
+  });
+
+  it("groups shopping items by type, unpurchased first", () => {
+    const names = ["Cà chua", "Cá lóc", "Đậu bắp", "Đậu hũ", "Nước mắm", "Sữa chua", "Bún tươi", "Chuối", "Đá viên", "Ức gà", "Lá dứa"];
+    expect(names.map((name) => shoppingGroupOf({ name }))).toEqual([
+      "Rau củ", "Thịt & cá", "Rau củ", "Đậu & hạt", "Gia vị", "Trứng & sữa", "Gạo, bún & bánh", "Trái cây", "Khác", "Thịt & cá", "Rau củ",
+    ]);
+    expect(shoppingGroupOf({ name: "Cà chua", category: "Đồ tươi" })).toBe("Đồ tươi");
+    const result = groupShoppingItems([
+      { name: "Muối", purchased: false }, { name: "Tỏi", purchased: true }, { name: "Hành lá", purchased: false }, { name: "Tôm", purchased: false },
+    ]);
+    expect(result.map((group) => [group.name, group.items.map((item) => item.name)])).toEqual([
+      ["Rau củ", ["Hành lá", "Tỏi"]], ["Thịt & cá", ["Tôm"]], ["Gia vị", ["Muối"]],
+    ]);
   });
 });
 
@@ -227,11 +249,13 @@ describe("Meal plan route and delete helpers", () => {
     ])).toBe("same-start-created-last");
     expect(latestMealPlanId([])).toBeNull();
   });
-  it("names the plan in the delete confirmation and warns when it is active", () => {
-    const draft = mealPlanDeleteConfirmMessage({ name: "Tuần 1", status: "DRAFT" });
-    expect(draft).toContain("“Tuần 1”");
-    expect(draft).not.toContain("đang được áp dụng");
-    expect(mealPlanDeleteConfirmMessage({ name: "Tuần 2", status: "ACTIVE" })).toContain("Thực đơn này đang được áp dụng.");
+  it("names the plan in the delete confirmation, warns when it is active and states the consequence", () => {
+    const draft = mealPlanDeleteConfirm({ name: "Tuần 1", status: "DRAFT" });
+    expect(draft.title).toBe("Xóa “Tuần 1”?");
+    expect(draft.description).not.toContain("đang được áp dụng");
+    expect(draft.description).toContain("Không hoàn tác được.");
+    expect(draft.confirmLabel).toBe("Xóa thực đơn");
+    expect(mealPlanDeleteConfirm({ name: "Tuần 2", status: "ACTIVE" }).description).toContain("Thực đơn này đang được áp dụng.");
   });
   it("does not retry plan details for client errors such as 404", () => {
     expect(mealPlanQueries.detail("plan-a").retry).toBe(retryUnlessClientError);
@@ -243,8 +267,7 @@ describe("Meal plan suggestions respect the profile", () => {
     activityLevel: "MODERATE", goal: "MAINTAIN", dietType: "BALANCED", allergies: [], dislikedFoods: [],
     preferredCuisines: [], mealsPerDay: 3, ...overrides,
   });
-  const fatSuggestion = (value: NutritionProfile | null | undefined) =>
-    mealPlanSuggestions(value, { fiber: 30, fat: 40 }, { fiber: 30, fat: 60 })[1];
+  const fatSuggestion = (value: NutritionProfile | null | undefined) => mealPlanSuggestions(value, { fiber: 30, fat: 40 }, 60)[1];
 
   it("suggests oily fish only when nothing in the profile rules it out", () => {
     expect(fatSuggestion(profile()).key).toBe("omega3-fish");
@@ -260,7 +283,6 @@ describe("Meal plan suggestions respect the profile", () => {
     const suggestion = fatSuggestion(value);
     expect(suggestion.key).toBe("omega3-plant");
     expect(suggestion.text).not.toMatch(/\bcá\b|cá béo|cá hồi/i);
-    expect(suggestion.image).not.toContain("salmon");
   });
   it("falls back to a neutral suggestion when plant sources are also restricted", () => {
     const suggestion = fatSuggestion(profile({ dietType: "VEGAN", allergies: ["Đậu nành"] }));
@@ -270,11 +292,18 @@ describe("Meal plan suggestions respect the profile", () => {
   it("does not mistake an unrelated allergy for fish", () => {
     expect(fatSuggestion(profile({ allergies: ["Cà chua", "Đậu phộng"] })).key).toBe("omega3-fish");
   });
-  it("keeps the fiber suggestion and the reduce-fat advice free of fish", () => {
-    const [fiber, fat] = mealPlanSuggestions(profile({ dietType: "VEGAN" }), { fiber: 10, fat: 80 }, { fiber: 30, fat: 60 });
-    expect(fiber.text).toContain("rau xanh");
+  it("states the plan's own numbers and keeps the reduce-fat advice free of fish", () => {
+    const [fiber, fat] = mealPlanSuggestions(profile({ dietType: "VEGAN" }), { fiber: 10, fat: 80 }, 60);
+    expect(fiber.text).toBe("Chất xơ trung bình 10 g mỗi ngày, dưới mức 30 g: thêm 1–2 khẩu phần rau xanh mỗi ngày.");
     expect(fat.key).toBe("fat-reduce");
-    expect(fat.image).not.toContain("salmon");
+    expect(fat.text).toBe("Chất béo trung bình 80 g mỗi ngày (mục tiêu 60 g): bớt món chiên, ưu tiên hấp, luộc, kho.");
+    expect(fat.text).not.toMatch(/cá/);
+  });
+  it("skips the fat comparison when the profile has no target", () => {
+    const [fiber, fat] = mealPlanSuggestions(undefined, { fiber: 31, fat: 90 }, null);
+    expect(fiber.text).toBe("Chất xơ trung bình 31 g mỗi ngày, đạt mức 30 g.");
+    expect(fat.key).toBe("omega3-fish");
+    expect(fat.text).not.toContain("mục tiêu");
   });
 });
 
@@ -310,11 +339,12 @@ describe("Honest meal plan labels", () => {
     expect(mealPlanSourceLabel(true)).toBe("Tạo bởi AI");
     expect(mealPlanSourceLabel(false)).toBe("Thuật toán gợi ý");
   });
-  it.each([
-    [true, false, "Tạo thực đơn AI"], [true, true, "AI đang tạo..."],
-    [false, false, "Tạo thực đơn"], [false, true, "Đang tạo..."],
-    [undefined, false, "Tạo thực đơn"], [undefined, true, "Đang tạo..."],
-  ] as const)("mentions AI only when the backend reports it is configured (available=%s, pending=%s)", (available, pending, label) => {
-    expect(generateMealPlanLabel(available, pending)).toBe(label);
+  it.each([[true, "Tạo bởi AI"], [false, "Thuật toán gợi ý"], [undefined, "Thuật toán gợi ý"]] as const)(
+    "mentions AI only when the backend reports it is configured (available=%s)",
+    (available, label) => expect(generateSourceLabel(available)).toBe(label),
+  );
+  it("keeps one action name for the generate button", () => {
+    expect(generateMealPlanLabel(false)).toBe("Tạo thực đơn");
+    expect(generateMealPlanLabel(true)).toBe("Đang tạo thực đơn...");
   });
 });
