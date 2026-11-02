@@ -6,9 +6,6 @@
 @import "./styles/03-dashboard.css";
 @import "./styles/06-type-scale.css";
 @import "./styles/09-dashboard-palette.css";
-@import "./styles/19-logo.css";
-@import "./styles/22-landing.css";
-@import "./styles/25-landing-hero-footer.css";
 /* Giao diện mới (docs/design/DESIGN.md): token + thành phần dùng chung. Đặt cuối; CSS cũ gỡ dần theo từng lượt UI. */
 @import "./styles/ui/tokens.css";
 @import "./styles/ui/components.css";
@@ -24,4 +21,4 @@
 @import "./styles/ui/assistant.css";
 @import "./styles/ui/profile.css";
 @import "./styles/ui/auth.css";
-@import "./styles/ui/recipe-image-legacy.css";
+@import "./styles/ui/landing.css";

@@ -1,19 +1,51 @@
-import type { RecipeStats } from "../../types";
+import type { FeaturedRecipe, RecipeStats } from "../../types";
+import { isUploadedImageUrl } from "../../utils/images";
+import { loginPath } from "../auth/auth.logic";
+import { mealLabels } from "../meal-plans/meal-plans.logic";
+import { recipeDetailPath, recipeDietLabel, recipeTotalMinutes } from "../recipes/recipes.logic";
 
-/** Nhóm công thức ở Landing, khớp nhãn thật của công thức (bữa ăn/chế độ ăn) và khóa số đếm từ GET /api/recipes/stats. */
-export const landingRecipeCategoryStats = {
-  all: "total",
-  breakfast: "breakfast",
-  vegetarian: "vegetarian",
-  vegan: "vegan",
-  "low-carb": "lowCarb",
-  protein: "highProtein",
-} as const satisfies Record<string, keyof RecipeStats>;
+/** Nhóm món có số thật từ GET /api/recipes/stats, khớp nhãn thật của công thức (bữa ăn, chế độ ăn). */
+export const LANDING_RECIPE_GROUPS = [
+  ["breakfast", "Bữa sáng"], ["vegetarian", "Món chay"], ["vegan", "Thuần chay"], ["lowCarb", "Ít tinh bột"], ["highProtein", "Giàu đạm"],
+] as const satisfies ReadonlyArray<readonly [keyof RecipeStats, string]>;
 
-export type LandingRecipeCategoryId = keyof typeof landingRecipeCategoryStats;
+/** Số món theo nhóm; chưa tải được số thì trả mảng rỗng (ẩn, không hiện số giả). Số 0 thật vẫn hiện. */
+export function landingRecipeGroups(stats: RecipeStats | undefined) {
+  return stats ? LANDING_RECIPE_GROUPS.map(([key, label]) => ({ key, label, count: stats[key] })) : [];
+}
 
-/** "33 món" khi đã có số thật; chưa tải được thì ẩn số (không hiện số giả). */
-export function landingCategoryCountLabel(stats: RecipeStats | undefined, categoryId: LandingRecipeCategoryId) {
-  const count = stats?.[landingRecipeCategoryStats[categoryId]];
-  return typeof count === "number" ? `${count} món` : null;
+/** Câu dẫn của phần "Món trong Nouri": có tổng thật thì nêu số, chưa có thì không nêu. */
+export function landingRecipeIntro(stats: RecipeStats | undefined) {
+  const detail = "Mỗi món ghi rõ nguyên liệu, các bước làm, calo và đạm, tinh bột, béo cho một khẩu phần.";
+  return stats ? `Nouri đang có ${stats.total} món, chủ yếu là món Việt nấu ở nhà. ${detail}` : `Món Việt nấu ở nhà và một số món nước ngoài. ${detail}`;
+}
+
+/** Ảnh hero: món đầu tiên có ảnh đã tải lên (Cloudinary). Không có thì hero chỉ có chữ. */
+export function heroPhotoRecipe(recipes: FeaturedRecipe[] | undefined) {
+  return recipes?.find((recipe) => isUploadedImageUrl(recipe.imageUrl)) ?? null;
+}
+
+/** Số món tải về cho Landing: 6 thẻ + 1 món có thể dùng làm ảnh hero (không lặp lại món đó trong danh sách thẻ). */
+export const LANDING_FEATURED_LIMIT = 7;
+export const LANDING_CARD_COUNT = 6;
+
+export function landingCards(recipes: FeaturedRecipe[], hero: FeaturedRecipe | null) {
+  return recipes.filter((recipe) => recipe.id !== hero?.id).slice(0, LANDING_CARD_COUNT);
+}
+
+/** Khách bấm món: sang đăng nhập rồi mở đúng món; đã đăng nhập: mở thẳng trang chi tiết. */
+export function featuredRecipeLink(recipe: Pick<FeaturedRecipe, "id">, signedIn: boolean) {
+  const path = recipeDetailPath(recipe.id);
+  return signedIn ? path : loginPath({ next: path });
+}
+
+/** Thông tin ngắn trên thẻ món: thời gian, calo, bữa đầu tiên, nhãn chế độ ăn (bỏ "Cân bằng" vì món nào cũng có). */
+export function featuredRecipeFacts(recipe: FeaturedRecipe) {
+  const diet = recipe.dietTags.find((tag) => tag !== "BALANCED");
+  const meal = recipe.mealTypes[0];
+  return {
+    minutes: recipeTotalMinutes(recipe),
+    calories: recipe.calories,
+    tags: [meal ? mealLabels[meal] : null, diet ? recipeDietLabel(diet) : null].filter((tag): tag is string => Boolean(tag)),
+  };
 }

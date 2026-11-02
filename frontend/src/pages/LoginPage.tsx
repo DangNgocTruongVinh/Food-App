@@ -3,7 +3,7 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { AuthForm } from "../components/auth/AuthForm";
 import { Logo, ThemeToggle } from "../components/ui";
 import { useAuth } from "../contexts/AuthContext";
-import { type AuthFormValues, type AuthMode, authErrorMessage, validateAuthForm } from "../features/auth/auth.logic";
+import { type AuthFormValues, type AuthMode, authErrorMessage, safeNextPath, validateAuthForm } from "../features/auth/auth.logic";
 import { getRememberLoginPreference } from "../features/auth/auth.storage";
 
 export default function LoginPage() {
@@ -12,7 +12,9 @@ export default function LoginPage() {
   const [params] = useSearchParams();
   // Bị Admin khóa khi đang dùng: client đăng xuất và chuyển về đây kèm ?locked=1 (api/client.ts).
   const lockedNotice = params.get("locked") === "1";
-  const [mode, setMode] = useState<AuthMode>("login");
+  // Landing: "Đăng ký miễn phí" mở sẵn form đăng ký (?mode=register); bấm món khi chưa đăng nhập thì quay lại món đó (?next=).
+  const [mode, setMode] = useState<AuthMode>(() => (params.get("mode") === "register" ? "register" : "login"));
+  const nextPath = safeNextPath(params.get("next"));
   const [form, setForm] = useState<AuthFormValues>({ name: "", email: "", password: "" });
   const [submitted, setSubmitted] = useState(false);
   const [serverError, setServerError] = useState(() => (
@@ -34,7 +36,7 @@ export default function LoginPage() {
     try {
       if (mode === "register") await auth.register(form.name.trim(), form.email.trim(), form.password);
       else await auth.login(form.email.trim(), form.password, rememberLogin);
-      navigate("/dashboard", { replace: true });
+      navigate(nextPath, { replace: true });
     } catch (error) {
       setServerError(authErrorMessage(error, mode));
     } finally {

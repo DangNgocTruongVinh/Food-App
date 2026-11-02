@@ -106,6 +106,12 @@ export interface RecipeForYou {
   warnings: { allergens: string[]; dislikedFoods: string[]; dietConflict: string | null };
 }
 
+/** GET /api/recipes/featured (công khai): món tiêu biểu cho Landing, chỉ trường tóm tắt, món có ảnh thật đứng trước. */
+export interface FeaturedRecipe {
+  id: string; slug: string; name: string; imageUrl: string | null; calories: number; prepMinutes: number; cookMinutes: number;
+  dietTags: string[]; mealTypes: MealType[];
+}
+
 /** GET /api/recipes/stats (công khai): số công thức theo nhóm cho Landing. */
 export interface RecipeStats { total: number; breakfast: number; vegetarian: number; vegan: number; lowCarb: number; highProtein: number }
 

@@ -30,3 +30,18 @@ export function authErrorMessage(error: unknown, mode: AuthMode) {
   if (status === 422 || status === 400) return "Thông tin chưa hợp lệ. Kiểm tra lại email và mật khẩu (ít nhất 8 ký tự).";
   return data?.message ?? "Máy chủ đang gặp lỗi. Thử lại sau ít phút.";
 }
+
+/** Đường dẫn trang đăng nhập: `mode: "register"` mở sẵn form đăng ký; `next` là trang mở sau khi đăng nhập. */
+export function loginPath({ mode, next }: { mode?: AuthMode; next?: string } = {}) {
+  const params = new URLSearchParams();
+  if (mode === "register") params.set("mode", "register");
+  if (next) params.set("next", next);
+  const query = params.toString();
+  return query ? `/login?${query}` : "/login";
+}
+
+/** Trang mở sau khi đăng nhập: chỉ nhận đường dẫn trong ứng dụng ("/recipes/abc"); "//site", "https://…", "/\site" về /dashboard. */
+export function safeNextPath(raw: string | null) {
+  if (!raw || !raw.startsWith("/") || raw.startsWith("//") || raw.startsWith("/\\") || raw.startsWith("/login")) return "/dashboard";
+  return raw;
+}

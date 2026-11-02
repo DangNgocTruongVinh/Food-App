@@ -1,0 +1,133 @@
+/*
+ * Landing (/) — UI-11, DESIGN.md mục 14 "Landing". Chỉ dùng token; không blob, lá, kính mờ, gradient, hiệu ứng khi cuộn.
+ * Điểm nhấn duy nhất: H1 hero (thêm ảnh món thật khi có). Các phần tách bằng khoảng trắng và đường kẻ mảnh;
+ * chỉ việc chính đầu tiên và thẻ món dùng khung card.
+ */
+
+.ld-page { color: var(--ink); }
+
+/* Liên kết neo ở menu: chừa chỗ cho menu dính đầu trang. */
+.ld-section,
+.ld-hero { scroll-margin-top: 88px; }
+
+.ld-section { padding: var(--space-8) 0; border-top: 1px solid var(--line); }
+.ld-section__inner {
+  display: grid;
+  gap: var(--space-6);
+  max-width: var(--content-max);
+  margin: 0 auto;
+  padding: 0 var(--gutter);
+}
+/* Tiêu đề cấp 3 dùng Be Vietnam Pro (CSS cũ 01-base.css còn đặt phông khác cho h1–h3, gỡ ở UI-12). */
+.ld-benefit__title,
+.ld-recipe__title,
+.ld-step__title { font-family: var(--font-sans); letter-spacing: 0; }
+.ld-text { max-width: 62ch; margin: 0; color: var(--ink-2); font-size: var(--fs-body); line-height: var(--lh-body); }
+.ld-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3) var(--space-4); }
+
+/* ---------- Hero ---------- */
+.ld-hero__inner {
+  display: grid;
+  gap: var(--space-7);
+  max-width: var(--content-max);
+  margin: 0 auto;
+  padding: var(--space-9) var(--gutter) var(--space-8);
+}
+.ld-hero__copy { display: grid; align-content: center; gap: var(--space-5); max-width: 760px; }
+/* Cụm nghiêng xuống dòng nguyên cụm (không tách "tuần / này ăn gì"). */
+.ld-hero .ui-hero-title em { display: block; }
+.ld-hero__lead { max-width: 58ch; margin: 0; color: var(--ink-2); font-size: 1.1875rem; line-height: var(--lh-body); }
+.ld-hero__figure { display: grid; gap: var(--space-2); margin: 0; }
+.ld-hero__image { width: 100%; aspect-ratio: 4 / 3; border-radius: var(--radius-card); object-fit: cover; }
+
+/* ---------- Nouri giúp gì ---------- */
+.ld-benefits { display: grid; gap: var(--space-6); margin: 0; padding: 0; list-style: none; }
+.ld-benefit { display: grid; align-content: start; gap: var(--space-3); padding-top: var(--space-5); border-top: 1px solid var(--line); }
+.ld-benefit__title { margin: 0; color: var(--ink); font-size: var(--fs-h3); font-weight: 600; line-height: var(--lh-h3); }
+.ld-benefit--lead { padding: var(--space-6); border: 1px solid var(--line); border-radius: var(--radius-card); background: var(--surface); }
+.ld-benefit--lead .ld-benefit__title { font-size: 1.5rem; }
+.ld-benefit--lead .ld-text { font-size: 1.0625rem; }
+
+/* ---------- Món trong Nouri ---------- */
+.ld-recipes-head { display: grid; gap: var(--space-6); }
+.ld-recipes-head__text { display: grid; gap: var(--space-3); }
+.ld-groups { display: grid; grid-template-columns: repeat(auto-fit, minmax(112px, 1fr)); gap: var(--space-4); margin: 0; }
+.ld-groups__item { display: grid; align-content: start; gap: var(--space-2); padding-top: var(--space-3); border-top: 1px solid var(--line); }
+.ld-groups dt { color: var(--muted); font-size: var(--fs-label); font-weight: 600; line-height: var(--lh-label); }
+.ld-groups__count {
+  margin: 0;
+  color: var(--ink);
+  font-family: var(--font-serif);
+  font-size: var(--fs-stat);
+  font-weight: 500;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.ld-recipes { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: var(--space-4); margin: 0; padding: 0; list-style: none; }
+.ld-recipes > li { display: grid; min-width: 0; }
+.ld-recipe {
+  position: relative;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  background: var(--surface);
+  transition: border-color 160ms ease-out;
+}
+.ld-recipe:hover { border-color: var(--border-input); }
+.ld-recipe__image { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; }
+.ld-recipe__body { display: grid; align-content: start; gap: var(--space-3); padding: var(--space-5); }
+.ld-recipe__title { margin: 0; font-size: var(--fs-h3); font-weight: 600; line-height: var(--lh-h3); }
+.ld-recipe__link { color: var(--ink); text-decoration: none; }
+.ld-recipe__link:hover { color: var(--action-text); text-decoration: underline; text-underline-offset: 3px; }
+/* Cả thẻ là vùng bấm của liên kết tên món. */
+.ld-recipe__link::after { content: ""; position: absolute; inset: 0; }
+.ld-recipes-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-3) var(--space-5); }
+
+/* ---------- Cách hoạt động ---------- */
+.ld-steps { display: grid; gap: var(--space-6); margin: 0; padding: 0; list-style: none; }
+.ld-step { display: grid; align-content: start; gap: var(--space-3); padding-top: var(--space-4); border-top: 1px solid var(--line); }
+.ld-step__number {
+  color: var(--action-text);
+  font-family: var(--font-serif);
+  font-size: var(--fs-stat);
+  font-weight: 500;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.ld-step__title { margin: 0; color: var(--ink); font-size: var(--fs-h3); font-weight: 600; line-height: var(--lh-h3); }
+
+/* ---------- Cộng đồng ---------- */
+.ld-split__body { display: grid; gap: var(--space-4); }
+.ld-split__action { justify-self: start; }
+
+/* ---------- Kêu gọi đăng ký ---------- */
+.ld-signup { padding: var(--space-8) 0 var(--space-9); border-top: 1px solid var(--line); }
+.ld-signup__inner { justify-items: start; gap: var(--space-5); }
+
+@media (min-width: 640px) {
+  .ld-steps { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (min-width: 1024px) {
+  .ld-hero--photo .ld-hero__inner { grid-template-columns: minmax(0, 760px) minmax(0, 1fr); align-items: center; }
+  .ld-benefits { grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); column-gap: var(--space-7); }
+  .ld-benefit--lead { grid-row: span 2; align-self: start; }
+  .ld-recipes-head { grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); align-items: end; column-gap: var(--space-7); }
+  .ld-recipes { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  /* Thứ bậc: món đầu (có ảnh thật) lớn gấp đôi. */
+  .ld-recipes > li:first-child:has(.ld-recipe--photo) { grid-column: span 2; grid-row: span 2; }
+  .ld-recipes > li:first-child .ld-recipe--photo .ld-recipe__image { aspect-ratio: 16 / 9; }
+  .ld-steps { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .ld-split { grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); align-items: start; column-gap: var(--space-7); }
+}
+
+@media (max-width: 639px) {
+  .ld-section { padding: var(--space-7) 0; }
+  .ld-hero__inner { gap: var(--space-6); padding-top: var(--space-7); padding-bottom: var(--space-7); }
+  .ld-hero__lead { font-size: 1.0625rem; }
+  .ld-benefit--lead { padding: var(--space-5); }
+  .ld-signup { padding: var(--space-7) 0 var(--space-8); }
+}

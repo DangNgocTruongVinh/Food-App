@@ -1,5 +1,0 @@
-/*
- * Kích thước ô "chưa có ảnh" (RecipeImage) trong trang cũ chưa làm lại; CSS cũ chỉ đặt kích thước cho thẻ img.
- * Gỡ từng dòng khi làm lại trang tương ứng (Landing UI-11).
- */
-.landing-recipe-media .ui-recipe-image--empty { width: 100%; height: 100%; }

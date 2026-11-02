@@ -3,6 +3,7 @@
  * Thay 21-navigation.css, 23-app-navbar.css. Chỉ dùng token.
  */
 
+html:has(.ui-shell),
 body:has(.ui-shell) { background: var(--bg); }
 
 .ui-shell {
