@@ -8,7 +8,7 @@ import { RecipesHero } from "../components/recipes/RecipesHero";
 import { RecipesSkeleton } from "../components/recipes/RecipesSkeleton";
 import { ErrorState } from "../components/ui";
 import {
-  filterAndSortRecipes, paginateRecipes, recipeCategoryCounts, type RecipeCategory, type RecipeSort,
+  filterAndSortRecipes, paginateRecipes, recipeCategoryCounts, recipesForProfile, type RecipeCategory, type RecipeSort,
 } from "../features/recipes/recipes.logic";
 import { recipeQueries } from "../features/recipes/recipes.queries";
 import { recommendationQueries } from "../features/recommendations/recommendations.api";
@@ -24,6 +24,7 @@ export default function RecipesPage() {
   const [view, setView] = useState<"grid" | "list">("grid");
   const [filtersExpanded, setFiltersExpanded] = useState(true);
   const [pageIndex, setPageIndex] = useState(1);
+  const [showAll, setShowAll] = useState(false);
 
   const list = useQuery(recipeQueries.list());
   // "Dành cho bạn": bộ gợi ý, ngữ cảnh for-you (khẩu vị là chính); món lớn đối chiếu thêm kho/hồ sơ.
@@ -33,8 +34,10 @@ export default function RecipesPage() {
   const featuredFit = useQuery({ ...recipeQueries.forYou(featuredId), enabled: Boolean(featuredId) });
 
   const data = list.data ?? [];
-  const recipes = useMemo(() => filterAndSortRecipes(data, { search, category, sort }), [category, data, search, sort]);
-  const counts = useMemo(() => recipeCategoryCounts(data), [data]);
+  // Món vi phạm dị ứng/chế độ ăn ẩn mặc định; số đếm danh mục tính trên danh sách đang hiện.
+  const profileView = useMemo(() => recipesForProfile(data, showAll), [data, showAll]);
+  const recipes = useMemo(() => filterAndSortRecipes(profileView.recipes, { search, category, sort }), [category, profileView, search, sort]);
+  const counts = useMemo(() => recipeCategoryCounts(profileView.recipes), [profileView]);
   const recipesById = useMemo(() => new Map(data.map((recipe) => [recipe.id, recipe])), [data]);
 
   if (list.isLoading) return <RecipesSkeleton />;
@@ -84,6 +87,9 @@ export default function RecipesPage() {
           onSortChange={(next) => { setSort(next); setPageIndex(1); }}
           onPageChange={(page) => setPageIndex(Math.min(totalPages, Math.max(1, page)))}
           onClearFilters={clearFilters}
+          hiddenCount={profileView.hiddenCount}
+          showAll={showAll}
+          onShowAllChange={(next) => { setShowAll(next); setPageIndex(1); }}
         />
       </div>
     </div>

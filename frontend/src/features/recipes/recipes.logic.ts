@@ -52,6 +52,19 @@ export function filterAndSortRecipes(
   });
 }
 
+/**
+ * "Tất cả công thức" ẩn mặc định món vi phạm dị ứng hoặc chế độ chay/thuần chay của người dùng (GĐ3b-R2).
+ * Món không thích không bị ẩn, chỉ gắn nhãn (quyết định GĐ3b-R #2). Danh sách chưa có `fit` thì không ẩn gì.
+ */
+export function violatesProfile(recipe: Pick<Recipe, "fit">) {
+  return Boolean(recipe.fit && (recipe.fit.allergens.length || recipe.fit.dietConflict));
+}
+
+export function recipesForProfile<T extends Pick<Recipe, "fit">>(recipes: T[], showAll: boolean) {
+  const hiddenCount = recipes.filter(violatesProfile).length;
+  return { hiddenCount, recipes: showAll ? recipes : recipes.filter((recipe) => !violatesProfile(recipe)) };
+}
+
 export function paginateRecipes(recipes: Recipe[], pageIndex: number, pageSize: number) {
   const totalPages = Math.max(1, Math.ceil(recipes.length / pageSize));
   const currentPage = Math.min(pageIndex, totalPages);

@@ -11,7 +11,7 @@ import { getRecipe, getRecipeForYou, listRecipes, normalizeRecipeListParams } fr
 import {
   clampServings, filterAndSortRecipes, formatIngredientAmount, formatScaledIngredientAmount, MAX_RECIPE_SERVINGS,
   roundIngredientQuantity, scaleIngredientQuantity, matchesRecipeCategory, paginateRecipes, recipeDetailPath,
-  recipeCategories, recipeCategoryCounts, recipeDietLabel, recipePhotoSrc, recipeTotalMinutes,
+  recipeCategories, recipeCategoryCounts, recipeDietLabel, recipePhotoSrc, recipesForProfile, recipeTotalMinutes, violatesProfile,
 } from "./recipes.logic";
 import { recipeQueries } from "./recipes.queries";
 
@@ -196,6 +196,34 @@ describe("Recipes page business logic", () => {
     const counts = recipeCategoryCounts(recipes);
     expect(counts.all).toBe(recipes.length);
     for (const { id } of recipeCategories) expect(counts[id]).toBe(recipes.filter((item) => matchesRecipeCategory(item, id)).length);
+  });
+});
+
+describe("Recipes hidden by profile (GĐ3b-R2)", () => {
+  const fit = (overrides: Partial<NonNullable<Recipe["fit"]>> = {}) => ({ allergens: [], dislikedFoods: [], dietConflict: null, safe: true, ...overrides });
+  const withFit = [
+    recipe({ id: "safe", fit: fit() }),
+    recipe({ id: "allergen", fit: fit({ allergens: ["tôm"], safe: false }) }),
+    recipe({ id: "diet", fit: fit({ dietConflict: "VEGETARIAN", safe: false }) }),
+    recipe({ id: "disliked", fit: fit({ dislikedFoods: ["hành tím"], safe: false }) }),
+    recipe({ id: "no-fit" }),
+  ];
+
+  it("hides allergen and diet violations by default but keeps disliked recipes (labelled only)", () => {
+    expect(withFit.map((item) => violatesProfile(item))).toEqual([false, true, true, false, false]);
+    const view = recipesForProfile(withFit, false);
+    expect(view.hiddenCount).toBe(2);
+    expect(view.recipes.map((item) => item.id)).toEqual(["safe", "disliked", "no-fit"]);
+  });
+
+  it("shows every recipe when \"Hiện tất cả\" is on, still reporting how many violate the profile", () => {
+    const view = recipesForProfile(withFit, true);
+    expect(view.hiddenCount).toBe(2);
+    expect(view.recipes).toEqual(withFit);
+  });
+
+  it("names the allergen in the warning label of a violating recipe", () => {
+    expect(forYouWarnings(withFit[1].fit!)).toEqual([{ kind: "allergen", text: "Có thành phần bạn dị ứng: tôm" }]);
   });
 });
 

@@ -105,7 +105,13 @@ export interface Recipe {
   cuisine: string; dietTags: string[]; mealTypes?: MealType[]; imageUrl?: string | null; ingredients: Ingredient[];
   /** Món đã ngừng sử dụng (Admin ẩn): vẫn xem được chi tiết, không chia sẻ/không chọn mới. */
   hidden?: boolean;
+  /** GET /api/recipes: độ phù hợp với hồ sơ người đang đăng nhập (GĐ3b-R1). */
+  fit?: RecipeFit;
 }
+
+/** Vi phạm theo hồ sơ: thành phần gây dị ứng (theo nhóm), món không thích, không hợp chế độ chay/thuần chay. */
+export interface RecipeWarnings { allergens: string[]; dislikedFoods: string[]; dietConflict: string | null }
+export interface RecipeFit extends RecipeWarnings { safe: boolean }
 
 /** GET /api/recipes/:id/for-you: mức phù hợp của công thức với hồ sơ và kho của người dùng đang đăng nhập. */
 export interface RecipeForYou {
@@ -116,7 +122,7 @@ export interface RecipeForYou {
     unitMismatches: Array<{ name: string; recipeUnit: FoodUnit; pantryUnits: FoodUnit[] }>;
   };
   calories: { recipeCalories: number; dailyTarget: number; percentOfDailyTarget: number };
-  warnings: { allergens: string[]; dislikedFoods: string[]; dietConflict: string | null };
+  warnings: RecipeWarnings;
 }
 
 /** GET /api/recipes/featured (công khai): món tiêu biểu cho Landing, chỉ trường tóm tắt, món có ảnh thật đứng trước. */

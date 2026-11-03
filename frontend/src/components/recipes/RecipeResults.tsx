@@ -1,7 +1,7 @@
 import { ChevronLeft, ChevronRight, Grid2X2, List } from "lucide-react";
 import type { RecipeSort } from "../../features/recipes/recipes.logic";
 import type { Recipe } from "../../types";
-import { Button, EmptyState, IconButton } from "../ui";
+import { Button, Chip, EmptyState, IconButton } from "../ui";
 import { RecipeCard } from "./RecipeCard";
 
 type RecipeResultsProps = {
@@ -15,6 +15,10 @@ type RecipeResultsProps = {
   onSortChange: (sort: RecipeSort) => void;
   onPageChange: (page: number) => void;
   onClearFilters: () => void;
+  /** Số món vi phạm dị ứng/chế độ ăn của người dùng (ẩn mặc định); 0 thì không hiện công tắc. */
+  hiddenCount: number;
+  showAll: boolean;
+  onShowAllChange: (showAll: boolean) => void;
 };
 
 /** "Tất cả công thức": lưới/danh sách, sắp xếp, phân trang (giữ chức năng trang cũ). */
@@ -37,6 +41,17 @@ export function RecipeResults(props: RecipeResultsProps) {
           </select>
         </div>
       </header>
+
+      {props.hiddenCount > 0 && (
+        <div className="recipes-results__profile">
+          <p className="ui-small">
+            {props.showAll
+              ? `Đang hiện cả ${props.hiddenCount} món có thành phần bạn dị ứng hoặc không hợp chế độ ăn của bạn.`
+              : `Đã ẩn ${props.hiddenCount} món có thành phần bạn dị ứng hoặc không hợp chế độ ăn của bạn.`}
+          </p>
+          <Chip selected={props.showAll} onClick={() => props.onShowAllChange(!props.showAll)}>Hiện tất cả</Chip>
+        </div>
+      )}
 
       {recipes.length ? (
         <ul className={`recipes-results__list recipes-results__list--${view}`}>
