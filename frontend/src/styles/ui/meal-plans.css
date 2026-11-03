@@ -191,3 +191,38 @@
   .td-day__narrow { display: inline; }
   .td-week { grid-template-columns: minmax(0, 1fr); }
 }
+
+/* ---------- Hộp "Đã ăn" → trừ kho (GĐ3b lượt 4; dùng ở Thực đơn và Tổng quan) ---------- */
+.ui-dialog--form.td-consume { width: min(680px, calc(100vw - 2 * var(--gutter))); padding-bottom: 0; }
+.td-consume__list { display: grid; margin: 0; padding: 0; border-top: 1px solid var(--line); list-style: none; }
+.td-consume__line { display: grid; gap: var(--space-2); padding: var(--space-3) 0 var(--space-4); border-bottom: 1px solid var(--line); }
+.td-consume__head { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 0 var(--space-3); }
+.td-consume__check { flex: 0 0 auto; width: 22px; height: 22px; margin: 0; accent-color: var(--action); cursor: pointer; }
+.td-consume__check:disabled { cursor: not-allowed; }
+.td-consume__name { display: flex; align-items: center; min-width: 0; min-height: var(--control-h); color: var(--ink); font-weight: 600; overflow-wrap: anywhere; cursor: pointer; }
+.td-consume__status { justify-self: end; padding: 2px var(--space-3); text-align: right; border-radius: var(--radius-pill); font-size: var(--fs-label); font-weight: 600; line-height: var(--lh-label); }
+.td-consume__status--ok { color: var(--ink); background: var(--tag-bg); }
+.td-consume__status--warn { color: var(--warn); background: var(--warn-bg); }
+.td-consume__status--muted { color: var(--ink-2); background: var(--surface-2); }
+.td-consume__detail,
+.td-consume__amount { margin: 0; padding-left: calc(22px + var(--space-3)); }
+.td-consume__detail { color: var(--ink-2); font-size: var(--fs-small); line-height: var(--lh-small); }
+.td-consume__amount { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-3); }
+.td-consume__amount > label { color: var(--muted); font-size: var(--fs-label); font-weight: 600; }
+.td-consume__input { display: inline-flex; align-items: center; gap: var(--space-2); color: var(--ink-2); }
+.td-consume__input .ui-input { width: 112px; min-height: var(--control-h); }
+.td-consume__amount .ui-field__error { flex-basis: 100%; }
+/* Hàng nút dính đáy hộp khi danh sách dài (hộp cuộn bên trong). */
+.td-consume__actions {
+  position: sticky;
+  bottom: 0;
+  margin: 0 calc(-1 * var(--space-6));
+  padding: var(--space-4) var(--space-6) var(--space-5);
+  border-top: 1px solid var(--line);
+  background: var(--surface);
+}
+
+@media (max-width: 639px) {
+  .ui-dialog--form.td-consume { padding-bottom: 0; }
+  .td-consume__actions { margin: 0 calc(-1 * var(--space-4)); padding: var(--space-4); }
+}

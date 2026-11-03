@@ -117,6 +117,34 @@ export interface FeaturedRecipe {
 /** GET /api/recipes/stats (công khai): số công thức theo nhóm cho Landing. */
 export interface RecipeStats { total: number; breakfast: number; vegetarian: number; vegan: number; lowCarb: number; highProtein: number }
 
+/** "Đã ăn" → trừ kho (GĐ3b): trạng thái từng nguyên liệu trong hộp xem trước. */
+export type ConsumptionStatus = "ENOUGH" | "SHORT" | "NOT_IN_PANTRY" | "UNIT_MISMATCH" | "EXPIRED_ONLY" | "OPTIONAL";
+export interface ConsumptionDeduction {
+  pantryItemId: string; name: string; quantity: number; unit: FoodUnit; expiryDate: string | null; quantityAfter: number;
+}
+export interface ConsumptionLine {
+  ingredientId: string; name: string; optional: boolean; required: { quantity: number; unit: FoodUnit }; status: ConsumptionStatus;
+  deductions: ConsumptionDeduction[]; shortfall: number; defaultQuantity: number; otherUnits: FoodUnit[];
+}
+/** GET /api/meal-plans/items/:id/consumption-preview */
+export interface ConsumptionPreview {
+  mealPlanItemId: string; completed: boolean; alreadyDeducted: boolean; servings: number;
+  recipe: { id: string; name: string; servings: number }; lines: ConsumptionLine[];
+}
+export type ConsumptionSkipReason = "DELETED" | "UNIT_MISMATCH" | "CHANGED";
+/** PATCH /api/meal-plans/items/:id: bữa đã cập nhật + tóm tắt trừ kho / hoàn lại. */
+export interface MealCompletionResult {
+  id: string; completed: boolean; alreadyCompleted: boolean;
+  consumption: {
+    lines: Array<ConsumptionLine & { skipped: Array<{ pantryItemId: string; reason: ConsumptionSkipReason }> }>;
+    skippedIngredients: Array<{ ingredientId: string; name: string }>;
+  } | null;
+  restoration: {
+    restored: Array<{ pantryItemId: string; name: string; quantity: number; unit: FoodUnit; quantityAfter: number }>;
+    skipped: Array<{ itemName: string; quantity: number; unit: FoodUnit; reason: ConsumptionSkipReason }>;
+  } | null;
+}
+
 export interface MealPlanItem { id: string; mealType: MealType; servings: number; calories: number; completed: boolean; recipe: Recipe }
 export interface MealPlanDay { id: string; date: string; items: MealPlanItem[] }
 export interface ShoppingItem { id: string; name: string; quantity: number; unit: FoodUnit; purchased: boolean; category?: string | null }

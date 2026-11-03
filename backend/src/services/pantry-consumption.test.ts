@@ -66,6 +66,13 @@ describe("Consumption preview lines", () => {
     expect(line).toMatchObject({ status: "EXPIRED_ONLY", deductions: [], defaultQuantity: 0 });
   });
 
+  it("EXPIRED_ONLY: deducted from the expired item only when the user explicitly includes the line", () => {
+    const items = [pantry("p", "Cá basa", 500, "G", day(-1))];
+    const [line] = plan([ingredient("i1", "Cá basa", 200, "G")], items, 1, 1, new Map([["i1", { quantity: 200, unit: "G" as const }]]));
+    expect(line).toMatchObject({ status: "EXPIRED_ONLY", shortfall: 0, defaultQuantity: 200 });
+    expect(line.deductions).toEqual([expect.objectContaining({ pantryItemId: "p", quantity: 200, quantityAfter: 300 })]);
+  });
+
   it("OPTIONAL: previewed with a suggested allocation but defaults to 0, without reserving stock for later lines", () => {
     const [chili, chili2] = plan([ingredient("i1", "Ớt", 10, "G", true), ingredient("i2", "Ớt", 10, "G")], [pantry("p", "Ớt", 10, "G", null)]);
     expect(chili).toMatchObject({ status: "OPTIONAL", defaultQuantity: 0 });

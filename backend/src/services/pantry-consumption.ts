@@ -101,7 +101,13 @@ export function planConsumption(
     const base = { ingredientId: ingredient.id, name: ingredient.name, optional: ingredient.optional, required, otherUnits };
 
     if (!matches.length) return { ...base, status: "NOT_IN_PANTRY", deductions: [], shortfall: required.quantity, defaultQuantity: 0 };
-    if (!usable.length) return { ...base, status: "EXPIRED_ONLY", deductions: [], shortfall: required.quantity, defaultQuantity: 0 };
+    if (!usable.length) {
+      // Chỉ còn món đã hết hạn: xem trước thì mặc định không trừ; người dùng chủ động chọn trừ (amounts) thì trừ từ các món đó.
+      const expired = matches.filter((item) => canConvertUnit(item.unit, required.unit)).sort(byExpiryFirst);
+      if (!override || !expired.length) return { ...base, status: "EXPIRED_ONLY", deductions: [], shortfall: required.quantity, defaultQuantity: 0 };
+      const { deductions, shortfall } = allocate(required.quantity, required.unit, expired, available);
+      return { ...base, status: "EXPIRED_ONLY", deductions, shortfall, defaultQuantity: roundQuantity(required.quantity - shortfall) };
+    }
     if (!convertible.length) return { ...base, status: "UNIT_MISMATCH", deductions: [], shortfall: required.quantity, defaultQuantity: 0 };
 
     // Dòng tùy chọn mặc định không trừ: xem trước trên bản sao để không giữ chỗ phần kho của các dòng sau.

@@ -6,13 +6,15 @@ import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { getApiError } from "../api/client";
 import { queryKeys } from "../api/query-keys";
 import { dayTabId, MealDayTabs } from "../components/meal-plans/MealDayTabs";
+import { ConsumeMealDialog } from "../components/meal-plans/ConsumeMealDialog";
 import { MealDayList } from "../components/meal-plans/MealDayList";
 import { MealPlanCreateForm } from "../components/meal-plans/MealPlanCreateForm";
 import { MealPlanHeader } from "../components/meal-plans/MealPlanHeader";
 import { MealPlanNutritionCard, MealPlanSuggestionsCard } from "../components/meal-plans/MealPlanSide";
 import { MealPlansSkeleton } from "../components/meal-plans/MealPlansSkeleton";
+import { MealStatusNotice } from "../components/meal-plans/MealStatusNotice";
 import { ShoppingListCard } from "../components/meal-plans/ShoppingListCard";
-import { Button, EmptyState, ErrorState, Toast, useConfirm } from "../components/ui";
+import { EmptyState, ErrorState, Toast, useConfirm } from "../components/ui";
 import { aiQueries } from "../features/ai/ai.queries";
 import {
   dayNutrition, generateSourceLabel, initialDayIndex, latestMealPlanId, mealPlanDeleteConfirm, mealPlanPath, mealPlanSuggestions,
@@ -22,15 +24,17 @@ import {
   invalidateMealPlanQueries, mealPlanMutations, mealPlanQueries, removeDeletedMealPlan, removeMealPlanDetail,
 } from "../features/meal-plans/meal-plans.queries";
 import { profileQueries } from "../features/profile/profile.queries";
-import type { MealPlan, MealPlanItem } from "../types";
+import { useMealConsumption } from "../features/meal-plans/useMealConsumption";
+import type { MealPlan } from "../types";
 import { type DateDraftStatus, formatDisplayDate } from "../utils/date";
 
 type MealPlansLocationState = { notice?: string } | null;
-type MealStatus = { kind: "done" | "undone" | "error"; item: MealPlanItem; message?: string };
 const DAY_PANEL_ID = "td-day-panel";
 
 export default function MealPlansPage() {
   const queryClient = useQueryClient();
+  // "Đã ăn" mở hộp xem trước trừ kho (dùng chung với Tổng quan); bỏ đánh dấu thì hoàn lại kho.
+  const consumption = useMealConsumption();
   const navigate = useNavigate();
   const location = useLocation();
   const confirm = useConfirm();
@@ -39,7 +43,6 @@ export default function MealPlansPage() {
   const [startDate, setStartDate] = useState(format(addDays(new Date(), 1), "yyyy-MM-dd"));
   const [dateStatus, setDateStatus] = useState<DateDraftStatus>("valid");
   const [error, setError] = useState("");
-  const [mealStatus, setMealStatus] = useState<MealStatus | null>(null);
   const [toast, setToast] = useState("");
   const clearToast = useCallback(() => setToast(""), []);
   const notice = (location.state as MealPlansLocationState)?.notice ?? "";
@@ -82,7 +85,7 @@ export default function MealPlansPage() {
   // Mở thực đơn: chọn sẵn hôm nay (nếu thuộc thực đơn); đổi ngày sau đó chỉ đổi state, không tải lại trang.
   useEffect(() => {
     if (selected) setSelectedDayIndex(initialDayIndex(selected));
-    setMealStatus(null);
+    consumption.dismissNotice();
   }, [selected?.id]); // chỉ khi đổi thực đơn, không chạy lại khi dữ liệu thực đơn được làm mới
 
   const week = useMemo(() => summarizeMealPlan(selected), [selected]);
@@ -98,7 +101,6 @@ export default function MealPlansPage() {
     },
     onError: (err) => setError(getApiError(err)),
   });
-  const updateMeal = useMutation({ ...mealPlanMutations.updateMeal(), onSuccess: () => invalidateMealPlanQueries(queryClient, true) });
   const toggleShop = useMutation({ ...mealPlanMutations.updateShopping(), onSuccess: () => invalidateMealPlanQueries(queryClient, false) });
   const activate = useMutation({
     ...mealPlanMutations.updateStatus(),
@@ -117,12 +119,6 @@ export default function MealPlansPage() {
     onError: (err) => setError(getApiError(err)),
   });
 
-  const setCompleted = (item: MealPlanItem, completed: boolean) => {
-    updateMeal.mutate({ id: item.id, completed }, {
-      onSuccess: () => setMealStatus({ kind: completed ? "done" : "undone", item }),
-      onError: (err) => setMealStatus({ kind: "error", item, message: getApiError(err) }),
-    });
-  };
   const confirmRemove = async (plan: MealPlan) => {
     if (!(await confirm({ ...mealPlanDeleteConfirm(plan), tone: "danger" }))) return;
     remove.mutate(plan.id, { onSuccess: () => setToast(`Đã xóa “${plan.name}”.`) });
@@ -208,22 +204,19 @@ export default function MealPlansPage() {
       <div className="td-layout">
         <div className="td-main">
           <MealDayTabs days={selected.days} selectedIndex={dayIndex} todayIndex={todayIndex} panelId={DAY_PANEL_ID} onSelect={setSelectedDayIndex} />
-          {mealStatus && (
-            <p className={mealStatus.kind === "error" ? "ui-notice ui-notice--error" : "ui-notice"} role={mealStatus.kind === "error" ? "alert" : "status"}>
-              {mealStatus.kind === "done" && <>Đã đánh dấu đã ăn: {mealStatus.item.recipe.name}.</>}
-              {mealStatus.kind === "undone" && <>Đã bỏ đánh dấu đã ăn: {mealStatus.item.recipe.name}.</>}
-              {mealStatus.kind === "error" && <>Chưa cập nhật được bữa {mealStatus.item.recipe.name}. {mealStatus.message}</>}
-              {mealStatus.kind === "done" && <Button busy={updateMeal.isPending} onClick={() => setCompleted(mealStatus.item, false)}>Hoàn tác</Button>}
-            </p>
-          )}
+          <MealStatusNotice notice={consumption.notice} busy={consumption.pending} onUndo={(notice) => consumption.undo(notice.target)} />
           <MealDayList
             plan={selected}
             day={day}
             isToday={dayIndex === todayIndex}
             panelId={DAY_PANEL_ID}
             labelledBy={dayTabId(dayIndex)}
-            pendingId={updateMeal.isPending ? updateMeal.variables?.id ?? null : null}
-            onToggle={setCompleted}
+            pendingId={consumption.pendingId}
+            onToggle={(item, completed) => {
+              const meal = { id: item.id, recipeName: item.recipe.name };
+              if (completed) consumption.open(meal);
+              else consumption.undo(meal);
+            }}
           />
         </div>
 
@@ -241,6 +234,15 @@ export default function MealPlansPage() {
           onToggle={(item) => toggleShop.mutate({ id: item.id, purchased: !item.purchased })}
         />
       </div>
+      {consumption.target && (
+        <ConsumeMealDialog
+          target={consumption.target}
+          busy={consumption.pending}
+          error={consumption.confirmError}
+          onClose={consumption.close}
+          onConfirm={consumption.confirm}
+        />
+      )}
       {toastRegion}
     </div>
   );

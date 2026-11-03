@@ -2,8 +2,7 @@ import { mutationOptions, queryOptions, type QueryClient } from "@tanstack/react
 import { retryUnlessClientError } from "../../api/query-client";
 import { queryKeys } from "../../api/query-keys";
 import {
-  deleteMealPlan, generateMealPlan, getMealPlan, listMealPlans,
-  updateMealCompletion, updateMealPlanStatus, updateShoppingPurchased,
+  deleteMealPlan, generateMealPlan, getMealPlan, listMealPlans, updateMealPlanStatus, updateShoppingPurchased,
 } from "./meal-plans.api";
 import type { MealPlan } from "../../types";
 
@@ -19,7 +18,6 @@ export const mealPlanQueries = {
 export const mealPlanMutations = {
   generate: (startDate: string) => mutationOptions({ mutationFn: () => generateMealPlan(startDate) }),
   updateStatus: () => mutationOptions({ mutationFn: updateMealPlanStatus }),
-  updateMeal: () => mutationOptions({ mutationFn: updateMealCompletion }),
   updateShopping: () => mutationOptions({ mutationFn: updateShoppingPurchased }),
   remove: () => mutationOptions({ mutationFn: deleteMealPlan }),
 };

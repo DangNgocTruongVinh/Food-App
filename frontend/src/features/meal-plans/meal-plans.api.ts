@@ -1,7 +1,8 @@
 import { api } from "../../api/client";
-import type { MealPlan, MealPlanItem, MealPlanStatus, ShoppingItem } from "../../types";
+import type { ConsumptionPreview, FoodUnit, MealCompletionResult, MealPlan, MealPlanStatus, ShoppingItem } from "../../types";
 
-export interface MealCompletionUpdate { id: string; completed: boolean }
+export type MealConsumption = { mode: "deduct"; lines: Array<{ ingredientId: string; quantity: number; unit: FoodUnit }> } | { mode: "none" };
+export interface MealCompletionUpdate { id: string; completed: boolean; consumption?: MealConsumption }
 export interface ShoppingPurchasedUpdate { id: string; purchased: boolean }
 export interface MealPlanStatusUpdate { id: string; status: MealPlanStatus }
 
@@ -21,8 +22,13 @@ export async function updateMealPlanStatus({ id, status }: MealPlanStatusUpdate)
   return (await api.patch<MealPlan>(`/meal-plans/${id}/status`, { status })).data;
 }
 
-export async function updateMealCompletion({ id, completed }: MealCompletionUpdate) {
-  return (await api.patch<MealPlanItem>(`/meal-plans/items/${id}`, { completed })).data;
+export async function updateMealCompletion({ id, completed, consumption }: MealCompletionUpdate) {
+  return (await api.patch<MealCompletionResult>(`/meal-plans/items/${id}`, consumption ? { completed, consumption } : { completed })).data;
+}
+
+/** Xem trước trừ kho cho một bữa (không đổi kho). */
+export async function getConsumptionPreview(id: string) {
+  return (await api.get<ConsumptionPreview>(`/meal-plans/items/${id}/consumption-preview`)).data;
 }
 
 export async function updateShoppingPurchased({ id, purchased }: ShoppingPurchasedUpdate) {
