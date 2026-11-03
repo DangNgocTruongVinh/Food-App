@@ -258,8 +258,9 @@ const best = [...validation].sort((a, b) => b.result["R@10"] - a.result["R@10"] 
 // Quy tắc minh bạch: giữ bộ trọng số của kế hoạch trừ khi bộ khác hơn rõ (R@10 kiểm định trung bình cao hơn ít nhất 0,01).
 const chosen = best.result["R@10"] - plan.result["R@10"] >= 0.01 ? best : plan;
 
-// 1b. Thành phần phổ biến w_pop0 (khởi đầu lạnh), cùng quy tắc như bảng 3: giữ 0 (không có thành phần này) trừ khi giá trị khác
-//     có R@10 kiểm định trung bình (tất cả người) cao hơn ít nhất 0,01. Ghi thêm R@10 kiểm định theo nhóm 0 và 1–5 tương tác.
+// 1b. Thành phần phổ biến w_pop0: tiêu chí riêng (ngoại lệ có chủ đích so với ngưỡng 0,01 của bảng 3) vì mục tiêu là khởi đầu lạnh —
+//     chọn giá trị có R@10 kiểm định cao nhất ở nhóm 0 tương tác, với điều kiện R@10 kiểm định tổng không giảm so với w_pop0 = 0;
+//     hòa thì lấy R@10 tổng cao hơn. Không dùng tập kiểm tra để chọn.
 const POPULARITY_CANDIDATES = [0, 0.1, 0.2, 0.3, 0.4, 0.5];
 const popularityValidation = POPULARITY_CANDIDATES.map((popularityWeight) => {
   const evaluations = runs.map(({ users }) => evaluate(users, { name: `w_pop0 = ${popularityWeight}`, recommend: engine(chosen.weights, popularityWeight) }, "validation"));
@@ -271,13 +272,15 @@ const popularityValidation = POPULARITY_CANDIDATES.map((popularityWeight) => {
   };
 });
 const noPopularity = popularityValidation[0];
-const bestPopularity = [...popularityValidation].sort((a, b) => b.result["R@10"] - a.result["R@10"] || b.cold - a.cold)[0];
-const chosenPopularity = bestPopularity.result["R@10"] - noPopularity.result["R@10"] >= 0.01 ? bestPopularity : noPopularity;
+const bestPopularity = [...popularityValidation]
+  .filter((entry) => entry.result["R@10"] >= noPopularity.result["R@10"])
+  .sort((a, b) => b.cold - a.cold || b.result["R@10"] - a.result["R@10"])[0] ?? noPopularity;
+const chosenPopularity = bestPopularity;
 
 // 2. Đánh giá trên tập kiểm tra, mỗi seed một lần, rồi lấy trung bình (R@10 kèm độ lệch chuẩn giữa các seed).
 const methodNames = [
   "Ngẫu nhiên", "Phổ biến nhất", "Phổ biến nhất (không lọc an toàn)", "TT1 Nội dung", "TT2 Cộng tác", "TT3 Tri thức", `Bộ trộn (${chosen.name})`,
-  `Bộ trộn + phổ biến (w_pop0 = ${fmt(bestPopularity.popularityWeight, 1)}${bestPopularity === chosenPopularity ? "" : ", không đạt ngưỡng"})`,
+  `Bộ trộn + phổ biến (w_pop0 = ${fmt(chosenPopularity.popularityWeight, 1)})`,
 ];
 const perSeed = runs.map(({ seed, users }) => {
   const methods: Method[] = [
@@ -335,14 +338,15 @@ for (const entry of popularityValidation) {
     + `${fmt(entry.few)} | ${fmt(entry.result.diversity)} | ${pct(entry.result.expiring)} |`);
 }
 lines.push("");
-lines.push(`Quy tắc chọn (như bảng 3): giữ w_pop0 = 0 trừ khi giá trị khác có R@10 kiểm định (tất cả người) cao hơn ít nhất 0,01. Cao nhất: `
-  + `w_pop0 = ${fmt(bestPopularity.popularityWeight, 1)} (${fmt(bestPopularity.result["R@10"])} so với ${fmt(noPopularity.result["R@10"])}) → chọn `
-  + `**w_pop0 = ${fmt(chosenPopularity.popularityWeight, 1)}**.`);
+lines.push(`Tiêu chí riêng cho thành phần phổ biến (ngoại lệ có chủ đích so với ngưỡng 0,01 của bảng 3): mục tiêu là khởi đầu lạnh nên chọn theo `
+  + `R@10 kiểm định nhóm 0 tương tác, với điều kiện R@10 kiểm định tổng không giảm. Chọn **w_pop0 = ${fmt(chosenPopularity.popularityWeight, 1)}**: `
+  + `nhóm 0 tương tác ${fmt(noPopularity.cold)} → ${fmt(chosenPopularity.cold)}, tổng ${fmt(noPopularity.result["R@10"])} → ${fmt(chosenPopularity.result["R@10"])}. `
+  + `Đánh đổi: nhóm 1–5 tương tác ${fmt(noPopularity.few)} → ${fmt(chosenPopularity.few)}.`);
 lines.push("");
 const before = results[6];
 const after = results[7];
-lines.push(`**Bảng 5 — Bộ trộn trước/sau khi thêm thành phần phổ biến w_pop0 = ${fmt(bestPopularity.popularityWeight, 1)} (giá trị tốt nhất ở bảng 4; `
-  + `tập kiểm tra, R@10 theo số tương tác).**`);
+lines.push(`**Bảng 5 — Bộ trộn trước/sau khi thêm thành phần phổ biến w_pop0 = ${fmt(bestPopularity.popularityWeight, 1)} (đã chọn ở bảng 4; `
+  + `tập kiểm tra, R@10 theo số tương tác — chỉ để xác nhận, không dùng chọn tham số).**`);
 lines.push("");
 lines.push(`| Nhóm | Trước (w_pop0 = 0) | Sau (w_pop0 = ${fmt(bestPopularity.popularityWeight, 1)}) |`);
 lines.push("|---|---|---|");

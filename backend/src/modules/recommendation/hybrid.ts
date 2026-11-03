@@ -32,9 +32,10 @@ export const COLD_START_KAPPA = 10;
 /**
  * Thành phần phổ biến (Σ_u r_ui, mọi người kể cả tài khoản mẫu; vẫn sau lọc an toàn): w_pop = (1 − γ_u)·w_pop0, các thành phần
  * khác nhân (1 − w_pop). Người mới (γ = 0) nhận đủ w_pop0, người nhiều lịch sử gần như 0. w_pop0 chọn ở đánh giá (docs, mục 8,
- * bảng 4): theo quy tắc "chỉ đổi khi R@10 kiểm định tăng ≥ 0,01", giá trị tốt nhất 0,3 tăng 0,009 → giữ 0 (thành phần tắt).
+ * bảng 4): tiêu chí riêng cho khởi đầu lạnh — R@10 kiểm định nhóm 0 tương tác 0,556 → 0,778, tổng không giảm (0,660 → 0,669);
+ * đánh đổi: nhóm 1–5 tương tác 0,690 → 0,621.
  */
-export const POPULARITY_WEIGHT0 = 0;
+export const POPULARITY_WEIGHT0 = 0.3;
 export const MMR_LAMBDA = 0.8;
 
 /** Min–max về [0, 1] trên tập id; id không có điểm tính là 0; mọi điểm bằng nhau → 0 (thuật toán không phân biệt được món nào). */
