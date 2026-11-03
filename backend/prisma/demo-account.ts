@@ -2,6 +2,7 @@ import type { Prisma, PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { nutritionTargetFields } from "../src/services/nutrition.service.js";
 import { vietnamToday } from "../src/utils/vietnam-date.js";
+import { rebuildSampleAccounts, samplePasswordHashes } from "./sample-accounts.js";
 
 // Tài khoản demo (demo@nouri.vn): hồ sơ và kho mẫu. Hạn sử dụng TƯƠNG ĐỐI theo ngày chạy (giờ Việt Nam) để dữ liệu demo
 // không "già": luôn có đồ sắp hết hạn, đồ còn hạn dài và một món dưới mức tối thiểu. Chỉ tác động tài khoản demo.
@@ -67,12 +68,16 @@ type ResetClient = Pick<PrismaClient, "user" | "$transaction">;
 /**
  * Đặt lại tài khoản demo về trạng thái chuẩn (chạy trước buổi demo). Chỉ xóa dữ liệu CỦA demo: thực đơn, bài viết (kèm
  * bình luận/lượt thích/ảnh), bình luận và lượt thích của demo trên bài người khác, tin nhắn, lịch sử kho, thông báo, kho;
- * rồi tạo lại hồ sơ và kho mẫu, mở khóa, đặt lại tên và mật khẩu demo. Không đụng tới món ăn, Admin, nhật ký Admin.
+ * rồi tạo lại hồ sơ và kho mẫu, mở khóa, đặt lại tên và mật khẩu demo. Tạo lại luôn các tài khoản mẫu minh họa (GĐ3b-R4,
+ * `sample-accounts.ts`). Không đụng tới món ăn, Admin, nhật ký Admin.
  * Trả về publicId ảnh bài viết đã xóa để xóa trên Cloudinary sau khi transaction thành công.
  */
-export async function resetDemoAccount(client: ResetClient, now = new Date()) {
+export async function resetDemoAccount(
+  client: ResetClient, now = new Date(), samples = { hashes: samplePasswordHashes, rebuild: rebuildSampleAccounts },
+) {
   const existing = await client.user.findUnique({ where: { email: DEMO_EMAIL }, select: { id: true } });
   const passwordHash = await bcrypt.hash(DEMO_PASSWORD, 12);
+  const sampleHashes = await samples.hashes();
   return client.$transaction(async (tx) => {
     const user = existing ?? await tx.user.create({ data: { email: DEMO_EMAIL, name: DEMO_NAME, passwordHash } });
     const userId = user.id;
@@ -93,8 +98,12 @@ export async function resetDemoAccount(client: ResetClient, now = new Date()) {
     const profileData = { ...demoProfile, ...nutritionTargetFields(demoProfile) };
     await tx.nutritionProfile.upsert({ where: { userId }, update: profileData, create: { userId, ...profileData } });
     const pantry = await tx.pantryItem.createMany({ data: demoPantryItems(userId, now) });
-    return { userId, removed, pantryItems: pantry.count, imagePublicIds: posts.flatMap((post) => post.images.map((image) => image.publicId)) };
-  });
+    const sampleAccounts = await samples.rebuild(tx, sampleHashes, now);
+    return {
+      userId, removed, pantryItems: pantry.count, sampleAccounts,
+      imagePublicIds: posts.flatMap((post) => post.images.map((image) => image.publicId)),
+    };
+  }, { timeout: 30_000 });
 }
 
 /** Lệnh đặt lại chỉ chạy khi có --yes (-y), hoặc người dùng gõ đúng câu xác nhận ở terminal tương tác. */

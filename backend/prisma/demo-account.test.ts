@@ -76,6 +76,8 @@ describe("resetDemoAccount", () => {
     nutritionProfile: { upsert: vi.fn() },
   };
   const client = { user: { findUnique: vi.fn() }, $transaction: vi.fn(async (operation: (db: typeof tx) => unknown) => operation(tx)) };
+  const samples = { hashes: vi.fn(async () => ["h1"]), rebuild: vi.fn(async () => ({ accounts: 8, posts: 8, likes: 20 })) };
+  const reset = () => resetDemoAccount(client as never, now, samples as never);
   beforeEach(() => {
     for (const model of Object.values(tx)) for (const fn of Object.values(model)) fn.mockReset().mockResolvedValue({ count: 2 });
     client.user.findUnique.mockReset().mockResolvedValue({ id: "demo-id" });
@@ -84,7 +86,7 @@ describe("resetDemoAccount", () => {
   });
 
   it("deletes only the demo user's data, in one transaction", async () => {
-    const result = await resetDemoAccount(client as never, now);
+    const result = await reset();
     expect(client.user.findUnique).toHaveBeenCalledWith({ where: { email: DEMO_EMAIL }, select: { id: true } });
     expect(client.$transaction).toHaveBeenCalledOnce();
     expect(tx.notification.deleteMany).toHaveBeenCalledWith({ where: { OR: [{ userId: "demo-id" }, { relatedId: { in: ["post-1", "post-2"] } }] } });
@@ -96,8 +98,15 @@ describe("resetDemoAccount", () => {
     expect(result.imagePublicIds).toEqual(["nouri/posts/a"]);
   });
 
+  it("rebuilds the sample accounts in the same transaction, with password hashes made before it", async () => {
+    const result = await reset();
+    expect(samples.rebuild).toHaveBeenCalledWith(tx, ["h1"], now);
+    expect(samples.hashes.mock.invocationCallOrder[0]).toBeLessThan(client.$transaction.mock.invocationCallOrder.at(-1)!);
+    expect(result.sampleAccounts).toEqual({ accounts: 8, posts: 8, likes: 20 });
+  });
+
   it("recreates the sample profile and pantry, unlocks the account and resets name/password", async () => {
-    await resetDemoAccount(client as never, now);
+    await reset();
     expect(tx.user.update).toHaveBeenCalledWith({ where: { id: "demo-id" }, data: expect.objectContaining({ name: "Minh Anh", lockedAt: null, role: "USER" }) });
     expect(tx.nutritionProfile.upsert.mock.calls[0][0].update).toMatchObject({ dietType: "BALANCED", allergies: [], dislikedFoods: ["Cần tây"] });
     const data = tx.pantryItem.createMany.mock.calls[0][0].data;
@@ -109,7 +118,7 @@ describe("resetDemoAccount", () => {
   it("creates the demo account when it does not exist yet", async () => {
     client.user.findUnique.mockResolvedValue(null);
     tx.user.create.mockResolvedValue({ id: "new-demo" });
-    const result = await resetDemoAccount(client as never, now);
+    const result = await reset();
     expect(tx.user.create).toHaveBeenCalledWith({ data: expect.objectContaining({ email: DEMO_EMAIL }) });
     expect(result.userId).toBe("new-demo");
   });

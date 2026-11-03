@@ -2,6 +2,7 @@ import { PrismaClient } from "@prisma/client";
 import { readSeedEnv } from "../src/config/seed-env.js";
 import { DEMO_EMAIL, DEMO_PASSWORD, seedDemoAccount } from "./demo-account.js";
 import { seedRecipes } from "./seed-data.js";
+import { seedSampleAccounts } from "./sample-accounts.js";
 import { seedAdminAccount, seedRecipeCatalog } from "./seed-steps.js";
 
 const prisma = new PrismaClient();
@@ -28,6 +29,10 @@ async function main() {
   console.log(demo.pantryCreated
     ? "Kho demo: đã tạo kho mẫu (hạn tính từ hôm nay)."
     : "Kho demo: đã có dữ liệu, giữ nguyên (đặt lại bằng npm run demo:reset -- --yes).");
+  const samples = await seedSampleAccounts(prisma);
+  console.log(samples
+    ? `Tài khoản mẫu minh họa: đã tạo ${samples.accounts} tài khoản, ${samples.posts} bài viết, ${samples.likes} lượt thích (mật khẩu ngẫu nhiên, không in).`
+    : "Tài khoản mẫu minh họa: đã có đủ, giữ nguyên.");
   console.log(`Seed hoàn tất. Demo: ${DEMO_EMAIL} / ${DEMO_PASSWORD}`);
 }
 

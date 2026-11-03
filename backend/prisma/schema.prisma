@@ -104,6 +104,9 @@ model User {
   role              Role               @default(USER)
   // Khác null: tài khoản đang bị khóa (không đăng nhập, không gọi API được); lưu thời điểm khóa.
   lockedAt          DateTime?
+  // Tài khoản mẫu minh họa (seed, "Người dùng mẫu N", mauN@nouri.vn): có tương tác thật để thuật toán gợi ý cộng tác chạy khi
+  // demo; không tính vào thống kê Admin, danh sách người dùng Admin gắn nhãn "Tài khoản mẫu".
+  isSample          Boolean            @default(false)
   profile           NutritionProfile?
   pantryItems       PantryItem[]
   pantryTransactions PantryTransaction[]

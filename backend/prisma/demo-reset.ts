@@ -23,6 +23,8 @@ async function main() {
     }
     const removed = Object.entries(result.removed).map(([key, count]) => `${key} ${count}`).join(", ");
     console.log(`Đã đặt lại ${DEMO_EMAIL}. Đã xóa: ${removed}, ảnh ${result.imagePublicIds.length}. Kho mẫu: ${result.pantryItems} thực phẩm.`);
+    const samples = result.sampleAccounts;
+    console.log(`Tài khoản mẫu minh họa: ${samples.accounts} tài khoản, ${samples.posts} bài viết, ${samples.likes} lượt thích (mật khẩu ngẫu nhiên, không in).`);
   } finally {
     await prisma.$disconnect();
   }
