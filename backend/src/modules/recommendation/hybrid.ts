@@ -22,7 +22,8 @@ export type RecommendationContext = "today" | "for-you" | "pantry" | "similar" |
 export const ALGORITHMS: Algorithm[] = ["content", "collaborative", "knowledge"];
 export const CONTEXT_WEIGHTS: Record<RecommendationContext, Record<Algorithm, number>> = {
   today: { content: 0.35, collaborative: 0.25, knowledge: 0.4 },
-  "for-you": { content: 0.45, collaborative: 0.3, knowledge: 0.25 },
+  // Chốt sau đánh giá R6 (docs/thuat-toan-goi-y.md, bảng 3): 0,60/0,20/0,20 hơn bộ ban đầu 0,45/0,30/0,25 trên tập kiểm định.
+  "for-you": { content: 0.6, collaborative: 0.2, knowledge: 0.2 },
   pantry: { content: 0.15, collaborative: 0.1, knowledge: 0.75 },
   similar: { content: 1, collaborative: 0, knowledge: 0 },
   "also-cooked": { content: 0, collaborative: 1, knowledge: 0 },

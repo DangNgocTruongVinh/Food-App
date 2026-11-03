@@ -2,7 +2,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   alsoCooked, buildCollaborativeModel, buildRatings, collaborativeScores, interactedCount, itemNeighbors, MIN_SUPPORT,
 } from "./collaborative.js";
-import { type Interaction, loadCollaborativeInteractions, loadUserInteractions } from "./interactions.js";
+import { loadCollaborativeInteractions, loadUserInteractions } from "./interaction-loader.js";
+import type { Interaction } from "./interactions.js";
 
 const mocks = vi.hoisted(() => ({ queryRaw: vi.fn() }));
 vi.mock("../../lib/prisma.js", () => ({ prisma: { $queryRaw: mocks.queryRaw } }));

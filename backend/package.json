@@ -14,7 +14,8 @@
     "db:migrate": "prisma migrate dev",
     "db:seed": "tsx prisma/seed.ts",
     "demo:reset": "node dist/prisma/demo-reset.js",
-    "demo:reset:dev": "tsx prisma/demo-reset.ts"
+    "demo:reset:dev": "tsx prisma/demo-reset.ts",
+    "eval:recommend": "tsx scripts/eval-recommendation.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.5.0",

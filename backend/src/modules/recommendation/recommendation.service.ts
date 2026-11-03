@@ -4,7 +4,7 @@ import { HttpError } from "../../utils/http-error.js";
 import { vietnamToday } from "../../utils/vietnam-date.js";
 import { buildCollaborativeModel, type CollaborativeModel } from "./collaborative.js";
 import { type EngineData, type EngineQuery, runRecommendation } from "./hybrid.js";
-import { loadCollaborativeInteractions, loadUserInteractions } from "./interactions.js";
+import { loadCollaborativeInteractions, loadUserInteractions } from "./interaction-loader.js";
 import type { RecommendationsQuery } from "./recommendation.schema.js";
 
 // Nạp dữ liệu cho bộ gợi ý (GĐ3b-R). Mọi dữ liệu cá nhân (hồ sơ, kho, lịch sử, thực đơn hôm nay) lọc theo userId từ JWT;
