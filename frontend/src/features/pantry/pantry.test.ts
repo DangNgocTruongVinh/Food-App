@@ -201,7 +201,7 @@ describe("Pantry page logic", () => {
   });
 
   it("counts the summary metrics and categories (most items first)", () => {
-    expect(pantryCounts(items, now)).toEqual({ total: 6, good: 3, expiring: 2, expired: 1, lowStock: 2 });
+    expect(pantryCounts(items, now)).toEqual({ total: 6, depleted: 0, good: 3, expiring: 2, expired: 1, lowStock: 2 });
     expect(pantryCategories(items)[0]).toEqual(["Rau củ", 2]);
   });
 
@@ -247,10 +247,43 @@ describe("Pantry page logic", () => {
 
   it("keeps the default form, category options and done messages", () => {
     expect(initialPantryForm).toMatchObject({ category: "Rau củ", quantity: 1, unit: "ITEM", storageLocation: "REFRIGERATOR", expiryDate: "" });
-    expect(pantryCategoryOptions("Rau củ")).toHaveLength(7);
+    expect(pantryCategoryOptions("Rau củ")).toEqual(["Rau củ", "Thịt & cá", "Trứng & sữa", "Đậu & hạt", "Ngũ cốc", "Trái cây", "Gia vị", "Khác"]);
     expect(pantryCategoryOptions("Đồ hộp")[0]).toBe("Đồ hộp");
     expect(pantryDoneMessage("create", "Ức gà")).toBe("Đã lưu “Ức gà” vào kho.");
     expect(pantryDoneMessage("update", "Ức gà")).toBe("Đã lưu thay đổi cho “Ức gà”.");
     expect(pantryDoneMessage("delete", "Ức gà")).toBe("Đã xóa “Ức gà” khỏi kho.");
+  });
+});
+
+describe("Depleted pantry items (quantity 0, GĐ3b decision 1)", () => {
+  const base = { category: "Ngũ cốc", unit: "G" as const, storageLocation: "DRY_STORAGE" as const, minimumStock: 0, note: null };
+  const items = [
+    { ...base, id: "a", name: "Gạo", quantity: 0, expiryDate: "2026-11-04T00:00:00.000Z" },
+    { ...base, id: "b", name: "Bún", quantity: 300, expiryDate: "2026-11-05T00:00:00.000Z" },
+    { ...base, id: "c", name: "Đậu xanh", quantity: 0, expiryDate: null, minimumStock: 200 },
+    { ...base, id: "d", name: "Yến mạch", quantity: 500, expiryDate: "2026-11-02T00:00:00.000Z" },
+  ];
+  const day = new Date("2026-11-03T08:00:00.000Z");
+
+  it("labels quantity 0 as \"Đã dùng hết\", before any expiry status", () => {
+    expect(items.map((item) => getPantryStatus(item, day))).toEqual(["depleted", "expiring", "depleted", "expired"]);
+    expect(pantryStatusLabel("depleted")).toBe("Đã dùng hết");
+  });
+
+  it("does not count depleted items in \"Tất cả\" or expiry stats, but still counts them as under minimum stock", () => {
+    expect(pantryCounts(items, day)).toEqual({ total: 2, depleted: 2, good: 0, expiring: 1, expired: 1, lowStock: 1 });
+  });
+
+  it("filters \"Đã dùng hết\" (no stat cell) and lists depleted items last", () => {
+    const filters = { search: "", status: "all" as const, category: "all", storage: "all" as const, sortBy: "expiry", lowStock: false };
+    expect(filterAndSortPantry(items, filters, day).map((item) => item.id)).toEqual(["d", "b", "a", "c"]);
+    expect(filterAndSortPantry(items, { ...filters, sortBy: "name" }, day).map((item) => item.id)).toEqual(["b", "d", "c", "a"]);
+    expect(filterAndSortPantry(items, { ...filters, status: "depleted" }, day).map((item) => item.id)).toEqual(["a", "c"]);
+    expect(activeStatFilter({ status: "depleted", lowStock: false })).toBeNull();
+  });
+
+  it("keeps depleted items out of \"Cần dùng sớm\"", () => {
+    const soon = itemsToUseSoon(items, day);
+    expect([...soon.expiring, ...soon.expired].map((item) => item.id)).toEqual(["b", "d"]);
   });
 });

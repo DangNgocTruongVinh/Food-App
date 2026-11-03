@@ -108,7 +108,8 @@ export default function PantryPage() {
       <div className="kho-layout">
         <section className="kho-main" aria-labelledby="kho-list-title">
           <h2 id="kho-list-title" className="ui-visually-hidden">Danh sách thực phẩm</h2>
-          <PantryCategoryChips total={counts.total} categories={categories} category={category} onChange={setCategory} />
+          {/* Chip lọc danh sách: đếm mọi thực phẩm đang hiện (kể cả đã dùng hết); ô thống kê "Tất cả" thì không đếm món đã dùng hết. */}
+          <PantryCategoryChips total={data.length} categories={categories} category={category} onChange={setCategory} />
           <Card variant="flush" className="kho-panel">
             <PantryToolbar
               status={status} storage={storage} sortBy={sortBy} view={view}

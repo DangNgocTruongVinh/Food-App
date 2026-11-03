@@ -43,7 +43,7 @@ function Expiry({ item, status }: { item: PantryItem; status: PantryItemStatus }
   return (
     <>
       <span className="kho-date">{expiry.date}</span>
-      {expiry.relative && <span className={cx("kho-sub", status !== "good" && "kho-sub--warn")}>{expiry.relative}</span>}
+      {expiry.relative && <span className={cx("kho-sub", (status === "expiring" || status === "expired") && "kho-sub--warn")}>{expiry.relative}</span>}
     </>
   );
 }

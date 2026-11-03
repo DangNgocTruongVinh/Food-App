@@ -101,6 +101,7 @@
 .kho-status--good { color: var(--action-text); background: var(--tag-bg); }
 .kho-status--expiring { border-color: var(--warn); color: var(--warn); background: var(--surface); }
 .kho-status--expired { border-color: var(--warn); color: var(--surface); background: var(--warn); }
+.kho-status--depleted { border-color: var(--line); color: var(--ink-2); background: var(--surface-2); }
 
 .kho-actions { display: flex; justify-content: flex-end; gap: var(--space-1); }
 .kho-actions .ui-icon-button { color: var(--ink-2); }

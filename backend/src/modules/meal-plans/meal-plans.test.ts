@@ -91,6 +91,10 @@ const plan = {
   createdAt: new Date("2026-09-15T00:00:00.000Z"), updatedAt: new Date("2026-09-15T00:00:00.000Z"),
 };
 
+// Dòng đi chợ trong fixture tạo trước GĐ3b lượt 5 (category null): API trả category tính theo tên khi đọc.
+const shoppingItemRead = { ...shoppingItem, category: "Thịt & cá" };
+const planRead = { ...plan, shoppingItems: [shoppingItemRead] };
+
 beforeEach(() => {
   vi.resetAllMocks();
   delete process.env.OPENAI_API_KEY;
@@ -131,7 +135,7 @@ afterEach(() => vi.restoreAllMocks());
 describe("Meal Plan and Shopping HTTP contract (no database)", () => {
   it("lists only the authenticated user's plans with the existing include and order", async () => {
     const response = await request(app, "/api/meal-plans?userId=user-b", { token: token() });
-    expect(response).toEqual({ status: 200, body: JSON.parse(JSON.stringify([plan])) });
+    expect(response).toEqual({ status: 200, body: JSON.parse(JSON.stringify([planRead])) });
     expect(mocks.listPlans).toHaveBeenCalledWith({
       where: { userId },
       include: {
@@ -144,7 +148,7 @@ describe("Meal Plan and Shopping HTTP contract (no database)", () => {
 
   it("gets a plan only when it belongs to the authenticated user", async () => {
     const response = await request(app, `/api/meal-plans/${planId}`, { token: token() });
-    expect(response).toEqual({ status: 200, body: JSON.parse(JSON.stringify(plan)) });
+    expect(response).toEqual({ status: 200, body: JSON.parse(JSON.stringify(planRead)) });
     expect(mocks.findPlan).toHaveBeenCalledWith(expect.objectContaining({ where: { id: planId, userId } }));
   });
 
@@ -159,7 +163,7 @@ describe("Meal Plan and Shopping HTTP contract (no database)", () => {
     const response = await request(app, "/api/meal-plans/generate", {
       method: "POST", token: token(), body: { startDate: "2026-10-01" },
     });
-    expect(response).toEqual({ status: 201, body: JSON.parse(JSON.stringify(plan)) });
+    expect(response).toEqual({ status: 201, body: JSON.parse(JSON.stringify(planRead)) });
     expect(mocks.generatePlanWithAI).toHaveBeenCalledWith(expect.objectContaining({
       mealsPerDay: 3,
       dietType: "BALANCED",
@@ -174,7 +178,7 @@ describe("Meal Plan and Shopping HTTP contract (no database)", () => {
       endDate: new Date("2026-10-07T00:00:00.000Z"),
       calorieTarget: 2000,
       aiGenerated: false,
-      shoppingItems: { create: [{ name: "Ức gà", quantity: 2050, unit: "G" }] },
+      shoppingItems: { create: [{ name: "Ức gà", quantity: 2050, unit: "G", category: "Thịt & cá" }] },
     });
     expect(data.days.create).toHaveLength(7);
     expect(data.days.create.every((day: { items: { create: unknown[] } }) => day.items.create.length === 3)).toBe(true);
@@ -184,7 +188,7 @@ describe("Meal Plan and Shopping HTTP contract (no database)", () => {
     mocks.listRecipes.mockResolvedValue([{ ...recipe, servings: 2 }]);
     await request(app, "/api/meal-plans/generate", { method: "POST", token: token(), body: { startDate: "2026-10-01" } });
     // 21 bữa × 100 g / 2 khẩu phần = 1050 g, trừ 50 g đang có trong kho.
-    expect(mocks.createPlan.mock.calls[0][0].data.shoppingItems).toEqual({ create: [{ name: "Ức gà", quantity: 1000, unit: "G" }] });
+    expect(mocks.createPlan.mock.calls[0][0].data.shoppingItems).toEqual({ create: [{ name: "Ức gà", quantity: 1000, unit: "G", category: "Thịt & cá" }] });
   });
 
   it("corrects an OpenAI plan with a wrong-meal dish and an allergen before saving", async () => {
@@ -286,7 +290,7 @@ describe("Meal Plan and Shopping HTTP contract (no database)", () => {
     const response = await request(app, `/api/meal-plans/shopping/${shoppingItemId}`, {
       method: "PATCH", token: token(), body: { purchased: true },
     });
-    expect(response).toEqual({ status: 200, body: JSON.parse(JSON.stringify(shoppingItem)) });
+    expect(response).toEqual({ status: 200, body: JSON.parse(JSON.stringify(shoppingItemRead)) });
     expect(mocks.updateShoppingItems).toHaveBeenCalledWith({
       where: { id: shoppingItemId, mealPlan: { userId } }, data: { purchased: true },
     });

@@ -3,6 +3,7 @@ import { prisma } from "../../lib/prisma.js";
 import { filterRecipesForProfile, normalizeFoodText } from "../../services/dietary.service.js";
 import { calculateNutritionTargets } from "../../services/nutrition.service.js";
 import { visibleRecipeWhere } from "../../services/recipe-visibility.js";
+import { foodCategoryOf, withFoodCategory } from "../../services/food-category.js";
 import { requiredQuantity } from "../../services/pantry-consumption.js";
 import { HttpError } from "../../utils/http-error.js";
 import { generatePlanWithAI } from "../ai/ai.service.js";
@@ -80,10 +81,10 @@ export async function generateWeeklyPlan(userId: string, startDateInput: string)
   }
   const shoppingItems = [...required.entries()].flatMap(([key, item]) => {
     const missing = item.quantity - (pantryByKey.get(key) ?? 0);
-    return missing > 0.01 ? [{ ...item, quantity: Math.round(missing * 10) / 10 }] : [];
+    return missing > 0.01 ? [{ ...item, quantity: Math.round(missing * 10) / 10, category: foodCategoryOf(item.name) }] : [];
   });
 
-  return prisma.mealPlan.create({
+  const created = await prisma.mealPlan.create({
     data: {
       userId,
       name: `Thực đơn ${startDate.toLocaleDateString("vi-VN", { timeZone: "UTC" })}`,
@@ -97,6 +98,7 @@ export async function generateWeeklyPlan(userId: string, startDateInput: string)
     },
     include: planInclude,
   });
+  return withShoppingCategories(created);
 }
 
 export const planInclude = {
@@ -104,26 +106,33 @@ export const planInclude = {
   shoppingItems: { orderBy: [{ purchased: "asc" as const }, { name: "asc" as const }] },
 };
 
-export function listMealPlans(userId: string) {
-  return prisma.mealPlan.findMany({
+/** Dòng đi chợ tạo trước GĐ3b lượt 5 chưa có `category`: tính theo tên khi đọc (không đổi dữ liệu đã lưu). */
+function withShoppingCategories<T extends { shoppingItems: Array<{ name: string; category: string | null }> }>(plan: T) {
+  return { ...plan, shoppingItems: plan.shoppingItems.map(withFoodCategory) };
+}
+
+export async function listMealPlans(userId: string) {
+  const plans = await prisma.mealPlan.findMany({
     where: { userId },
     include: planInclude,
     // Mới nhất trước; trùng ngày bắt đầu thì thực đơn tạo sau đứng trước.
     orderBy: [{ startDate: "desc" }, { createdAt: "desc" }],
   });
+  return plans.map(withShoppingCategories);
 }
 
 export async function getMealPlan(userId: string, id: string) {
   const plan = await prisma.mealPlan.findFirst({ where: { id, userId }, include: planInclude });
   if (!plan) throw new HttpError(404, "Không tìm thấy thực đơn.");
-  return plan;
+  return withShoppingCategories(plan);
 }
 
 export async function updateMealPlanStatus(userId: string, id: string, status: PlanStatus) {
   return prisma.$transaction(async (transaction) => {
     const result = await transaction.mealPlan.updateMany({ where: { id, userId }, data: { status } });
     if (!result.count) throw new HttpError(404, "Không tìm thấy thực đơn.");
-    return transaction.mealPlan.findUnique({ where: { id }, include: planInclude });
+    const plan = await transaction.mealPlan.findUnique({ where: { id }, include: planInclude });
+    return plan && withShoppingCategories(plan);
   });
 }
 
@@ -136,7 +145,7 @@ export async function updateShoppingPurchased(userId: string, id: string, purcha
     if (!result.count) throw new HttpError(404, "Không tìm thấy nguyên liệu mua sắm.");
     const item = await transaction.shoppingItem.findUnique({ where: { id } });
     if (!item) throw new HttpError(404, "Không tìm thấy nguyên liệu mua sắm.");
-    return item;
+    return withFoodCategory(item);
   });
 }
 

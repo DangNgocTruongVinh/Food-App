@@ -50,6 +50,7 @@ export function PantryToolbar(props: PantryToolbarProps) {
           <option value="good">Còn tốt</option>
           <option value="expiring">Sắp hết hạn</option>
           <option value="expired">Đã hết hạn</option>
+          <option value="depleted">Đã dùng hết</option>
         </select>
       </div>
       <div className="kho-toolbar__field">

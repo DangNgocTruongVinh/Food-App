@@ -11,7 +11,7 @@ import {
 import {
   alternativeMeals, dayNutrition, generateMealPlanLabel, generateSourceLabel, groupShoppingItems, initialDayIndex, latestMealPlanId,
   mealPlanDeleteConfirm, mealPlanPath, mealPlanSourceLabel, mealPlanSuggestions, nextMealPlanIdAfterDelete, orderDayMeals, planDayLabels,
-  planTargets, planTitleParts, selectMealPlanDay, shoppingGroupOf, summarizeMealPlan, todayDayIndex,
+  planTargets, planTitleParts, selectMealPlanDay, summarizeMealPlan, todayDayIndex,
 } from "./meal-plans.logic";
 import { invalidateMealPlanQueries, mealPlanQueries, removeDeletedMealPlan, removeMealPlanDetail } from "./meal-plans.queries";
 
@@ -209,17 +209,15 @@ describe("Meal Plan and Shopping page business logic", () => {
     expect(alternativeMeals(plan, "BREAKFAST", "meal-a").map(({ item, day }) => [item.id, day.id])).toEqual([["meal-b", "day-b"]]);
   });
 
-  it("groups shopping items by type, unpurchased first", () => {
-    const names = ["Cà chua", "Cá lóc", "Đậu bắp", "Đậu hũ", "Nước mắm", "Sữa chua", "Bún tươi", "Chuối", "Đá viên", "Ức gà", "Lá dứa"];
-    expect(names.map((name) => shoppingGroupOf({ name }))).toEqual([
-      "Rau củ", "Thịt & cá", "Rau củ", "Đậu & hạt", "Gia vị", "Trứng & sữa", "Gạo, bún & bánh", "Trái cây", "Khác", "Thịt & cá", "Rau củ",
-    ]);
-    expect(shoppingGroupOf({ name: "Cà chua", category: "Đồ tươi" })).toBe("Đồ tươi");
+  it("groups shopping items by the backend category in the 8 shared groups' order, unpurchased first", () => {
     const result = groupShoppingItems([
-      { name: "Muối", purchased: false }, { name: "Tỏi", purchased: true }, { name: "Hành lá", purchased: false }, { name: "Tôm", purchased: false },
+      { name: "Muối", purchased: false, category: "Gia vị" }, { name: "Tỏi", purchased: true, category: "Rau củ" },
+      { name: "Hành lá", purchased: false, category: "Rau củ" }, { name: "Tôm", purchased: false, category: "Thịt & cá" },
+      { name: "Đậu hũ", purchased: false, category: "Đậu & hạt" }, { name: "Gạo", purchased: false, category: "Ngũ cốc" },
+      { name: "Đá viên", purchased: false, category: null },
     ]);
     expect(result.map((group) => [group.name, group.items.map((item) => item.name)])).toEqual([
-      ["Rau củ", ["Hành lá", "Tỏi"]], ["Thịt & cá", ["Tôm"]], ["Gia vị", ["Muối"]],
+      ["Rau củ", ["Hành lá", "Tỏi"]], ["Thịt & cá", ["Tôm"]], ["Đậu & hạt", ["Đậu hũ"]], ["Ngũ cốc", ["Gạo"]], ["Gia vị", ["Muối"]], ["Khác", ["Đá viên"]],
     ]);
   });
 });

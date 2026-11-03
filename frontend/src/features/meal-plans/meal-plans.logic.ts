@@ -1,4 +1,5 @@
 import type { MealPlan, MealPlanDay, MealPlanItem, MealPlanStatus, MealType, NutritionProfile, ShoppingItem } from "../../types";
+import { FOOD_CATEGORIES } from "../../utils/food-categories";
 
 export const mealLabels: Record<MealType, string> = {
   BREAKFAST: "Bữa sáng", LUNCH: "Bữa trưa", DINNER: "Bữa tối", SNACK: "Bữa phụ",
@@ -141,38 +142,17 @@ export function mealPlanDeleteConfirm(plan: Pick<MealPlan, "name" | "status">) {
 
 // ---------- Danh sách đi chợ ----------
 
-export const SHOPPING_GROUPS = ["Rau củ", "Thịt & cá", "Trứng & sữa", "Đậu & hạt", "Gạo, bún & bánh", "Trái cây", "Gia vị", "Khác"] as const;
-export type ShoppingGroup = (typeof SHOPPING_GROUPS)[number];
-
-// Xét theo từ đầu tên nguyên liệu, theo thứ tự (ngoại lệ trước: "đậu bắp" là rau, "cà" khác "cá").
-const GROUP_RULES: Array<[ShoppingGroup, RegExp]> = [
-  ["Rau củ", /^(đậu bắp|đậu hà lan|bắp ngọt|đu đủ xanh|ớt chuông)/],
-  ["Gia vị", /^(muối|đường|tiêu|nước mắm|nước tương|tương|giấm|dầu|mật ong|quế|hoa hồi|lá oregano|mè|hạt nêm|bột ngọt|ô liu)/],
-  ["Thịt & cá", /^(thịt|sườn|xương|đùi gà|ức gà|cánh gà|gà|bò|heo|cá|tôm|mực|cua|nghêu)/],
-  ["Trứng & sữa", /^(trứng|sữa|phô mai|bơ lạt)/],
-  ["Đậu & hạt", /^(đậu|hạt|lạc)/],
-  ["Gạo, bún & bánh", /^(gạo|nếp|bún|bánh|mì|miến|yến mạch|bột)/],
-  ["Trái cây", /^(chuối|chanh|thơm|dứa|quả|táo|cam|xoài|nước dừa|nước cốt dừa|dừa|me)/],
-  ["Rau củ", /^(rau|cải|cà|bí|hành|tỏi|gừng|sả|ớt|nấm|giá|xà lách|dưa|khoai|bông cải|hẹ|ngò|bạc hà|lá|su|măng|đu đủ)/],
-];
-
-/** Nhóm của một món cần mua: dùng category nếu backend có, không thì đoán theo tên (chỉ để trình bày). */
-export function shoppingGroupOf(item: Pick<ShoppingItem, "name"> & { category?: string | null }): string {
-  if (item.category?.trim()) return item.category.trim();
-  const name = item.name.normalize("NFC").toLocaleLowerCase("vi").trim();
-  return GROUP_RULES.find(([, pattern]) => pattern.test(name))?.[0] ?? "Khác";
-}
-
-/** Danh sách đi chợ theo nhóm (thứ tự nhóm cố định), trong nhóm: chưa mua trước, rồi theo tên. */
+/** Danh sách đi chợ theo nhóm (thứ tự 8 nhóm chung), trong nhóm: chưa mua trước, rồi theo tên. */
 export function groupShoppingItems<T extends Pick<ShoppingItem, "name" | "purchased"> & { category?: string | null }>(items: T[]) {
   const groups = new Map<string, T[]>();
   items.forEach((item) => {
-    const group = shoppingGroupOf(item);
+    // Nhóm do backend gán (services/food-category.ts); thiếu thì "Khác".
+    const group = item.category?.trim() || "Khác";
     groups.set(group, [...(groups.get(group) ?? []), item]);
   });
   const rank = (group: string) => {
-    const index = (SHOPPING_GROUPS as readonly string[]).indexOf(group);
-    return index < 0 ? SHOPPING_GROUPS.length - 1 : index;
+    const index = (FOOD_CATEGORIES as readonly string[]).indexOf(group);
+    return index < 0 ? FOOD_CATEGORIES.length - 1 : index;
   };
   return [...groups.entries()]
     .sort(([a], [b]) => rank(a) - rank(b) || a.localeCompare(b, "vi"))
