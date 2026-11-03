@@ -61,4 +61,19 @@ docker exec app_food-backend-1 node dist/prisma/seed.js
 
 Mở `http://localhost:8080`. Migration PostgreSQL được chạy tự động khi backend khởi động.
 
+### Đặt lại dữ liệu demo (chạy trước buổi demo)
+
+Tài khoản `demo@nouri.vn` được đưa về trạng thái chuẩn: xóa thực đơn, bài viết (kèm ảnh trên Cloudinary), bình luận,
+lượt thích, tin nhắn trợ lý, lịch sử kho, thông báo và kho của demo; tạo lại hồ sơ mẫu và kho mẫu với hạn sử dụng tính từ
+ngày chạy (giờ Việt Nam): một món còn 1 ngày, một món còn 2 ngày, các món khác 5–10 ngày, một món dưới mức tối thiểu.
+Không đụng tới 33 món, tài khoản Admin và người dùng khác.
+
+```bash
+docker compose exec backend npm run demo:reset -- --yes   # trong container (bản build)
+npm run demo:reset:dev -w backend -- --yes                 # máy dev (tsx)
+```
+
+Không có `--yes` thì lệnh hỏi xác nhận (gõ `dat lai`); không có terminal để hỏi thì lệnh dừng, không xóa gì.
+Seed (`db:seed`) chỉ tạo kho mẫu khi kho demo đang trống, không ghi đè dữ liệu đã có.
+
 Xem thêm [kiến trúc](docs/ARCHITECTURE.md) và [danh sách API](docs/API.md).

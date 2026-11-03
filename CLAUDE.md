@@ -503,6 +503,7 @@ Hiện trạng ghi nhận khi lập kế hoạch: định lượng nguyên liệ
 - [ ] Hạn chế: ảnh đã xóa (xóa bài, thay ảnh công thức) vẫn mở được qua link cũ khoảng 1 phút do bộ nhớ đệm CDN của Cloudinary, dù đã gọi xóa kèm `invalidate: true` (đã ghi ở `docs/test-evidence/README.md`).
 
 ## Lưu ý khi demo
+- **Chạy trước buổi demo:** `docker compose exec backend npm run demo:reset -- --yes` (máy dev: `npm run demo:reset:dev -w backend -- --yes`). Chỉ tác động `demo@nouri.vn`: xóa thực đơn, bài viết (kèm ảnh Cloudinary), bình luận, lượt thích, tin nhắn, lịch sử kho, thông báo, kho; tạo lại hồ sơ mẫu và kho mẫu 8 thực phẩm với hạn tính từ ngày chạy theo giờ Việt Nam (Đậu hũ còn 1 ngày, Ức gà 2 ngày, các món khác 5–10 ngày, Gạo 90 ngày; Trứng dưới mức tối thiểu); mở khóa, đặt lại tên/mật khẩu demo. Giữ nguyên 33 món, Admin, nhật ký Admin. Không có `--yes` thì hỏi xác nhận, không có terminal thì dừng. Mã: `backend/prisma/demo-account.ts` (dùng chung với seed: seed chỉ tạo kho mẫu khi kho demo trống), lệnh `backend/prisma/demo-reset.ts`, test `demo-account.test.ts`.
 - **Bắt buộc trước demo: upload ảnh thật cho 33 món** (Admin → ảnh công thức, Cloudinary). Chưa có ảnh thì mọi nơi hiện ô tên món, hero Tổng quan không có ảnh.
 - Phải có `OPENAI_API_KEY` hợp lệ, nếu không meal plan/chat chạy fallback (không phải AI thật).
 - Chuẩn bị tài khoản Admin và User mẫu bằng seed.
