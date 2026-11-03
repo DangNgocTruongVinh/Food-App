@@ -85,4 +85,20 @@ Không có `--yes` thì lệnh hỏi xác nhận (gõ `dat lai`); không có ter
 Seed (`db:seed`) chỉ tạo kho mẫu (kèm lịch sử mẫu, nếu demo chưa có thực đơn) khi kho demo đang trống, và chỉ tạo tài khoản
 mẫu khi còn thiếu; không ghi đè dữ liệu đã có.
 
+### Nghiệm thu bằng Playwright (`e2e/acceptance/`)
+
+Mỗi lượt có một script nghiệm thu (UI-1 → UI-12, GĐ3b lượt 2–7, GĐ3b-R4 → R7). Cần frontend Vite ở `http://localhost:5173`
+(`npm run dev -w frontend`), backend ở `http://localhost:4000` (Docker hoặc `npm run dev -w backend`) và trình duyệt Chromium
+cho Playwright (`npx playwright-core install chromium` nếu máy chưa có). Tài khoản đọc từ biến môi trường hoặc `.env` ở gốc repo,
+không có giá trị mặc định trong mã: `DEMO_EMAIL`, `DEMO_PASSWORD` (tài khoản demo của seed), `ADMIN_EMAIL`, `ADMIN_PASSWORD`
+(script có thao tác Admin).
+
+```bash
+npm run e2e:acceptance -- r7-check                 # ảnh ghi vào e2e/output/r7-check/
+npm run e2e:acceptance -- gd3b-l7-check docs/design/screens/GD3b-L7   # chọn thư mục ảnh
+```
+
+Một số script tạo/xóa dữ liệu thử hoặc chạy `demo:reset` (ghi rõ ở đầu file); script lượt UI cũ so với bản `main` ở
+`http://localhost:8080` và có thể cần tham số thêm (xem dòng đầu mỗi file). Chạy `npm run e2e:acceptance` không tham số để xem danh sách.
+
 Xem thêm [kiến trúc](docs/ARCHITECTURE.md) và [danh sách API](docs/API.md).

@@ -2,16 +2,21 @@
   "name": "nouri",
   "private": true,
   "version": "1.0.0",
-  "workspaces": ["frontend", "backend"],
+  "workspaces": [
+    "frontend",
+    "backend"
+  ],
   "scripts": {
     "typecheck": "npm run typecheck -w backend && npm run typecheck -w frontend",
     "dev": "concurrently -n WEB,API -c cyan,green \"npm run dev -w frontend\" \"npm run dev -w backend\"",
     "build": "npm run build -w backend && npm run build -w frontend",
     "test": "npm run test -w backend && npm run test -w frontend",
     "db:migrate": "npm run db:migrate -w backend",
-    "db:seed": "npm run db:seed -w backend"
+    "db:seed": "npm run db:seed -w backend",
+    "e2e:acceptance": "node e2e/acceptance/run.cjs"
   },
   "devDependencies": {
-    "concurrently": "^9.1.2"
+    "concurrently": "^9.1.2",
+    "playwright-core": "^1.52.0"
   }
 }
