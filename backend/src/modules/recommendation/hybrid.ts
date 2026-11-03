@@ -8,7 +8,7 @@ import type { Interaction } from "./interactions.js";
 import {
   type KnowledgeRecipe, knowledgeScore, type KnowledgeScore, mealTarget, pantryFeature, recentWindowStart, type TargetProfile, usesPantryItem,
 } from "./knowledge-based.js";
-import { type Algorithm, alsoCookedReason, recommendationReason, similarReason } from "./reasons.js";
+import { type Algorithm, alsoCookedReason, pickReason, reasonCandidates, similarReason } from "./reasons.js";
 import { safeRecipes, type SafetyProfile, type SafetyRecipe } from "./safety.js";
 
 // Bộ trộn (GĐ3b-R5), hàm thuần (dữ liệu nạp ở recommendation.service.ts):
@@ -113,6 +113,8 @@ export type EngineQuery = {
   recipeId?: string;
   /** Ngữ cảnh "gợi ý món cho thực phẩm X" (đã kiểm tra quyền sở hữu ở service). */
   focusItem?: FitPantryItem;
+  /** Chỉ dùng cho đánh giá (scripts/eval-recommendation.ts): thay trọng số của ngữ cảnh. */
+  weights?: Record<Algorithm, number>;
 };
 
 export const recipeSummary = (recipe: EngineRecipe) => ({
@@ -170,20 +172,18 @@ export function runRecommendation(data: EngineData, query: EngineQuery): { coldS
   const knowledge = new Map<string, KnowledgeScore>(candidates.map((recipe) => [recipe.id, knowledgeScore(recipe, {
     pantry: data.pantry, pantryIndex, dietType: data.profile?.dietType, target, recentRecipeIds, space, now: data.now,
   })]));
-  const weights = coldStartWeights(CONTEXT_WEIGHTS[query.context], interactedCount(data.model, data.userId));
+  const weights = coldStartWeights(query.weights ?? CONTEXT_WEIGHTS[query.context], interactedCount(data.model, data.userId));
   const raw = {
     content: new Map([...content].map(([id, entry]) => [id, entry.score])),
     collaborative: new Map([...collaborative].map(([id, entry]) => [id, entry.score])),
     knowledge: new Map([...knowledge].map(([id, entry]) => [id, entry.score])),
   };
   const picked = mmr(blendScores(ids, raw, weights), space, query.limit);
+  const usedKinds = new Set<string>();
   return {
     coldStart,
     items: picked.map((entry) => {
-      // Thành phần đóng góp lớn nhất trước; thành phần bằng 0 (vd. chỉ có một ứng viên nên min–max = 0) xếp sau theo trọng số ngữ cảnh.
-      const order = [...ALGORITHMS].sort((a, b) => entry.components[b] - entry.components[a] || weights[b] - weights[a]);
-      const reason = recommendationReason({
-        algorithm: order[0],
+      const candidatesForReason = reasonCandidates({
         content: content.get(entry.recipeId),
         collaborative: collaborative.get(entry.recipeId),
         knowledge: knowledge.get(entry.recipeId),
@@ -193,7 +193,8 @@ export function runRecommendation(data: EngineData, query: EngineQuery): { coldS
         mealType: query.mealType,
         target,
         hasHistory: data.interactions.length > 0,
-      }, order);
+      }, entry.components, weights);
+      const reason = pickReason(candidatesForReason, usedKinds);
       return item(entry.recipeId, entry.score, reason, entry.components);
     }),
   };

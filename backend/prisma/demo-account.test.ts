@@ -39,6 +39,10 @@ describe("seedDemoAccount", () => {
     user: { upsert: vi.fn() },
     nutritionProfile: { findUnique: vi.fn(), update: vi.fn(), create: vi.fn() },
     pantryItem: { count: vi.fn(), createMany: vi.fn() },
+    mealPlan: { count: vi.fn(), create: vi.fn() },
+    recipe: { findMany: vi.fn(async () => []) },
+    communityPost: { findMany: vi.fn(async () => []) },
+    communityLike: { createMany: vi.fn() },
   };
   beforeEach(() => {
     vi.resetAllMocks();
@@ -52,7 +56,8 @@ describe("seedDemoAccount", () => {
     expect(client.user.upsert).toHaveBeenCalledWith(expect.objectContaining({ where: { email: DEMO_EMAIL }, update: {} }));
     expect(client.nutritionProfile.update.mock.calls[0][0].data).not.toHaveProperty("dietType");
     expect(client.pantryItem.createMany).not.toHaveBeenCalled();
-    expect(result).toEqual({ userId: "demo-id", pantryCreated: false });
+    expect(result).toEqual({ userId: "demo-id", pantryCreated: false, historyCreated: false });
+    expect(client.mealPlan.create).not.toHaveBeenCalled();
   });
 
   it("creates the sample pantry when the demo pantry is empty", async () => {
@@ -77,7 +82,8 @@ describe("resetDemoAccount", () => {
   };
   const client = { user: { findUnique: vi.fn() }, $transaction: vi.fn(async (operation: (db: typeof tx) => unknown) => operation(tx)) };
   const samples = { hashes: vi.fn(async () => ["h1"]), rebuild: vi.fn(async () => ({ accounts: 8, posts: 8, likes: 20 })) };
-  const reset = () => resetDemoAccount(client as never, now, samples as never);
+  const history = vi.fn(async () => ({ meals: 10, likes: 3 }));
+  const reset = () => resetDemoAccount(client as never, now, samples as never, history as never);
   beforeEach(() => {
     for (const model of Object.values(tx)) for (const fn of Object.values(model)) fn.mockReset().mockResolvedValue({ count: 2 });
     client.user.findUnique.mockReset().mockResolvedValue({ id: "demo-id" });
@@ -103,6 +109,14 @@ describe("resetDemoAccount", () => {
     expect(samples.rebuild).toHaveBeenCalledWith(tx, ["h1"], now);
     expect(samples.hashes.mock.invocationCallOrder[0]).toBeLessThan(client.$transaction.mock.invocationCallOrder.at(-1)!);
     expect(result.sampleAccounts).toEqual({ accounts: 8, posts: 8, likes: 20 });
+  });
+
+  it("recreates the demo's sample history after the sample accounts, in the same transaction", async () => {
+    const result = await reset();
+    expect(history).toHaveBeenCalledWith(tx, "demo-id", now);
+    expect(samples.rebuild.mock.invocationCallOrder.at(-1)!).toBeLessThan(history.mock.invocationCallOrder.at(-1)!);
+    expect(tx.mealPlan.deleteMany.mock.invocationCallOrder.at(-1)!).toBeLessThan(history.mock.invocationCallOrder.at(-1)!);
+    expect(result.demoHistory).toEqual({ meals: 10, likes: 3 });
   });
 
   it("recreates the sample profile and pantry, unlocks the account and resets name/password", async () => {

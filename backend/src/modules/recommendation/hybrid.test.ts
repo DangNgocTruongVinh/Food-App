@@ -10,7 +10,7 @@ import type { Interaction } from "./interactions.js";
 import {
   diversityFeature, expiringFeature, KNOWLEDGE_WEIGHTS, knowledgeScore, mealTarget, nutritionFeature, pantryFeature, usesPantryItem,
 } from "./knowledge-based.js";
-import { contentReason, FALLBACK_REASON, knowledgeReason, recommendationReason, similarReason } from "./reasons.js";
+import { contentReason, FALLBACK_REASON, knowledgeReason, pickReason, reasonCandidates, similarReason } from "./reasons.js";
 
 const day = 86_400_000;
 const now = new Date("2026-11-03T03:00:00.000Z");
@@ -130,9 +130,11 @@ describe("Hybrid blending", () => {
     };
     const content = { recipeId: "a", score: 0.4, blocks: { ingredients: 0.3, cuisine: 0.1, meal: 0, diet: 0, nutrition: 0 }, top: "ingredients" as const, ingredients: ["Tỏi", "Gừng"] };
     const base = { recipe: { cuisine: "Việt Nam" }, recipeName: (id: string) => ({ x: "Cá kho tộ" })[id], target: { calories: 600, proteinG: 30 } };
-    expect(recommendationReason({ ...base, algorithm: "knowledge", knowledge, content }, ["knowledge", "content"])).toBe("Dùng 2 thực phẩm sắp hết hạn: Đậu hũ, Ức gà");
-    expect(recommendationReason({ ...base, algorithm: "content", knowledge, content }, ["content", "knowledge"])).toBe("Có nguyên liệu bạn hay dùng: Tỏi, Gừng");
-    expect(recommendationReason({ ...base, algorithm: "collaborative", collaborative: { recipeId: "a", score: 1, because: "x" } }, ["collaborative"]))
+    const top = (contributions: Record<"content" | "collaborative" | "knowledge", number>, input: object) =>
+      reasonCandidates({ ...base, ...input }, contributions, contributions)[0]?.text;
+    expect(top({ content: 0.1, collaborative: 0, knowledge: 0.4 }, { knowledge, content })).toBe("Dùng 2 thực phẩm sắp hết hạn: Đậu hũ, Ức gà");
+    expect(top({ content: 0.4, collaborative: 0, knowledge: 0.1 }, { knowledge, content })).toBe("Có nguyên liệu bạn hay dùng: Tỏi, Gừng");
+    expect(top({ content: 0, collaborative: 0.3, knowledge: 0 }, { collaborative: { recipeId: "a", score: 1, because: "x" } }))
       .toBe("Người hay nấu Cá kho tộ cũng nấu món này");
     expect(knowledgeReason({ ...knowledge, parts: { ...knowledge.parts, expiring: 0 } }, base)).toBe("Có sẵn 2/3 nguyên liệu trong kho");
     expect(knowledgeReason({ ...knowledge, parts: { expiring: 0, pantry: 0, nutrition: 0.2, diversity: 0, preference: 0 } }, { ...base, mealType: "DINNER" }))
@@ -143,7 +145,29 @@ describe("Hybrid blending", () => {
     expect(contentReason({ ...content, top: "nutrition" }, null, false)).toBe("Dinh dưỡng hợp mục tiêu trong hồ sơ của bạn");
     expect(similarReason({ ...content, top: "nutrition" }, "Việt Nam")).toBe("Cùng nguyên liệu: Tỏi, Gừng");
     expect(similarReason({ ...content, ingredients: [], top: "cuisine" }, "Việt Nam")).toBe("Cùng ẩm thực Việt Nam");
-    expect(recommendationReason({ ...base, algorithm: null }, [])).toBe(FALLBACK_REASON);
+    expect(pickReason(reasonCandidates(base, { content: 0, collaborative: 0, knowledge: 0 }, { content: 0, collaborative: 0, knowledge: 1 }), new Set()))
+      .toBe(FALLBACK_REASON);
+  });
+
+  it("varies reasons within a list: a reason already used goes to the next one, if it is at least 25% of the main one", () => {
+    const candidates = [{ text: "A1", weight: 0.4, kind: "a" }, { text: "B", weight: 0.15, kind: "b" }, { text: "C", weight: 0.05, kind: "c" }];
+    const used = new Set<string>();
+    expect(pickReason(candidates, used)).toBe("A1");
+    // Cùng loại "a" (vd. "Có nguyên liệu bạn hay dùng: …" khác tên nguyên liệu) → lý do kế tiếp.
+    expect(pickReason([{ text: "A2", weight: 0.4, kind: "a" }, ...candidates.slice(1)], used)).toBe("B");
+    // "C" chỉ 12,5% lý do chính → không đủ lớn, giữ lý do chính dù trùng loại.
+    expect(pickReason(candidates, used)).toBe("A1");
+    // Chia đóng góp của thuật toán 3 cho từng tiêu chí: hạn (0,3) > kho (0,15) > dinh dưỡng (0,05).
+    const knowledge = {
+      recipeId: "a", score: 0.5, expiringNames: ["Đậu hũ"], pantryCount: 2, requiredCount: 3,
+      parts: { expiring: 0.3, pantry: 0.15, nutrition: 0.05, diversity: 0, preference: 0 },
+    };
+    const list = reasonCandidates({ recipe: { cuisine: null }, recipeName: () => undefined, target: { calories: 600, proteinG: 30 }, knowledge },
+      { content: 0, collaborative: 0, knowledge: 0.5 }, { content: 0, collaborative: 0, knowledge: 1 });
+    expect(list.map((entry) => entry.text)).toEqual([
+      "Dùng 1 thực phẩm sắp hết hạn: Đậu hũ", "Có sẵn 2/3 nguyên liệu trong kho", "Vừa với khoảng 600 kcal cho một bữa của bạn",
+    ]);
+    expect(list[1].weight).toBeCloseTo(0.5 * 0.15 / 0.5, 12);
   });
 });
 

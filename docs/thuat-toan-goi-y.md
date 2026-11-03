@@ -104,4 +104,9 @@ với hồ sơ và tương tác thật tạo bằng seed: một thực đơn tu�
 Mỗi món họ ăn đều an toàn với hồ sơ của chính họ (có test). Đây **không phải người dùng thật**: mật khẩu ngẫu nhiên không lưu ở đâu,
 không ai đăng nhập được; không tính vào thống kê Admin; danh sách người dùng Admin gắn nhãn "Tài khoản mẫu"; `demo:reset` tạo lại.
 
+**Lịch sử mẫu của tài khoản demo** (`backend/prisma/demo-history.ts`): `demo:reset` (và seed khi kho demo trống) tạo cho
+`demo@nouri.vn` khoảng 2 tuần lịch sử mẫu tương đối theo ngày chạy — một thực đơn đã qua với 12 bữa đã ăn (món Việt, thích món cá,
+vài món Nhật; "chỉ đánh dấu", không có lịch sử kho) và 3 lượt thích bài của tài khoản mẫu — để buổi demo không rơi vào khởi đầu
+lạnh. Đây là dữ liệu mẫu, không phải hoạt động thật.
+
 Dữ liệu dùng để **đánh giá** thuật toán (R6) là dữ liệu mô phỏng riêng, sinh trong bộ nhớ, không đưa vào cơ sở dữ liệu.

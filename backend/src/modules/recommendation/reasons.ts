@@ -14,7 +14,6 @@ const DIET_LABEL: Partial<Record<DietType, string>> = { LOW_CARB: "ít tinh bộ
 const list = (names: string[], max = 3) => names.slice(0, max).join(", ");
 
 export type ReasonInput = {
-  algorithm: Algorithm | null;
   content?: ContentScore;
   collaborative?: CollaborativeScore;
   knowledge?: KnowledgeScore;
@@ -47,8 +46,10 @@ function topKnowledgePart(parts: Record<KnowledgePart, number>): KnowledgePart |
   return best;
 }
 
-export function knowledgeReason(score: KnowledgeScore, input: Pick<ReasonInput, "dietType" | "mealType" | "target">) {
-  switch (topKnowledgePart(score.parts)) {
+export function knowledgeReason(
+  score: KnowledgeScore, input: Pick<ReasonInput, "dietType" | "mealType" | "target">, part: KnowledgePart | null = topKnowledgePart(score.parts),
+) {
+  switch (part) {
     case "expiring": {
       const count = score.expiringNames.length;
       return `Dùng ${count} thực phẩm sắp hết hạn: ${list(score.expiringNames)}`;
@@ -71,16 +72,52 @@ export function collaborativeReason(score: CollaborativeScore, recipeName: Reaso
 
 export const FALLBACK_REASON = "Hợp hồ sơ ăn uống của bạn";
 
-/** Lý do theo thành phần đóng góp lớn nhất; thành phần đó không viết được lý do thì thử các thành phần còn lại. */
-export function recommendationReason(input: ReasonInput, order: Algorithm[]) {
-  for (const algorithm of order) {
-    const reason = algorithm === "content" && input.content ? contentReason(input.content, input.recipe.cuisine, input.hasHistory ?? true)
-      : algorithm === "knowledge" && input.knowledge ? knowledgeReason(input.knowledge, input)
-        : algorithm === "collaborative" && input.collaborative ? collaborativeReason(input.collaborative, input.recipeName)
-          : null;
-    if (reason) return reason;
+/** `kind`: loại lý do (khối/tiêu chí/thuật toán) — hai lý do cùng loại coi là trùng dù khác tên nguyên liệu. */
+export type ReasonCandidate = { text: string; weight: number; kind: string };
+/** Lý do thứ hai chỉ dùng khi đóng góp ít nhất 25% lý do chính (không đưa ra lý do yếu chỉ để khác đi). */
+export const SECOND_REASON_MIN_SHARE = 0.25;
+
+/**
+ * Mọi lý do viết được cho một món, kèm trọng số đóng góp: thành phần a có đóng góp c_a = w_a'·ŝ_a, chia cho các tiêu chí con
+ * theo tỷ lệ (khối đặc trưng của thuật toán 1, tiêu chí của thuật toán 3). Mọi c_a = 0 (vd. chỉ một ứng viên) → dùng trọng số
+ * ngữ cảnh thay cho c_a. Cao xuống thấp; không trùng chữ.
+ */
+export function reasonCandidates(input: ReasonInput, contributions: Record<Algorithm, number>, weights: Record<Algorithm, number>) {
+  const total = Object.values(contributions).reduce((sum, value) => sum + value, 0);
+  const base = total > 0 ? contributions : weights;
+  const candidates: ReasonCandidate[] = [];
+  const split = <K extends string>(prefix: string, share: number, parts: Record<K, number>, text: (key: K) => string | null) => {
+    const positive = (Object.entries(parts) as Array<[K, number]>).filter(([, value]) => value > 0);
+    const sum = positive.reduce((acc, [, value]) => acc + value, 0);
+    for (const [key, value] of positive) {
+      const reason = text(key);
+      if (reason) candidates.push({ text: reason, weight: (share * value) / sum, kind: `${prefix}:${key}` });
+    }
+  };
+  if (input.content) {
+    split("content", base.content, input.content.blocks, (block) => contentReason(input.content!, input.recipe.cuisine, input.hasHistory ?? true, block));
   }
-  return FALLBACK_REASON;
+  if (input.knowledge) split("knowledge", base.knowledge, input.knowledge.parts, (part) => knowledgeReason(input.knowledge!, input, part));
+  if (input.collaborative && input.collaborative.score > 0) {
+    const reason = collaborativeReason(input.collaborative, input.recipeName);
+    if (reason) candidates.push({ text: reason, weight: base.collaborative, kind: "collaborative" });
+  }
+  const seen = new Set<string>();
+  return candidates.sort((a, b) => b.weight - a.weight).filter((candidate) => !seen.has(candidate.text) && seen.add(candidate.text));
+}
+
+/**
+ * Đa dạng hóa lý do trong một danh sách: loại lý do chính đã dùng cho món trước thì lấy lý do kế tiếp thuộc loại chưa dùng,
+ * nếu nó đủ lớn (≥ 25% lý do chính); không có thì giữ lý do chính (trùng còn hơn nêu lý do không đúng). `usedKinds` được cập nhật.
+ */
+export function pickReason(candidates: ReasonCandidate[], usedKinds: Set<string>) {
+  if (!candidates.length) return FALLBACK_REASON;
+  const [top] = candidates;
+  const chosen = usedKinds.has(top.kind)
+    ? candidates.find((candidate) => !usedKinds.has(candidate.kind) && candidate.weight >= SECOND_REASON_MIN_SHARE * top.weight) ?? top
+    : top;
+  usedKinds.add(chosen.kind);
+  return chosen.text;
 }
 
 /** "Món tương tự": có nguyên liệu chung thì nêu ra (dễ hiểu nhất), không thì theo khối giống nhất giữa hai món. */

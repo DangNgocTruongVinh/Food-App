@@ -25,14 +25,16 @@ async function main() {
   if (!(await prisma.user.findUnique({ where: { email: DEMO_EMAIL } })) && (await prisma.user.findUnique({ where: { email: legacyEmail } }))) {
     await prisma.user.update({ where: { email: legacyEmail }, data: { email: DEMO_EMAIL } });
   }
-  const demo = await seedDemoAccount(prisma);
-  console.log(demo.pantryCreated
-    ? "Kho demo: đã tạo kho mẫu (hạn tính từ hôm nay)."
-    : "Kho demo: đã có dữ liệu, giữ nguyên (đặt lại bằng npm run demo:reset -- --yes).");
+  // Tài khoản mẫu trước: lịch sử mẫu của demo thích bài của họ.
   const samples = await seedSampleAccounts(prisma);
   console.log(samples
     ? `Tài khoản mẫu minh họa: đã tạo ${samples.accounts} tài khoản, ${samples.posts} bài viết, ${samples.likes} lượt thích (mật khẩu ngẫu nhiên, không in).`
     : "Tài khoản mẫu minh họa: đã có đủ, giữ nguyên.");
+  const demo = await seedDemoAccount(prisma);
+  console.log(demo.pantryCreated
+    ? "Kho demo: đã tạo kho mẫu (hạn tính từ hôm nay)."
+    : "Kho demo: đã có dữ liệu, giữ nguyên (đặt lại bằng npm run demo:reset -- --yes).");
+  if (demo.historyCreated) console.log("Lịch sử mẫu của demo: đã tạo thực đơn 2 tuần trước (dữ liệu mẫu).");
   console.log(`Seed hoàn tất. Demo: ${DEMO_EMAIL} / ${DEMO_PASSWORD}`);
 }
 

@@ -2,6 +2,7 @@ import type { Prisma, PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { nutritionTargetFields } from "../src/services/nutrition.service.js";
 import { vietnamToday } from "../src/utils/vietnam-date.js";
+import { createDemoHistory } from "./demo-history.js";
 import { rebuildSampleAccounts, samplePasswordHashes } from "./sample-accounts.js";
 
 // Tài khoản demo (demo@nouri.vn): hồ sơ và kho mẫu. Hạn sử dụng TƯƠNG ĐỐI theo ngày chạy (giờ Việt Nam) để dữ liệu demo
@@ -40,11 +41,12 @@ export function demoPantryItems(userId: string, now = new Date()): Prisma.Pantry
   }));
 }
 
-type DemoClient = Pick<PrismaClient, "user" | "nutritionProfile" | "pantryItem">;
+type DemoClient = Pick<PrismaClient, "user" | "nutritionProfile" | "pantryItem" | "mealPlan" | "recipe" | "communityPost" | "communityLike">;
 
 /**
- * Seed: tạo tài khoản demo nếu chưa có (kèm hồ sơ mẫu); kho mẫu chỉ tạo khi kho demo đang trống. Không ghi đè hồ sơ hay kho
- * demo đã có (người dùng có thể đang thử), chỉ tính lại 4 chỉ tiêu từ chính hồ sơ đó. Không đụng tới tài khoản khác.
+ * Seed: tạo tài khoản demo nếu chưa có (kèm hồ sơ mẫu); kho mẫu chỉ tạo khi kho demo đang trống, kèm lịch sử mẫu 2 tuần
+ * (demo-history.ts) nếu demo chưa có thực đơn nào. Không ghi đè hồ sơ, kho hay thực đơn demo đã có (người dùng có thể đang thử),
+ * chỉ tính lại 4 chỉ tiêu từ chính hồ sơ đó. Gọi sau khi đã tạo tài khoản mẫu (lịch sử mẫu thích bài của họ).
  */
 export async function seedDemoAccount(client: DemoClient, now = new Date()) {
   const user = await client.user.upsert({
@@ -60,7 +62,9 @@ export async function seedDemoAccount(client: DemoClient, now = new Date()) {
   else await client.nutritionProfile.create({ data: { userId: user.id, ...demoProfile, ...nutritionTargetFields(demoProfile) } });
   const pantryCreated = !(await client.pantryItem.count({ where: { userId: user.id } }));
   if (pantryCreated) await client.pantryItem.createMany({ data: demoPantryItems(user.id, now) });
-  return { userId: user.id, pantryCreated };
+  const historyCreated = pantryCreated && !(await client.mealPlan.count({ where: { userId: user.id } }));
+  if (historyCreated) await createDemoHistory(client, user.id, now);
+  return { userId: user.id, pantryCreated, historyCreated };
 }
 
 type ResetClient = Pick<PrismaClient, "user" | "$transaction">;
@@ -69,11 +73,12 @@ type ResetClient = Pick<PrismaClient, "user" | "$transaction">;
  * Đặt lại tài khoản demo về trạng thái chuẩn (chạy trước buổi demo). Chỉ xóa dữ liệu CỦA demo: thực đơn, bài viết (kèm
  * bình luận/lượt thích/ảnh), bình luận và lượt thích của demo trên bài người khác, tin nhắn, lịch sử kho, thông báo, kho;
  * rồi tạo lại hồ sơ và kho mẫu, mở khóa, đặt lại tên và mật khẩu demo. Tạo lại luôn các tài khoản mẫu minh họa (GĐ3b-R4,
- * `sample-accounts.ts`). Không đụng tới món ăn, Admin, nhật ký Admin.
+ * `sample-accounts.ts`) rồi lịch sử mẫu 2 tuần của demo (`demo-history.ts`). Không đụng tới món ăn, Admin, nhật ký Admin.
  * Trả về publicId ảnh bài viết đã xóa để xóa trên Cloudinary sau khi transaction thành công.
  */
 export async function resetDemoAccount(
   client: ResetClient, now = new Date(), samples = { hashes: samplePasswordHashes, rebuild: rebuildSampleAccounts },
+  history = createDemoHistory,
 ) {
   const existing = await client.user.findUnique({ where: { email: DEMO_EMAIL }, select: { id: true } });
   const passwordHash = await bcrypt.hash(DEMO_PASSWORD, 12);
@@ -99,8 +104,9 @@ export async function resetDemoAccount(
     await tx.nutritionProfile.upsert({ where: { userId }, update: profileData, create: { userId, ...profileData } });
     const pantry = await tx.pantryItem.createMany({ data: demoPantryItems(userId, now) });
     const sampleAccounts = await samples.rebuild(tx, sampleHashes, now);
+    const demoHistory = await history(tx, userId, now);
     return {
-      userId, removed, pantryItems: pantry.count, sampleAccounts,
+      userId, removed, pantryItems: pantry.count, sampleAccounts, demoHistory,
       imagePublicIds: posts.flatMap((post) => post.images.map((image) => image.publicId)),
     };
   }, { timeout: 30_000 });
