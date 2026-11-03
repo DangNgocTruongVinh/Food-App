@@ -148,6 +148,18 @@ export interface MealCompletionResult {
 export interface MealPlanItem { id: string; mealType: MealType; servings: number; calories: number; completed: boolean; recipe: Recipe }
 export interface MealPlanDay { id: string; date: string; items: MealPlanItem[] }
 export interface ShoppingItem { id: string; name: string; quantity: number; unit: FoodUnit; purchased: boolean; category?: string | null }
+/** PATCH /api/meal-plans/shopping/:id: dòng đi chợ đã cập nhật + tóm tắt thêm vào kho / hoàn lại (GĐ3b lượt 6). */
+export interface ShoppingPurchaseResult extends ShoppingItem {
+  alreadyPurchased: boolean;
+  pantry: {
+    action: "MERGED" | "REUSED" | "CREATED"; pantryItemId: string; name: string; quantity: number; unit: FoodUnit; quantityAfter: number;
+    expiryDate: string | null; expiryEstimated: boolean;
+  } | null;
+  restoration: {
+    restored: Array<{ pantryItemId: string; name: string; quantity: number; unit: FoodUnit; quantityAfter: number; removed: boolean }>;
+    skipped: Array<{ itemName: string; quantity: number; unit: FoodUnit; reason: ConsumptionSkipReason | "INSUFFICIENT" }>;
+  } | null;
+}
 export interface MealPlan {
   id: string; name: string; startDate: string; endDate: string; status: MealPlanStatus;
   calorieTarget: number; aiGenerated: boolean; summary?: string; days: MealPlanDay[]; shoppingItems: ShoppingItem[];

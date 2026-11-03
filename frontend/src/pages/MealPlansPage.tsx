@@ -25,6 +25,7 @@ import {
 } from "../features/meal-plans/meal-plans.queries";
 import { profileQueries } from "../features/profile/profile.queries";
 import { useMealConsumption } from "../features/meal-plans/useMealConsumption";
+import { useShoppingPurchase } from "../features/meal-plans/useShoppingPurchase";
 import type { MealPlan } from "../types";
 import { type DateDraftStatus, formatDisplayDate } from "../utils/date";
 
@@ -35,6 +36,8 @@ export default function MealPlansPage() {
   const queryClient = useQueryClient();
   // "Đã ăn" mở hộp xem trước trừ kho (dùng chung với Tổng quan); bỏ đánh dấu thì hoàn lại kho.
   const consumption = useMealConsumption();
+  // Tick "Đã mua" thêm vào kho, bỏ tick thì hoàn lại; không hộp thoại, chỉ dòng nhắc trong thẻ Đi chợ.
+  const shopping = useShoppingPurchase();
   const navigate = useNavigate();
   const location = useLocation();
   const confirm = useConfirm();
@@ -86,6 +89,7 @@ export default function MealPlansPage() {
   useEffect(() => {
     if (selected) setSelectedDayIndex(initialDayIndex(selected));
     consumption.dismissNotice();
+    shopping.dismissNotice();
   }, [selected?.id]); // chỉ khi đổi thực đơn, không chạy lại khi dữ liệu thực đơn được làm mới
 
   const week = useMemo(() => summarizeMealPlan(selected), [selected]);
@@ -101,7 +105,6 @@ export default function MealPlansPage() {
     },
     onError: (err) => setError(getApiError(err)),
   });
-  const toggleShop = useMutation({ ...mealPlanMutations.updateShopping(), onSuccess: () => invalidateMealPlanQueries(queryClient, false) });
   const activate = useMutation({
     ...mealPlanMutations.updateStatus(),
     onSuccess: (plan) => { invalidateMealPlanQueries(queryClient, true); setToast(`Đã áp dụng “${plan.name}”.`); },
@@ -230,8 +233,9 @@ export default function MealPlansPage() {
 
         <ShoppingListCard
           items={selected.shoppingItems}
-          pendingId={toggleShop.isPending ? toggleShop.variables?.id ?? null : null}
-          onToggle={(item) => toggleShop.mutate({ id: item.id, purchased: !item.purchased })}
+          pendingId={shopping.pendingId}
+          notice={shopping.notice}
+          onToggle={shopping.toggle}
         />
       </div>
       {consumption.target && (

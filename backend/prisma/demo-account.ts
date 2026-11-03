@@ -1,6 +1,7 @@
 import type { Prisma, PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { nutritionTargetFields } from "../src/services/nutrition.service.js";
+import { vietnamToday } from "../src/utils/vietnam-date.js";
 
 // Tài khoản demo (demo@nouri.vn): hồ sơ và kho mẫu. Hạn sử dụng TƯƠNG ĐỐI theo ngày chạy (giờ Việt Nam) để dữ liệu demo
 // không "già": luôn có đồ sắp hết hạn, đồ còn hạn dài và một món dưới mức tối thiểu. Chỉ tác động tài khoản demo.
@@ -29,12 +30,7 @@ export const demoPantryTemplate: DemoPantryTemplate[] = [
   { name: "Gạo", category: "Ngũ cốc", quantity: 2, unit: "KG", storageLocation: "DRY_STORAGE", expiresInDays: 90 },
 ];
 
-/** Ngày hôm nay theo giờ Việt Nam, dạng 00:00 UTC (cùng quy ước ngày của API kho: "yyyy-MM-dd" → T00:00:00.000Z). */
-export function vietnamToday(now = new Date()) {
-  const [year, month, day] = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Ho_Chi_Minh", year: "numeric", month: "2-digit", day: "2-digit" })
-    .format(now).split("-").map(Number);
-  return new Date(Date.UTC(year, month - 1, day));
-}
+export { vietnamToday };
 
 export function demoPantryItems(userId: string, now = new Date()): Prisma.PantryItemCreateManyInput[] {
   const today = vietnamToday(now);

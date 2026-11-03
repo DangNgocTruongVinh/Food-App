@@ -70,6 +70,11 @@ export function expiryCopy(item: Pick<PantryItem, "expiryDate">, now = new Date(
   return { date, relative: `Còn ${days} ngày` };
 }
 
+/** Hạn do hệ thống gợi ý theo nhóm (đã mua → kho), người dùng chưa xác nhận; sửa sang ngày khác thì backend bỏ cờ. */
+export function isExpiryEstimated(item: Pick<PantryItem, "expiryDate" | "expiryEstimated">) {
+  return Boolean(item.expiryEstimated && item.expiryDate);
+}
+
 export function formatPantryQuantity(quantity: number, unit: FoodUnit) {
   return `${quantity.toLocaleString("vi-VN", { maximumFractionDigits: 2 })} ${foodUnitLabel[unit]}`;
 }

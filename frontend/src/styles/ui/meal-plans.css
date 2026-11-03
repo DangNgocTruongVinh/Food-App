@@ -130,6 +130,7 @@
 /* Danh sách đi chợ: cả dòng là vùng bấm. */
 .td-shopping__count { margin: 0; color: var(--ink-2); font-size: var(--fs-small); font-weight: 600; font-variant-numeric: tabular-nums; }
 .td-shop-groups { columns: 2; column-gap: var(--space-6); }
+.td-shop-notice { position: sticky; bottom: var(--space-4); z-index: 1; box-shadow: var(--shadow-overlay); }
 .td-shop-group { display: grid; gap: var(--space-1); padding-bottom: var(--space-4); break-inside: avoid; }
 .td-shop-group__title { margin: 0; color: var(--muted); font-size: var(--fs-label); font-weight: 600; }
 .td-shop-list { display: grid; margin: 0; padding: 0; list-style: none; }

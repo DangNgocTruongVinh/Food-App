@@ -1,5 +1,5 @@
 import { api } from "../../api/client";
-import type { ConsumptionPreview, FoodUnit, MealCompletionResult, MealPlan, MealPlanStatus, ShoppingItem } from "../../types";
+import type { ConsumptionPreview, FoodUnit, MealCompletionResult, MealPlan, MealPlanStatus, ShoppingPurchaseResult } from "../../types";
 
 export type MealConsumption = { mode: "deduct"; lines: Array<{ ingredientId: string; quantity: number; unit: FoodUnit }> } | { mode: "none" };
 export interface MealCompletionUpdate { id: string; completed: boolean; consumption?: MealConsumption }
@@ -32,7 +32,7 @@ export async function getConsumptionPreview(id: string) {
 }
 
 export async function updateShoppingPurchased({ id, purchased }: ShoppingPurchasedUpdate) {
-  return (await api.patch<ShoppingItem>(`/meal-plans/shopping/${id}`, { purchased })).data;
+  return (await api.patch<ShoppingPurchaseResult>(`/meal-plans/shopping/${id}`, { purchased })).data;
 }
 
 export async function deleteMealPlan(id: string) {

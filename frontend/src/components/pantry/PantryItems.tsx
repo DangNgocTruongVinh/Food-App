@@ -1,6 +1,6 @@
 import { Pencil, Trash2 } from "lucide-react";
 import {
-  expiryCopy, formatPantryQuantity, getPantryStatus, pantryStatusLabel, stockWarning, storageLabel, type PantryItemStatus,
+  expiryCopy, formatPantryQuantity, isExpiryEstimated, getPantryStatus, pantryStatusLabel, stockWarning, storageLabel, type PantryItemStatus,
 } from "../../features/pantry/pantry.logic";
 import { pantryItemElementId } from "../../features/pantry/usePantryItemFocus";
 import { cx } from "../../features/ui/ui.logic";
@@ -44,6 +44,7 @@ function Expiry({ item, status }: { item: PantryItem; status: PantryItemStatus }
     <>
       <span className="kho-date">{expiry.date}</span>
       {expiry.relative && <span className={cx("kho-sub", (status === "expiring" || status === "expired") && "kho-sub--warn")}>{expiry.relative}</span>}
+      {isExpiryEstimated(item) && <span className="kho-sub">Hạn ước tính</span>}
     </>
   );
 }

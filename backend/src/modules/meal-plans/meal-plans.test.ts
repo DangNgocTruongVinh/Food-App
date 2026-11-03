@@ -24,8 +24,6 @@ const mocks = vi.hoisted(() => ({
   updateHistory: vi.fn(),
   countHistory: vi.fn(),
   syncNotifications: vi.fn(),
-  updateShoppingItems: vi.fn(),
-  findShoppingItem: vi.fn(),
   findUser: vi.fn(),
   listPantry: vi.fn(),
   listRecipes: vi.fn(),
@@ -49,7 +47,6 @@ const client = () => ({
     create: mocks.createPlan,
   },
   mealPlanItem: { updateMany: mocks.updateMealItems, findUnique: mocks.findMealItem, findFirst: mocks.findFirstMealItem },
-  shoppingItem: { updateMany: mocks.updateShoppingItems, findUnique: mocks.findShoppingItem },
   user: { findUnique: mocks.findUser },
   pantryItem: { findMany: mocks.listPantry, updateMany: mocks.updatePantry, findFirst: mocks.findFirstPantry },
   pantryTransaction: { create: mocks.createHistory, findMany: mocks.listHistory, updateMany: mocks.updateHistory, count: mocks.countHistory },
@@ -105,8 +102,6 @@ beforeEach(() => {
   mocks.deletePlans.mockResolvedValue({ count: 1 });
   mocks.updateMealItems.mockResolvedValue({ count: 1 });
   mocks.findMealItem.mockResolvedValue(mealItem);
-  mocks.updateShoppingItems.mockResolvedValue({ count: 1 });
-  mocks.findShoppingItem.mockResolvedValue(shoppingItem);
   mocks.findUser.mockResolvedValue({
     id: userId,
     profile: {
@@ -284,24 +279,6 @@ describe("Meal Plan and Shopping HTTP contract (no database)", () => {
     })).toEqual({ status: 404, body: { message: "Không tìm thấy bữa ăn." } });
     expect(mocks.findFirstMealItem).toHaveBeenCalledWith(expect.objectContaining({ where: { id: mealItemId, day: { mealPlan: { userId: otherUserId } } } }));
     expect(mocks.updateMealItems).not.toHaveBeenCalled();
-  });
-
-  it("updates Shopping purchase state by item id and plan owner", async () => {
-    const response = await request(app, `/api/meal-plans/shopping/${shoppingItemId}`, {
-      method: "PATCH", token: token(), body: { purchased: true },
-    });
-    expect(response).toEqual({ status: 200, body: JSON.parse(JSON.stringify(shoppingItemRead)) });
-    expect(mocks.updateShoppingItems).toHaveBeenCalledWith({
-      where: { id: shoppingItemId, mealPlan: { userId } }, data: { purchased: true },
-    });
-  });
-
-  it("rejects a Shopping update for an unowned item", async () => {
-    mocks.updateShoppingItems.mockResolvedValue({ count: 0 });
-    expect(await request(app, `/api/meal-plans/shopping/${shoppingItemId}`, {
-      method: "PATCH", token: token(otherUserId), body: { purchased: true },
-    })).toEqual({ status: 404, body: { message: "Không tìm thấy nguyên liệu mua sắm." } });
-    expect(mocks.findShoppingItem).not.toHaveBeenCalled();
   });
 
   it("deletes only a plan owned by the authenticated user", async () => {

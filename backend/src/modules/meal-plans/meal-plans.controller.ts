@@ -6,8 +6,9 @@ import type {
 } from "./meal-plans.schema.js";
 import { previewMealConsumption, updateMealCompletion } from "./meal-consumption.service.js";
 import {
-  deleteMealPlan, generateWeeklyPlan, getMealPlan, listMealPlans, updateMealPlanStatus, updateShoppingPurchased,
+  deleteMealPlan, generateWeeklyPlan, getMealPlan, listMealPlans, updateMealPlanStatus,
 } from "./meal-plans.service.js";
+import { updateShoppingPurchased } from "./shopping-purchase.service.js";
 
 const authenticatedUserId = (req: Request) => (req as AuthenticatedRequest).userId;
 

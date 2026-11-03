@@ -136,19 +136,6 @@ export async function updateMealPlanStatus(userId: string, id: string, status: P
   });
 }
 
-export async function updateShoppingPurchased(userId: string, id: string, purchased: boolean) {
-  return prisma.$transaction(async (transaction) => {
-    const result = await transaction.shoppingItem.updateMany({
-      where: { id, mealPlan: { userId } },
-      data: { purchased },
-    });
-    if (!result.count) throw new HttpError(404, "Không tìm thấy nguyên liệu mua sắm.");
-    const item = await transaction.shoppingItem.findUnique({ where: { id } });
-    if (!item) throw new HttpError(404, "Không tìm thấy nguyên liệu mua sắm.");
-    return withFoodCategory(item);
-  });
-}
-
 export async function deleteMealPlan(userId: string, id: string) {
   const result = await prisma.mealPlan.deleteMany({ where: { id, userId } });
   if (!result.count) throw new HttpError(404, "Không tìm thấy thực đơn.");

@@ -11,7 +11,7 @@ import {
 import { invalidatePantryQueries, pantryMutations, pantryQueries } from "./pantry.queries";
 import {
   activeStatFilter, applyStatFilter, expiryCopy, filterAndSortPantry, formatPantryQuantity, getDaysLeft, getPantryStatus,
-  initialPantryForm, isBelowMinimum, itemsToUseSoon, pantryCategories, pantryCategoryOptions, pantryCounts, pantryDoneMessage,
+  initialPantryForm, isBelowMinimum, isExpiryEstimated, itemsToUseSoon, pantryCategories, pantryCategoryOptions, pantryCounts, pantryDoneMessage,
   pantryItemPage, pantryStatusLabel, stockWarning, validatePantryForm, type PantryFilters,
 } from "./pantry.logic";
 
@@ -188,6 +188,13 @@ describe("Pantry page logic", () => {
     expect(expiryCopy(pantryItem({ expiryDate: "2026-10-30T00:00:00.000Z" }), now).relative).toBe("Hết hạn hôm nay");
     expect(expiryCopy(items[1], now).relative).toBe("Còn 1 ngày");
     expect(expiryCopy(items[4], now)).toEqual({ date: "Không có hạn", relative: "" });
+  });
+
+  it("marks only a suggested expiry that is still set as \"Hạn ước tính\"", () => {
+    expect(isExpiryEstimated(pantryItem({ expiryEstimated: true, expiryDate: "2026-11-06T00:00:00.000Z" }))).toBe(true);
+    expect(isExpiryEstimated(pantryItem({ expiryEstimated: false, expiryDate: "2026-11-06T00:00:00.000Z" }))).toBe(false);
+    expect(isExpiryEstimated(pantryItem({ expiryEstimated: true, expiryDate: null }))).toBe(false);
+    expect(isExpiryEstimated(pantryItem({ expiryDate: "2026-11-06T00:00:00.000Z" }))).toBe(false);
   });
 
   it("flags stock at or below the minimum, like the backend low-stock notification", () => {
