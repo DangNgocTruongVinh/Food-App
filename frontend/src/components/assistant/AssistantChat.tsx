@@ -71,7 +71,7 @@ export function AssistantChat(props: AssistantChatProps) {
           value={value}
           onChange={(event) => onChange(event.target.value)}
           placeholder="Hỏi về bữa ăn, dinh dưỡng hoặc thực phẩm trong kho"
-          aria-describedby="as-composer-hint"
+          aria-describedby="as-composer-hint as-composer-allergy"
           onKeyDown={(event) => {
             if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) {
               event.preventDefault();
@@ -82,6 +82,10 @@ export function AssistantChat(props: AssistantChatProps) {
         <Button type="submit" variant="primary" icon={<Send />} disabled={!value.trim()} busy={pending}>Gửi</Button>
         <p id="as-composer-hint" className="as-composer__hint">
           Enter để gửi, Shift + Enter để xuống dòng. Trợ lý có thể sai, không thay thế tư vấn của bác sĩ.
+        </p>
+        {/* GĐ3b-R2: AI đã được dặn tránh món vi phạm hồ sơ (R1) nhưng vẫn có thể sai, người dùng tự kiểm lại. */}
+        <p id="as-composer-allergy" className="as-composer__hint">
+          Gợi ý của AI chỉ để tham khảo, hãy kiểm tra thành phần nếu bạn bị dị ứng.
         </p>
       </form>
     </section>
