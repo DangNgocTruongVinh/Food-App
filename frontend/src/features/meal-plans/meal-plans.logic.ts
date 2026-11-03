@@ -102,6 +102,16 @@ export function dayNutrition(items: MealPlanItem[], targets: PlanTargets) {
   };
 }
 
+/**
+ * Bữa vi phạm hồ sơ hiện tại (thực đơn tạo trước khi người dùng thêm dị ứng/đổi chế độ ăn, GĐ3b-R2): cảnh báo, và
+ * nút "Đổi món" khi bữa chưa ăn. Thực đơn tạo sau đã lọc theo hồ sơ nên không có bữa vi phạm.
+ */
+export function mealViolation(item: Pick<MealPlanItem, "completed" | "recipe">) {
+  const fit = item.recipe.fit;
+  if (!fit || fit.safe) return null;
+  return { warnings: fit, canSwap: !item.completed };
+}
+
 /** Món cùng bữa ở các ngày khác trong tuần (tối đa 2), kèm ngày của món. */
 export function alternativeMeals(plan: MealPlan, mealType: MealType, primaryId?: string) {
   return plan.days.flatMap((day) => day.items.map((item) => ({ item, day })))

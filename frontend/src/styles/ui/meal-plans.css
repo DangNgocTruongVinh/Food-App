@@ -95,7 +95,11 @@
 .td-meal__name:hover { color: var(--action-text); text-decoration: underline; text-underline-offset: 3px; }
 .td-meal.is-done .td-meal__name { color: var(--ink-2); font-weight: 500; }
 .td-meal__facts { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-4); margin: 0; color: var(--ink-2); font-size: var(--fs-small); font-variant-numeric: tabular-nums; }
-.td-meal__action { display: flex; justify-content: flex-end; }
+.td-meal__action { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: var(--space-2); }
+/* Bữa vi phạm hồ sơ hiện tại (thực đơn tạo trước khi thêm dị ứng, GĐ3b-R2). */
+.td-meal__warnings { display: grid; gap: var(--space-1); margin: var(--space-1) 0 0; padding: var(--space-2) var(--space-3); border-radius: var(--radius-field); background: var(--warn-bg); list-style: none; }
+.td-meal__warnings li { display: flex; align-items: flex-start; gap: var(--space-2); color: var(--ink); font-size: var(--fs-small); font-weight: 500; line-height: var(--lh-small); }
+.td-meal__warnings svg { width: 16px; height: 16px; flex: 0 0 auto; margin-top: 2px; color: var(--warn); stroke-width: 1.75; }
 
 /* Món cùng bữa ở ngày khác (giữ chức năng trang cũ). */
 .td-meal__others { grid-column: 2 / -1; font-size: var(--fs-small); }

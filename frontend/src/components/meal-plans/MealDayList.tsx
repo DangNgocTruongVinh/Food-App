@@ -1,7 +1,8 @@
-import { Check } from "lucide-react";
+import { Check, Repeat, TriangleAlert } from "lucide-react";
 import { Link } from "react-router-dom";
 import { formatNumber } from "../../features/dashboard/dashboard.logic";
-import { alternativeMeals, mealLabels, orderDayMeals, planDayLabels } from "../../features/meal-plans/meal-plans.logic";
+import { alternativeMeals, mealLabels, mealViolation, orderDayMeals, planDayLabels } from "../../features/meal-plans/meal-plans.logic";
+import { forYouWarnings } from "../../features/recipes/recipe-for-you.logic";
 import { recipeDetailPath } from "../../features/recipes/recipes.logic";
 import type { MealPlan, MealPlanDay, MealPlanItem } from "../../types";
 import { IMAGE_WIDTHS } from "../../utils/images";
@@ -15,6 +16,9 @@ type MealDayListProps = {
   labelledBy: string;
   pendingId: string | null;
   onToggle: (item: MealPlanItem, completed: boolean) => void;
+  /** Bữa đang đổi món (nút bận). */
+  swappingId: string | null;
+  onSwap: (item: MealPlanItem) => void;
 };
 
 type EatenButtonProps = { item: MealPlanItem; pendingId: string | null; label: string; primary?: boolean } & Pick<MealDayListProps, "onToggle">;
@@ -36,7 +40,7 @@ function EatenButton({ item, pendingId, onToggle, label, primary }: EatenButtonP
 }
 
 /** Các bữa của ngày đang chọn (sáng, trưa, phụ, tối): ảnh, tên món (link chi tiết), thời gian, calo, "Đã ăn"; món cùng bữa ở ngày khác. */
-export function MealDayList({ plan, day, isToday, panelId, labelledBy, pendingId, onToggle }: MealDayListProps) {
+export function MealDayList({ plan, day, isToday, panelId, labelledBy, pendingId, onToggle, swappingId, onSwap }: MealDayListProps) {
   const labels = planDayLabels(day);
   const meals = orderDayMeals(day.items);
   const nextId = meals.find((item) => !item.completed)?.id;
@@ -53,6 +57,7 @@ export function MealDayList({ plan, day, isToday, panelId, labelledBy, pendingId
           {meals.map((item) => {
             const others = alternativeMeals(plan, item.mealType, item.id);
             const minutes = item.recipe.prepMinutes + item.recipe.cookMinutes;
+            const violation = mealViolation(item);
             return (
               <li key={item.id} className={item.completed ? "td-meal is-done" : "td-meal"}>
                 <RecipeImage className="td-meal__image" recipe={item.recipe} width={IMAGE_WIDTHS.thumb} alt="" />
@@ -67,8 +72,20 @@ export function MealDayList({ plan, day, isToday, panelId, labelledBy, pendingId
                     <span>{minutes} phút</span>
                     {item.servings !== 1 && <span>{formatNumber(item.servings)} khẩu phần</span>}
                   </p>
+                  {violation && (
+                    <ul className="td-meal__warnings" aria-label="Cảnh báo theo hồ sơ hiện tại của bạn">
+                      {forYouWarnings(violation.warnings).map((warning) => (
+                        <li key={warning.kind}><TriangleAlert aria-hidden="true" /><span>{warning.text}</span></li>
+                      ))}
+                    </ul>
+                  )}
                 </div>
                 <div className="td-meal__action">
+                  {violation?.canSwap && (
+                    <Button icon={<Repeat />} busy={swappingId === item.id} onClick={() => onSwap(item)} aria-label={`Đổi món: ${item.recipe.name}`}>
+                      Đổi món
+                    </Button>
+                  )}
                   <EatenButton item={item} pendingId={pendingId} onToggle={onToggle} label={item.recipe.name} primary={item.id === nextId} />
                 </div>
                 {others.length > 0 && (

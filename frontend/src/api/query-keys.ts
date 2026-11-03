@@ -11,6 +11,7 @@ export const queryKeys = {
   pantryTransactions: (filters: { source?: string; pantryItemId?: string; page: number; pageSize: number }) => ["pantry", "transactions", filters] as const,
   recipes: {
     all: ["recipes"] as const,
+    lists: ["recipes", "list"] as const,
     list: (filters: { search?: string; cuisine?: string } = {}) => ["recipes", "list", filters] as const,
     detail: (id: string) => ["recipes", "detail", id] as const,
     stats: ["recipes", "stats"] as const,

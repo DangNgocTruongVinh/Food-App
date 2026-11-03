@@ -6,11 +6,11 @@ import { queryKeys } from "../../api/query-keys";
 import type { MealPlan, MealPlanItem, NutritionProfile, Recipe } from "../../types";
 import {
   deleteMealPlan, generateMealPlan, getMealPlan, listMealPlans, updateMealCompletion,
-  updateMealPlanStatus, updateShoppingPurchased,
+  swapMealItem, updateMealPlanStatus, updateShoppingPurchased,
 } from "./meal-plans.api";
 import {
   alternativeMeals, dayNutrition, generateMealPlanLabel, generateSourceLabel, groupShoppingItems, initialDayIndex, latestMealPlanId,
-  mealPlanDeleteConfirm, mealPlanPath, mealPlanSourceLabel, mealPlanSuggestions, nextMealPlanIdAfterDelete, orderDayMeals, planDayLabels,
+  mealPlanDeleteConfirm, mealPlanPath, mealViolation, mealPlanSourceLabel, mealPlanSuggestions, nextMealPlanIdAfterDelete, orderDayMeals, planDayLabels,
   planTargets, planTitleParts, selectMealPlanDay, summarizeMealPlan, todayDayIndex,
 } from "./meal-plans.logic";
 import { invalidateMealPlanQueries, mealPlanQueries, removeDeletedMealPlan, removeMealPlanDetail } from "./meal-plans.queries";
@@ -257,6 +257,27 @@ describe("Meal plan route and delete helpers", () => {
   });
   it("does not retry plan details for client errors such as 404", () => {
     expect(mealPlanQueries.detail("plan-a").retry).toBe(retryUnlessClientError);
+  });
+});
+
+describe("Old plan meals that violate the current profile (GĐ3b-R2)", () => {
+  const fit = { allergens: ["tôm"], dislikedFoods: [], dietConflict: null, safe: false };
+
+  it("warns about an unsafe meal and offers a swap only while it is not eaten", () => {
+    expect(mealViolation(meal({ completed: false, recipe: recipe({ fit }) }))).toEqual({ warnings: fit, canSwap: true });
+    expect(mealViolation(meal({ completed: true, recipe: recipe({ fit }) }))).toEqual({ warnings: fit, canSwap: false });
+  });
+
+  it("shows nothing for a safe meal or when the API sends no fit", () => {
+    expect(mealViolation(meal({ recipe: recipe({ fit: { ...fit, allergens: [], safe: true } }) }))).toBeNull();
+    expect(mealViolation(meal())).toBeNull();
+  });
+
+  it("posts the swap without choosing the recipe on the client", async () => {
+    const adapter = vi.fn(async (config) => ({ config, data: { plan, from: "Tôm rang", to: "Đậu hũ" }, status: 200, statusText: "OK", headers: {} }));
+    api.defaults.adapter = adapter;
+    expect(await swapMealItem("meal-a")).toEqual({ plan, from: "Tôm rang", to: "Đậu hũ" });
+    expect(adapter.mock.calls.map(([config]) => [config.method, config.url, config.data])).toEqual([["post", "/meal-plans/items/meal-a/swap", "{}"]]);
   });
 });
 

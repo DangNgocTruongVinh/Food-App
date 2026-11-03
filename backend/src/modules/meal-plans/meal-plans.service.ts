@@ -7,6 +7,7 @@ import { foodCategoryOf, withFoodCategory } from "../../services/food-category.j
 import { requiredQuantity } from "../../services/pantry-consumption.js";
 import { HttpError } from "../../utils/http-error.js";
 import { generatePlanWithAI } from "../ai/ai.service.js";
+import { recipeFit, type SafetyProfile } from "../recommendation/safety.js";
 import { fallbackPlan, reconcileAIPlan } from "./meal-plan-generator.js";
 
 export async function generateWeeklyPlan(userId: string, startDateInput: string) {
@@ -98,7 +99,7 @@ export async function generateWeeklyPlan(userId: string, startDateInput: string)
     },
     include: planInclude,
   });
-  return withShoppingCategories(created);
+  return forReading(created, profile);
 }
 
 export const planInclude = {
@@ -106,34 +107,54 @@ export const planInclude = {
   shoppingItems: { orderBy: [{ purchased: "asc" as const }, { name: "asc" as const }] },
 };
 
-/** Dòng đi chợ tạo trước GĐ3b lượt 5 chưa có `category`: tính theo tên khi đọc (không đổi dữ liệu đã lưu). */
-function withShoppingCategories<T extends { shoppingItems: Array<{ name: string; category: string | null }> }>(plan: T) {
-  return { ...plan, shoppingItems: plan.shoppingItems.map(withFoodCategory) };
+type ReadablePlan = {
+  shoppingItems: Array<{ name: string; category: string | null }>;
+  days: Array<{ items: Array<{ recipe: Parameters<typeof recipeFit>[0] }> }>;
+};
+
+/**
+ * Dữ liệu trả về khi đọc thực đơn: dòng đi chợ tạo trước GĐ3b lượt 5 chưa có `category` thì tính theo tên (không đổi
+ * dữ liệu đã lưu); mỗi món kèm `fit` theo hồ sơ hiện tại (GĐ3b-R2: thực đơn tạo trước khi thêm dị ứng hiện cảnh báo).
+ */
+function forReading<T extends ReadablePlan>(plan: T, profile: SafetyProfile) {
+  return {
+    ...plan,
+    days: plan.days.map((day) => ({
+      ...day,
+      items: day.items.map((item) => ({ ...item, recipe: { ...item.recipe, fit: recipeFit(item.recipe, profile) } })),
+    })),
+    shoppingItems: plan.shoppingItems.map(withFoodCategory),
+  };
 }
 
+const profileOf = (userId: string) => prisma.nutritionProfile.findUnique({ where: { userId } });
+
 export async function listMealPlans(userId: string) {
-  const plans = await prisma.mealPlan.findMany({
-    where: { userId },
-    include: planInclude,
-    // Mới nhất trước; trùng ngày bắt đầu thì thực đơn tạo sau đứng trước.
-    orderBy: [{ startDate: "desc" }, { createdAt: "desc" }],
-  });
-  return plans.map(withShoppingCategories);
+  const [plans, profile] = await Promise.all([
+    prisma.mealPlan.findMany({
+      where: { userId },
+      include: planInclude,
+      // Mới nhất trước; trùng ngày bắt đầu thì thực đơn tạo sau đứng trước.
+      orderBy: [{ startDate: "desc" }, { createdAt: "desc" }],
+    }),
+    profileOf(userId),
+  ]);
+  return plans.map((plan) => forReading(plan, profile));
 }
 
 export async function getMealPlan(userId: string, id: string) {
-  const plan = await prisma.mealPlan.findFirst({ where: { id, userId }, include: planInclude });
+  const [plan, profile] = await Promise.all([prisma.mealPlan.findFirst({ where: { id, userId }, include: planInclude }), profileOf(userId)]);
   if (!plan) throw new HttpError(404, "Không tìm thấy thực đơn.");
-  return withShoppingCategories(plan);
+  return forReading(plan, profile);
 }
 
 export async function updateMealPlanStatus(userId: string, id: string, status: PlanStatus) {
-  return prisma.$transaction(async (transaction) => {
+  const plan = await prisma.$transaction(async (transaction) => {
     const result = await transaction.mealPlan.updateMany({ where: { id, userId }, data: { status } });
     if (!result.count) throw new HttpError(404, "Không tìm thấy thực đơn.");
-    const plan = await transaction.mealPlan.findUnique({ where: { id }, include: planInclude });
-    return plan && withShoppingCategories(plan);
+    return transaction.mealPlan.findUnique({ where: { id }, include: planInclude });
   });
+  return plan && forReading(plan, await profileOf(userId));
 }
 
 export async function deleteMealPlan(userId: string, id: string) {

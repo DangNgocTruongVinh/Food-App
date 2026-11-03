@@ -38,6 +38,8 @@ export const updateMealCompletionSchema = z.object({
   query: empty,
 });
 export const mealConsumptionPreviewSchema = z.object({ body: empty, params: idParams, query: empty });
+// Đổi món: server tự chọn món thay theo hồ sơ, client không gửi món (không tin dữ liệu chọn món từ client).
+export const swapMealItemSchema = z.object({ body: empty.strict(), params: idParams, query: empty });
 export const updateShoppingPurchasedSchema = z.object({
   body: z.object({ purchased: z.boolean() }),
   params: idParams,

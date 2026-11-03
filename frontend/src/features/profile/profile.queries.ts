@@ -14,8 +14,11 @@ export const profileMutations = {
 
 export function invalidateProfileQueries(queryClient: QueryClient) {
   // Non-blocking invalidation; "Dành cho bạn" ở trang công thức phụ thuộc dị ứng/chế độ ăn/mục tiêu calo.
+  // Danh sách công thức và thực đơn trả `fit` theo hồ sơ (ẩn món vi phạm, cảnh báo bữa vi phạm ở thực đơn cũ).
   void queryClient.invalidateQueries({ queryKey: queryKeys.profile });
   void queryClient.invalidateQueries({ queryKey: queryKeys.dashboard });
   void queryClient.invalidateQueries({ queryKey: queryKeys.recipes.forYouAll });
+  void queryClient.invalidateQueries({ queryKey: queryKeys.recipes.lists });
+  void queryClient.invalidateQueries({ queryKey: queryKeys.mealPlans.all });
   void queryClient.invalidateQueries({ queryKey: queryKeys.recommendations.all });
 }

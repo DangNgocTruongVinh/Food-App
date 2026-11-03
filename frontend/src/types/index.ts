@@ -182,6 +182,8 @@ export interface MealPlan {
   calorieTarget: number; aiGenerated: boolean; summary?: string; days: MealPlanDay[]; shoppingItems: ShoppingItem[];
   createdAt?: string;
 }
+/** POST /api/meal-plans/items/:id/swap: thực đơn sau khi đổi, tên món cũ và món mới. */
+export interface MealSwapResult { plan: MealPlan; from: string; to: string }
 
 // Số liệu kho chỉ có ở món gợi ý thật từ API; món mẫu dự phòng không có.
 export interface DashboardRecommendedRecipe {

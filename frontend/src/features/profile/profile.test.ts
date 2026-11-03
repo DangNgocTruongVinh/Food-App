@@ -56,15 +56,19 @@ describe("Profile query and mutation compatibility", () => {
     expect(await client.fetchQuery(profileQueries.detail())).toEqual(profile);
     expect(adapter).toHaveBeenCalledTimes(1);
   });
-  it("invalidates profile, dashboard and recipe \"Dành cho bạn\" queries only", () => {
-    const keys = [["profile"], ["dashboard"], ["dashboard", "detail"], ["pantry"], ["meal-plans"], ["recipes", "for-you", "recipe-a"], ["recipes", "detail", "recipe-a"]];
+  it("invalidates profile, dashboard, recipe \"Dành cho bạn\", recipe lists and meal plans (fit theo hồ sơ) only", () => {
+    const keys = [
+      ["profile"], ["dashboard"], ["dashboard", "detail"], ["pantry"], ["meal-plans"], ["recipes", "for-you", "recipe-a"],
+      ["recipes", "detail", "recipe-a"], ["recipes", "list", {}],
+    ];
     for (const key of keys) client.setQueryData(key, {});
     expect(invalidateProfileQueries(client)).toBeUndefined();
     expect(client.getQueryState(["profile"])?.isInvalidated).toBe(true);
     expect(client.getQueryState(["dashboard"])?.isInvalidated).toBe(true);
     expect(client.getQueryState(["dashboard", "detail"])?.isInvalidated).toBe(true);
     expect(client.getQueryState(["pantry"])?.isInvalidated).toBe(false);
-    expect(client.getQueryState(["meal-plans"])?.isInvalidated).toBe(false);
+    expect(client.getQueryState(["meal-plans"])?.isInvalidated).toBe(true);
+    expect(client.getQueryState(["recipes", "list", {}])?.isInvalidated).toBe(true);
     expect(client.getQueryState(["recipes", "for-you", "recipe-a"])?.isInvalidated).toBe(true);
     expect(client.getQueryState(["recipes", "detail", "recipe-a"])?.isInvalidated).toBe(false);
   });

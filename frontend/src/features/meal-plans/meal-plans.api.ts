@@ -1,5 +1,7 @@
 import { api } from "../../api/client";
-import type { ConsumptionPreview, FoodUnit, MealCompletionResult, MealPlan, MealPlanStatus, ShoppingPurchaseResult } from "../../types";
+import type {
+  ConsumptionPreview, FoodUnit, MealCompletionResult, MealPlan, MealPlanStatus, MealSwapResult, ShoppingPurchaseResult,
+} from "../../types";
 
 export type MealConsumption = { mode: "deduct"; lines: Array<{ ingredientId: string; quantity: number; unit: FoodUnit }> } | { mode: "none" };
 export interface MealCompletionUpdate { id: string; completed: boolean; consumption?: MealConsumption }
@@ -29,6 +31,11 @@ export async function updateMealCompletion({ id, completed, consumption }: MealC
 /** Xem trước trừ kho cho một bữa (không đổi kho). */
 export async function getConsumptionPreview(id: string) {
   return (await api.get<ConsumptionPreview>(`/meal-plans/items/${id}/consumption-preview`)).data;
+}
+
+/** Đổi món một bữa chưa ăn: server tự chọn món hợp hồ sơ hiện tại, cập nhật danh sách đi chợ (GĐ3b-R2). */
+export async function swapMealItem(id: string) {
+  return (await api.post<MealSwapResult>(`/meal-plans/items/${id}/swap`, {})).data;
 }
 
 export async function updateShoppingPurchased({ id, purchased }: ShoppingPurchasedUpdate) {

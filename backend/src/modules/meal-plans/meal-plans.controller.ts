@@ -8,6 +8,7 @@ import { previewMealConsumption, updateMealCompletion } from "./meal-consumption
 import {
   deleteMealPlan, generateWeeklyPlan, getMealPlan, listMealPlans, updateMealPlanStatus,
 } from "./meal-plans.service.js";
+import { swapMealItem } from "./meal-swap.service.js";
 import { updateShoppingPurchased } from "./shopping-purchase.service.js";
 
 const authenticatedUserId = (req: Request) => (req as AuthenticatedRequest).userId;
@@ -49,6 +50,13 @@ export async function mealConsumptionPreviewController(
   res: Response,
 ) {
   res.json(await previewMealConsumption(authenticatedUserId(req), req.params.id));
+}
+
+export async function swapMealItemController(
+  req: ValidatedRequest<unknown, MealPlanIdParams>,
+  res: Response,
+) {
+  res.json(await swapMealItem(authenticatedUserId(req), req.params.id));
 }
 
 export async function updateShoppingPurchasedController(

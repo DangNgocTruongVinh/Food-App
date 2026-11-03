@@ -110,6 +110,16 @@ export default function MealPlansPage() {
     onSuccess: (plan) => { invalidateMealPlanQueries(queryClient, true); setToast(`Đã áp dụng “${plan.name}”.`); },
     onError: (err) => setError(getApiError(err)),
   });
+  const swap = useMutation({
+    ...mealPlanMutations.swap(),
+    onSuccess: (result) => {
+      queryClient.setQueryData(queryKeys.mealPlans.detail(result.plan.id), result.plan);
+      invalidateMealPlanQueries(queryClient, true);
+      setError("");
+      setToast(`Đã đổi “${result.from}” thành “${result.to}”.`);
+    },
+    onError: (err) => setError(getApiError(err)),
+  });
   const remove = useMutation({
     ...mealPlanMutations.remove(),
     onSuccess: (_result, deletedId) => {
@@ -215,6 +225,8 @@ export default function MealPlansPage() {
             panelId={DAY_PANEL_ID}
             labelledBy={dayTabId(dayIndex)}
             pendingId={consumption.pendingId}
+            swappingId={swap.isPending ? swap.variables ?? null : null}
+            onSwap={(item) => swap.mutate(item.id)}
             onToggle={(item, completed) => {
               const meal = { id: item.id, recipeName: item.recipe.name };
               if (completed) consumption.open(meal);

@@ -2,6 +2,7 @@ import type { DietType, MealType } from "@prisma/client";
 import { describe, expect, it } from "vitest";
 import { filterRecipesForProfile } from "../services/dietary.service.js";
 import { fallbackPlan, reconcileAIPlan } from "../modules/meal-plans/meal-plan-generator.js";
+import { pickSwapRecipe } from "../modules/meal-plans/meal-swap.js";
 import { isRecipeSafe, recipeFit, safeRecipes } from "../modules/recommendation/safety.js";
 import { buildCollaborativeModel } from "../modules/recommendation/collaborative.js";
 import { type EngineData, type EngineRecipe, type RecommendationContext, runRecommendation } from "../modules/recommendation/hybrid.js";
@@ -95,6 +96,12 @@ const SUGGESTERS: Record<string, (profile: Profile) => Recipe[]> = {
     const { plan } = reconcileAIPlan(aiPlan, filterRecipesForProfile(visible, profile), pantryNames, 4, profile.dietType);
     return plan.days.flatMap((planDay) => planDay.meals.map((meal) => recipes.find((recipe) => recipe.id === meal.recipeId)!));
   },
+  "đổi món trong thực đơn cũ (pickSwapRecipe), mọi bữa": (profile) => mealTypes.flatMap((mealType) => {
+    // Bữa cũ là món vi phạm (tôm, cá...) và cả bộ món (kể cả món ẩn) được đưa vào để chọn.
+    const current = recipes.find((recipe) => recipe.slug === "canh-chua-ca-loc")!;
+    const picked = pickSwapRecipe(recipes, profile, { recipeId: current.id, calories: current.calories, mealType }, { sameDay: new Set(), planCounts: new Map() });
+    return picked ? [picked] : [];
+  }),
   "API gợi ý: today": recommend("today"),
   "API gợi ý: today, bữa sáng": recommend("today", { mealType: "BREAKFAST" }),
   "API gợi ý: for-you": recommend("for-you"),
