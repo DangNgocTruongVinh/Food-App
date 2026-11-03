@@ -4,9 +4,9 @@ import type {
   GenerateMealPlanInput, MealPlanIdParams, UpdateMealCompletionInput,
   UpdateMealPlanStatusInput, UpdateShoppingPurchasedInput,
 } from "./meal-plans.schema.js";
+import { previewMealConsumption, updateMealCompletion } from "./meal-consumption.service.js";
 import {
-  deleteMealPlan, generateWeeklyPlan, getMealPlan, listMealPlans,
-  updateMealCompletion, updateMealPlanStatus, updateShoppingPurchased,
+  deleteMealPlan, generateWeeklyPlan, getMealPlan, listMealPlans, updateMealPlanStatus, updateShoppingPurchased,
 } from "./meal-plans.service.js";
 
 const authenticatedUserId = (req: Request) => (req as AuthenticatedRequest).userId;
@@ -40,7 +40,14 @@ export async function updateMealCompletionController(
   req: ValidatedRequest<UpdateMealCompletionInput, MealPlanIdParams>,
   res: Response,
 ) {
-  res.json(await updateMealCompletion(authenticatedUserId(req), req.params.id, req.body.completed));
+  res.json(await updateMealCompletion(authenticatedUserId(req), req.params.id, req.body.completed, req.body.consumption));
+}
+
+export async function mealConsumptionPreviewController(
+  req: ValidatedRequest<unknown, MealPlanIdParams>,
+  res: Response,
+) {
+  res.json(await previewMealConsumption(authenticatedUserId(req), req.params.id));
 }
 
 export async function updateShoppingPurchasedController(

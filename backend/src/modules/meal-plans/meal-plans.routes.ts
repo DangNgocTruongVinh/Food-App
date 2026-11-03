@@ -4,11 +4,11 @@ import { validate } from "../../middleware/validate.js";
 import { asyncHandler } from "../../utils/async-handler.js";
 import {
   deleteMealPlanController, generateMealPlanController, getMealPlanController,
-  listMealPlansController, updateMealCompletionController, updateMealPlanStatusController,
+  listMealPlansController, mealConsumptionPreviewController, updateMealCompletionController, updateMealPlanStatusController,
   updateShoppingPurchasedController,
 } from "./meal-plans.controller.js";
 import {
-  deleteMealPlanSchema, generateMealPlanSchema, getMealPlanSchema, listMealPlansSchema,
+  deleteMealPlanSchema, generateMealPlanSchema, getMealPlanSchema, listMealPlansSchema, mealConsumptionPreviewSchema,
   updateMealCompletionSchema, updateMealPlanStatusSchema, updateShoppingPurchasedSchema,
 } from "./meal-plans.schema.js";
 
@@ -19,6 +19,7 @@ router.get("/", validate(listMealPlansSchema), asyncHandler(listMealPlansControl
 router.get("/:id", validate(getMealPlanSchema), asyncHandler(getMealPlanController));
 router.post("/generate", validate(generateMealPlanSchema), asyncHandler(generateMealPlanController));
 router.patch("/:id/status", validate(updateMealPlanStatusSchema), asyncHandler(updateMealPlanStatusController));
+router.get("/items/:id/consumption-preview", validate(mealConsumptionPreviewSchema), asyncHandler(mealConsumptionPreviewController));
 router.patch("/items/:id", validate(updateMealCompletionSchema), asyncHandler(updateMealCompletionController));
 router.patch("/shopping/:id", validate(updateShoppingPurchasedSchema), asyncHandler(updateShoppingPurchasedController));
 router.delete("/:id", validate(deleteMealPlanSchema), asyncHandler(deleteMealPlanController));

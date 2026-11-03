@@ -3,6 +3,7 @@ import { prisma } from "../../lib/prisma.js";
 import { filterRecipesForProfile, normalizeFoodText } from "../../services/dietary.service.js";
 import { calculateNutritionTargets } from "../../services/nutrition.service.js";
 import { visibleRecipeWhere } from "../../services/recipe-visibility.js";
+import { requiredQuantity } from "../../services/pantry-consumption.js";
 import { HttpError } from "../../utils/http-error.js";
 import { generatePlanWithAI } from "../ai/ai.service.js";
 import { fallbackPlan, reconcileAIPlan } from "./meal-plan-generator.js";
@@ -57,7 +58,8 @@ export async function generateWeeklyPlan(userId: string, startDateInput: string)
       if (!recipe) return [];
       recipe.ingredients.forEach((ingredient) => selectedIngredients.push({
         name: ingredient.name,
-        quantity: ingredient.quantity * meal.servings,
+        // Định lượng công thức tính cho recipe.servings khẩu phần; bữa ăn meal.servings khẩu phần.
+        quantity: requiredQuantity(ingredient.quantity, meal.servings, recipe.servings),
         unit: ingredient.unit,
       }));
       return [{
@@ -122,19 +124,6 @@ export async function updateMealPlanStatus(userId: string, id: string, status: P
     const result = await transaction.mealPlan.updateMany({ where: { id, userId }, data: { status } });
     if (!result.count) throw new HttpError(404, "Không tìm thấy thực đơn.");
     return transaction.mealPlan.findUnique({ where: { id }, include: planInclude });
-  });
-}
-
-export async function updateMealCompletion(userId: string, id: string, completed: boolean) {
-  return prisma.$transaction(async (transaction) => {
-    const result = await transaction.mealPlanItem.updateMany({
-      where: { id, day: { mealPlan: { userId } } },
-      data: { completed },
-    });
-    if (!result.count) throw new HttpError(404, "Không tìm thấy bữa ăn.");
-    const item = await transaction.mealPlanItem.findUnique({ where: { id } });
-    if (!item) throw new HttpError(404, "Không tìm thấy bữa ăn.");
-    return item;
   });
 }
 

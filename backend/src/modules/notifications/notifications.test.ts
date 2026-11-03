@@ -249,9 +249,13 @@ describe("Pantry notification compatibility", () => {
     expect(first.map((item) => item.dedupeKey)).toEqual(second.map((item) => item.dedupeKey));
   });
 
-  it("does not create candidates for depleted Pantry items", () => {
-    expect(buildPantryNotificationCandidates([
+  it("keeps reminding to buy a depleted item that has a minimum stock, but drops its expiry reminders", () => {
+    const candidates = buildPantryNotificationCandidates([
       pantryItem({ quantity: 0, minimumStock: 2, expiryDate: new Date("2026-08-19T00:00:00.000Z") }),
+    ], now);
+    expect(candidates).toEqual([expect.objectContaining({ type: "PANTRY_LOW_STOCK", message: "Ức gà đã dùng hết, cần mua thêm." })]);
+    expect(buildPantryNotificationCandidates([
+      pantryItem({ quantity: 0, minimumStock: 0, expiryDate: new Date("2026-08-19T00:00:00.000Z") }),
     ], now)).toEqual([]);
   });
 
@@ -263,9 +267,8 @@ describe("Pantry notification compatibility", () => {
     expect(mocks.findPantryItems).toHaveBeenCalledWith({
       where: {
         userId,
-        quantity: { gt: 0 },
         OR: [
-          { expiryDate: { lte: new Date("2026-08-23T00:00:00.000Z") } },
+          { quantity: { gt: 0 }, expiryDate: { lte: new Date("2026-08-23T00:00:00.000Z") } },
           { minimumStock: { gt: 0 } },
         ],
       },

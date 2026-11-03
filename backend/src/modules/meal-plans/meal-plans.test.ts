@@ -1,5 +1,6 @@
 import jwt from "jsonwebtoken";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { fakeTransaction } from "../../test/fake-transaction.js";
 import { request, testApp } from "../../test/http-test-utils.js";
 import { seedRecipesAsRecords } from "../../test/seed-recipes.js";
 import mealPlanRoutes from "./meal-plans.routes.js";
@@ -15,6 +16,14 @@ const mocks = vi.hoisted(() => ({
   deletePlans: vi.fn(),
   updateMealItems: vi.fn(),
   findMealItem: vi.fn(),
+  findFirstMealItem: vi.fn(),
+  updatePantry: vi.fn(),
+  findFirstPantry: vi.fn(),
+  createHistory: vi.fn(),
+  listHistory: vi.fn(),
+  updateHistory: vi.fn(),
+  countHistory: vi.fn(),
+  syncNotifications: vi.fn(),
   updateShoppingItems: vi.fn(),
   findShoppingItem: vi.fn(),
   findUser: vi.fn(),
@@ -29,24 +38,27 @@ vi.mock("../../config/env.js", () => ({ env: { JWT_SECRET: mocks.secret } }));
 vi.mock("../ai/ai.service.js", () => ({
   generatePlanWithAI: mocks.generatePlanWithAI,
 }));
-vi.mock("../../lib/prisma.js", () => ({
-  prisma: {
-    mealPlan: {
-      findMany: mocks.listPlans,
-      findFirst: mocks.findPlan,
-      updateMany: mocks.updatePlans,
-      findUnique: mocks.findUniquePlan,
-      deleteMany: mocks.deletePlans,
-      create: mocks.createPlan,
-    },
-    mealPlanItem: { updateMany: mocks.updateMealItems, findUnique: mocks.findMealItem },
-    shoppingItem: { updateMany: mocks.updateShoppingItems, findUnique: mocks.findShoppingItem },
-    user: { findUnique: mocks.findUser },
-    pantryItem: { findMany: mocks.listPantry },
-    recipe: { findMany: mocks.listRecipes },
-    $transaction: mocks.transaction,
+vi.mock("../notifications/notifications.service.js", () => ({ syncPantryNotifications: mocks.syncNotifications }));
+const client = () => ({
+  mealPlan: {
+    findMany: mocks.listPlans,
+    findFirst: mocks.findPlan,
+    updateMany: mocks.updatePlans,
+    findUnique: mocks.findUniquePlan,
+    deleteMany: mocks.deletePlans,
+    create: mocks.createPlan,
   },
-}));
+  mealPlanItem: { updateMany: mocks.updateMealItems, findUnique: mocks.findMealItem, findFirst: mocks.findFirstMealItem },
+  shoppingItem: { updateMany: mocks.updateShoppingItems, findUnique: mocks.findShoppingItem },
+  user: { findUnique: mocks.findUser },
+  pantryItem: { findMany: mocks.listPantry, updateMany: mocks.updatePantry, findFirst: mocks.findFirstPantry },
+  pantryTransaction: { create: mocks.createHistory, findMany: mocks.listHistory, updateMany: mocks.updateHistory, count: mocks.countHistory },
+  recipe: { findMany: mocks.listRecipes },
+});
+const tx = fakeTransaction(client);
+vi.mock("../../lib/prisma.js", () => ({ prisma: new Proxy({}, {
+  get: (_target, key) => (key === "$transaction" ? mocks.transaction : Reflect.get(client(), key)),
+}) }));
 
 const app = testApp("/api/meal-plans", mealPlanRoutes);
 const userId = "user-a";
@@ -104,11 +116,14 @@ beforeEach(() => {
   mocks.listRecipes.mockResolvedValue([recipe]);
   mocks.generatePlanWithAI.mockResolvedValue(null);
   mocks.createPlan.mockResolvedValue(plan);
-  mocks.transaction.mockImplementation((operation) => operation({
-    mealPlan: { updateMany: mocks.updatePlans, findUnique: mocks.findUniquePlan },
-    mealPlanItem: { updateMany: mocks.updateMealItems, findUnique: mocks.findMealItem },
-    shoppingItem: { updateMany: mocks.updateShoppingItems, findUnique: mocks.findShoppingItem },
-  }));
+  mocks.findFirstMealItem.mockResolvedValue({ ...mealItem, completed: false });
+  mocks.updatePantry.mockResolvedValue({ count: 1 });
+  mocks.createHistory.mockImplementation(async ({ data }) => ({ id: `tx-${mocks.createHistory.mock.calls.length}`, ...data }));
+  mocks.listHistory.mockResolvedValue([]);
+  mocks.updateHistory.mockResolvedValue({ count: 1 });
+  mocks.countHistory.mockResolvedValue(0);
+  mocks.syncNotifications.mockResolvedValue(0);
+  mocks.transaction.mockImplementation(tx.run);
 });
 
 afterEach(() => vi.restoreAllMocks());
@@ -163,6 +178,13 @@ describe("Meal Plan and Shopping HTTP contract (no database)", () => {
     });
     expect(data.days.create).toHaveLength(7);
     expect(data.days.create.every((day: { items: { create: unknown[] } }) => day.items.create.length === 3)).toBe(true);
+  });
+
+  it("divides by recipe.servings in the shopping list: a 2-serving recipe needs half per 1-serving meal", async () => {
+    mocks.listRecipes.mockResolvedValue([{ ...recipe, servings: 2 }]);
+    await request(app, "/api/meal-plans/generate", { method: "POST", token: token(), body: { startDate: "2026-10-01" } });
+    // 21 bữa × 100 g / 2 khẩu phần = 1050 g, trừ 50 g đang có trong kho.
+    expect(mocks.createPlan.mock.calls[0][0].data.shoppingItems).toEqual({ create: [{ name: "Ức gà", quantity: 1000, unit: "G" }] });
   });
 
   it("corrects an OpenAI plan with a wrong-meal dish and an allergen before saving", async () => {
@@ -241,18 +263,23 @@ describe("Meal Plan and Shopping HTTP contract (no database)", () => {
     const response = await request(app, `/api/meal-plans/items/${mealItemId}`, {
       method: "PATCH", token: token(), body: { completed: true },
     });
-    expect(response).toEqual({ status: 200, body: JSON.parse(JSON.stringify(mealItem)) });
+    // Client cũ (không gửi consumption): chỉ đánh dấu, không đụng tới kho.
+    expect(response).toEqual({ status: 200, body: { ...JSON.parse(JSON.stringify(mealItem)), consumption: null, alreadyCompleted: false, restoration: null } });
+    expect(mocks.updatePantry).not.toHaveBeenCalled();
+    expect(mocks.createHistory).not.toHaveBeenCalled();
+    expect(mocks.findFirstMealItem).toHaveBeenCalledWith(expect.objectContaining({ where: { id: mealItemId, day: { mealPlan: { userId } } } }));
     expect(mocks.updateMealItems).toHaveBeenCalledWith({
-      where: { id: mealItemId, day: { mealPlan: { userId } } }, data: { completed: true },
+      where: { id: mealItemId, day: { mealPlan: { userId } }, completed: false }, data: { completed: true },
     });
   });
 
   it("rejects a meal update for an unowned item", async () => {
-    mocks.updateMealItems.mockResolvedValue({ count: 0 });
+    mocks.findFirstMealItem.mockResolvedValue(null);
     expect(await request(app, `/api/meal-plans/items/${mealItemId}`, {
       method: "PATCH", token: token(otherUserId), body: { completed: true },
     })).toEqual({ status: 404, body: { message: "Không tìm thấy bữa ăn." } });
-    expect(mocks.findMealItem).not.toHaveBeenCalled();
+    expect(mocks.findFirstMealItem).toHaveBeenCalledWith(expect.objectContaining({ where: { id: mealItemId, day: { mealPlan: { userId: otherUserId } } } }));
+    expect(mocks.updateMealItems).not.toHaveBeenCalled();
   });
 
   it("updates Shopping purchase state by item id and plan owner", async () => {

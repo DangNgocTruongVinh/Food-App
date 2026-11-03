@@ -1,6 +1,7 @@
 import type { DietType, FoodUnit } from "@prisma/client";
-import { expandRestrictedTerms, filterRecipesForProfile, findRestrictedTerms, matchesRequiredDiet, normalizeFoodText } from "./dietary.service.js";
+import { expandRestrictedTerms, filterRecipesForProfile, findRestrictedTerms, matchesRequiredDiet } from "./dietary.service.js";
 import { calculateNutritionTargets } from "./nutrition.service.js";
+import { groupPantryByName, pantryMatchesFor } from "./pantry-match.js";
 
 // Mức độ phù hợp của một công thức với người dùng (không truy cập DB): dùng cho khối "Dành cho bạn"
 // ở trang chi tiết công thức và cho gợi ý ở Dashboard.
@@ -35,12 +36,7 @@ export function pantryExpiryState(expiryDate: Date | null, now = new Date()): "e
  * kho "cái") vẫn tính là có, nhưng ghi vào unitMismatches để giao diện nói rõ không so được số lượng.
  */
 export function matchRecipeToPantry(recipe: Pick<FitRecipe, "ingredients">, pantry: FitPantryItem[], now = new Date()) {
-  const byName = new Map<string, FitPantryItem[]>();
-  for (const item of pantry) {
-    if (item.quantity <= 0) continue;
-    const key = normalizeFoodText(item.name);
-    byName.set(key, [...(byName.get(key) ?? []), item]);
-  }
+  const byName = groupPantryByName(pantry);
 
   const inPantry: string[] = [];
   const missing: Array<{ name: string; optional: boolean }> = [];
@@ -49,7 +45,7 @@ export function matchRecipeToPantry(recipe: Pick<FitRecipe, "ingredients">, pant
   const unitMismatches: Array<{ name: string; recipeUnit: FoodUnit; pantryUnits: FoodUnit[] }> = [];
 
   for (const ingredient of recipe.ingredients) {
-    const matches = byName.get(normalizeFoodText(ingredient.name)) ?? [];
+    const matches = pantryMatchesFor(byName, ingredient.name);
     const usable = matches.filter((item) => pantryExpiryState(item.expiryDate, now) !== "expired");
     if (!usable.length) {
       missing.push({ name: ingredient.name, optional: Boolean(ingredient.optional) });
