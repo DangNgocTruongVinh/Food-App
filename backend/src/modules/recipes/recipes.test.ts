@@ -62,9 +62,11 @@ beforeEach(() => {
 afterEach(() => vi.restoreAllMocks());
 
 describe("Recipes HTTP contract (no database)", () => {
-  it("lists recipes with ingredients using the existing name order", async () => {
+  it("lists recipes with ingredients using the existing name order, each with the user's fit", async () => {
     const response = await request(app, "/api/recipes", { token: token() });
-    expect(response).toEqual({ status: 200, body: JSON.parse(JSON.stringify([recipe])) });
+    const fit = { allergens: [], dislikedFoods: [], dietConflict: null, safe: true };
+    expect(response).toEqual({ status: 200, body: JSON.parse(JSON.stringify([{ ...recipe, fit }])) });
+    expect(mocks.findProfile).toHaveBeenCalledWith({ where: { userId } });
     expect(mocks.findMany).toHaveBeenCalledWith({
       where: { hiddenAt: null }, include: { ingredients: true }, orderBy: { name: "asc" },
     });

@@ -73,7 +73,10 @@ const withoutNestedTerms = (terms: string[]) =>
   terms.filter((term) => !terms.some((other) => other !== term && ` ${other} `.includes(` ${term} `)));
 
 /** Cảnh báo theo hồ sơ: thành phần gây dị ứng (theo nhóm), món không thích, không hợp chế độ chay/thuần chay. */
-export function recipeWarnings(recipe: Pick<FitRecipe, "name" | "dietTags" | "ingredients">, profile: FitProfile | null | undefined) {
+export function recipeWarnings(
+  recipe: Pick<FitRecipe, "name" | "dietTags"> & { ingredients: Array<{ name: string }> },
+  profile: Pick<FitProfile, "dietType" | "allergies" | "dislikedFoods"> | null | undefined,
+) {
   const dietType = profile?.dietType ?? "BALANCED";
   return {
     allergens: withoutNestedTerms(findRestrictedTerms(recipe, expandRestrictedTerms(profile?.allergies ?? []))),

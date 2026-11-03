@@ -184,6 +184,8 @@ Thứ tự: (b) → khảo sát dọn code → (a), (c), (d).
 
 Nội dung GĐ3b, GĐ3c: xem hai mục "Giai đoạn 3b", "Giai đoạn 3c" (sau GĐ3).
 
+**Thứ tự làm việc (chốt 03/11/2026, thay bảng thời gian trên từ GĐ3b lượt 7 trở đi):** R1 → R3 → R4 → R5 → R6 → R7 → GĐ3c (quét hóa đơn) → R2 → R8 → (bản 8 + tách Admin) → GĐ4 → R9 → R10 → GĐ5 (chỉ còn "thêm món thủ công vào thực đơn"). R1–R10: mục "Giai đoạn 3b-R" (sau GĐ3b).
+
 ### Làm lại toàn bộ giao diện (31/10–7/11) — nhánh `ui-moi`
 Quy tắc (ngoài DESIGN.md):
 - Đọc `docs/design/DESIGN.md` trước mỗi lượt; cuối mỗi lượt **tự nghiệm thu theo mục 15** và báo kết quả checklist mục 3. Ảnh nghiệm thu lưu ở `docs/design/screens/<lượt>/`.
@@ -464,9 +466,39 @@ Hiện trạng ghi nhận khi lập kế hoạch: định lượng nguyên liệ
   - Hộp thoại Sửa: `PantryItemHistory` (`<details>` "Xem lịch sử", chỉ tải khi mở, lọc `pantryItemId`, 10 dòng/trang) để trả lời "vì sao còn 200 g".
   - Logic + test `features/pantry/pantry-history.logic.ts`; API `listPantryTransactions`, `pantryQueries.transactions` (khóa `["pantry","transactions",…]` cùng tiền tố `["pantry"]` nên mọi chỗ làm mới kho cũng làm mới lịch sử). `vietnamTime`/`vietnamDate` chuyển từ `features/admin/admin-people.logic.ts` sang `utils/date.ts` (Admin dùng lại qua re-export). CSS `kho-history*` trong `styles/ui/pantry.css`, chỉ token.
   - Nghiệm thu Playwright 28/28 (`docs/design/screens/GD3b-L7/`): luồng thêm Cà chua 500 g (giao diện) → sửa còn 300 g → ăn "Cháo gà hành gừng" trừ 4 nguyên liệu → mua Cà chua (cộng 250 g) → hoàn tác ăn và mua → xóa Cà chua (giao diện): đúng 13 dòng, trang 1 khớp API từng dòng (tên, ±, nguồn, Hoàn lại/Đã hoàn lại, liên kết), giờ Việt Nam, lọc "Tiêu thụ" đúng 8 dòng, lọc "Quét hóa đơn" trống + "Xem tất cả", liên kết mở đúng thực đơn, "Xem lịch sử" của Gạo đúng 2 dòng; ảnh 390/1440 sáng/tối (phần Lịch sử, hộp thoại), trống, đang tải, lỗi; tương phản ≥ 4.5:1 cả hai chế độ; focus bàn phím; 320px. Dọn dữ liệu của các lần chạy lỗi bằng SQL (chỉ dòng lịch sử/thực đơn của demo tạo trong lượt); cuối lượt kiểm demo chỉ có dữ liệu của lượt rồi mới `demo:reset`.
-- [ ] Lượt 8 — Ưu tiên đồ sắp hết hạn trong thực đơn (đo trước/sau) + "Gợi ý món" ở Kho (trung bình).
-- [ ] Lượt 9 — Dị ứng/chế độ ăn ở mọi nơi: `fit` + ẩn/hiện ở "Tất cả công thức", cảnh báo thực đơn cũ, lời nhắc AI, test chung, gom `asWords` về backend (trung bình–khó).
-- [ ] Lượt 10 — `docs/han-che.md`, `docs/cau-hoi-bao-ve.md`, cập nhật CLAUDE.md (dễ).
+- Lượt 8, 9, 10 cũ gộp vào GĐ3b-R (03/11): lượt 8 (ưu tiên đồ sắp hết hạn, "Gợi ý món" ở Kho) → R5/R7/R8; lượt 9 (dị ứng/chế độ ăn ở mọi nơi) → R1 (backend) + R2 (frontend); lượt 10 → R10.
+
+### Giai đoạn 3b-R — 3 thuật toán gợi ý (yêu cầu của giảng viên; kế hoạch duyệt 03/11/2026)
+Kiến trúc `backend/src/modules/recommendation/`: `safety.ts` (lọc cứng dùng chung), `features.ts` (vector món, cache theo phiên bản bộ món), `interactions.ts` (suy tương tác từ bảng có sẵn, không bảng sự kiện mới), `content-based.ts` (1), `collaborative.ts` (2), `knowledge-based.ts` (3), `hybrid.ts` (chuẩn hóa min–max, trộn, khởi đầu lạnh, MMR, lý do), `reasons.ts`, `recommendation.service.ts`, API chung `GET /api/recommendations?context=today|for-you|pantry|similar|also-cooked&recipeId=&pantryItemId=&mealType=&limit=`. Dùng lại `dietary.service`, `pantry-match`, `recipe-fit.service`, `meal-plan-generator`, không chép logic. Không lưu ma trận tương đồng trong DB (tính trong bộ nhớ; ma trận cộng tác cache 10 phút).
+- Thuật toán 1 (nội dung): khối nguyên liệu TF-IDF (`idf = ln((1+N)/(1+df)) + 1`, nguyên liệu tùy chọn 0,5), ẩm thực, bữa, nhãn chế độ ăn, dinh dưỡng z-score; trọng số khối 0,45/0,15/0,10/0,10/0,20 (cos = tổng có trọng số của cos từng khối). Vector người dùng = tiên nghiệm từ hồ sơ + Σ ω·exp(−Δngày/30)·v; ω: đã ăn 3, đăng bài có món 3, thích bài 2, có trong thực đơn chưa ăn 0,5.
+- Thuật toán 2 (cộng tác theo món): `r_ui = ln(1 + Σ ω·suy giảm)`, cosine giữa cột món có co rút `n_ij/(n_ij+5)`, k = 20 hàng xóm, điểm Deshpande–Karypis; "Người khác cũng nấu" chỉ khi ≥ 3 người khác nhau.
+- Thuật toán 3 (tri thức): lọc cứng + `0,35·hạn + 0,25·kho + 0,20·dinh dưỡng (Gaussian calo, đạm còn thiếu) + 0,10·đa dạng + 0,10·ưu tiên chế độ ăn`.
+- Bộ trộn: lọc an toàn trước; trọng số theo ngữ cảnh (Tổng quan 0,35/0,25/0,40; "Dành cho bạn" 0,45/0,30/0,25; Kho 0,15/0,10/0,75; Món tương tự chỉ 1; Người khác cũng nấu chỉ 2); khởi đầu lạnh `w2·n_u/(n_u+10)`, phần còn lại chia cho 1 và 3; MMR λ = 0,8; lý do từ thành phần đóng góp lớn nhất.
+
+**Quyết định đã chốt (03/11):**
+| # | Vấn đề | Quyết định |
+|---|---|---|
+| 1 | "Có trong thực đơn" (thực đơn do hệ thống xếp) | Chỉ dùng cho thuật toán 1 (trọng số 0,5); thuật toán 2 chỉ dùng đã ăn, bài viết, lượt thích. Ghi vào `docs/thuat-toan-goi-y.md` như quyết định thiết kế tránh vòng lặp phản hồi |
+| 2 | Món không thích | Lọc cứng ở mọi chỗ gợi ý; "Tất cả công thức" vẫn hiện kèm nhãn |
+| 3 | Thuật toán 2 khi demo (DB chỉ có admin, demo) | 6–8 tài khoản mẫu tạo bằng seed: "Người dùng mẫu N", `mauN@nouri.vn`, cờ `User.isSample` (migration), có hồ sơ và tương tác thật tạo bằng seed (đã ăn, đăng bài gắn món, thích bài) theo vài nhóm khẩu vị; mật khẩu ngẫu nhiên, không in ra; không tính vào thống kê Admin; danh sách người dùng Admin có nhãn "Tài khoản mẫu"; `demo:reset` tạo lại được; tài liệu ghi rõ là tài khoản mẫu minh họa. Làm ở R4 |
+| 4 | Dữ liệu đánh giá | Mô phỏng (~80 người, 6 nhóm khẩu vị, seed cố định), chỉ trong bộ nhớ, không vào DB, không vào thống kê Admin; báo cáo ghi rõ là mô phỏng |
+| 5 | Tab "Dành cho bạn" ở Cộng đồng | Bỏ bài của chính mình; "Mới nhất" vẫn mặc định; bài có món vi phạm bị đẩy xuống (×0,2) và có nhãn, không ẩn |
+
+**Các lượt (mỗi lượt một commit):**
+- [x] R1 — Lọc an toàn chung (backend phần lượt 9):
+  - `modules/recommendation/safety.ts`: `recipeFit` (dị ứng, không thích, xung đột chay/thuần chay + `safe`, dùng `recipeWarnings`), `isRecipeSafe`/`safeRecipes` (thêm món ẩn và đúng bữa `fitsMealType`, cùng quy ước "mealTypes rỗng = mọi bữa" với `meal-plan-generator`). `recipeWarnings` nới kiểu (chỉ cần tên nguyên liệu, 3 trường hồ sơ).
+  - `GET /api/recipes` trả `fit` cho từng món theo hồ sơ người đăng nhập (danh sách vẫn không lọc theo hồ sơ; frontend ẩn mặc định ở R2).
+  - Trợ lý AI: ngữ cảnh có `safety` (`chatSafetyContext`: cụm cần tránh do dị ứng mở rộng theo nhóm, do không thích, chế độ chay/thuần chay bắt buộc); lời nhắc hệ thống cấm gợi ý món vi phạm và yêu cầu nói rõ khi người dùng hỏi món vi phạm. Dòng nhắc dưới khung chat làm ở R2.
+  - `src/test/dietary-matrix.test.ts`: 105 hồ sơ (5 chế độ ăn × 7 bộ dị ứng × 3 bộ không thích) × mọi nguồn gợi ý hiện có (lọc an toàn, gợi ý Tổng quan, `fallbackPlan`, `reconcileAIPlan` với AI chọn cả món vi phạm/món ẩn), đối chiếu "đáp án" viết tay theo tên nguyên liệu seed (không gọi lại `dietary.service`); lọc an toàn giữ đúng món được phép (không lọc thừa) theo từng bữa; `fit` khớp đáp án; món ẩn không bao giờ an toàn. Đã thử bỏ điều kiện "không thích" và "món ẩn" → test báo lỗi. Các thuật toán R3–R9 thêm hàm vào `SUGGESTERS`.
+- [ ] R3 — Thuật toán 1: `features.ts`, `content-based.ts`, "món tương tự" (backend), test (khó).
+- [ ] R4 — Thuật toán 2: `interactions.ts`, `collaborative.ts`, cache, ngưỡng ≥ 3 người, tài khoản mẫu (quyết định 3), test (khó).
+- [ ] R5 — Thuật toán 3 + bộ trộn + MMR + lý do + `GET /api/recommendations`, test hiệu năng (33 và 500 món) (khó).
+- [ ] R6 — Dữ liệu mô phỏng + `npm run eval:recommend -w backend` + `docs/thuat-toan-goi-y.md` (Precision@K, Recall@K, độ phủ, đa dạng, lệch calo, dùng đồ sắp hết hạn; so với ngẫu nhiên/phổ biến), chỉnh trọng số (khó).
+- [ ] R7 — Giao diện: Tổng quan, "Dành cho bạn", Món tương tự / Người khác cũng nấu, Kho (Nấu gì từ kho + nút "Gợi ý món" trên dòng sắp hết hạn), dòng lý do; nghiệm thu (trung bình–khó).
+- [ ] R2 — Frontend lượt 9: "Tất cả công thức" ẩn món vi phạm mặc định + "Hiện tất cả", nhãn món không thích; nhãn cảnh báo bữa vi phạm ở thực đơn cũ; dòng nhắc dưới khung chat AI; gom `asWords` về backend (trung bình).
+- [ ] R8 — Thực đơn dùng bộ chấm điểm 3 (+0,3 × thuật toán 1), thưởng đồ sắp hết hạn (tối đa 8, chỉ các ngày trước hạn), giữ mọi ràng buộc; đo trước/sau (trung bình–khó).
+- [ ] R9 — Cộng đồng: tab "Dành cho bạn" (backend + frontend) (trung bình).
+- [ ] R10 — `docs/han-che.md`, `docs/cau-hoi-bao-ve.md`, cập nhật CLAUDE.md (dễ).
 
 ### Giai đoạn 3c — Quét hóa đơn (OCR) (11–14/11)
 - [ ] Nút "Quét hóa đơn" nhận ảnh hóa đơn hoặc nhãn sản phẩm; OpenAI đọc ảnh với structured output; trả về tên, số lượng, đơn vị (thuộc `FoodUnit`), nhóm, hạn dùng nếu đọc được, nếu không thì gợi ý hạn ước tính theo nhóm.

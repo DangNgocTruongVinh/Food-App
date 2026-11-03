@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { chatMealPlanContext, chatProfileContext, vietnamDateKey } from "./chat-context.js";
+import { chatMealPlanContext, chatProfileContext, chatSafetyContext, vietnamDateKey } from "./chat-context.js";
 
 const day = (date: string, items: Array<[string, string, number, boolean]>) => ({
   date: new Date(`${date}T00:00:00.000Z`),
@@ -64,5 +64,17 @@ describe("AI chat meal plan context", () => {
     expect(context).toContain("VEGAN");
     expect(context).not.toMatch(/profile-a|user-a|demo@nouri\.vn|passwordHash|\$2b\$|eyJhbGciOi|createdAt|updatedAt/);
     expect(chatProfileContext(null)).toBeNull();
+  });
+});
+
+describe("AI chat safety context (GĐ3b-R1)", () => {
+  it("expands allergy groups and dislikes into terms to avoid, and names a strict diet", () => {
+    const context = chatSafetyContext({ dietType: "VEGETARIAN", allergies: ["Hải sản"], dislikedFoods: ["Hành tây"] });
+    expect(context.avoidForAllergy).toEqual(expect.arrayContaining(["tôm", "cá", "nước mắm"]));
+    expect(context.avoidDisliked).toEqual(["hành tây"]);
+    expect(context.requiredDiet).toBe("chay");
+    expect(chatSafetyContext({ dietType: "VEGAN" }).requiredDiet).toBe("thuần chay");
+    expect(chatSafetyContext({ dietType: "LOW_CARB" }).requiredDiet).toBeNull();
+    expect(chatSafetyContext(null)).toEqual({ avoidForAllergy: [], avoidDisliked: [], requiredDiet: null });
   });
 });
