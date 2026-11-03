@@ -110,7 +110,9 @@ a.cm-recipe:hover { border-color: var(--action-text); }
 .cm-post--focus { border-color: var(--action-text); box-shadow: inset 4px 0 0 var(--action-text); }
 .cm-post__head { display: flex; align-items: center; gap: var(--space-3); }
 .cm-post__who { display: grid; flex: 1 1 auto; gap: 2px; min-width: 0; }
-.cm-post__author { color: var(--ink); font-weight: 600; }
+.cm-post__author { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1) var(--space-2); color: var(--ink); font-weight: 600; }
+/* Nhãn bài của tài khoản mẫu minh họa (GĐ3b-R7). */
+.cm-sample-tag { min-height: 22px; font-size: var(--fs-label); font-weight: 500; }
 .cm-time { color: var(--muted); font-size: var(--fs-label); }
 .cm-post__content { margin: 0; color: var(--ink); font-size: var(--fs-body); line-height: var(--lh-body); white-space: pre-wrap; overflow-wrap: anywhere; }
 .cm-post__stats { display: flex; gap: var(--space-4); margin: 0; color: var(--ink-2); font-size: var(--fs-small); }

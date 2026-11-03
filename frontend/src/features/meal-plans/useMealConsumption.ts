@@ -10,7 +10,7 @@ export type MealNotice = { kind: "done" | "undone" | "error"; target: ConsumeTar
 
 /** Đánh dấu/bỏ đánh dấu đã ăn đổi cả kho: làm mới Thực đơn, Tổng quan, Kho, "Dành cho bạn", thông báo. */
 export function invalidateAfterMealChange(queryClient: QueryClient) {
-  for (const queryKey of [queryKeys.mealPlans.all, queryKeys.dashboard, queryKeys.pantry, queryKeys.recipes.forYouAll, queryKeys.notifications.all]) {
+  for (const queryKey of [queryKeys.mealPlans.all, queryKeys.dashboard, queryKeys.pantry, queryKeys.recipes.forYouAll, queryKeys.notifications.all, queryKeys.recommendations.all]) {
     void queryClient.invalidateQueries({ queryKey });
   }
 }

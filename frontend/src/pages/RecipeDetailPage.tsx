@@ -8,6 +8,7 @@ import RecipeForYouCard, { RecipeForYouAlerts } from "../components/recipes/Reci
 import RecipeIngredientsCard from "../components/recipes/RecipeIngredientsCard";
 import RecipeNutritionStrip from "../components/recipes/RecipeNutritionStrip";
 import RecipeStepsCard from "../components/recipes/RecipeStepsCard";
+import { RecipeSuggestions } from "../components/recipes/RecipeSuggestions";
 import { communityShareRecipePath } from "../features/community/community.logic";
 import { clampServings } from "../features/recipes/recipes.logic";
 import { recipeQueries } from "../features/recipes/recipes.queries";
@@ -60,6 +61,7 @@ export default function RecipeDetailPage() {
           </div>
         )}
       </div>
+      {!recipe.hidden && <RecipeSuggestions recipeId={recipe.id} recipeName={recipe.name} />}
     </div>
   );
 }

@@ -10,7 +10,8 @@ export interface AuthResponse { token: string; user: User }
 export interface LoginInput { email: string; password: string }
 export interface RegisterInput extends LoginInput { name: string }
 
-export interface CommunityAuthor { id: string; name: string }
+/** `isSample`: tài khoản mẫu minh họa (GĐ3b-R4), giao diện gắn nhãn "Tài khoản mẫu". */
+export interface CommunityAuthor { id: string; name: string; isSample?: boolean }
 export interface CommunityComment {
   id: string; content: string; createdAt: string; updatedAt: string; author: CommunityAuthor;
 }
@@ -180,7 +181,21 @@ export interface MealPlan {
 export interface DashboardRecommendedRecipe {
   id: string; name: string; calories: number; prepMinutes: number; cookMinutes: number; dietTags: string[];
   imageUrl?: string | null; totalIngredients?: number; pantryIngredientCount?: number; expiringIngredientCount?: number;
+  /** Lý do gợi ý của bộ trộn (GĐ3b-R5). */
+  reason?: string;
 }
+
+export type RecommendationContext = "today" | "for-you" | "pantry" | "similar" | "also-cooked";
+/** GET /api/recommendations: món gợi ý (tóm tắt) + lý do ngắn. */
+export interface RecommendationItem {
+  recipe: {
+    id: string; slug: string; name: string; imageUrl: string | null; calories: number; prepMinutes: number; cookMinutes: number;
+    cuisine: string; dietTags: string[]; mealTypes: MealType[];
+  };
+  score: number; reason: string;
+  components: { content: number; collaborative: number; knowledge: number; popularity: number };
+}
+export interface RecommendationResponse { coldStart: boolean; items: RecommendationItem[] }
 
 export interface DashboardData {
   nutritionTargets: { calories: number; proteinG: number; carbsG: number; fatG: number } | null;

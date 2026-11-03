@@ -102,13 +102,6 @@ export function recommendationReason(recipe: Pick<DashboardRecommendedRecipe, "p
   return null;
 }
 
-/** Dòng phụ dưới tên món gợi ý: ưu tiên nguyên liệu sắp hết hạn, rồi nguyên liệu trong kho; không dùng gì trong kho thì ẩn. */
-export function recommendedRecipePantryNote(recipe: Pick<DashboardRecommendedRecipe, "pantryIngredientCount" | "expiringIngredientCount">) {
-  if (recipe.expiringIngredientCount) return `Dùng ${recipe.expiringIngredientCount} nguyên liệu sắp hết hạn`;
-  if (recipe.pantryIngredientCount) return `Dùng ${recipe.pantryIngredientCount} nguyên liệu trong kho`;
-  return null;
-}
-
 export function dashboardRecipeSearchPath(search: string) {
   const normalized = search.trim();
   return normalized ? `/recipes?q=${encodeURIComponent(normalized)}` : null;

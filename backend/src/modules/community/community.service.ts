@@ -8,7 +8,8 @@ import { recordAdminAction } from "../admin/admin-audit.service.js";
 import type { CreateCommunityPostBody } from "./community.schema.js";
 
 const COMMUNITY_FEED_LIMIT = 30;
-const authorSelect = { id: true, name: true } as const;
+// isSample: tài khoản mẫu minh họa (GĐ3b-R4) — giao diện gắn nhãn "Tài khoản mẫu". Không trả email.
+const authorSelect = { id: true, name: true, isSample: true } as const;
 /** Tóm tắt công thức gắn trong bài: chỉ các cột thẻ hiển thị cần, không lấy nguyên liệu/các bước. */
 export const communityRecipeSelect = {
   id: true, name: true, imageUrl: true, calories: true, prepMinutes: true, cookMinutes: true, hiddenAt: true,

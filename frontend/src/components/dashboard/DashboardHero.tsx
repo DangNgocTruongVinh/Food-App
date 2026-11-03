@@ -17,7 +17,8 @@ type DashboardHeroProps = {
 export function DashboardHero({ greeting, userName, recipes, hasProfile }: DashboardHeroProps) {
   const [index, setIndex] = useState(0);
   const recipe = recipes.length ? recipes[index % recipes.length] : null;
-  const reason = recipe ? recommendationReason(recipe, hasProfile) : null;
+  // Lý do của bộ gợi ý (backend); bản cũ không có thì tự viết theo số nguyên liệu trong kho.
+  const reason = recipe ? (recipe.reason ? `${recipe.reason}.` : recommendationReason(recipe, hasProfile)) : null;
   // Chỉ ảnh thật (Cloudinary) mới làm ảnh nền đầu trang; chưa có ảnh thì đầu trang chỉ có chữ.
   const photo = recipe ? recipePhotoSrc(recipe, IMAGE_WIDTHS.hero) : null;
 

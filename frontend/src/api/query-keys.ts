@@ -2,6 +2,10 @@
 export const queryKeys = {
   profile: ["profile"],
   dashboard: ["dashboard"],
+  recommendations: {
+    all: ["recommendations"] as const,
+    list: (params: { context: string; recipeId?: string; pantryItemId?: string; limit: number }) => ["recommendations", params] as const,
+  },
   pantry: ["pantry"],
   // Cùng tiền tố "pantry": mọi chỗ làm mới kho cũng làm mới lịch sử kho.
   pantryTransactions: (filters: { source?: string; pantryItemId?: string; page: number; pageSize: number }) => ["pantry", "transactions", filters] as const,

@@ -17,4 +17,5 @@ export function invalidateProfileQueries(queryClient: QueryClient) {
   void queryClient.invalidateQueries({ queryKey: queryKeys.profile });
   void queryClient.invalidateQueries({ queryKey: queryKeys.dashboard });
   void queryClient.invalidateQueries({ queryKey: queryKeys.recipes.forYouAll });
+  void queryClient.invalidateQueries({ queryKey: queryKeys.recommendations.all });
 }

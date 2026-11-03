@@ -7,11 +7,11 @@ import { RecipesForYou } from "../components/recipes/RecipesForYou";
 import { RecipesHero } from "../components/recipes/RecipesHero";
 import { RecipesSkeleton } from "../components/recipes/RecipesSkeleton";
 import { ErrorState } from "../components/ui";
-import { dashboardQueries } from "../features/dashboard/dashboard.queries";
 import {
   filterAndSortRecipes, paginateRecipes, recipeCategoryCounts, type RecipeCategory, type RecipeSort,
 } from "../features/recipes/recipes.logic";
 import { recipeQueries } from "../features/recipes/recipes.queries";
+import { recommendationQueries } from "../features/recommendations/recommendations.api";
 
 const PAGE_SIZE = 8;
 
@@ -26,10 +26,11 @@ export default function RecipesPage() {
   const [pageIndex, setPageIndex] = useState(1);
 
   const list = useQuery(recipeQueries.list());
-  // "Dành cho bạn" dùng chung gợi ý theo hồ sơ của Tổng quan; món lớn đối chiếu thêm kho/hồ sơ.
-  const overview = useQuery(dashboardQueries.overview());
-  const recommendations = overview.data?.recommendedRecipes ?? [];
-  const featuredFit = useQuery({ ...recipeQueries.forYou(recommendations[0]?.id ?? ""), enabled: Boolean(recommendations[0]) });
+  // "Dành cho bạn": bộ gợi ý, ngữ cảnh for-you (khẩu vị là chính); món lớn đối chiếu thêm kho/hồ sơ.
+  const suggestions = useQuery(recommendationQueries.list({ context: "for-you", limit: 3 }));
+  const recommendations = suggestions.data?.items ?? [];
+  const featuredId = recommendations[0]?.recipe.id ?? "";
+  const featuredFit = useQuery({ ...recipeQueries.forYou(featuredId), enabled: Boolean(featuredId) });
 
   const data = list.data ?? [];
   const recipes = useMemo(() => filterAndSortRecipes(data, { search, category, sort }), [category, data, search, sort]);
@@ -63,7 +64,15 @@ export default function RecipesPage() {
           onToggle={() => setFiltersExpanded((value) => !value)}
           onChange={updateCategory}
         />
-        <RecipesForYou recommendations={recommendations} recipesById={recipesById} featuredFit={featuredFit.data} />
+        <RecipesForYou
+          recommendations={recommendations}
+          recipesById={recipesById}
+          featuredFit={featuredFit.data}
+          isLoading={suggestions.isLoading}
+          isError={suggestions.isError}
+          isFetching={suggestions.isFetching}
+          onRetry={() => void suggestions.refetch()}
+        />
         <RecipeResults
           total={recipes.length}
           recipes={visibleRecipes}

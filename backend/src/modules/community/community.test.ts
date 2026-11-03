@@ -154,13 +154,13 @@ describe("Community HTTP contract (mock Prisma, no database)", () => {
       orderBy: { createdAt: "desc" },
       take: 30,
       include: {
-        author: { select: { id: true, name: true } },
+        author: { select: { id: true, name: true, isSample: true } },
         recipe: { select: recipeSelect },
         images: imagesSelect,
         likes: { where: { userId }, select: { userId: true } },
         comments: {
           orderBy: { createdAt: "asc" },
-          include: { author: { select: { id: true, name: true } } },
+          include: { author: { select: { id: true, name: true, isSample: true } } },
         },
         _count: { select: { likes: true, comments: true } },
       },
@@ -183,7 +183,7 @@ describe("Community HTTP contract (mock Prisma, no database)", () => {
     });
     expect(mocks.createPost).toHaveBeenCalledWith({
       data: { authorId: userId, content: "Bữa trưa", recipeId: null },
-      include: { author: { select: { id: true, name: true } }, recipe: { select: recipeSelect }, images: imagesSelect },
+      include: { author: { select: { id: true, name: true, isSample: true } }, recipe: { select: recipeSelect }, images: imagesSelect },
     });
     expect(mocks.findRecipe).not.toHaveBeenCalled();
   });
@@ -207,7 +207,7 @@ describe("Community HTTP contract (mock Prisma, no database)", () => {
     expect(mocks.findRecipe).toHaveBeenCalledWith({ where: { id: recipeId }, select: { id: true, hiddenAt: true } });
     expect(mocks.createPost).toHaveBeenCalledWith({
       data: { authorId: userId, content: "Món tối nay", recipeId },
-      include: { author: { select: { id: true, name: true } }, recipe: { select: recipeSelect }, images: imagesSelect },
+      include: { author: { select: { id: true, name: true, isSample: true } }, recipe: { select: recipeSelect }, images: imagesSelect },
     });
   });
 
@@ -318,7 +318,7 @@ describe("Community HTTP contract (mock Prisma, no database)", () => {
     expect(response.body).toMatchObject({ id: commentId, content: "Rất hữu ích" });
     expect(mocks.createComment).toHaveBeenCalledWith({
       data: { postId, authorId: userId, content: "Rất hữu ích" },
-      include: { author: { select: { id: true, name: true } } },
+      include: { author: { select: { id: true, name: true, isSample: true } } },
     });
     expect(mocks.createNotification).toHaveBeenCalledWith({ data: {
       userId: ownerId,

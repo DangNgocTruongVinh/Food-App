@@ -7,7 +7,7 @@ import { PantryHistorySection } from "../components/pantry/PantryHistory";
 import { PantryItemDialog } from "../components/pantry/PantryItemDialog";
 import { PantryGrid, PantryTable } from "../components/pantry/PantryItems";
 import { PantryPager } from "../components/pantry/PantryPager";
-import { PantryCookIdeas, PantrySoonCard } from "../components/pantry/PantrySide";
+import { PantryCookIdeas, PantrySoonCard, PantrySuggestDialog } from "../components/pantry/PantrySide";
 import { PantrySkeleton } from "../components/pantry/PantrySkeleton";
 import { PantryStats } from "../components/pantry/PantryStats";
 import { Button, Card, EmptyState, ErrorState, Toast, useConfirm } from "../components/ui";
@@ -34,6 +34,7 @@ export default function PantryPage() {
   const [view, setView] = useState<PantryView>("list");
   const [page, setPage] = useState(1);
   const [dialog, setDialog] = useState<DialogState>(null);
+  const [suggestFor, setSuggestFor] = useState<PantryItem | null>(null);
   const [toast, setToast] = useState("");
   const clearToast = useCallback(() => setToast(""), []);
 
@@ -90,6 +91,7 @@ export default function PantryPage() {
     deletingId: remove.isPending ? remove.variables ?? null : null,
     onEdit: (item: PantryItem) => setDialog({ item }),
     onDelete: (item: PantryItem) => void confirmRemove(item),
+    onSuggest: (item: PantryItem) => setSuggestFor(item),
   };
 
   return (
@@ -155,6 +157,7 @@ export default function PantryPage() {
           onSaved={(message) => { setDialog(null); setToast(message); }}
         />
       )}
+      {suggestFor && <PantrySuggestDialog item={suggestFor} onClose={() => setSuggestFor(null)} />}
       <Toast message={toast} onDone={clearToast} />
     </div>
   );
