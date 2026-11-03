@@ -66,12 +66,19 @@ const HistorySkeleton = ({ rows }: { rows: number }) => (
   </LoadingState>
 );
 
+const ALL_CHIP_ID = "kho-history-source-all";
+
 /** Phần "Lịch sử" ở trang Kho: mọi thay đổi số lượng của kho, lọc theo nguồn, phân trang (mới nhất trước). */
 export function PantryHistorySection() {
   const [source, setSource] = useState<PantryTransactionSource | undefined>();
   const [page, setPage] = useState(1);
   const history = useQuery(pantryQueries.transactions({ source, page, pageSize: HISTORY_PAGE_SIZE }));
   const choose = (next?: PantryTransactionSource) => { setSource(next); setPage(1); };
+  // "Xem tất cả" biến mất khi bấm: đưa focus về chip "Tất cả" để người dùng bàn phím không rơi về đầu trang.
+  const showAll = () => {
+    choose();
+    requestAnimationFrame(() => document.getElementById(ALL_CHIP_ID)?.focus());
+  };
   const data = history.data;
 
   return (
@@ -81,7 +88,7 @@ export function PantryHistorySection() {
         <p className="kho-sub">Mỗi lần thêm, sửa, xóa, ăn (trừ kho) hay mua (cộng kho) đều được ghi lại.</p>
       </header>
       <div className="kho-chips" role="group" aria-label="Lọc lịch sử theo nguồn">
-        <Chip selected={!source} onClick={() => choose()}>Tất cả</Chip>
+        <Chip id={ALL_CHIP_ID} selected={!source} onClick={() => choose()}>Tất cả</Chip>
         {HISTORY_SOURCES.map((value) => (
           <Chip key={value} selected={source === value} onClick={() => choose(value)}>{HISTORY_SOURCE_LABELS[value]}</Chip>
         ))}
@@ -95,7 +102,7 @@ export function PantryHistorySection() {
           source ? (
             <EmptyState
               message={`Chưa có thay đổi nào từ nguồn “${HISTORY_SOURCE_LABELS[source]}”.`}
-              action={<Button onClick={() => choose()}>Xem tất cả</Button>}
+              action={<Button onClick={showAll}>Xem tất cả</Button>}
             />
           ) : (
             <EmptyState message="Chưa có thay đổi nào trong kho. Thêm thực phẩm, đánh dấu đã ăn hoặc đã mua thì lịch sử hiện ở đây." />

@@ -21,7 +21,10 @@ const SUGGESTED: Record<FoodCategory, { days: number | null; storage: StorageLoc
   "Khác": { days: null, storage: "REFRIGERATOR" },
 };
 const DRY_LEGUME = { days: 90, storage: "DRY_STORAGE" as StorageLocation };
-const FRESH_GRAIN = { days: 2, storage: "REFRIGERATOR" as StorageLocation }; // bánh mì, bún tươi, bánh phở…
+const FRESH_GRAIN = { days: 2, storage: "REFRIGERATOR" as StorageLocation }; // bún tươi, bánh phở, bánh cuốn, mì tươi…
+// Bánh mì để ngăn mát nhanh khô cứng nên để nơi khô ráo (vẫn hạn 2 ngày).
+const BREAD = { days: 2, storage: "DRY_STORAGE" as StorageLocation };
+const isBread = (name: string) => /^bánh mì( |$)/.test(normalizeFoodText(name.normalize("NFC")));
 
 /**
  * Nhóm, nơi bảo quản và hạn gợi ý cho thực phẩm mới từ "Đã mua". Hạn tính từ hôm nay theo giờ Việt Nam; có hạn thì đánh dấu
@@ -30,7 +33,7 @@ const FRESH_GRAIN = { days: 2, storage: "REFRIGERATOR" as StorageLocation }; // 
 export function suggestedPantryDefaults(name: string, category: string | null | undefined, now = new Date()) {
   const known = (category?.trim() || foodCategoryOf(name)) as FoodCategory;
   const rule = known === "Đậu & hạt" && legumeKind(name) === "dry" ? DRY_LEGUME
-    : known === "Ngũ cốc" && grainKind(name) === "fresh" ? FRESH_GRAIN
+    : known === "Ngũ cốc" && grainKind(name) === "fresh" ? (isBread(name) ? BREAD : FRESH_GRAIN)
     : SUGGESTED[known] ?? SUGGESTED["Khác"];
   const expiryDate = rule.days === null ? null : new Date(vietnamToday(now).getTime() + rule.days * DAY_MS);
   return { category: category?.trim() || known, storageLocation: rule.storage, expiryDate, expiryEstimated: expiryDate !== null };
