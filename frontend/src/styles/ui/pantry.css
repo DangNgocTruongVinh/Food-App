@@ -147,6 +147,41 @@
 
 /* Cột phải. */
 .kho-side { display: grid; gap: var(--space-5); min-width: 0; }
+
+/* Lịch sử kho (GĐ3b lượt 7): khu riêng dưới danh sách; cùng danh sách dùng trong "Xem lịch sử" của hộp thoại Sửa. */
+.kho-history-section { grid-column: 1; display: grid; gap: var(--space-4); min-width: 0; }
+.kho-history-section__head { display: grid; gap: var(--space-1); }
+.kho-history-section__title { margin: 0; color: var(--ink); font-family: var(--font-serif); font-size: 1.5rem; font-weight: 500; line-height: var(--lh-h2); }
+.kho-history { margin: 0; padding: 0; list-style: none; }
+.kho-history__row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-3) var(--space-5);
+  border-top: 1px solid var(--line);
+}
+.kho-history__row:first-child { border-top: 0; }
+.kho-history__main { display: grid; gap: var(--space-1); min-width: 0; }
+.kho-history__tags { display: flex; flex-wrap: wrap; gap: var(--space-1); }
+.kho-history__reversal { color: var(--ink); background: var(--warn-bg); }
+.kho-history__link { color: var(--action-text); font-size: var(--fs-small); font-weight: 600; text-underline-offset: 3px; overflow-wrap: anywhere; }
+.kho-history__change { flex: 0 0 auto; text-align: right; }
+.kho-history__delta { display: block; color: var(--ink); font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.kho-history__delta.is-minus { color: var(--warn); }
+.kho-history__page { align-self: center; padding: 0 var(--space-2); color: var(--muted); font-size: var(--fs-small); }
+.kho-item-history { border-top: 1px solid var(--line); padding-top: var(--space-3); }
+.kho-item-history > summary {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--action-text);
+  font-weight: 600;
+  cursor: pointer;
+}
+.kho-item-history .kho-history { margin-top: var(--space-2); border: 1px solid var(--line); border-radius: var(--radius-card); }
+.kho-item-history .kho-history__row { padding: var(--space-3) var(--space-4); }
+.kho-item-history .kho-pager { padding: var(--space-3) 0 0; border-top: 0; }
 .kho-side__title { margin: 0; color: var(--ink); font-family: var(--font-serif); font-size: 1.5rem; font-weight: 500; line-height: var(--lh-h2); }
 .kho-soon,
 .kho-cook { display: grid; gap: var(--space-3); }

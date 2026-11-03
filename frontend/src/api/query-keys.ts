@@ -3,6 +3,8 @@ export const queryKeys = {
   profile: ["profile"],
   dashboard: ["dashboard"],
   pantry: ["pantry"],
+  // Cùng tiền tố "pantry": mọi chỗ làm mới kho cũng làm mới lịch sử kho.
+  pantryTransactions: (filters: { source?: string; pantryItemId?: string; page: number; pageSize: number }) => ["pantry", "transactions", filters] as const,
   recipes: {
     all: ["recipes"] as const,
     list: (filters: { search?: string; cuisine?: string } = {}) => ["recipes", "list", filters] as const,

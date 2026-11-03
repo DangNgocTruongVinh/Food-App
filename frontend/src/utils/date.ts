@@ -50,3 +50,15 @@ export function formatDisplayDate(value: string | Date) {
 export function formatDayMonth(value: string | Date) {
   return format(new Date(value), "dd/MM");
 }
+
+const VN_TIME = new Intl.DateTimeFormat("vi-VN", {
+  timeZone: "Asia/Ho_Chi_Minh", hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit", year: "numeric", hour12: false,
+});
+const VN_DATE = new Intl.DateTimeFormat("vi-VN", { timeZone: "Asia/Ho_Chi_Minh", day: "2-digit", month: "2-digit", year: "numeric" });
+
+/** "14:05, 02/11/2026" theo giờ Việt Nam (không phụ thuộc múi giờ máy): nhật ký Admin, lịch sử kho. */
+export function vietnamTime(value: string) {
+  const parts = Object.fromEntries(VN_TIME.formatToParts(new Date(value)).map((part) => [part.type, part.value]));
+  return `${parts.hour}:${parts.minute}, ${parts.day}/${parts.month}/${parts.year}`;
+}
+export const vietnamDate = (value: string) => VN_DATE.format(new Date(value));

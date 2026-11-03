@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { getApiError } from "../api/client";
 import { PantryCategoryChips, PantryToolbar } from "../components/pantry/PantryFilterBar";
 import { PantryHero } from "../components/pantry/PantryHero";
+import { PantryHistorySection } from "../components/pantry/PantryHistory";
 import { PantryItemDialog } from "../components/pantry/PantryItemDialog";
 import { PantryGrid, PantryTable } from "../components/pantry/PantryItems";
 import { PantryPager } from "../components/pantry/PantryPager";
@@ -143,6 +144,8 @@ export default function PantryPage() {
           />
           <PantryCookIdeas />
         </aside>
+
+        <PantryHistorySection />
       </div>
 
       {dialog && (

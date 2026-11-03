@@ -80,6 +80,16 @@ export interface PantryItem {
   expiryEstimated?: boolean;
 }
 
+export type PantryTransactionSource = "MANUAL_ADD" | "MANUAL_EDIT" | "MANUAL_DELETE" | "CONSUMPTION" | "PURCHASE" | "RECEIPT_SCAN";
+/** Một dòng lịch sử kho (GET /api/pantry/transactions): `delta` theo `unit`, `quantityAfter` là số còn lại sau thay đổi. */
+export interface PantryTransaction {
+  id: string; pantryItemId: string | null; itemName: string; unit: FoodUnit; delta: number; quantityAfter: number;
+  source: PantryTransactionSource; note: string | null; reversalOfId: string | null; reversedAt: string | null; createdAt: string;
+  mealPlanItem: { id: string; mealType: MealType; recipe: { name: string }; day: { date: string; mealPlanId: string } } | null;
+  shoppingItem: { id: string; name: string; mealPlanId: string } | null;
+}
+export interface PantryTransactionPage { items: PantryTransaction[]; total: number; page: number; pageSize: number }
+
 export interface PantryInput {
   name: string; category: string; quantity: number; unit: FoodUnit;
   storageLocation: StorageLocation; expiryDate?: string | null; minimumStock: number; note?: string | null;

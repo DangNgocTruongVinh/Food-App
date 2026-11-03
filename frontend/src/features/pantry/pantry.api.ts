@@ -1,5 +1,7 @@
 import { api } from "../../api/client";
-import type { FoodUnit, PantryInput, PantryItem, PantryUpdateInput, StorageLocation } from "../../types";
+import type {
+  FoodUnit, PantryInput, PantryItem, PantryTransactionPage, PantryTransactionSource, PantryUpdateInput, StorageLocation,
+} from "../../types";
 
 export type PantryFormValues = {
   name: string;
@@ -47,4 +49,12 @@ export async function updatePantryItem(id: string, input: PantryUpdateInput) {
 
 export async function deletePantryItem(id: string) {
   await api.delete(`/pantry/${id}`);
+}
+
+export type PantryTransactionFilters = { source?: PantryTransactionSource; pantryItemId?: string; page: number; pageSize: number };
+
+/** Lịch sử kho của người đang đăng nhập, mới nhất trước; lọc theo nguồn và/hoặc một thực phẩm. */
+export async function listPantryTransactions({ source, pantryItemId, page, pageSize }: PantryTransactionFilters) {
+  const params = { page, pageSize, ...(source ? { source } : {}), ...(pantryItemId ? { pantryItemId } : {}) };
+  return (await api.get<PantryTransactionPage>("/pantry/transactions", { params })).data;
 }

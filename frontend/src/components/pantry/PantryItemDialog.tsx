@@ -8,6 +8,7 @@ import {
 import { invalidatePantryQueries, pantryMutations } from "../../features/pantry/pantry.queries";
 import type { FoodUnit, PantryItem, StorageLocation } from "../../types";
 import DateInput from "../DateInput";
+import { PantryItemHistory } from "./PantryHistory";
 import { Button, Dialog, ErrorState, Field } from "../ui";
 
 type PantryItemDialogProps = {
@@ -158,6 +159,11 @@ export function PantryItemDialog({ item, onClose, onSaved }: PantryItemDialogPro
             />
           )}
         </Field>
+        {item && (
+          <div className="kho-form__wide">
+            <PantryItemHistory itemId={item.id} itemName={item.name} />
+          </div>
+        )}
         {saveError && (
           <div className="kho-form__wide">
             <ErrorState message={`Chưa lưu được: ${getApiError(saveError)}`} />

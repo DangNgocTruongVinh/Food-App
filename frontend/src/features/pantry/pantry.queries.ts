@@ -1,12 +1,17 @@
 import { mutationOptions, queryOptions, type QueryClient } from "@tanstack/react-query";
 import { queryKeys } from "../../api/query-keys";
 import {
-  createPantryItem, deletePantryItem, listPantryItems, toCreatePantryInput, updatePantryItem,
-  type PantryFormValues,
+  createPantryItem, deletePantryItem, listPantryItems, listPantryTransactions, toCreatePantryInput, updatePantryItem,
+  type PantryFormValues, type PantryTransactionFilters,
 } from "./pantry.api";
 
 export const pantryQueries = {
   list: () => queryOptions({ queryKey: queryKeys.pantry, queryFn: listPantryItems }),
+  transactions: (filters: PantryTransactionFilters) => queryOptions({
+    queryKey: queryKeys.pantryTransactions(filters),
+    queryFn: () => listPantryTransactions(filters),
+    placeholderData: (previous) => previous,
+  }),
 };
 
 export const pantryMutations = {
