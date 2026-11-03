@@ -34,6 +34,15 @@ export function legumeKind(name: string): "dry" | "fresh" {
   return DRY_LEGUMES.test(key(name)) ? "dry" : "fresh";
 }
 
+// "Ngũ cốc" cũng có hai loại: đồ khô (gạo, nếp, mì/bún/phở khô, mì gói, miến, nui, yến mạch, bột, bánh tráng) để lâu ở nơi
+// khô ráo; đồ tươi (bánh mì, bún tươi, bánh phở, bánh cuốn, mì tươi…) chỉ vài ngày. Tên có chữ "khô" luôn là đồ khô.
+const DRY_GRAINS = /^(gạo|nếp|yến mạch|bột|miến|nui|mì ý|mì gói|mì tôm|bánh tráng|ngũ cốc)|(^| )khô( |$)/;
+
+/** Chỉ có nghĩa với nhóm "Ngũ cốc": "dry" = đồ khô, "fresh" = đồ tươi (mặc định khi không chắc: hạn ngắn hơn, an toàn hơn). */
+export function grainKind(name: string): "dry" | "fresh" {
+  return DRY_GRAINS.test(key(name)) ? "dry" : "fresh";
+}
+
 /** Dòng đi chợ cũ (tạo trước GĐ3b lượt 5) chưa có `category`: tính khi đọc, không cần migration dữ liệu. */
 export function withFoodCategory<T extends { name: string; category: string | null }>(item: T): T & { category: string } {
   return { ...item, category: item.category?.trim() || foodCategoryOf(item.name) };

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { seedRecipes } from "../../prisma/seed-data.js";
-import { FOOD_CATEGORIES, foodCategoryOf, legumeKind, withFoodCategory } from "./food-category.js";
+import { FOOD_CATEGORIES, foodCategoryOf, grainKind, legumeKind, withFoodCategory } from "./food-category.js";
 
 // Nhóm mong đợi của từng tên nguyên liệu trong bộ món seed (rà bằng tay).
 const EXPECTED: Record<string, string> = {
@@ -45,6 +45,13 @@ describe("Food categories (8 shared groups)", () => {
   it("tells fresh tofu/beans from dry legumes and nuts (for suggested expiry)", () => {
     for (const name of ["Đậu phộng", "Đậu xanh", "Đậu đen", "Đậu đỏ", "Đậu nành", "Lạc rang", "Hạt điều", "Mè đen"]) expect(legumeKind(name)).toBe("dry");
     for (const name of ["Đậu hũ", "Đậu phụ", "Đậu hũ non", "Tàu hũ ky"]) expect(legumeKind(name)).toBe("fresh");
+  });
+
+  it("tells fresh grain products from dry ones (unknown → fresh, shorter expiry)", () => {
+    for (const name of ["Gạo", "Gạo nếp", "Gạo tấm", "Nếp cẩm", "Yến mạch", "Mì Ý", "Bánh tráng", "Bún khô", "Mì khô", "Phở khô", "Miến", "Bột năng", "Mì gói"]) {
+      expect(grainKind(name), name).toBe("dry");
+    }
+    for (const name of ["Bánh mì", "Bún tươi", "Bánh phở", "Bánh cuốn", "Mì tươi", "Bánh hỏi", "Bánh bao"]) expect(grainKind(name), name).toBe("fresh");
   });
 
   it("fills a missing category of an old shopping line when reading, keeps an existing one", () => {

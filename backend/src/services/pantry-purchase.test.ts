@@ -15,6 +15,10 @@ describe("Suggested pantry defaults for a purchased item (decision 5)", () => {
     ["Đậu phộng", "Đậu & hạt", "Đậu & hạt", "DRY_STORAGE", 90],
     ["Đậu xanh", null, "Đậu & hạt", "DRY_STORAGE", 90],
     ["Gạo", null, "Ngũ cốc", "DRY_STORAGE", 180],
+    ["Bún khô", null, "Ngũ cốc", "DRY_STORAGE", 180],
+    ["Bánh mì", "Ngũ cốc", "Ngũ cốc", "REFRIGERATOR", 2],
+    ["Bún tươi", null, "Ngũ cốc", "REFRIGERATOR", 2],
+    ["Bánh phở", null, "Ngũ cốc", "REFRIGERATOR", 2],
     ["Chuối", null, "Trái cây", "REFRIGERATOR", 5],
     ["Nước mắm", null, "Gia vị", "DRY_STORAGE", 180],
   ])("%s → %s, %s, %i ngày, hạn ước tính", (name, category, expected, storage, days) => {

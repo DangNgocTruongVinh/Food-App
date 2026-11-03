@@ -15,12 +15,12 @@ const quantityLabel = (item: ShoppingItem) => `${item.quantity.toLocaleString("v
 
 /**
  * Dòng nhắc sau khi tick/bỏ tick: đã thêm gì vào kho (kèm "Sửa" mở đúng thực phẩm ở Kho) hoặc đã hoàn lại gì. Đặt cuối thẻ và
- * dính đáy màn hình (CSS) để vẫn thấy khi tick món ở cuối danh sách dài.
+ * dính đáy màn hình (CSS, `.td-shop-live`) để vẫn thấy khi tick món ở cuối danh sách dài.
  */
 function PurchaseNotice({ notice }: { notice: ShoppingNotice }) {
   const error = notice.kind === "error";
   return (
-    <p className={error ? "ui-notice ui-notice--error td-shop-notice" : "ui-notice td-shop-notice"} role={error ? "alert" : "status"}>
+    <p className={error ? "ui-notice ui-notice--error td-shop-notice" : "ui-notice td-shop-notice"} role={error ? "alert" : undefined}>
       {notice.message}
       {notice.pantryItemId && <ButtonLink to={`/pantry?item=${encodeURIComponent(notice.pantryItemId)}`}>Sửa</ButtonLink>}
     </p>
@@ -61,7 +61,8 @@ export function ShoppingListCard({ items, pendingId, notice, onToggle }: Shoppin
           </section>
         ))}</div>
       )}
-      {notice && <PurchaseNotice notice={notice} />}
+      {/* Vùng aria-live luôn có sẵn (kể cả khi trống) để trình đọc màn hình đọc mỗi dòng nhắc mới. */}
+      <div className="td-shop-live" aria-live="polite">{notice && <PurchaseNotice key={notice.message} notice={notice} />}</div>
     </Card>
   );
 }

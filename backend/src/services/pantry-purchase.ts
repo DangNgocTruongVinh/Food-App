@@ -2,7 +2,7 @@ import type { FoodUnit, StorageLocation } from "@prisma/client";
 import { canConvertUnit } from "../utils/food-units.js";
 import { vietnamToday } from "../utils/vietnam-date.js";
 import { normalizeFoodText } from "./dietary.service.js";
-import { foodCategoryOf, legumeKind, type FoodCategory } from "./food-category.js";
+import { foodCategoryOf, grainKind, legumeKind, type FoodCategory } from "./food-category.js";
 import { pantryExpiryState } from "./recipe-fit.service.js";
 
 // "Đã mua" → thêm vào kho (GĐ3b lượt 6): phần tính toán thuần. Đọc/ghi DB ở modules/meal-plans/shopping-purchase.service.ts.
@@ -15,12 +15,13 @@ const SUGGESTED: Record<FoodCategory, { days: number | null; storage: StorageLoc
   "Thịt & cá": { days: 2, storage: "REFRIGERATOR" },
   "Trứng & sữa": { days: 7, storage: "REFRIGERATOR" },
   "Đậu & hạt": { days: 3, storage: "REFRIGERATOR" }, // đậu hũ, đậu tươi; hạt khô xem DRY_LEGUME
-  "Ngũ cốc": { days: 180, storage: "DRY_STORAGE" },
+  "Ngũ cốc": { days: 180, storage: "DRY_STORAGE" }, // đồ khô; đồ tươi xem FRESH_GRAIN
   "Trái cây": { days: 5, storage: "REFRIGERATOR" },
   "Gia vị": { days: 180, storage: "DRY_STORAGE" },
   "Khác": { days: null, storage: "REFRIGERATOR" },
 };
 const DRY_LEGUME = { days: 90, storage: "DRY_STORAGE" as StorageLocation };
+const FRESH_GRAIN = { days: 2, storage: "REFRIGERATOR" as StorageLocation }; // bánh mì, bún tươi, bánh phở…
 
 /**
  * Nhóm, nơi bảo quản và hạn gợi ý cho thực phẩm mới từ "Đã mua". Hạn tính từ hôm nay theo giờ Việt Nam; có hạn thì đánh dấu
@@ -28,7 +29,9 @@ const DRY_LEGUME = { days: 90, storage: "DRY_STORAGE" as StorageLocation };
  */
 export function suggestedPantryDefaults(name: string, category: string | null | undefined, now = new Date()) {
   const known = (category?.trim() || foodCategoryOf(name)) as FoodCategory;
-  const rule = known === "Đậu & hạt" && legumeKind(name) === "dry" ? DRY_LEGUME : SUGGESTED[known] ?? SUGGESTED["Khác"];
+  const rule = known === "Đậu & hạt" && legumeKind(name) === "dry" ? DRY_LEGUME
+    : known === "Ngũ cốc" && grainKind(name) === "fresh" ? FRESH_GRAIN
+    : SUGGESTED[known] ?? SUGGESTED["Khác"];
   const expiryDate = rule.days === null ? null : new Date(vietnamToday(now).getTime() + rule.days * DAY_MS);
   return { category: category?.trim() || known, storageLocation: rule.storage, expiryDate, expiryEstimated: expiryDate !== null };
 }
