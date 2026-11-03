@@ -1,10 +1,10 @@
 import type { DietType, FoodUnit } from "@prisma/client";
-import { expandRestrictedTerms, filterRecipesForProfile, findRestrictedTerms, matchesRequiredDiet } from "./dietary.service.js";
+import { expandRestrictedTerms, findRestrictedTerms, matchesRequiredDiet } from "./dietary.service.js";
 import { calculateNutritionTargets } from "./nutrition.service.js";
 import { groupPantryByName, pantryMatchesFor } from "./pantry-match.js";
 
 // Mức độ phù hợp của một công thức với người dùng (không truy cập DB): dùng cho khối "Dành cho bạn"
-// ở trang chi tiết công thức và cho gợi ý ở Dashboard.
+// ở trang chi tiết công thức và cho bộ gợi ý (modules/recommendation).
 
 const DAY_MS = 86_400_000;
 /** Cùng ngưỡng với cảnh báo PANTRY_EXPIRING: hạn dùng trong khoảng hôm nay → 3 ngày tới (theo ngày UTC). */
@@ -35,8 +35,11 @@ export function pantryExpiryState(expiryDate: Date | null, now = new Date()): "e
  * Món trong kho đã hết hạn không được tính là "có". Khi kho có nguyên liệu nhưng khác đơn vị (vd. công thức "g",
  * kho "cái") vẫn tính là có, nhưng ghi vào unitMismatches để giao diện nói rõ không so được số lượng.
  */
-export function matchRecipeToPantry(recipe: Pick<FitRecipe, "ingredients">, pantry: FitPantryItem[], now = new Date()) {
-  const byName = groupPantryByName(pantry);
+export function matchRecipeToPantry(
+  recipe: Pick<FitRecipe, "ingredients">, pantry: FitPantryItem[], now = new Date(),
+  /** Bảng kho theo tên dựng sẵn (bộ gợi ý so nhiều món với cùng một kho). */
+  byName = groupPantryByName(pantry),
+) {
 
   const inPantry: string[] = [];
   const missing: Array<{ name: string; optional: boolean }> = [];
@@ -83,29 +86,4 @@ export function recipeWarnings(
     dislikedFoods: withoutNestedTerms(findRestrictedTerms(recipe, expandRestrictedTerms(profile?.dislikedFoods ?? []))),
     dietConflict: matchesRequiredDiet(recipe, dietType) ? null : dietType,
   };
-}
-
-/**
- * Gợi ý món cho Dashboard: chỉ món hợp chế độ ăn, không chứa dị ứng/món không thích; ưu tiên món dùng nguyên liệu
- * sắp hết hạn, rồi món dùng nhiều nguyên liệu trong kho. Hòa nhau thì giữ thứ tự đầu vào (sort ổn định).
- */
-export function recommendRecipes<T extends FitRecipe>(
-  recipes: T[],
-  profile: FitProfile | null | undefined,
-  pantry: FitPantryItem[],
-  limit = 3,
-  now = new Date(),
-) {
-  return filterRecipesForProfile(recipes, profile)
-    .map((recipe) => {
-      const match = matchRecipeToPantry(recipe, pantry, now);
-      return {
-        recipe,
-        totalIngredients: match.totalIngredients,
-        pantryIngredientCount: match.inPantry.length,
-        expiringIngredientCount: match.expiring.length,
-      };
-    })
-    .sort((a, b) => b.expiringIngredientCount - a.expiringIngredientCount || b.pantryIngredientCount - a.pantryIngredientCount)
-    .slice(0, limit);
 }

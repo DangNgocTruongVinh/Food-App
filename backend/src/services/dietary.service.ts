@@ -46,10 +46,23 @@ export function expandRestrictedTerms(items: string[]) {
 // So khớp theo nguyên từ: "ốc" không khớp "quốc", "cá" khớp "cá lóc" nhưng không khớp "cà chua".
 const asWords = (value: string) => ` ${normalizeFoodText(value).replace(/[^\p{L}\p{N}]+/gu, " ").trim()} `;
 
+// Tên món + tên nguyên liệu đã chuẩn hóa, nhớ theo đối tượng món (một lần gợi ý kiểm dị ứng và món không thích trên cùng món).
+const wordsCache = new WeakMap<object, string[]>();
+const recipeWords = (recipe: Pick<DietaryRecipe, "name" | "ingredients">) => {
+  const cached = wordsCache.get(recipe);
+  if (cached) return cached;
+  const words = [recipe.name, ...recipe.ingredients.map((ingredient) => ingredient.name)].map(asWords);
+  wordsCache.set(recipe, words);
+  return words;
+};
+
 /** Các cụm từ bị tránh xuất hiện trong tên món hoặc tên nguyên liệu. */
 export function findRestrictedTerms(recipe: Pick<DietaryRecipe, "name" | "ingredients">, restrictedTerms: string[]) {
-  const texts = [recipe.name, ...recipe.ingredients.map((ingredient) => ingredient.name)].map(asWords);
-  return restrictedTerms.filter((term) => texts.some((text) => text.includes(asWords(term))));
+  if (!restrictedTerms.length) return [];
+  // Chuẩn hóa mỗi cụm từ một lần (trước đây chuẩn hóa lại cho từng tên nguyên liệu; bộ gợi ý gọi hàm này cho mọi món).
+  const terms = restrictedTerms.map((term) => ({ term, words: asWords(term) }));
+  const texts = recipeWords(recipe);
+  return terms.filter(({ words }) => texts.some((text) => text.includes(words))).map(({ term }) => term);
 }
 
 // Nguyên liệu động vật trái với nhãn chay/thuần chay. Dùng chung cho kiểm tra dữ liệu seed và API Admin công thức.

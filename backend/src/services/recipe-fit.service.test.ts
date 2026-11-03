@@ -1,7 +1,7 @@
 import type { DietType, FoodUnit } from "@prisma/client";
 import { describe, expect, it } from "vitest";
 import { calculateNutritionTargets } from "./nutrition.service.js";
-import { calorieShare, matchRecipeToPantry, pantryExpiryState, recipeWarnings, recommendRecipes } from "./recipe-fit.service.js";
+import { calorieShare, matchRecipeToPantry, pantryExpiryState, recipeWarnings } from "./recipe-fit.service.js";
 
 const now = new Date("2026-09-15T10:00:00.000Z");
 const day = (iso: string) => new Date(`${iso}T00:00:00.000Z`);
@@ -88,26 +88,5 @@ describe("recipeWarnings", () => {
     const omelette = dish("Trứng chiên", ["Trứng"], ["VEGETARIAN"]);
     expect(recipeWarnings(omelette, { dietType: "VEGAN" }).dietConflict).toBe("VEGAN");
     expect(recipeWarnings(omelette, null)).toEqual({ allergens: [], dislikedFoods: [], dietConflict: null });
-  });
-});
-
-describe("recommendRecipes", () => {
-  it("keeps only dishes allowed by the profile", () => {
-    const recipes = [dish("Phở bò", ["Thịt bò"]), dish("Đậu hũ sốt cà", ["Đậu hũ"], ["VEGETARIAN", "VEGAN"])];
-    expect(recommendRecipes(recipes, { dietType: "VEGETARIAN" }, [], 3, now).map((item) => item.recipe.name)).toEqual(["Đậu hũ sốt cà"]);
-  });
-
-  it("ranks expiring-ingredient dishes first, then by pantry ingredients, keeping input order on ties and honoring the limit", () => {
-    const recipes = [
-      dish("A", ["Tôm"]),
-      dish("B", ["Gạo", "Trứng"]),
-      dish("C", ["Ức gà"]),
-      dish("D", ["Gạo"]),
-      dish("E", ["Trứng"]),
-    ];
-    const pantry = [stock("Ức gà", "2026-09-16"), stock("Gạo", "2026-12-01"), stock("Trứng")];
-    const result = recommendRecipes(recipes, null, pantry, 4, now);
-    expect(result.map((item) => item.recipe.name)).toEqual(["C", "B", "D", "E"]);
-    expect(result[0]).toMatchObject({ totalIngredients: 1, pantryIngredientCount: 1, expiringIngredientCount: 1 });
   });
 });

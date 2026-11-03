@@ -1,9 +1,11 @@
 import type { DietType, MealType } from "@prisma/client";
 import { describe, expect, it } from "vitest";
 import { filterRecipesForProfile } from "../services/dietary.service.js";
-import { recommendRecipes } from "../services/recipe-fit.service.js";
 import { fallbackPlan, reconcileAIPlan } from "../modules/meal-plans/meal-plan-generator.js";
 import { isRecipeSafe, recipeFit, safeRecipes } from "../modules/recommendation/safety.js";
+import { buildCollaborativeModel } from "../modules/recommendation/collaborative.js";
+import { type EngineData, type EngineRecipe, type RecommendationContext, runRecommendation } from "../modules/recommendation/hybrid.js";
+import { sampleMembers } from "../../prisma/sample-accounts.js";
 import { seedRecipesAsRecords } from "./seed-recipes.js";
 
 // Bộ test an toàn chung (GĐ3b-R1, gộp lượt 9): mọi chỗ gợi ý món không được trả món vi phạm dị ứng, món không thích,
@@ -62,10 +64,27 @@ const pantry = [
 ];
 const pantryNames = new Set(pantry.map((item) => item.name.toLocaleLowerCase("vi")));
 
+// Bộ gợi ý (GĐ3b-R5): mô hình cộng tác từ tương tác của các tài khoản mẫu; người dùng có lịch sử ăn cả món vi phạm (lịch sử cũ
+// trước khi đổi hồ sơ) để thuật toán 1, 2 có lý do đẩy món đó lên — lọc an toàn vẫn phải loại.
+const interactions = sampleMembers().flatMap((member) => member.recipes.map((slug) => ({
+  userId: `mau${member.index}`, recipeId: slug, kind: "EATEN" as const, at: now, count: 1,
+})));
+const model = buildCollaborativeModel([...interactions, ...["pho-bo", "ca-kho-to", "canh-chua-ca-loc"].map((slug) => ({
+  userId: "nguoi-xem", recipeId: slug, kind: "EATEN" as const, at: now, count: 1,
+}))], now);
+const engineData = (profile: Profile): EngineData => ({
+  userId: "nguoi-xem", recipes: visible as unknown as EngineRecipe[], now, profile, pantry, model,
+  interactions: ["pho-bo", "ca-kho-to", "canh-chua-ca-loc"].map((slug) => ({ userId: "nguoi-xem", recipeId: slug, kind: "EATEN" as const, at: now, count: 1 })),
+  today: { calories: 0, proteinG: 0, meals: 0 },
+});
+const recommend = (context: RecommendationContext, extra: { recipeId?: string; focus?: boolean; mealType?: MealType } = {}) => (profile: Profile) =>
+  runRecommendation(engineData(profile), {
+    context, limit: 12, recipeId: extra.recipeId, mealType: extra.mealType, focusItem: extra.focus ? pantry[1] : undefined,
+  }).items.map((entry) => recipes.find((recipe) => recipe.id === entry.recipe.id)!);
+
 // Mỗi chỗ gợi ý: nhận hồ sơ, trả danh sách món đã gợi ý (kể cả món trong thực đơn).
 const SUGGESTERS: Record<string, (profile: Profile) => Recipe[]> = {
   "lọc an toàn (safety)": (profile) => safeRecipes(recipes, profile),
-  "gợi ý Tổng quan (recommendRecipes)": (profile) => recommendRecipes(visible, profile, pantry, 10, now).map((entry) => entry.recipe),
   "thực đơn dự phòng (fallbackPlan)": (profile) => {
     const plan = fallbackPlan(filterRecipesForProfile(visible, profile), pantryNames, 4, profile.dietType);
     return plan.days.flatMap((planDay) => planDay.meals.map((meal) => recipes.find((recipe) => recipe.id === meal.recipeId)!));
@@ -76,6 +95,17 @@ const SUGGESTERS: Record<string, (profile: Profile) => Recipe[]> = {
     const { plan } = reconcileAIPlan(aiPlan, filterRecipesForProfile(visible, profile), pantryNames, 4, profile.dietType);
     return plan.days.flatMap((planDay) => planDay.meals.map((meal) => recipes.find((recipe) => recipe.id === meal.recipeId)!));
   },
+  "API gợi ý: today": recommend("today"),
+  "API gợi ý: today, bữa sáng": recommend("today", { mealType: "BREAKFAST" }),
+  "API gợi ý: for-you": recommend("for-you"),
+  "API gợi ý: pantry": recommend("pantry"),
+  "API gợi ý: pantry, món cho Tôm": recommend("pantry", { focus: true }),
+  "API gợi ý: similar (Cá kho tộ đã ẩn / Canh chua cá lóc)": (profile) => [
+    ...recommend("similar", { recipeId: "ca-kho-to" })(profile), ...recommend("similar", { recipeId: "canh-chua-ca-loc" })(profile),
+  ],
+  "API gợi ý: also-cooked (Bún xào chay / Gà xào sả ớt)": (profile) => [
+    ...recommend("also-cooked", { recipeId: "bun-xao-chay" })(profile), ...recommend("also-cooked", { recipeId: "ga-xao-sa-ot" })(profile),
+  ],
 };
 
 const label = (profile: Profile) => `${profile.dietType}, dị ứng [${profile.allergies.join(", ")}], không thích [${profile.dislikedFoods.join(", ")}]`;
