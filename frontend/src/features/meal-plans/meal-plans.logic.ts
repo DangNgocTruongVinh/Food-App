@@ -172,59 +172,6 @@ export function groupShoppingItems<T extends Pick<ShoppingItem, "name" | "purcha
     }));
 }
 
-// ---------- Gợi ý dinh dưỡng ----------
-
-/** Lượng chất xơ khuyến nghị mỗi ngày dùng cho gợi ý (hồ sơ chưa có chỉ tiêu chất xơ). */
-export const FIBER_TARGET_G = 30;
-
-export type MealPlanSuggestion = { key: string; text: string };
-type SuggestionCandidate = MealPlanSuggestion & { excludedDiets?: string[]; conflicts?: string[] };
-
-const asWords = (value: string) => ` ${value.trim().toLocaleLowerCase("vi").replace(/[^\p{L}\p{N}]+/gu, " ").trim()} `;
-
-// Gợi ý không được mâu thuẫn với chế độ ăn, dị ứng hoặc món không thích (vd. "cá hồi" ↔ "cá", "Hải sản").
-function conflictsWithProfile(candidate: SuggestionCandidate, profile: NutritionProfile | null | undefined) {
-  if (!profile) return false;
-  if (candidate.excludedDiets?.includes(profile.dietType)) return true;
-  const restrictions = [...(profile.allergies ?? []), ...(profile.dislikedFoods ?? [])].map(asWords).filter((item) => item.trim());
-  return (candidate.conflicts ?? []).map(asWords).some((term) => restrictions.some((item) => item.includes(term) || term.includes(item)));
-}
-
-const fatCandidates: SuggestionCandidate[] = [
-  {
-    key: "omega3-fish", text: "Thêm cá béo như cá hồi, cá thu 1–2 bữa để có thêm Omega-3.",
-    excludedDiets: ["VEGETARIAN", "VEGAN"], conflicts: ["hải sản", "thủy sản", "đồ biển", "seafood", "cá"],
-  },
-  {
-    key: "omega3-plant", text: "Thêm Omega-3 từ thực vật: đậu nành, đậu hũ hoặc hạt óc chó.",
-    conflicts: ["đậu nành", "đậu hũ", "óc chó", "các loại hạt"],
-  },
-  { key: "fat-plant-oil", text: "Nấu bằng dầu thực vật và giữ lượng chất béo như hiện tại." },
-];
-
-const formatGram = (value: number) => `${value.toLocaleString("vi-VN")} g`;
-
-/** Hai gợi ý theo số liệu trung bình của thực đơn: chất xơ và chất béo; đã loại gợi ý mâu thuẫn với hồ sơ. */
-export function mealPlanSuggestions(
-  profile: NutritionProfile | null | undefined,
-  averages: { fiber: number; fat: number },
-  fatTarget: number | null,
-): MealPlanSuggestion[] {
-  const fiberHead = `Chất xơ trung bình ${formatGram(averages.fiber)} mỗi ngày`;
-  const fiber: MealPlanSuggestion = {
-    key: "fiber",
-    text: averages.fiber < FIBER_TARGET_G
-      ? `${fiberHead}, dưới mức ${formatGram(FIBER_TARGET_G)}: thêm 1–2 khẩu phần rau xanh mỗi ngày.`
-      : `${fiberHead}, đạt mức ${formatGram(FIBER_TARGET_G)}.`,
-  };
-  const fatHead = fatTarget ? `Chất béo trung bình ${formatGram(averages.fat)} mỗi ngày (mục tiêu ${formatGram(fatTarget)})` : "";
-  if (fatTarget && averages.fat > fatTarget) {
-    return [fiber, { key: "fat-reduce", text: `${fatHead}: bớt món chiên, ưu tiên hấp, luộc, kho.` }];
-  }
-  const candidate = fatCandidates.find((item) => !conflictsWithProfile(item, profile))!;
-  return [fiber, { key: candidate.key, text: fatHead ? `${fatHead}. ${candidate.text}` : candidate.text }];
-}
-
 /** Nhãn trung thực cho nguồn tạo thực đơn. */
 export function mealPlanSourceLabel(aiGenerated: boolean) {
   return aiGenerated ? "Tạo bởi AI" : "Thuật toán gợi ý";

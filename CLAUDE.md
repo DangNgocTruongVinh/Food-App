@@ -103,7 +103,7 @@ Biến môi trường mới phải thêm vào `backend/src/config/env.ts` (Zod) 
 - GĐ3b lượt 1–7 — gzip; lịch sử kho `PantryTransaction`; "Đã ăn" → trừ kho (hộp xem trước) và hoàn lại; 8 nhóm thực phẩm chung, "Đã dùng hết"; "Đã mua" → kho (gộp/dùng lại/tạo mới, hạn ước tính) và hoàn lại; giao diện lịch sử kho; `demo:reset`.
 - GĐ3b-R: R1 (lọc an toàn + `fit` + ràng buộc AI + ma trận an toàn), R3 (thuật toán 1), R4 (thuật toán 2 + tài khoản mẫu `isSample`), R5 (thuật toán 3, bộ trộn, `GET /api/recommendations`), lịch sử mẫu demo, R6 (đánh giá mô phỏng, chốt trọng số), thành phần phổ biến (w_pop0 = 0,3), R7 (gợi ý trên giao diện).
 
-**Thứ tự làm việc (chốt 03/11/2026):** ~~R1 → R3 → R4 → R5 → R6 → R7~~ → GĐ3c (quét hóa đơn) → R2 → R8 → (bản 8 + tách Admin) → GĐ4 → R9 → R10 → GĐ5 (chỉ còn "thêm món thủ công vào thực đơn"). Nhánh hiện tại: `giai-doan-3b` (chưa gộp `main`).
+**Thứ tự làm việc (chốt 03/11/2026):** ~~R1 → R3 → R4 → R5 → R6 → R7 → R2~~ (R2 làm trước GĐ3c vì GĐ3c chờ key) → GĐ3c (quét hóa đơn) → R8 → (bản 8 + tách Admin) → GĐ4 → R9 → R10 → GĐ5 (chỉ còn "thêm món thủ công vào thực đơn"). Nhánh hiện tại: `giai-doan-3b` (chưa gộp `main`).
 
 ### Quy tắc đã áp dụng, cần giữ khi làm tiếp
 - **Giao diện:** `docs/design/DESIGN.md` là nguồn sự thật; CSS mới ở `styles/ui/` chỉ dùng token (test `features/ui/design-rules.test.ts` chặn mã màu cứng, gradient, `backdrop-filter`, emoji, "→"; thư mục component mới phải thêm vào test); thành phần dùng chung ở `components/ui/` (Dialog, ConfirmDialog/`useConfirm`, Toast, States…); không dùng `window.confirm`. Phông phải đủ tiếng Việt (kiểm dấu chồng ố ặ ữ ỗ ẫ ợ ở mọi độ đậm, nghiêng; dự phòng Noto Serif/Noto Sans). Giao diện sẽ đổi sang "bản 8" sau GĐ3c.
@@ -115,7 +115,7 @@ Biến môi trường mới phải thêm vào `backend/src/config/env.ts` (Zod) 
 
 ### Giai đoạn 3b-R — còn lại
 Kiến trúc, công thức và quyết định: `docs/thuat-toan-goi-y.md` và `docs/lich-su-giai-doan.md` (mục GĐ3b-R).
-- [ ] R2 — Frontend lượt 9: "Tất cả công thức" ẩn món vi phạm mặc định + "Hiện tất cả", nhãn món không thích; nhãn cảnh báo bữa vi phạm ở thực đơn cũ; dòng nhắc dưới khung chat AI; gom `asWords` về backend (trung bình).
+- [x] R2 — "Tất cả công thức" ẩn món vi phạm dị ứng/chế độ ăn mặc định + "Hiện tất cả" (món không thích chỉ gắn nhãn); thực đơn cũ cảnh báo bữa vi phạm + "Đổi món" (`POST /api/meal-plans/items/:id/swap`, server chọn món qua `safety.ts`); dòng nhắc dưới khung chat AI; gợi ý dinh dưỡng thực đơn tính ở backend (`meal-plan-suggestions.ts`, `overlapsFoodTerms`).
 - [ ] R8 — Thực đơn dùng bộ chấm điểm 3 (+0,3 × thuật toán 1), thưởng đồ sắp hết hạn (tối đa 8, chỉ các ngày trước hạn), giữ mọi ràng buộc; đo trước/sau (trung bình–khó).
 - [ ] R9 — Cộng đồng: tab "Dành cho bạn" (backend + frontend) (trung bình).
 - [ ] R10 — `docs/han-che.md`, `docs/cau-hoi-bao-ve.md`, cập nhật CLAUDE.md (dễ).
@@ -151,7 +151,7 @@ Kiến trúc, công thức và quyết định: `docs/thuat-toan-goi-y.md` và `
 - [ ] Gộp cảnh báo pantry về module Notifications (về mặt tổ chức code/tài liệu).
 
 ### Việc làm sau (chưa xếp giai đoạn)
-- [ ] Gom logic so khớp nguyên liệu/dị ứng của `mealPlanSuggestions` (`asWords` trong `features/meal-plans/meal-plans.logic.ts`) về backend, dùng chung `dietary.service.ts` / `recipe-fit.service.ts`.
+- [x] Gom logic so khớp nguyên liệu/dị ứng của `mealPlanSuggestions` về backend: xong ở R2 (`GET /api/meal-plans` trả `suggestions`).
 - [ ] Ô chọn công thức khi đăng bài đang lọc ở frontend trên toàn bộ danh sách công thức; khi Admin thêm nhiều món thì chuyển sang tìm kiếm ở backend (có giới hạn số kết quả).
 - [x] Thay `window.confirm` bằng hộp xác nhận dùng chung (`useConfirm()`): xong ở mọi trang (không còn `window.confirm`).
 - [x] Bật nén gzip ở nginx frontend: xong ở GĐ3b lượt 1 (chỉ gzip theo quyết định; brotli không làm).

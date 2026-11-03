@@ -17,7 +17,7 @@ import { ShoppingListCard } from "../components/meal-plans/ShoppingListCard";
 import { EmptyState, ErrorState, Toast, useConfirm } from "../components/ui";
 import { aiQueries } from "../features/ai/ai.queries";
 import {
-  dayNutrition, generateSourceLabel, initialDayIndex, latestMealPlanId, mealPlanDeleteConfirm, mealPlanPath, mealPlanSuggestions,
+  dayNutrition, generateSourceLabel, initialDayIndex, latestMealPlanId, mealPlanDeleteConfirm, mealPlanPath,
   nextMealPlanIdAfterDelete, planTargets, selectMealPlanDay, summarizeMealPlan, todayDayIndex,
 } from "../features/meal-plans/meal-plans.logic";
 import {
@@ -240,7 +240,7 @@ export default function MealPlansPage() {
             nutrition={targets ? dayNutrition(day.items, targets) : null}
             week={{ completedMeals: week.completedMeals, totalMeals: week.planMeals.length, averageCalories: week.averages.calories }}
           />
-          <MealPlanSuggestionsCard suggestions={mealPlanSuggestions(profileData?.profile, week.averages, targets?.fat ?? null)} />
+          <MealPlanSuggestionsCard suggestions={selected.suggestions ?? []} />
         </aside>
 
         <ShoppingListCard

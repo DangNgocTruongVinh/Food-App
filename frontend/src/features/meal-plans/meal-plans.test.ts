@@ -10,7 +10,7 @@ import {
 } from "./meal-plans.api";
 import {
   alternativeMeals, dayNutrition, generateMealPlanLabel, generateSourceLabel, groupShoppingItems, initialDayIndex, latestMealPlanId,
-  mealPlanDeleteConfirm, mealPlanPath, mealViolation, mealPlanSourceLabel, mealPlanSuggestions, nextMealPlanIdAfterDelete, orderDayMeals, planDayLabels,
+  mealPlanDeleteConfirm, mealPlanPath, mealViolation, mealPlanSourceLabel, nextMealPlanIdAfterDelete, orderDayMeals, planDayLabels,
   planTargets, planTitleParts, selectMealPlanDay, summarizeMealPlan, todayDayIndex,
 } from "./meal-plans.logic";
 import { invalidateMealPlanQueries, mealPlanQueries, removeDeletedMealPlan, removeMealPlanDetail } from "./meal-plans.queries";
@@ -278,51 +278,6 @@ describe("Old plan meals that violate the current profile (GĐ3b-R2)", () => {
     api.defaults.adapter = adapter;
     expect(await swapMealItem("meal-a")).toEqual({ plan, from: "Tôm rang", to: "Đậu hũ" });
     expect(adapter.mock.calls.map(([config]) => [config.method, config.url, config.data])).toEqual([["post", "/meal-plans/items/meal-a/swap", "{}"]]);
-  });
-});
-
-describe("Meal plan suggestions respect the profile", () => {
-  const profile = (overrides: Partial<NutritionProfile> = {}): NutritionProfile => ({
-    activityLevel: "MODERATE", goal: "MAINTAIN", dietType: "BALANCED", allergies: [], dislikedFoods: [],
-    preferredCuisines: [], mealsPerDay: 3, ...overrides,
-  });
-  const fatSuggestion = (value: NutritionProfile | null | undefined) => mealPlanSuggestions(value, { fiber: 30, fat: 40 }, 60)[1];
-
-  it("suggests oily fish only when nothing in the profile rules it out", () => {
-    expect(fatSuggestion(profile()).key).toBe("omega3-fish");
-    expect(fatSuggestion(undefined).key).toBe("omega3-fish");
-  });
-  it.each([
-    ["vegetarian", profile({ dietType: "VEGETARIAN" })],
-    ["vegan", profile({ dietType: "VEGAN" })],
-    ["seafood allergy", profile({ allergies: ["Hải sản"] })],
-    ["fish allergy written differently", profile({ allergies: ["  CÁ  hồi "] })],
-    ["disliked fish", profile({ dislikedFoods: ["cá"] })],
-  ])("never suggests fish for %s", (_label, value) => {
-    const suggestion = fatSuggestion(value);
-    expect(suggestion.key).toBe("omega3-plant");
-    expect(suggestion.text).not.toMatch(/\bcá\b|cá béo|cá hồi/i);
-  });
-  it("falls back to a neutral suggestion when plant sources are also restricted", () => {
-    const suggestion = fatSuggestion(profile({ dietType: "VEGAN", allergies: ["Đậu nành"] }));
-    expect(suggestion.key).toBe("fat-plant-oil");
-    expect(suggestion.text).not.toMatch(/cá|đậu nành|óc chó/i);
-  });
-  it("does not mistake an unrelated allergy for fish", () => {
-    expect(fatSuggestion(profile({ allergies: ["Cà chua", "Đậu phộng"] })).key).toBe("omega3-fish");
-  });
-  it("states the plan's own numbers and keeps the reduce-fat advice free of fish", () => {
-    const [fiber, fat] = mealPlanSuggestions(profile({ dietType: "VEGAN" }), { fiber: 10, fat: 80 }, 60);
-    expect(fiber.text).toBe("Chất xơ trung bình 10 g mỗi ngày, dưới mức 30 g: thêm 1–2 khẩu phần rau xanh mỗi ngày.");
-    expect(fat.key).toBe("fat-reduce");
-    expect(fat.text).toBe("Chất béo trung bình 80 g mỗi ngày (mục tiêu 60 g): bớt món chiên, ưu tiên hấp, luộc, kho.");
-    expect(fat.text).not.toMatch(/cá/);
-  });
-  it("skips the fat comparison when the profile has no target", () => {
-    const [fiber, fat] = mealPlanSuggestions(undefined, { fiber: 31, fat: 90 }, null);
-    expect(fiber.text).toBe("Chất xơ trung bình 31 g mỗi ngày, đạt mức 30 g.");
-    expect(fat.key).toBe("omega3-fish");
-    expect(fat.text).not.toContain("mục tiêu");
   });
 });
 

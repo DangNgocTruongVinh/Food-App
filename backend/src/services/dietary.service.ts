@@ -56,6 +56,16 @@ const recipeWords = (recipe: Pick<DietaryRecipe, "name" | "ingredients">) => {
   return words;
 };
 
+/**
+ * Hai danh sách cụm từ có chạm nhau theo nguyên từ, chiều nào cũng được ("cá" ↔ "cá hồi", "Hải sản" ↔ "hải sản").
+ * Dùng cho câu gợi ý không gắn với món (vd. gợi ý dinh dưỡng của thực đơn) khi so với dị ứng/món không thích.
+ */
+export function overlapsFoodTerms(left: string[], right: string[]) {
+  const a = left.map(asWords).filter((item) => item.trim());
+  const b = right.map(asWords).filter((item) => item.trim());
+  return a.some((x) => b.some((y) => x.includes(y) || y.includes(x)));
+}
+
 /** Các cụm từ bị tránh xuất hiện trong tên món hoặc tên nguyên liệu. */
 export function findRestrictedTerms(recipe: Pick<DietaryRecipe, "name" | "ingredients">, restrictedTerms: string[]) {
   if (!restrictedTerms.length) return [];

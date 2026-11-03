@@ -102,6 +102,11 @@ const planRead = {
   ...plan,
   days: plan.days.map((day) => ({ ...day, items: day.items.map((item) => ({ ...item, recipe: { ...item.recipe, fit: safeFit } })) })),
   shoppingItems: [shoppingItemRead],
+  // Gợi ý dinh dưỡng tính ở backend (GĐ3b-R2): 1 ngày, chất xơ 5 g; hồ sơ không có chỉ tiêu chất béo.
+  suggestions: [
+    { key: "fiber", text: "Chất xơ trung bình 5 g mỗi ngày, dưới mức 30 g: thêm 1–2 khẩu phần rau xanh mỗi ngày." },
+    { key: "omega3-fish", text: "Thêm cá béo như cá hồi, cá thu 1–2 bữa để có thêm Omega-3." },
+  ],
 };
 
 beforeEach(() => {
@@ -356,6 +361,12 @@ describe("Old plans after the profile changes: fit and swap (GĐ3b-R2)", () => {
     const response = await request(app, `/api/meal-plans/${planId}`, { token: token() });
     expect(response.body.days[0].items[0].recipe.fit).toEqual({ allergens: ["ức gà"], dislikedFoods: [], dietConflict: null, safe: false });
     expect(mocks.findProfile).toHaveBeenCalledWith({ where: { userId } });
+  });
+
+  it("computes the week suggestions from the current profile (no fish for a seafood allergy)", async () => {
+    mocks.findProfile.mockResolvedValue({ dietType: "BALANCED", allergies: ["Hải sản"], dislikedFoods: [] });
+    const response = await request(app, `/api/meal-plans/${planId}`, { token: token() });
+    expect(response.body.suggestions.map((item: { key: string }) => item.key)).toEqual(["fiber", "omega3-plant"]);
   });
 
   it("swaps an unsafe meal for a safe recipe chosen by the server, adjusting the shopping list in the same transaction", async () => {

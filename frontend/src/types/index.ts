@@ -177,10 +177,13 @@ export interface ShoppingPurchaseResult extends ShoppingItem {
     skipped: Array<{ itemName: string; quantity: number; unit: FoodUnit; reason: ConsumptionSkipReason | "INSUFFICIENT" }>;
   } | null;
 }
+/** Gợi ý dinh dưỡng của tuần (chất xơ, chất béo), backend tính theo hồ sơ hiện tại (GĐ3b-R2). */
+export interface MealPlanSuggestion { key: string; text: string }
 export interface MealPlan {
   id: string; name: string; startDate: string; endDate: string; status: MealPlanStatus;
   calorieTarget: number; aiGenerated: boolean; summary?: string; days: MealPlanDay[]; shoppingItems: ShoppingItem[];
   createdAt?: string;
+  suggestions?: MealPlanSuggestion[];
 }
 /** POST /api/meal-plans/items/:id/swap: thực đơn sau khi đổi, tên món cũ và món mới. */
 export interface MealSwapResult { plan: MealPlan; from: string; to: string }

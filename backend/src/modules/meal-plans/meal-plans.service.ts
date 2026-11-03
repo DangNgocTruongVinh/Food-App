@@ -9,6 +9,7 @@ import { HttpError } from "../../utils/http-error.js";
 import { generatePlanWithAI } from "../ai/ai.service.js";
 import { recipeFit, type SafetyProfile } from "../recommendation/safety.js";
 import { fallbackPlan, reconcileAIPlan } from "./meal-plan-generator.js";
+import { planSuggestions, type SuggestionProfile } from "./meal-plan-suggestions.js";
 
 export async function generateWeeklyPlan(userId: string, startDateInput: string) {
   const [user, pantry, allRecipes] = await Promise.all([
@@ -109,15 +110,17 @@ export const planInclude = {
 
 type ReadablePlan = {
   shoppingItems: Array<{ name: string; category: string | null }>;
-  days: Array<{ items: Array<{ recipe: Parameters<typeof recipeFit>[0] }> }>;
+  days: Array<{ items: Array<{ recipe: Parameters<typeof recipeFit>[0] & { fiberG: number; fatG: number } }> }>;
 };
 
 /**
  * Dữ liệu trả về khi đọc thực đơn: dòng đi chợ tạo trước GĐ3b lượt 5 chưa có `category` thì tính theo tên (không đổi
- * dữ liệu đã lưu); mỗi món kèm `fit` theo hồ sơ hiện tại (GĐ3b-R2: thực đơn tạo trước khi thêm dị ứng hiện cảnh báo).
+ * dữ liệu đã lưu); mỗi món kèm `fit` theo hồ sơ hiện tại (GĐ3b-R2: thực đơn tạo trước khi thêm dị ứng hiện cảnh báo);
+ * `suggestions`: gợi ý dinh dưỡng của tuần theo hồ sơ hiện tại.
  */
-function forReading<T extends ReadablePlan>(plan: T, profile: SafetyProfile) {
+function forReading<T extends ReadablePlan>(plan: T, profile: SafetyProfile & SuggestionProfile) {
   return {
+    suggestions: planSuggestions(plan, profile),
     ...plan,
     days: plan.days.map((day) => ({
       ...day,
