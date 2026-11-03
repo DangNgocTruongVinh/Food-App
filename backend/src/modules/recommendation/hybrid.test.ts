@@ -4,13 +4,14 @@ import { seedRecipesAsRecords } from "../../test/seed-recipes.js";
 import { buildCollaborativeModel } from "./collaborative.js";
 import { buildFeatureSpace } from "./features.js";
 import {
-  blendScores, coldStartWeights, CONTEXT_WEIGHTS, type EngineData, type EngineRecipe, minMax, mmr, runRecommendation,
+  blendScores, coldStartWeights, CONTEXT_WEIGHTS, type EngineData, type EngineRecipe, minMax, mmr, POPULARITY_WEIGHT0, runRecommendation,
+  withPopularity,
 } from "./hybrid.js";
 import type { Interaction } from "./interactions.js";
 import {
   diversityFeature, expiringFeature, KNOWLEDGE_WEIGHTS, knowledgeScore, mealTarget, nutritionFeature, pantryFeature, usesPantryItem,
 } from "./knowledge-based.js";
-import { contentReason, FALLBACK_REASON, knowledgeReason, pickReason, reasonCandidates, similarReason } from "./reasons.js";
+import { contentReason, FALLBACK_REASON, knowledgeReason, pickReason, POPULARITY_REASON, reasonCandidates, similarReason } from "./reasons.js";
 
 const day = 86_400_000;
 const now = new Date("2026-11-03T03:00:00.000Z");
@@ -102,6 +103,33 @@ describe("Hybrid blending", () => {
     }
   });
 
+  it("popularity: w_pop = (1 − γ)·w_pop0 takes a share of the total for new users and fades with history", () => {
+    const fresh = withPopularity(CONTEXT_WEIGHTS["for-you"], 0, 0.3);
+    expect(fresh.popularity).toBeCloseTo(0.3, 12);
+    expect(fresh.content).toBeCloseTo(CONTEXT_WEIGHTS["for-you"].content * 0.7, 12);
+    const active = withPopularity(CONTEXT_WEIGHTS["for-you"], 90, 0.3);
+    expect(active.popularity).toBeCloseTo(0.03, 12);
+    for (const weights of [fresh, active, withPopularity(coldStartWeights(CONTEXT_WEIGHTS.today, 3), 3)]) {
+      expect(weights.content + weights.collaborative + weights.knowledge + weights.popularity).toBeCloseTo(1, 12);
+    }
+    expect(withPopularity(CONTEXT_WEIGHTS.today, 0).popularity).toBeCloseTo(POPULARITY_WEIGHT0, 12);
+    // Độ phổ biến của mô hình = Σ_u r_ui.
+    const model = buildCollaborativeModel([
+      { userId: "u1", recipeId: "a", kind: "EATEN", at: now, count: 1 }, { userId: "u2", recipeId: "a", kind: "EATEN", at: now, count: 1 },
+      { userId: "u1", recipeId: "b", kind: "LIKED", at: now, count: 1 },
+    ], now);
+    expect(model.popularity.get("a")).toBeCloseTo(2 * Math.log(4), 12);
+    expect(model.popularity.get("b")).toBeCloseTo(Math.log(3), 12);
+  });
+
+  it("explains a popularity-driven pick with \"Nhiều người đang nấu món này\"", () => {
+    const list = reasonCandidates({ recipe: { cuisine: null }, recipeName: () => undefined, target: { calories: 600, proteinG: 30 }, popularity: 5 },
+      { content: 0.05, collaborative: 0, knowledge: 0, popularity: 0.3 }, {});
+    expect(list[0]).toEqual({ text: POPULARITY_REASON, weight: 0.3, kind: "popularity" });
+    expect(reasonCandidates({ recipe: { cuisine: null }, recipeName: () => undefined, target: { calories: 600, proteinG: 30 }, popularity: 0 },
+      { popularity: 0.3 }, {})).toEqual([]);
+  });
+
   it("blends normalized scores with the weights and keeps each weighted component", () => {
     const blended = blendScores(["a", "b"], {
       content: new Map([["a", 1], ["b", 0]]), collaborative: new Map(), knowledge: new Map([["a", 0], ["b", 2]]),
@@ -182,6 +210,22 @@ const engine = (patch: Partial<EngineData> = {}): EngineData => ({
 });
 
 describe("runRecommendation on the seed catalog", () => {
+  it("cold start: a new user gets popular (safe) dishes ranked higher than without the popularity component", () => {
+    const popular = ["bun-xao-chay", "nam-kho-tieu", "canh-chua-chay"];
+    const crowd: Interaction[] = Array.from({ length: 6 }, (_, user) => popular.map((slug) => ({
+      userId: `u${user}`, recipeId: bySlug.get(slug)!, kind: "EATEN" as const, at: now, count: 1,
+    }))).flat();
+    const data = engine({ model: buildCollaborativeModel(crowd, now), pantry: [] });
+    const rank = (popularityWeight: number) => {
+      const ids = runRecommendation(data, { context: "for-you", limit: 33, popularityWeight }).items.map((entry) => entry.recipe.slug);
+      return popular.reduce((sum, slug) => sum + ids.indexOf(slug), 0);
+    };
+    expect(rank(0.5)).toBeLessThan(rank(0));
+    const top = runRecommendation(data, { context: "for-you", limit: 6, popularityWeight: 0.9 }).items;
+    expect(top.some((entry) => entry.reason === POPULARITY_REASON)).toBe(true);
+    expect(top[0].components.popularity).toBeGreaterThan(0);
+  });
+
   it("today: puts dishes using soon-expiring items first, each with a reason; cold start without history", () => {
     const result = runRecommendation(engine(), { context: "today", limit: 3 });
     expect(result.coldStart).toBe(true);

@@ -14,7 +14,8 @@ export const MIN_SUPPORT = 3;
 
 export type RatingMatrix = Map<string, Map<string, number>>;
 export type Neighbor = { recipeId: string; similarity: number; support: number };
-export type CollaborativeModel = { ratings: RatingMatrix; neighbors: Map<string, Neighbor[]> };
+/** `popularity`: Σ_u r_ui của mỗi món (độ phổ biến có suy giảm thời gian, cho thành phần phổ biến của bộ trộn khi khởi đầu lạnh). */
+export type CollaborativeModel = { ratings: RatingMatrix; neighbors: Map<string, Neighbor[]>; popularity: Map<string, number> };
 
 /** r_ui từ các tương tác (bỏ qua "có trong thực đơn" nếu lỡ truyền vào). */
 export function buildRatings(interactions: Interaction[], now = new Date()): RatingMatrix {
@@ -69,7 +70,9 @@ export function itemNeighbors(ratings: RatingMatrix, lambda = SHRINKAGE_LAMBDA, 
 
 export function buildCollaborativeModel(interactions: Interaction[], now = new Date(), lambda = SHRINKAGE_LAMBDA, k = NEIGHBORS_K): CollaborativeModel {
   const ratings = buildRatings(interactions, now);
-  return { ratings, neighbors: itemNeighbors(ratings, lambda, k) };
+  const popularity = new Map<string, number>();
+  for (const row of ratings.values()) for (const [recipeId, value] of row) popularity.set(recipeId, (popularity.get(recipeId) ?? 0) + value);
+  return { ratings, neighbors: itemNeighbors(ratings, lambda, k), popularity };
 }
 
 /** n_u: số món khác nhau người này đã tương tác (cho khởi đầu lạnh của bộ trộn). */

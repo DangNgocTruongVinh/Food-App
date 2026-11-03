@@ -80,6 +80,9 @@ ngữ cảnh Kho chỉ xét món có ít nhất một nguyên liệu trong kho.
 3. Khởi đầu lạnh: `γ_u = n_u/(n_u + 10)` (n_u = số món khác nhau đã tương tác); `w2' = w2 · γ_u`, phần `(1 − γ_u) · w2` chia cho
    w1, w3 theo tỷ lệ của chúng (tổng trọng số vẫn bằng 1).
 4. `S = w1' · ŝ1 + w2' · ŝ2 + w3' · ŝ3`.
+   Thành phần phổ biến (khởi đầu lạnh): `w_pop = (1 − γ_u) · w_pop0`, các thành phần khác nhân `(1 − w_pop)`; điểm phổ biến của món
+   = Σ_u r_ui của mọi người (kể cả tài khoản mẫu), vẫn sau lọc an toàn; lý do "Nhiều người đang nấu món này". w_pop0 chọn ở mục 8
+   (bảng 4): hiện **0** vì không đạt ngưỡng (xem nhận xét).
 5. Đa dạng hóa MMR: chọn lần lượt `argmax 0,8 · S(r) − 0,2 · max_{s đã chọn} cos(v_r, v_s)`.
 6. Lý do: thành phần có `w_a' · ŝ_a` lớn nhất, rồi tiêu chí con lớn nhất của nó (khối đặc trưng, tiêu chí của thuật toán 3, món
    "vì" của thuật toán 2). Ví dụ: "Dùng 2 thực phẩm sắp hết hạn: Đậu hũ, Ức gà", "Có nguyên liệu bạn hay dùng: Gừng, Ức gà",
@@ -112,6 +115,7 @@ Sinh bằng `npm run eval:recommend -w backend`: 5 lần mô phỏng (seed 20261
 | TT2 Cộng tác | 0,062 | 0,119 | 0,059 | 0,235 ± 0,023 | 0,602 | 99,4% | 0,793 | 43,1% | 66,8% | 0,0% |
 | TT3 Tri thức | 0,108 | 0,194 | 0,104 | 0,377 ± 0,041 | 0,378 | 100,0% | 0,710 | 33,0% | 85,3% | 0,0% |
 | Bộ trộn (Nội dung mạnh (0,60/0,20/0,20)) | 0,228 | 0,418 | 0,163 | 0,590 ± 0,017 | 0,308 | 100,0% | 0,620 | 37,1% | 79,5% | 0,0% |
+| Bộ trộn + phổ biến (w_pop0 = 0,3, không đạt ngưỡng) | 0,241 | 0,456 | 0,170 | 0,622 ± 0,021 | 0,347 | 100,0% | 0,653 | 38,2% | 78,5% | 0,0% |
 
 **Bảng 2 — R@10 theo số tương tác trong tập huấn luyện (khởi đầu lạnh; gộp người của 5 lần).**
 
@@ -124,19 +128,44 @@ Sinh bằng `npm run eval:recommend -w backend`: 5 lần mô phỏng (seed 20261
 | TT2 Cộng tác | 0,462 | 0,339 | 0,187 |
 | TT3 Tri thức | 0,359 | 0,446 | 0,366 |
 | Bộ trộn (Nội dung mạnh (0,60/0,20/0,20)) | 0,256 | 0,571 | 0,636 |
+| Bộ trộn + phổ biến (w_pop0 = 0,3, không đạt ngưỡng) | 0,308 | 0,643 | 0,658 |
 
 **Bảng 3 — Chọn trọng số bộ trộn trên tập kiểm định (20% cuối của tập huấn luyện; tập kiểm tra không dùng để chọn).**
 
 | Bộ trọng số (nội dung/cộng tác/tri thức) | R@10 kiểm định | P@10 kiểm định | Đa dạng | Có đồ sắp hết hạn |
 |---|---|---|---|---|
-| Kế hoạch (0,45/0,30/0,25) | 0,626 | 0,152 | 0,649 | 84,3% |
-| Như Tổng quan (0,35/0,25/0,40) | 0,580 | 0,140 | 0,672 | 84,9% |
-| Bằng nhau (1/3) | 0,590 | 0,140 | 0,672 | 84,9% |
-| Nội dung mạnh (0,60/0,20/0,20) **(chọn)** | 0,662 | 0,161 | 0,632 | 80,6% |
-| Cộng tác mạnh (0,30/0,50/0,20) | 0,591 | 0,140 | 0,668 | 84,6% |
-| Tri thức mạnh (0,25/0,25/0,50) | 0,509 | 0,122 | 0,687 | 85,2% |
+| Kế hoạch (0,45/0,30/0,25) | 0,627 | 0,149 | 0,647 | 84,2% |
+| Như Tổng quan (0,35/0,25/0,40) | 0,585 | 0,138 | 0,669 | 85,0% |
+| Bằng nhau (1/3) | 0,594 | 0,139 | 0,669 | 85,0% |
+| Nội dung mạnh (0,60/0,20/0,20) **(chọn)** | 0,660 | 0,158 | 0,629 | 80,6% |
+| Cộng tác mạnh (0,30/0,50/0,20) | 0,593 | 0,138 | 0,665 | 84,5% |
+| Tri thức mạnh (0,25/0,25/0,50) | 0,519 | 0,121 | 0,684 | 85,3% |
 
-Quy tắc chọn: giữ bộ trọng số của kế hoạch trừ khi bộ khác có R@10 kiểm định trung bình cao hơn ít nhất 0,01. Bộ cao nhất: Nội dung mạnh (0,60/0,20/0,20) (0,662 so với 0,626) → chọn **Nội dung mạnh (0,60/0,20/0,20)**. Thời gian chạy: 8.3 s.
+Quy tắc chọn: giữ bộ trọng số của kế hoạch trừ khi bộ khác có R@10 kiểm định trung bình cao hơn ít nhất 0,01. Bộ cao nhất: Nội dung mạnh (0,60/0,20/0,20) (0,660 so với 0,627) → chọn **Nội dung mạnh (0,60/0,20/0,20)**.
+
+**Bảng 4 — Chọn w_pop0 của thành phần phổ biến (khởi đầu lạnh) trên tập kiểm định, với bộ trọng số đã chọn.**
+
+| w_pop0 | R@10 kiểm định, tất cả | R@10 kiểm định, 0 tương tác | R@10 kiểm định, 1–5 tương tác | Đa dạng | Có đồ sắp hết hạn |
+|---|---|---|---|---|---|
+| 0,0 **(chọn)** | 0,660 | 0,556 | 0,690 | 0,629 | 80,6% |
+| 0,1 | 0,656 | 0,667 | 0,638 | 0,636 | 80,6% |
+| 0,2 | 0,659 | 0,667 | 0,621 | 0,645 | 79,7% |
+| 0,3 | 0,669 | 0,778 | 0,621 | 0,658 | 79,0% |
+| 0,4 | 0,667 | 0,778 | 0,603 | 0,677 | 77,5% |
+| 0,5 | 0,664 | 0,778 | 0,586 | 0,697 | 77,8% |
+
+Quy tắc chọn (như bảng 3): giữ w_pop0 = 0 trừ khi giá trị khác có R@10 kiểm định (tất cả người) cao hơn ít nhất 0,01. Cao nhất: w_pop0 = 0,3 (0,669 so với 0,660) → chọn **w_pop0 = 0,0**.
+
+**Bảng 5 — Bộ trộn trước/sau khi thêm thành phần phổ biến w_pop0 = 0,3 (giá trị tốt nhất ở bảng 4; tập kiểm tra, R@10 theo số tương tác).**
+
+| Nhóm | Trước (w_pop0 = 0) | Sau (w_pop0 = 0,3) |
+|---|---|---|
+| 0 tương tác (39 người) | 0,256 | 0,308 |
+| 1–5 tương tác (56 người) | 0,571 | 0,643 |
+| >5 tương tác (305 người) | 0,636 | 0,658 |
+| Tất cả | 0,590 | 0,622 |
+
+Thời gian chạy: 31.7 s.
 <!-- EVAL:END -->
 
 **Nhận xét** (dựa trên các bảng trên; cùng xu hướng ở cả 5 lần mô phỏng):
@@ -153,7 +182,11 @@ Quy tắc chọn: giữ bộ trọng số của kế hoạch trừ khi bộ khá
   lợi ích của thuật toán 3 (lệch calo 37%, 80% danh sách dùng đồ sắp hết hạn) và gợi ý món mới tốt hơn thuật toán 1 (0,31 so với 0,27).
   Đó là đánh đổi mong muốn: một chút độ đúng để đổi lấy giảm lãng phí và dinh dưỡng hợp mục tiêu.
 - **Khởi đầu lạnh (0 tương tác):** "phổ biến nhất" tốt nhất (0,54); bộ trộn chỉ 0,26 vì khi chưa có lịch sử, trọng số thuật toán 2
-  bằng 0 và thuật toán 1 chỉ dựa vào hồ sơ. Hướng cải thiện: với người chưa có lịch sử, thêm món phổ biến (đã lọc an toàn) vào danh sách.
+  bằng 0 và thuật toán 1 chỉ dựa vào hồ sơ. Đã thử thêm thành phần phổ biến `w_pop = (1 − γ_u)·w_pop0` (bảng 4, 5): trên tập kiểm định,
+  w_pop0 = 0,3 giúp nhóm 0 tương tác (0,556 → 0,778) nhưng làm giảm nhóm 1–5 tương tác (0,690 → 0,621), R@10 chung chỉ tăng 0,009 —
+  dưới ngưỡng 0,01 nên theo quy tắc đặt trước **giữ w_pop0 = 0** (thành phần có sẵn trong mã nhưng đang tắt). Trên tập kiểm tra,
+  0,3 lại tốt hơn ở mọi nhóm (0 tương tác 0,256 → 0,308; tất cả 0,590 → 0,622), nhưng không dùng tập kiểm tra để chọn tham số.
+  Tập kiểm định có ít người mới (mỗi lần mô phỏng vài người) nên kết luận ở nhóm này còn nhiễu.
 - **Lọc an toàn là bắt buộc:** mọi phương pháp chạy sau lọc an toàn đều 0% vi phạm; "phổ biến nhất" không lọc có 11,8% món vi phạm dị
   ứng/chế độ ăn/món không thích của chính người được gợi ý.
 - **Chọn trọng số:** sáu bộ trọng số được so trên tập kiểm định (không dùng tập kiểm tra) theo quy tắc đặt trước; bộ "nội dung mạnh"

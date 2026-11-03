@@ -8,7 +8,7 @@ import type { Interaction } from "./interactions.js";
 import {
   type KnowledgeRecipe, knowledgeScore, type KnowledgeScore, mealTarget, pantryFeature, recentWindowStart, type TargetProfile, usesPantryItem,
 } from "./knowledge-based.js";
-import { type Algorithm, alsoCookedReason, pickReason, reasonCandidates, similarReason } from "./reasons.js";
+import { type Algorithm, alsoCookedReason, type Component, pickReason, reasonCandidates, similarReason } from "./reasons.js";
 import { safeRecipes, type SafetyProfile, type SafetyRecipe } from "./safety.js";
 
 // Bộ trộn (GĐ3b-R5), hàm thuần (dữ liệu nạp ở recommendation.service.ts):
@@ -29,6 +29,12 @@ export const CONTEXT_WEIGHTS: Record<RecommendationContext, Record<Algorithm, nu
   "also-cooked": { content: 0, collaborative: 1, knowledge: 0 },
 };
 export const COLD_START_KAPPA = 10;
+/**
+ * Thành phần phổ biến (Σ_u r_ui, mọi người kể cả tài khoản mẫu; vẫn sau lọc an toàn): w_pop = (1 − γ_u)·w_pop0, các thành phần
+ * khác nhân (1 − w_pop). Người mới (γ = 0) nhận đủ w_pop0, người nhiều lịch sử gần như 0. w_pop0 chọn ở đánh giá (docs, mục 8,
+ * bảng 4): theo quy tắc "chỉ đổi khi R@10 kiểm định tăng ≥ 0,01", giá trị tốt nhất 0,3 tăng 0,009 → giữ 0 (thành phần tắt).
+ */
+export const POPULARITY_WEIGHT0 = 0;
 export const MMR_LAMBDA = 0.8;
 
 /** Min–max về [0, 1] trên tập id; id không có điểm tính là 0; mọi điểm bằng nhau → 0 (thuật toán không phân biệt được món nào). */
@@ -52,14 +58,31 @@ export function coldStartWeights(weights: Record<Algorithm, number>, interacted:
   };
 }
 
-export type Blended = { recipeId: string; score: number; components: Record<Algorithm, number> };
+/** Thêm thành phần phổ biến: w_pop = (1 − γ_u)·w_pop0; trọng số các thuật toán nhân (1 − w_pop) để tổng vẫn bằng 1. */
+export function withPopularity(
+  weights: Record<Algorithm, number>, interacted: number, popularityWeight0 = POPULARITY_WEIGHT0, kappa = COLD_START_KAPPA,
+) {
+  const popularity = (1 - interacted / (interacted + kappa)) * popularityWeight0;
+  return {
+    content: weights.content * (1 - popularity),
+    collaborative: weights.collaborative * (1 - popularity),
+    knowledge: weights.knowledge * (1 - popularity),
+    popularity,
+  };
+}
 
-export function blendScores(ids: string[], raw: Record<Algorithm, Map<string, number>>, weights: Record<Algorithm, number>): Blended[] {
-  const normalized = Object.fromEntries(ALGORITHMS.map((algorithm) => [algorithm, minMax(raw[algorithm], ids)])) as Record<Algorithm, Map<string, number>>;
+export type Blended = { recipeId: string; score: number; components: Partial<Record<Component, number>> };
+
+/** S = Σ_c w_c·ŝ_c trên các thành phần có trong `weights`. */
+export function blendScores(
+  ids: string[], raw: Partial<Record<Component, Map<string, number>>>, weights: Partial<Record<Component, number>>,
+): Blended[] {
+  const keys = Object.keys(weights) as Component[];
+  const normalized = new Map(keys.map((key) => [key, minMax(raw[key] ?? new Map(), ids)]));
   return ids
     .map((recipeId) => {
-      const components = Object.fromEntries(ALGORITHMS.map((algorithm) => [algorithm, weights[algorithm] * normalized[algorithm].get(recipeId)!])) as Record<Algorithm, number>;
-      return { recipeId, components, score: ALGORITHMS.reduce((sum, algorithm) => sum + components[algorithm], 0) };
+      const components = Object.fromEntries(keys.map((key) => [key, weights[key]! * normalized.get(key)!.get(recipeId)!])) as Partial<Record<Component, number>>;
+      return { recipeId, components, score: keys.reduce((sum, key) => sum + components[key]!, 0) };
     })
     .sort((a, b) => b.score - a.score || a.recipeId.localeCompare(b.recipeId));
 }
@@ -114,8 +137,9 @@ export type EngineQuery = {
   recipeId?: string;
   /** Ngữ cảnh "gợi ý món cho thực phẩm X" (đã kiểm tra quyền sở hữu ở service). */
   focusItem?: FitPantryItem;
-  /** Chỉ dùng cho đánh giá (scripts/eval-recommendation.ts): thay trọng số của ngữ cảnh. */
+  /** Chỉ dùng cho đánh giá (scripts/eval-recommendation.ts): thay trọng số của ngữ cảnh và w_pop0. */
   weights?: Record<Algorithm, number>;
+  popularityWeight?: number;
 };
 
 export const recipeSummary = (recipe: EngineRecipe) => ({
@@ -126,10 +150,10 @@ export type RecommendationItem = {
   recipe: ReturnType<typeof recipeSummary>;
   score: number;
   reason: string;
-  components: Record<Algorithm, number>;
+  components: Record<Component, number>;
 };
 
-const zeroComponents = (): Record<Algorithm, number> => ({ content: 0, collaborative: 0, knowledge: 0 });
+const zeroComponents = (): Record<Component, number> => ({ content: 0, collaborative: 0, knowledge: 0, popularity: 0 });
 
 /** Một lần gợi ý: luôn lọc an toàn trước, rồi chạy (các) thuật toán theo ngữ cảnh. */
 export function runRecommendation(data: EngineData, query: EngineQuery): { coldStart: boolean; items: RecommendationItem[] } {
@@ -173,11 +197,13 @@ export function runRecommendation(data: EngineData, query: EngineQuery): { coldS
   const knowledge = new Map<string, KnowledgeScore>(candidates.map((recipe) => [recipe.id, knowledgeScore(recipe, {
     pantry: data.pantry, pantryIndex, dietType: data.profile?.dietType, target, recentRecipeIds, space, now: data.now,
   })]));
-  const weights = coldStartWeights(query.weights ?? CONTEXT_WEIGHTS[query.context], interactedCount(data.model, data.userId));
+  const interacted = interactedCount(data.model, data.userId);
+  const weights = withPopularity(coldStartWeights(query.weights ?? CONTEXT_WEIGHTS[query.context], interacted), interacted, query.popularityWeight);
   const raw = {
     content: new Map([...content].map(([id, entry]) => [id, entry.score])),
     collaborative: new Map([...collaborative].map(([id, entry]) => [id, entry.score])),
     knowledge: new Map([...knowledge].map(([id, entry]) => [id, entry.score])),
+    popularity: data.model.popularity,
   };
   const picked = mmr(blendScores(ids, raw, weights), space, query.limit);
   const usedKinds = new Set<string>();
@@ -188,6 +214,7 @@ export function runRecommendation(data: EngineData, query: EngineQuery): { coldS
         content: content.get(entry.recipeId),
         collaborative: collaborative.get(entry.recipeId),
         knowledge: knowledge.get(entry.recipeId),
+        popularity: data.model.popularity.get(entry.recipeId),
         recipe: byId.get(entry.recipeId)!,
         recipeName: (id) => byId.get(id)?.name,
         dietType: data.profile?.dietType,
@@ -196,7 +223,7 @@ export function runRecommendation(data: EngineData, query: EngineQuery): { coldS
         hasHistory: data.interactions.length > 0,
       }, entry.components, weights);
       const reason = pickReason(candidatesForReason, usedKinds);
-      return item(entry.recipeId, entry.score, reason, entry.components);
+      return item(entry.recipeId, entry.score, reason, { ...zeroComponents(), ...entry.components });
     }),
   };
 }

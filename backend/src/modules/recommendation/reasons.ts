@@ -8,6 +8,9 @@ import type { KnowledgePart, KnowledgeScore, MealTarget } from "./knowledge-base
 // lớn nhất của thành phần đó (khối đặc trưng của thuật toán 1, tiêu chí của thuật toán 3, món "vì" của thuật toán 2).
 
 export type Algorithm = "content" | "collaborative" | "knowledge";
+/** Thành phần của bộ trộn: 3 thuật toán + độ phổ biến (chỉ có trọng số khi người dùng ít tương tác). */
+export type Component = Algorithm | "popularity";
+export const POPULARITY_REASON = "Nhiều người đang nấu món này";
 
 const MEAL_LABEL: Record<MealType, string> = { BREAKFAST: "bữa sáng", LUNCH: "bữa trưa", DINNER: "bữa tối", SNACK: "bữa phụ" };
 const DIET_LABEL: Partial<Record<DietType, string>> = { LOW_CARB: "ít tinh bột", HIGH_PROTEIN: "giàu đạm" };
@@ -23,6 +26,8 @@ export type ReasonInput = {
   dietType?: DietType | null;
   mealType?: MealType;
   target: MealTarget;
+  /** Điểm phổ biến thô của món (Σ r_ui của mọi người); > 0 mới viết được lý do phổ biến. */
+  popularity?: number;
   /** Có lịch sử ăn/đăng/thích: lý do nói "món bạn hay…"; chưa có thì vector chỉ từ hồ sơ, lý do nói theo hồ sơ. */
   hasHistory?: boolean;
 };
@@ -82,9 +87,11 @@ export const SECOND_REASON_MIN_SHARE = 0.25;
  * theo tỷ lệ (khối đặc trưng của thuật toán 1, tiêu chí của thuật toán 3). Mọi c_a = 0 (vd. chỉ một ứng viên) → dùng trọng số
  * ngữ cảnh thay cho c_a. Cao xuống thấp; không trùng chữ.
  */
-export function reasonCandidates(input: ReasonInput, contributions: Record<Algorithm, number>, weights: Record<Algorithm, number>) {
-  const total = Object.values(contributions).reduce((sum, value) => sum + value, 0);
-  const base = total > 0 ? contributions : weights;
+export function reasonCandidates(
+  input: ReasonInput, contributions: Partial<Record<Component, number>>, weights: Partial<Record<Component, number>>,
+) {
+  const total = Object.values(contributions).reduce((sum, value) => sum + (value ?? 0), 0);
+  const base = { content: 0, collaborative: 0, knowledge: 0, popularity: 0, ...(total > 0 ? contributions : weights) };
   const candidates: ReasonCandidate[] = [];
   const split = <K extends string>(prefix: string, share: number, parts: Record<K, number>, text: (key: K) => string | null) => {
     const positive = (Object.entries(parts) as Array<[K, number]>).filter(([, value]) => value > 0);
@@ -102,6 +109,7 @@ export function reasonCandidates(input: ReasonInput, contributions: Record<Algor
     const reason = collaborativeReason(input.collaborative, input.recipeName);
     if (reason) candidates.push({ text: reason, weight: base.collaborative, kind: "collaborative" });
   }
+  if ((input.popularity ?? 0) > 0 && base.popularity > 0) candidates.push({ text: POPULARITY_REASON, weight: base.popularity, kind: "popularity" });
   const seen = new Set<string>();
   return candidates.sort((a, b) => b.weight - a.weight).filter((candidate) => !seen.has(candidate.text) && seen.add(candidate.text));
 }

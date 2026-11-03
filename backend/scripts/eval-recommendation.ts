@@ -141,7 +141,8 @@ function simulate(seed: number): SimUser[] {
       userId: id, recipeId: sample().id, kind: pickKind(), at: new Date(START + random.next() * DAYS * DAY_MS), count: 1,
     })).sort((a, b) => a.at.getTime() - b.at.getTime());
     const { before: train, after: test } = splitLast(events);
-    const { before: trainInner, after: validation } = train.length >= 2 ? splitLast(train) : { before: train, after: [] };
+    // Kiểm định: 20% cuối của tập huấn luyện; người chỉ có 1 tương tác huấn luyện thành "người mới" của tập kiểm định.
+    const { before: trainInner, after: validation } = train.length >= 2 ? splitLast(train) : { before: [], after: train };
     const pantry = random.shuffle(allIngredients).slice(0, 6).map((name) => ({ name, daysLeft: Math.floor(random.next() * 12) }));
     return { id, index, group, profile, pantry, safe, events, train, test, trainInner, validation };
   });
@@ -153,12 +154,14 @@ type Method = { name: string; recommend: (user: SimUser, history: Interaction[],
 const pantryAt = (user: SimUser, now: Date): FitPantryItem[] => user.pantry.map(({ name, daysLeft }) => ({
   name, quantity: 500, unit: "G", expiryDate: new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()) + daysLeft * DAY_MS),
 }));
-const engine = (weights: Record<Algorithm, number>) => (user: SimUser, history: Interaction[], model: CollaborativeModel, now: Date, limit: number) => {
+const engine = (weights: Record<Algorithm, number>, popularityWeight = 0) => (
+  user: SimUser, history: Interaction[], model: CollaborativeModel, now: Date, limit: number,
+) => {
   const data: EngineData = {
     userId: user.id, recipes, profile: user.profile, pantry: pantryAt(user, now), interactions: history, model, now,
     today: { calories: 0, proteinG: 0, meals: 0 },
   };
-  return runRecommendation(data, { context: "for-you", limit, weights }).items.map((item) => item.recipe.id);
+  return runRecommendation(data, { context: "for-you", limit, weights, popularityWeight }).items.map((item) => item.recipe.id);
 };
 const popularity = (events: Interaction[]) => {
   const counts = new Map<string, number>();
@@ -255,13 +258,31 @@ const best = [...validation].sort((a, b) => b.result["R@10"] - a.result["R@10"] 
 // Quy tắc minh bạch: giữ bộ trọng số của kế hoạch trừ khi bộ khác hơn rõ (R@10 kiểm định trung bình cao hơn ít nhất 0,01).
 const chosen = best.result["R@10"] - plan.result["R@10"] >= 0.01 ? best : plan;
 
+// 1b. Thành phần phổ biến w_pop0 (khởi đầu lạnh), cùng quy tắc như bảng 3: giữ 0 (không có thành phần này) trừ khi giá trị khác
+//     có R@10 kiểm định trung bình (tất cả người) cao hơn ít nhất 0,01. Ghi thêm R@10 kiểm định theo nhóm 0 và 1–5 tương tác.
+const POPULARITY_CANDIDATES = [0, 0.1, 0.2, 0.3, 0.4, 0.5];
+const popularityValidation = POPULARITY_CANDIDATES.map((popularityWeight) => {
+  const evaluations = runs.map(({ users }) => evaluate(users, { name: `w_pop0 = ${popularityWeight}`, recommend: engine(chosen.weights, popularityWeight) }, "validation"));
+  return {
+    popularityWeight,
+    result: averageOf(evaluations.map((entry) => entry.summary)),
+    cold: mean(evaluations.flatMap((entry) => entry.buckets["0"])),
+    few: mean(evaluations.flatMap((entry) => entry.buckets["1–5"])),
+  };
+});
+const noPopularity = popularityValidation[0];
+const bestPopularity = [...popularityValidation].sort((a, b) => b.result["R@10"] - a.result["R@10"] || b.cold - a.cold)[0];
+const chosenPopularity = bestPopularity.result["R@10"] - noPopularity.result["R@10"] >= 0.01 ? bestPopularity : noPopularity;
+
 // 2. Đánh giá trên tập kiểm tra, mỗi seed một lần, rồi lấy trung bình (R@10 kèm độ lệch chuẩn giữa các seed).
 const methodNames = [
   "Ngẫu nhiên", "Phổ biến nhất", "Phổ biến nhất (không lọc an toàn)", "TT1 Nội dung", "TT2 Cộng tác", "TT3 Tri thức", `Bộ trộn (${chosen.name})`,
+  `Bộ trộn + phổ biến (w_pop0 = ${fmt(bestPopularity.popularityWeight, 1)}${bestPopularity === chosenPopularity ? "" : ", không đạt ngưỡng"})`,
 ];
 const perSeed = runs.map(({ seed, users }) => {
   const methods: Method[] = [
     ...baselineMethods(users.flatMap((user) => user.train), seed), ...algorithmMethods, { name: methodNames[6], recommend: engine(chosen.weights) },
+    { name: methodNames[7], recommend: engine(chosen.weights, bestPopularity.popularityWeight) },
   ];
   return methods.map((method) => evaluate(users, method, "test"));
 });
@@ -303,7 +324,32 @@ for (const set of validation) {
 }
 lines.push("");
 lines.push(`Quy tắc chọn: giữ bộ trọng số của kế hoạch trừ khi bộ khác có R@10 kiểm định trung bình cao hơn ít nhất 0,01. Bộ cao nhất: ${best.name} `
-  + `(${fmt(best.result["R@10"])} so với ${fmt(plan.result["R@10"])}) → chọn **${chosen.name}**. Thời gian chạy: ${((Date.now() - started) / 1000).toFixed(1)} s.`);
+  + `(${fmt(best.result["R@10"])} so với ${fmt(plan.result["R@10"])}) → chọn **${chosen.name}**.`);
+lines.push("");
+lines.push(`**Bảng 4 — Chọn w_pop0 của thành phần phổ biến (khởi đầu lạnh) trên tập kiểm định, với bộ trọng số đã chọn.**`);
+lines.push("");
+lines.push("| w_pop0 | R@10 kiểm định, tất cả | R@10 kiểm định, 0 tương tác | R@10 kiểm định, 1–5 tương tác | Đa dạng | Có đồ sắp hết hạn |");
+lines.push("|---|---|---|---|---|---|");
+for (const entry of popularityValidation) {
+  lines.push(`| ${fmt(entry.popularityWeight, 1)}${entry === chosenPopularity ? " **(chọn)**" : ""} | ${fmt(entry.result["R@10"])} | ${fmt(entry.cold)} | `
+    + `${fmt(entry.few)} | ${fmt(entry.result.diversity)} | ${pct(entry.result.expiring)} |`);
+}
+lines.push("");
+lines.push(`Quy tắc chọn (như bảng 3): giữ w_pop0 = 0 trừ khi giá trị khác có R@10 kiểm định (tất cả người) cao hơn ít nhất 0,01. Cao nhất: `
+  + `w_pop0 = ${fmt(bestPopularity.popularityWeight, 1)} (${fmt(bestPopularity.result["R@10"])} so với ${fmt(noPopularity.result["R@10"])}) → chọn `
+  + `**w_pop0 = ${fmt(chosenPopularity.popularityWeight, 1)}**.`);
+lines.push("");
+const before = results[6];
+const after = results[7];
+lines.push(`**Bảng 5 — Bộ trộn trước/sau khi thêm thành phần phổ biến w_pop0 = ${fmt(bestPopularity.popularityWeight, 1)} (giá trị tốt nhất ở bảng 4; `
+  + `tập kiểm tra, R@10 theo số tương tác).**`);
+lines.push("");
+lines.push(`| Nhóm | Trước (w_pop0 = 0) | Sau (w_pop0 = ${fmt(bestPopularity.popularityWeight, 1)}) |`);
+lines.push("|---|---|---|");
+for (const key of bucketKeys) lines.push(`| ${key} tương tác (${before.buckets[key].length} người) | ${fmt(mean(before.buckets[key]))} | ${fmt(mean(after.buckets[key]))} |`);
+lines.push(`| Tất cả | ${fmt(before.summary["R@10"])} | ${fmt(after.summary["R@10"])} |`);
+lines.push("");
+lines.push(`Thời gian chạy: ${((Date.now() - started) / 1000).toFixed(1)} s.`);
 
 const output = lines.join("\n");
 console.log(output);
