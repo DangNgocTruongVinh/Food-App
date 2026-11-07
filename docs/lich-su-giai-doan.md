@@ -560,4 +560,4 @@ Kiến trúc `backend/src/modules/recommendation/`: `safety.ts` (lọc cứng d�
 - Việc: dựng lại C0 trên nền `origin/giai-doan-3b` (`bd2ac97`), không dựa trên `main` cũ.
 - Phạm vi: tạo `AGENTS.md` và giữ nguyên lịch sử giai đoạn hiện hữu.
 - Commit: `fd76f8c` (`docs: add branch-specific Codex guidelines`).
-- Kiểm thử: backend 690/690, frontend 384/384; typecheck và build đạt.
+- Kiểm thử: backend 908/908, frontend 408/408; typecheck và build đạt.
