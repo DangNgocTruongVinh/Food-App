@@ -561,3 +561,7 @@ Kiến trúc `backend/src/modules/recommendation/`: `safety.ts` (lọc cứng d�
 - Phạm vi: tạo `AGENTS.md` và giữ nguyên lịch sử giai đoạn hiện hữu.
 - Commit: `fd76f8c` (`docs: add branch-specific Codex guidelines`).
 - Kiểm thử: backend 908/908, frontend 408/408; typecheck và build đạt.
+- C1: R2 đã hoàn thành trước bởi Claude (a98c4ac..bd2ac97), đã đối chiếu.
+- Đối chiếu: 4/4 mục ĐÃ XONG; không có mục THIẾU hoặc LÀM KHÁC.
+- Commit C1: ghi nhận đối chiếu R2 trên `codex-tuan-45`.
+- Kiểm thử C1: backend 908/908, frontend 408/408; typecheck và build đạt.
