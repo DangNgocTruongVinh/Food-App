@@ -565,3 +565,7 @@ Kiến trúc `backend/src/modules/recommendation/`: `safety.ts` (lọc cứng d�
 - Đối chiếu: 4/4 mục ĐÃ XONG; không có mục THIẾU hoặc LÀM KHÁC.
 - Commit C1: ghi nhận đối chiếu R2 trên `codex-tuan-45`.
 - Kiểm thử C1: backend 908/908, frontend 408/408; typecheck và build đạt.
+- C2: thêm món thủ công vào bữa bằng công thức có sẵn, chọn khẩu phần, xóa món và tính lại danh sách đi chợ.
+- Backend: kiểm quyền sở hữu, Zod, lọc an toàn theo hồ sơ và chia lượng theo `recipe.servings`; frontend có tìm kiếm, tải/trống/lỗi.
+- Commit C2: ghi nhận trong commit sau khi kiểm tra toàn bộ đạt.
+- Kiểm thử C2: backend 912/912, frontend 411/411; typecheck và build đạt.

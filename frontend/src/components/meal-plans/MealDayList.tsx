@@ -1,4 +1,4 @@
-import { Check, Repeat, TriangleAlert } from "lucide-react";
+import { Check, Plus, Repeat, Trash2, TriangleAlert } from "lucide-react";
 import { Link } from "react-router-dom";
 import { formatNumber } from "../../features/dashboard/dashboard.logic";
 import { alternativeMeals, mealLabels, mealViolation, orderDayMeals, planDayLabels } from "../../features/meal-plans/meal-plans.logic";
@@ -19,6 +19,9 @@ type MealDayListProps = {
   /** Bữa đang đổi món (nút bận). */
   swappingId: string | null;
   onSwap: (item: MealPlanItem) => void;
+  onAdd: (dayId: string, mealType: MealPlanItem["mealType"]) => void;
+  onDelete: (item: MealPlanItem) => void;
+  deletingId: string | null;
 };
 
 type EatenButtonProps = { item: MealPlanItem; pendingId: string | null; label: string; primary?: boolean } & Pick<MealDayListProps, "onToggle">;
@@ -40,7 +43,7 @@ function EatenButton({ item, pendingId, onToggle, label, primary }: EatenButtonP
 }
 
 /** Các bữa của ngày đang chọn (sáng, trưa, phụ, tối): ảnh, tên món (link chi tiết), thời gian, calo, "Đã ăn"; món cùng bữa ở ngày khác. */
-export function MealDayList({ plan, day, isToday, panelId, labelledBy, pendingId, onToggle, swappingId, onSwap }: MealDayListProps) {
+export function MealDayList({ plan, day, isToday, panelId, labelledBy, pendingId, onToggle, swappingId, onSwap, onAdd, onDelete, deletingId }: MealDayListProps) {
   const labels = planDayLabels(day);
   const meals = orderDayMeals(day.items);
   const nextId = meals.find((item) => !item.completed)?.id;
@@ -81,11 +84,13 @@ export function MealDayList({ plan, day, isToday, panelId, labelledBy, pendingId
                   )}
                 </div>
                 <div className="td-meal__action">
+                  {plan.status !== "COMPLETED" && <Button icon={<Plus />} onClick={() => onAdd(day.id, item.mealType)}>Thêm món</Button>}
                   {violation?.canSwap && (
                     <Button icon={<Repeat />} busy={swappingId === item.id} onClick={() => onSwap(item)} aria-label={`Đổi món: ${item.recipe.name}`}>
                       Đổi món
                     </Button>
                   )}
+                  {!item.completed && <Button variant="danger" icon={<Trash2 />} busy={deletingId === item.id} onClick={() => onDelete(item)}>Xóa món</Button>}
                   <EatenButton item={item} pendingId={pendingId} onToggle={onToggle} label={item.recipe.name} primary={item.id === nextId} />
                 </div>
                 {others.length > 0 && (

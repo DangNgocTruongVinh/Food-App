@@ -5,9 +5,10 @@ import { createAppQueryClient, retryUnlessClientError } from "../../api/query-cl
 import { queryKeys } from "../../api/query-keys";
 import type { MealPlan, MealPlanItem, NutritionProfile, Recipe } from "../../types";
 import {
-  deleteMealPlan, generateMealPlan, getMealPlan, listMealPlans, updateMealCompletion,
+  addMealPlanItem, deleteMealPlan, deleteMealPlanItem, generateMealPlan, getMealPlan, listMealPlans, updateMealCompletion,
   swapMealItem, updateMealPlanStatus, updateShoppingPurchased,
 } from "./meal-plans.api";
+import { addableRecipes, portionOptions } from "./add-meal.logic";
 import {
   alternativeMeals, dayNutrition, generateMealPlanLabel, generateSourceLabel, groupShoppingItems, initialDayIndex, latestMealPlanId,
   mealPlanDeleteConfirm, mealPlanPath, mealViolation, mealPlanSourceLabel, nextMealPlanIdAfterDelete, orderDayMeals, planDayLabels,
@@ -82,6 +83,17 @@ describe("Meal Plan and Shopping API adapters (no network)", () => {
     expect(JSON.parse(adapter.mock.calls[0][0].data)).toEqual({ startDate: "2026-10-01" });
   });
 
+  it("adds and deletes a meal item with the plan ownership in the URL", async () => {
+    const adapter = vi.fn(async (config) => ({ config, data: plan, status: 200, statusText: "OK", headers: {} }));
+    api.defaults.adapter = adapter;
+    await addMealPlanItem({ planId: plan.id, dayId: "day-a", mealType: "LUNCH", recipeId: "recipe-a", servings: 1.5 });
+    await deleteMealPlanItem("meal-a");
+    expect(adapter.mock.calls.map(([config]) => [config.method, config.url])).toEqual([
+      ["post", `/meal-plans/${plan.id}/items`], ["delete", "/meal-plans/items/meal-a"],
+    ]);
+    expect(JSON.parse(adapter.mock.calls[0][0].data)).toEqual({ dayId: "day-a", mealType: "LUNCH", recipeId: "recipe-a", servings: 1.5 });
+  });
+
   it("updates plan status with the existing PATCH contract", async () => {
     const adapter = vi.fn(async (config) => ({ config, data: plan, status: 200, statusText: "OK", headers: {} }));
     api.defaults.adapter = adapter;
@@ -126,10 +138,28 @@ describe("Meal Plan and Shopping API adapters (no network)", () => {
         meal: () => updateMealCompletion({ id: "meal-a", completed: true }),
         shopping: () => updateShoppingPurchased({ id: "shop-a", purchased: true }),
         delete: () => deleteMealPlan(plan.id),
+        add: () => addMealPlanItem({ planId: plan.id, dayId: "day-a", mealType: "LUNCH", recipeId: "recipe-a", servings: 1 }),
+        removeItem: () => deleteMealPlanItem("meal-a"),
       };
       await expect(actions[operation]()).rejects.toBe(failure);
     },
   );
+});
+
+describe("Manual meal selection", () => {
+  it("filters unsafe recipes, wrong meal types and searches by name or ingredient", () => {
+    const recipes = [
+      recipe({ id: "safe", name: "Đậu hũ rau", mealTypes: ["LUNCH"], fit: { safe: true, allergens: [], dislikedFoods: [], dietConflict: null } }),
+      recipe({ id: "unsafe", name: "Tôm rang", mealTypes: ["LUNCH"], fit: { safe: false, allergens: ["tôm"], dislikedFoods: [], dietConflict: null } }),
+      recipe({ id: "breakfast", name: "Cháo sáng", mealTypes: ["BREAKFAST"], fit: { safe: true, allergens: [], dislikedFoods: [], dietConflict: null }, ingredients: [{ id: "i", name: "gạo", quantity: 1, unit: "G", optional: false }] }),
+    ];
+    expect(addableRecipes(recipes, "LUNCH", "rau").map((item) => item.id)).toEqual(["safe"]);
+    expect(addableRecipes(recipes, "BREAKFAST", "").map((item) => item.id)).toEqual(["breakfast"]);
+  });
+
+  it("offers half-serving steps up to four portions", () => {
+    expect(portionOptions).toEqual([0.5, 1, 1.5, 2, 3, 4]);
+  });
 });
 
 describe("Meal Plan query definitions", () => {

@@ -185,6 +185,8 @@ export interface MealPlan {
   createdAt?: string;
   suggestions?: MealPlanSuggestion[];
 }
+/** POST /api/meal-plans/:id/items: thêm món có sẵn vào một ngày/bữa. */
+export interface AddMealPlanItemInput { planId: string; dayId: string; mealType: MealType; recipeId: string; servings: number }
 /** POST /api/meal-plans/items/:id/swap: thực đơn sau khi đổi, tên món cũ và món mới. */
 export interface MealSwapResult { plan: MealPlan; from: string; to: string }
 

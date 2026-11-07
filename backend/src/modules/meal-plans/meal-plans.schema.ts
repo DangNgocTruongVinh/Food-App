@@ -2,6 +2,7 @@ import { z } from "zod";
 
 const empty = z.object({});
 const idParams = z.object({ id: z.string().cuid() });
+const mealType = z.enum(["BREAKFAST", "LUNCH", "DINNER", "SNACK"]);
 
 export const listMealPlansSchema = z.object({ body: empty, params: empty, query: empty });
 export const getMealPlanSchema = z.object({ body: empty, params: idParams, query: empty });
@@ -10,6 +11,17 @@ export const generateMealPlanSchema = z.object({
   params: empty,
   query: empty,
 });
+export const addMealPlanItemSchema = z.object({
+  body: z.object({
+    dayId: z.string().cuid(),
+    mealType,
+    recipeId: z.string().cuid(),
+    servings: z.number().finite().positive().max(12).refine((value) => Number.isInteger(value * 2), "Khẩu phần phải theo bước 0,5."),
+  }).strict(),
+  params: idParams,
+  query: empty,
+});
+export const deleteMealPlanItemSchema = z.object({ body: empty, params: idParams, query: empty });
 export const updateMealPlanStatusSchema = z.object({
   body: z.object({ status: z.enum(["DRAFT", "ACTIVE", "COMPLETED"]) }),
   params: idParams,
@@ -49,6 +61,7 @@ export const deleteMealPlanSchema = z.object({ body: empty, params: idParams, qu
 
 export type MealPlanIdParams = z.infer<typeof idParams>;
 export type GenerateMealPlanInput = z.infer<typeof generateMealPlanSchema>["body"];
+export type AddMealPlanItemInput = z.infer<typeof addMealPlanItemSchema>["body"];
 export type UpdateMealPlanStatusInput = z.infer<typeof updateMealPlanStatusSchema>["body"];
 export type MealConsumptionBody = z.infer<typeof mealConsumption>;
 export type MealConsumptionInput = Extract<MealConsumptionBody, { mode: "deduct" }>;

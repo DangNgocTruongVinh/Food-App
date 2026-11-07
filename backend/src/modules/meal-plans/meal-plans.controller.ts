@@ -1,7 +1,7 @@
 import type { Request, Response } from "express";
 import type { AuthenticatedRequest, ValidatedRequest } from "../../types/http.js";
 import type {
-  GenerateMealPlanInput, MealPlanIdParams, UpdateMealCompletionInput,
+  AddMealPlanItemInput, GenerateMealPlanInput, MealPlanIdParams, UpdateMealCompletionInput,
   UpdateMealPlanStatusInput, UpdateShoppingPurchasedInput,
 } from "./meal-plans.schema.js";
 import { previewMealConsumption, updateMealCompletion } from "./meal-consumption.service.js";
@@ -9,6 +9,7 @@ import {
   deleteMealPlan, generateWeeklyPlan, getMealPlan, listMealPlans, updateMealPlanStatus,
 } from "./meal-plans.service.js";
 import { swapMealItem } from "./meal-swap.service.js";
+import { addMealPlanItem, deleteMealPlanItem } from "./meal-plan-items.service.js";
 import { updateShoppingPurchased } from "./shopping-purchase.service.js";
 
 const authenticatedUserId = (req: Request) => (req as AuthenticatedRequest).userId;
@@ -29,6 +30,20 @@ export async function generateMealPlanController(
   res: Response,
 ) {
   res.status(201).json(await generateWeeklyPlan(authenticatedUserId(req), req.body.startDate));
+}
+
+export async function addMealPlanItemController(
+  req: ValidatedRequest<AddMealPlanItemInput, MealPlanIdParams>,
+  res: Response,
+) {
+  res.status(201).json(await addMealPlanItem(authenticatedUserId(req), req.params.id, req.body));
+}
+
+export async function deleteMealPlanItemController(
+  req: ValidatedRequest<unknown, MealPlanIdParams>,
+  res: Response,
+) {
+  res.json(await deleteMealPlanItem(authenticatedUserId(req), req.params.id));
 }
 
 export async function updateMealPlanStatusController(

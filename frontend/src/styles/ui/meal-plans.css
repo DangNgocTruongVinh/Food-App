@@ -101,6 +101,23 @@
 .td-meal__warnings li { display: flex; align-items: flex-start; gap: var(--space-2); color: var(--ink); font-size: var(--fs-small); font-weight: 500; line-height: var(--lh-small); }
 .td-meal__warnings svg { width: 16px; height: 16px; flex: 0 0 auto; margin-top: 2px; color: var(--warn); stroke-width: 1.75; }
 
+/* Hộp chọn món có sẵn cho một bữa (C2). */
+.ui-dialog--form.td-add-meal { width: min(720px, calc(100vw - 2 * var(--gutter))); }
+.td-add-meal__search { display: grid; gap: var(--space-1); color: var(--muted); font-size: var(--fs-label); font-weight: 600; }
+.td-add-meal__search-input { position: relative; display: flex; align-items: center; }
+.td-add-meal__search-input svg { position: absolute; left: var(--space-3); width: 18px; height: 18px; color: var(--muted); pointer-events: none; }
+.td-add-meal__search-input .ui-input { width: 100%; padding-left: calc(var(--space-3) + 18px + var(--space-2)); }
+.td-add-meal__recipes { display: grid; gap: var(--space-2); max-height: min(46vh, 420px); margin: 0; padding: 0; overflow: auto; list-style: none; }
+.td-add-meal__recipe { display: grid; gap: var(--space-1); width: 100%; padding: var(--space-3); border: 1px solid var(--line); border-radius: var(--radius-field); color: var(--ink); background: var(--surface); text-align: left; cursor: pointer; }
+.td-add-meal__recipe:hover { border-color: var(--action-text); background: var(--surface-2); }
+.td-add-meal__recipe.is-selected { border-color: var(--action); box-shadow: inset 0 0 0 1px var(--action); }
+.td-add-meal__recipe-text { display: grid; gap: 2px; }
+.td-add-meal__recipe-text span { color: var(--ink-2); font-size: var(--fs-small); font-weight: 400; }
+.td-add-meal__recipe-tags { display: flex; flex-wrap: wrap; gap: var(--space-1); color: var(--action-text); font-size: var(--fs-label); }
+.td-add-meal__portion { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); }
+.td-add-meal__portion label { color: var(--muted); font-size: var(--fs-label); font-weight: 600; }
+.td-add-meal__portion .ui-input { width: 180px; }
+
 /* Món cùng bữa ở ngày khác (giữ chức năng trang cũ). */
 .td-meal__others { grid-column: 2 / -1; font-size: var(--fs-small); }
 .td-meal__others summary {
