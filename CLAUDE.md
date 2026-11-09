@@ -110,7 +110,7 @@ Biến môi trường mới phải thêm vào `backend/src/config/env.ts` (Zod) 
 
 **Codex và `AGENTS.md`:** `AGENTS.md` là luật cho Codex, phải giữ khớp với CLAUDE.md (sửa luật ở đây thì sửa cả bên đó). Hai quy tắc chặt hơn có chủ đích cho Codex: không tạo migration, hỏi trước khi `demo:reset`.
 
-**Việc còn lại (theo thứ tự, chốt 09/11/2026; đóng băng code 25/11):** ~~GĐ3c phần 1~~ (xong) → ~~R8~~ (xong, chờ kiểm thử) → C3 + GĐ4 (gộp) → bản 8 + tách Admin + chỉnh UX → dự phòng sửa lỗi → GĐ3c phần 2 (cần `OPENAI_API_KEY`, 1 lượt) → R10. Song song: Codex làm C5 (script ảnh món) và C6 (tài liệu quyển: ERD, API, đối chiếu UC), chỉ sửa `docs/` và `scripts/`. C4 Cộng đồng "Dành cho bạn" (= R9): tùy chọn, chỉ làm nếu còn thời gian. C2 đã gộp, chờ người dùng kiểm thử giao diện.
+**Việc còn lại (theo thứ tự, chốt 09/11/2026; đóng băng code 25/11):** ~~GĐ3c phần 1~~ (xong) → ~~R8~~ (xong, đã gộp main) → C3 + GĐ4 (gộp) → bản 8 + tách Admin + chỉnh UX → dự phòng sửa lỗi → GĐ3c phần 2 (cần `OPENAI_API_KEY`, 1 lượt) → R10. Song song: Codex làm C5 (script ảnh món) và C6 (tài liệu quyển: ERD, API, đối chiếu UC), chỉ sửa `docs/` và `scripts/`. C4 Cộng đồng "Dành cho bạn" (= R9): tùy chọn, chỉ làm nếu còn thời gian. C2 đã gộp, chờ người dùng kiểm thử giao diện.
 
 ### Quy tắc đã áp dụng, cần giữ khi làm tiếp
 - **Giao diện:** `docs/design/DESIGN.md` là nguồn sự thật; CSS mới ở `styles/ui/` chỉ dùng token (test `features/ui/design-rules.test.ts` chặn mã màu cứng, gradient, `backdrop-filter`, emoji, "→"; thư mục component mới phải thêm vào test); thành phần dùng chung ở `components/ui/` (Dialog, ConfirmDialog/`useConfirm`, Toast, States…); không dùng `window.confirm`. Phông phải đủ tiếng Việt (kiểm dấu chồng ố ặ ữ ỗ ẫ ợ ở mọi độ đậm, nghiêng; dự phòng Noto Serif/Noto Sans). Giao diện sẽ đổi sang "bản 8" sau GĐ3c.
@@ -123,7 +123,7 @@ Biến môi trường mới phải thêm vào `backend/src/config/env.ts` (Zod) 
 ### Giai đoạn 3b-R — còn lại
 Kiến trúc, công thức và quyết định: `docs/thuat-toan-goi-y.md` và `docs/lich-su-giai-doan.md` (mục GĐ3b-R).
 - [x] R2 — "Tất cả công thức" ẩn món vi phạm dị ứng/chế độ ăn mặc định + "Hiện tất cả" (món không thích chỉ gắn nhãn); thực đơn cũ cảnh báo bữa vi phạm + "Đổi món" (`POST /api/meal-plans/items/:id/swap`, server chọn món qua `safety.ts`); dòng nhắc dưới khung chat AI; gợi ý dinh dưỡng thực đơn tính ở backend (`meal-plan-suggestions.ts`, `overlapsFoodTerms`).
-- [x] R8 — Thực đơn không có OpenAI dùng `scoredPlan` (`meal-plan-scorer.ts`): thuật toán 3 + 0,3 × thuật toán 1, kho ảo (đồ sắp hết hạn không dùng quá lượng có, chỉ các ngày trước hạn), không lặp trong 3 ngày, calo ±35% mục tiêu bữa; đánh giá `npm run eval:mealplan -w backend` (mục 9 `docs/thuat-toan-goi-y.md`). Nhánh `giai-doan-r8`, chờ người dùng kiểm thử.
+- [x] R8 — Thực đơn không có OpenAI dùng `scoredPlan` (`meal-plan-scorer.ts`): thuật toán 3 + 0,3 × thuật toán 1, kho ảo (đồ sắp hết hạn không dùng quá lượng có, chỉ các ngày trước hạn), không lặp trong 3 ngày, calo ±35% mục tiêu bữa; đánh giá `npm run eval:mealplan -w backend` (mục 9 `docs/thuat-toan-goi-y.md`). Đã kiểm thử, gộp `main` 09/11/2026.
 - [ ] R9 — Cộng đồng: tab "Dành cho bạn" (backend + frontend) (trung bình). Làm dưới tên C4.
 - [ ] R10 — `docs/han-che.md`, `docs/cau-hoi-bao-ve.md`, cập nhật CLAUDE.md (dễ).
 
