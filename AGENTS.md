@@ -18,15 +18,16 @@
   trọng số hoặc thứ tự xếp hạng.
 - Không đổi `schema.prisma`, không tạo migration, không chạy
   `prisma migrate`/`db push`; database dùng chung với `main`.
+  (Quy tắc chặt hơn CLAUDE.md có chủ đích cho Codex: cần migration thì báo để Claude làm.)
 
 ## Bảo mật và vận hành
 
-- Nhánh gốc của công việc này là `giai-doan-3b`; `main` đang cũ.
-- Không merge vào `main`; mọi thay đổi chỉ làm trên `codex-tuan-45`.
+- Codex làm trên nhánh `codex/<tên việc>` tách từ `main`, không tự merge; Claude rà rồi mới merge.
 - Không commit `.env`, không in mật khẩu/khóa.
 - Không chạy `docker volume prune`, `docker system prune --volumes` hoặc
   `docker compose down -v`.
 - Không tự chạy `demo:reset`; nếu cần phải hỏi người dùng trước.
+  (Chặt hơn CLAUDE.md có chủ đích: CLAUDE.md cho Claude chạy ở cuối lượt khi demo chỉ có dữ liệu mẫu.)
 - Sau mọi thay đổi backend: chạy `docker compose up -d --build`, rồi thử đăng
   nhập tại `http://localhost:8080`.
 
