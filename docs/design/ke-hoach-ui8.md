@@ -3,8 +3,9 @@
 Lập 10/11/2026, **chờ duyệt**. Quy tắc: chỉ sửa giao diện (JSX/CSS/component trình bày); giữ nguyên API, `features/*.api.ts`,
 `*.queries.ts`, `*.logic.ts`, hook; mọi nút, liên kết, hộp thoại hiện có phải còn đủ. Ngoại lệ có chủ đích: điều hướng Admin (mục 3).
 
-> Cập nhật 10/11: trang **Đăng nhập** đã làm theo bản thiết kế riêng được duyệt (màu `--login-*`, Fraunces + Be Vietnam Pro) —
-> bản 8 **không** đổi trang này; khi bỏ Fraunces khỏi phần còn lại vẫn phải giữ tải Fraunces cho trang Đăng nhập.
+> **Trang Đăng nhập/Đăng ký đã xong theo thiết kế của người dùng (commit `6ee41a9`)**: chỉ Be Vietnam Pro, màu riêng `--login-*`,
+> bố cục 60/40. Lượt A (U1) và các lượt sau **không được sửa bố cục trang này** (`LoginPage.tsx`, `AuthForm.tsx`, `auth.css`);
+> token mới của bản 8 chỉ áp vào nếu khớp, không đổi giá trị `--login-*`. Test kiểm kê nút (mục 4) cũng phải giữ đủ các nút của trang.
 
 ## 1. DESIGN.md bản 3 (lượt U1)
 
