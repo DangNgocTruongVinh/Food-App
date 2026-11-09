@@ -41,8 +41,10 @@ services:
       ADMIN_EMAIL: ${ADMIN_EMAIL:-}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
       SEED_UPDATE_RECIPES: ${SEED_UPDATE_RECIPES:-false}
+    # Chỉ nghe trên máy chủ (127.0.0.1): người dùng và trình duyệt gọi API qua nginx của frontend (cổng 8080, /api/), nên không
+    # gọi thẳng được cổng 4000 từ máy khác để giả X-Forwarded-For lách rate limit.
     ports:
-      - "4000:4000"
+      - "127.0.0.1:4000:4000"
     depends_on:
       postgres:
         condition: service_healthy

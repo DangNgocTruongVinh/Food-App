@@ -110,7 +110,7 @@ Biến môi trường mới phải thêm vào `backend/src/config/env.ts` (Zod) 
 
 **Codex và `AGENTS.md`:** `AGENTS.md` là luật cho Codex, phải giữ khớp với CLAUDE.md (sửa luật ở đây thì sửa cả bên đó). Hai quy tắc chặt hơn có chủ đích cho Codex: không tạo migration, hỏi trước khi `demo:reset`.
 
-**Việc còn lại (theo thứ tự, chốt 09/11/2026; đóng băng code 25/11):** ~~GĐ3c phần 1~~ (xong) → ~~R8~~ (xong, đã gộp main) → ~~C3 + GĐ4~~ (xong trên `giai-doan-4`, chờ kiểm thử; còn quên mật khẩu qua email) → bản 8 + tách Admin + chỉnh UX → dự phòng sửa lỗi → GĐ3c phần 2 (cần `OPENAI_API_KEY`, 1 lượt) → R10. Song song: Codex làm C5 (script ảnh món) và C6 (tài liệu quyển: ERD, API, đối chiếu UC), chỉ sửa `docs/` và `scripts/`. C4 Cộng đồng "Dành cho bạn" (= R9): tùy chọn, chỉ làm nếu còn thời gian. C2 đã gộp, chờ người dùng kiểm thử giao diện.
+**Việc còn lại (theo thứ tự, chốt 09/11/2026; đóng băng code 25/11):** ~~GĐ3c phần 1~~ (xong) → ~~R8~~ (xong, đã gộp main) → ~~C3 + GĐ4~~ (xong, đã gộp main) → bản 8 + tách Admin + chỉnh UX → dự phòng sửa lỗi → GĐ3c phần 2 (cần `OPENAI_API_KEY`, 1 lượt) → R10. Song song: Codex làm C5 (script ảnh món) và C6 (tài liệu quyển: ERD, API, đối chiếu UC), chỉ sửa `docs/` và `scripts/`. C4 Cộng đồng "Dành cho bạn" (= R9): tùy chọn, chỉ làm nếu còn thời gian. C2 đã gộp, chờ người dùng kiểm thử giao diện.
 
 ### Quy tắc đã áp dụng, cần giữ khi làm tiếp
 - **Giao diện:** `docs/design/DESIGN.md` là nguồn sự thật; CSS mới ở `styles/ui/` chỉ dùng token (test `features/ui/design-rules.test.ts` chặn mã màu cứng, gradient, `backdrop-filter`, emoji, "→"; thư mục component mới phải thêm vào test); thành phần dùng chung ở `components/ui/` (Dialog, ConfirmDialog/`useConfirm`, Toast, States…); không dùng `window.confirm`. Phông phải đủ tiếng Việt (kiểm dấu chồng ố ặ ữ ỗ ẫ ợ ở mọi độ đậm, nghiêng; dự phòng Noto Serif/Noto Sans). Giao diện sẽ đổi sang "bản 8" sau GĐ3c.
@@ -139,8 +139,8 @@ Kế hoạch chi tiết: `docs/ke-hoach-gd3c.md`. Phần 1 (Tesseract trên serv
 
 ### Giai đoạn 4 — Bảo mật tài khoản
 - [x] Access token 15 phút + refresh token (cookie httpOnly, `SameSite=Strict`, `Path=/api/auth`; DB lưu SHA-256, bảng `RefreshToken`), xoay vòng, dùng lại token cũ → thu hồi cả chuỗi (trừ 10 giây cho hai tab, `REFRESH_RACE`); thu hồi khi đăng xuất, Admin khóa, đổi mật khẩu (`POST /api/auth/change-password`, `passwordChangedAt` chặn access token cũ); frontend tự làm mới một lần khi 401. Kèm C3: rate limit 20/phút/IP cho login/register, body JSON ≤ 100 KB, lỗi JSON 400/413. Chi tiết, việc còn lại: `docs/test-evidence/bao-mat.md`.
-- [ ] Quên/đặt lại mật khẩu qua email (token reset có hạn, dùng 1 lần).
-- [x] `npm audit fix` (không `--force`): 18 → 9. Còn 9 cần nâng bản lớn (prisma 7, zod 4, openai 7, sharp 0.35, vitest 5), **chờ người dùng quyết định** — bảng ở `docs/test-evidence/bao-mat.md`.
+- [x] ~~Quên/đặt lại mật khẩu qua email~~: không làm (quyết định 10/11), ghi vào hướng phát triển `docs/han-che.md` mục 2.
+- [x] `npm audit fix` (không `--force`): 18 → 9. Còn 9 cần nâng bản lớn (prisma 7, zod 4, openai 7, sharp 0.35, vitest 5): **không nâng** (quyết định 10/11), ghi rủi ro ở `docs/han-che.md` mục 1.1. Docker: cổng backend chỉ nghe `127.0.0.1:4000`.
 
 ### Giai đoạn 5 — Nghiệp vụ bổ sung
 - [x] ~~Tách dữ liệu tĩnh của Landing ra `features/landing/landing.data.ts`~~: làm trong UI-11 (Landing viết lại). (`MealPlansPage` đã tách vào `components/meal-plans/` khi làm lại giao diện ở UI-6.)

@@ -44,7 +44,7 @@ không lặp. Tổng: backend 1099/1099, frontend 432/432; typecheck, build đ�
 
 ## 3. Việc còn lại
 
-**Lỗ hổng `npm audit` cần nâng bản lớn (chưa nâng, chờ quyết định):**
+**Lỗ hổng `npm audit` cần nâng bản lớn — quyết định 10/11: không nâng trong đồ án, ghi ở `docs/han-che.md` mục 1.1:**
 
 | Gói | Mức | Cần nâng | Ghi chú |
 |---|---|---|---|
@@ -55,10 +55,10 @@ không lặp. Tổng: backend 1099/1099, frontend 432/432; typecheck, build đ�
 | `vitest` (+ `tinypool`, `@vitest/mocker`) | nghiêm trọng | Vitest 5 | Chỉ dùng khi chạy test (dev), không có trong bản chạy |
 
 **Khác:**
-- Quên/đặt lại mật khẩu qua email (Nodemailer + SMTP) chưa làm.
+- Quên/đặt lại mật khẩu qua email: không làm, ghi vào hướng phát triển (`docs/han-che.md` mục 2).
 - Rate limit lưu trong bộ nhớ một tiến trình: khởi động lại thì mất bộ đếm; chạy nhiều tiến trình cần kho chung (Redis).
-- Cổng 4000 của backend đang mở ra máy chủ trong `docker-compose.yml`; gọi thẳng cổng này với `TRUST_PROXY=1` thì giả được
-  `X-Forwarded-For` để lách rate limit. Khi triển khai thật nên bỏ `ports` của backend (chỉ đi qua nginx).
+- ~~Cổng 4000 của backend mở ra mạng~~: đã sửa, `docker-compose.yml` chỉ nghe `127.0.0.1:4000` (máy khác không gọi thẳng được để giả
+  `X-Forwarded-For`); trình duyệt gọi API qua nginx của frontend.
 - Access token vẫn lưu ở web storage (đọc được bằng JavaScript nếu có XSS); chỉ sống 15 phút. Phương án chặt hơn: giữ trong bộ nhớ và làm
   mới khi tải trang.
 - Đăng xuất chỉ thu hồi refresh token; access token đã phát còn dùng được tối đa 15 phút (khóa tài khoản và đổi mật khẩu thì bị chặn ngay).
