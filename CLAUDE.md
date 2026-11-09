@@ -103,7 +103,13 @@ Biến môi trường mới phải thêm vào `backend/src/config/env.ts` (Zod) 
 - GĐ3b lượt 1–7 — gzip; lịch sử kho `PantryTransaction`; "Đã ăn" → trừ kho (hộp xem trước) và hoàn lại; 8 nhóm thực phẩm chung, "Đã dùng hết"; "Đã mua" → kho (gộp/dùng lại/tạo mới, hạn ước tính) và hoàn lại; giao diện lịch sử kho; `demo:reset`.
 - GĐ3b-R: R1 (lọc an toàn + `fit` + ràng buộc AI + ma trận an toàn), R3 (thuật toán 1), R4 (thuật toán 2 + tài khoản mẫu `isSample`), R5 (thuật toán 3, bộ trộn, `GET /api/recommendations`), lịch sử mẫu demo, R6 (đánh giá mô phỏng, chốt trọng số), thành phần phổ biến (w_pop0 = 0,3), R7 (gợi ý trên giao diện).
 
-**Thứ tự làm việc (chốt 03/11/2026):** ~~R1 → R3 → R4 → R5 → R6 → R7 → R2~~ (R2 làm trước GĐ3c vì GĐ3c chờ key) → GĐ3c (quét hóa đơn) → R8 → (bản 8 + tách Admin) → GĐ4 → R9 → R10 → GĐ5 (chỉ còn "thêm món thủ công vào thực đơn"). Nhánh hiện tại: `giai-doan-3b` (chưa gộp `main`).
+- Codex (tuần 45, nhánh `codex-tuan-45`): C0 `AGENTS.md`, C1 đối chiếu R2, C2 thêm/xóa món thủ công (Claude sửa: đi chợ chỉ đổi theo phần của bữa, ngày trống/bữa phụ, nút ở chi tiết công thức).
+
+**Nhánh (09/11/2026):** `main` đã đầy đủ (gộp `giai-doan-3b` gồm GĐ3, GĐ3b, R1–R7, R2, C0–C2). Việc mới làm trên nhánh mới tách từ `main`; Codex làm trên `codex/<tên việc>`, không tự merge, Claude rà rồi mới merge.
+
+**Codex và `AGENTS.md`:** `AGENTS.md` là luật cho Codex, phải giữ khớp với CLAUDE.md (sửa luật ở đây thì sửa cả bên đó). Hai quy tắc chặt hơn có chủ đích cho Codex: không tạo migration, hỏi trước khi `demo:reset`.
+
+**Việc còn lại (theo thứ tự):** C2 thêm món thủ công (đã gộp, chờ người dùng kiểm thử giao diện) → C3 bảo mật nhẹ → C4 Cộng đồng "Dành cho bạn" (= R9) → C5 script ảnh món → C6 tài liệu quyển (ERD, API, đối chiếu UC) → GĐ3c quét hóa đơn → R8 → bản 8 + tách Admin → GĐ4 → R10.
 
 ### Quy tắc đã áp dụng, cần giữ khi làm tiếp
 - **Giao diện:** `docs/design/DESIGN.md` là nguồn sự thật; CSS mới ở `styles/ui/` chỉ dùng token (test `features/ui/design-rules.test.ts` chặn mã màu cứng, gradient, `backdrop-filter`, emoji, "→"; thư mục component mới phải thêm vào test); thành phần dùng chung ở `components/ui/` (Dialog, ConfirmDialog/`useConfirm`, Toast, States…); không dùng `window.confirm`. Phông phải đủ tiếng Việt (kiểm dấu chồng ố ặ ữ ỗ ẫ ợ ở mọi độ đậm, nghiêng; dự phòng Noto Serif/Noto Sans). Giao diện sẽ đổi sang "bản 8" sau GĐ3c.
@@ -117,7 +123,7 @@ Biến môi trường mới phải thêm vào `backend/src/config/env.ts` (Zod) 
 Kiến trúc, công thức và quyết định: `docs/thuat-toan-goi-y.md` và `docs/lich-su-giai-doan.md` (mục GĐ3b-R).
 - [x] R2 — "Tất cả công thức" ẩn món vi phạm dị ứng/chế độ ăn mặc định + "Hiện tất cả" (món không thích chỉ gắn nhãn); thực đơn cũ cảnh báo bữa vi phạm + "Đổi món" (`POST /api/meal-plans/items/:id/swap`, server chọn món qua `safety.ts`); dòng nhắc dưới khung chat AI; gợi ý dinh dưỡng thực đơn tính ở backend (`meal-plan-suggestions.ts`, `overlapsFoodTerms`).
 - [ ] R8 — Thực đơn dùng bộ chấm điểm 3 (+0,3 × thuật toán 1), thưởng đồ sắp hết hạn (tối đa 8, chỉ các ngày trước hạn), giữ mọi ràng buộc; đo trước/sau (trung bình–khó).
-- [ ] R9 — Cộng đồng: tab "Dành cho bạn" (backend + frontend) (trung bình).
+- [ ] R9 — Cộng đồng: tab "Dành cho bạn" (backend + frontend) (trung bình). Làm dưới tên C4.
 - [ ] R10 — `docs/han-che.md`, `docs/cau-hoi-bao-ve.md`, cập nhật CLAUDE.md (dễ).
 
 ### Giai đoạn 3c — Quét hóa đơn (OCR) (11–14/11)
@@ -133,7 +139,7 @@ Kiến trúc, công thức và quyết định: `docs/thuat-toan-goi-y.md` và `
 
 ### Giai đoạn 5 — Nghiệp vụ bổ sung
 - [x] ~~Tách dữ liệu tĩnh của Landing ra `features/landing/landing.data.ts`~~: làm trong UI-11 (Landing viết lại). (`MealPlansPage` đã tách vào `components/meal-plans/` khi làm lại giao diện ở UI-6.)
-- [ ] Thêm món thủ công vào thực đơn (chọn recipe → gắn vào MealPlanDay/MealType, cập nhật shopping list). Có nút "Thêm vào thực đơn" ở trang chi tiết công thức (chỗ đã để sẵn từ GĐ2).
+- [x] Thêm món thủ công vào thực đơn (C2): `POST /api/meal-plans/:id/items`, `DELETE /api/meal-plans/items/:id`; đi chợ chỉ đổi theo phần của bữa (`shoppingChangesForMeal`, dùng chung với "Đổi món"); thêm vào ngày trống/bữa phụ; nút "Thêm vào thực đơn" ở chi tiết công thức.
 - [ ] Lưu DB: favorite recipe, saved post, follow, lượng nước. (UI-7 đã gỡ nút "Lưu" bài và "Theo dõi" chỉ có state cục bộ; làm lại kèm API ở đây.)
 - [ ] Chủ đề/thành viên nổi bật từ dữ liệu thật. (UI-7 đã gỡ bản dữ liệu giả ở cột phải Cộng đồng.)
 - [ ] Xóa bài của tôi:
