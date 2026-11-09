@@ -22,3 +22,9 @@ skills-lock.json
 
 # Ảnh/kết quả khi chạy script nghiệm thu (npm run e2e:acceptance)
 e2e/output/
+
+# Cấu hình Claude Code và skill cài cục bộ (không thuộc mã nguồn dự án)
+.claude/
+
+# Bộ tài liệu thiết kế trang đăng nhập (chỉ dùng để tham khảo, không commit)
+nouri-login-handoff/
