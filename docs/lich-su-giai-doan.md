@@ -567,6 +567,13 @@ Kế hoạch và quyết định: `docs/ke-hoach-gd3c.md`.
 - [x] P1-1 (09/11) — backend: migration `ReceiptScan` + `PantryTransaction.receiptScanId`; Tesseract (`tesseract.js`, dữ liệu `vie`+`eng` đóng gói sẵn, một worker xếp hàng, quá 90 s thì hủy); bộ phân tích dòng và chuẩn hóa ở `services/receipt/`; API `/api/pantry/receipt-scans` (status, quét nền có tiến trình, commit một lần, hoàn tác lô); giới hạn `RECEIPT_SCAN_DAILY_LIMIT`; nhập/hoàn kho dùng chung với "Đã mua" (`modules/pantry/pantry-intake.ts`); `npm run eval:receipt -w backend`. Commit `fb0f094`.
 - [x] P1-2 (09/11) — frontend: nút ở Kho và Tổng quan, chụp/chọn ảnh, tiến trình 3 bước có Hủy (`POST /:id/cancel`), màn duyệt bắt buộc (sửa tên/số lượng/đơn vị/nhóm/hạn, đích trong kho, cảnh báo dị ứng, dòng bị bỏ khôi phục được, ghi rõ chế độ dự phòng), dải "Hoàn tác" sau khi lưu, "Hoàn tác hóa đơn" trong lịch sử kho. Kiểm trong container Alpine qua API (ảnh mẫu tự tạo): 4/4 dòng, khoảng 3 s. Chưa có ảnh hóa đơn thật nên chưa chạy `eval:receipt`.
 
+## Giai đoạn 4 + C3 — Bảo mật (nhánh `giai-doan-4`)
+
+- [x] (10/11) Refresh token: bảng `RefreshToken` (SHA-256, `familyId`, `remember`, `usedAt`, `revokedAt`) + `User.passwordChangedAt`, migration `20261110000000_add_refresh_tokens`; `modules/auth/refresh-token.service.ts`, cookie ở `auth.cookies.ts`; `POST /api/auth/refresh`, `/logout`, `/change-password`; access token 15 phút; thu hồi khi đăng xuất, Admin khóa (cùng transaction), đổi mật khẩu.
+- [x] Frontend: `api/client.ts` tự làm mới một lần khi 401 (dùng chung một lần làm mới, thử lại sau `REFRESH_RACE`), `withCredentials`; đăng xuất gọi API; đăng nhập gửi `remember`; form "Đổi mật khẩu" ở Hồ sơ (`components/profile/ChangePasswordForm.tsx`, `validateChangePassword`).
+- [x] C3: rate limit 20/phút/IP cho login/register (`middleware/rate-limit.ts`, `TRUST_PROXY`), JSON ≤ 100 KB, lỗi JSON hỏng 400 / quá lớn 413; rà 33 route ghi dữ liệu đều có Zod; `COOKIE_SECURE`; `npm audit fix` 18 → 9 (còn 9 cần bản lớn, chưa nâng).
+- Kiểm thử: backend 1099/1099, frontend 432/432; typecheck, build đạt. Tài liệu: `docs/test-evidence/bao-mat.md`.
+
 ## Việc do Codex làm
 
 - Việc: dựng lại C0 trên nền `origin/giai-doan-3b` (`bd2ac97`), không dựa trên `main` cũ.

@@ -202,7 +202,7 @@ describe("Auth session and query cache", () => {
 
 describe("Auth API adapters (no network)", () => {
   it.each([
-    ["login", "/auth/login", { email: "Demo@Nouri.vn", password: "Demo@123" }],
+    ["login", "/auth/login", { email: "Demo@Nouri.vn", password: "Demo@123", remember: false }],
     ["register", "/auth/register", { name: "  Minh Anh  ", email: "Demo@Nouri.vn", password: "Demo@123" }],
   ] as const)("preserves %s payload and unwraps the existing response", async (operation, path, input) => {
     const adapter = vi.fn(async (config) => ({ config, data: session, status: 200, statusText: "OK", headers: {} }));
@@ -217,7 +217,7 @@ describe("Auth API adapters (no network)", () => {
   it("propagates failed requests without accepting a session", async () => {
     const failure = new Error("offline");
     api.defaults.adapter = async () => { throw failure; };
-    await expect(login({ email: session.user.email, password: "Demo@123" })).rejects.toBe(failure);
+    await expect(login({ email: session.user.email, password: "Demo@123", remember: true })).rejects.toBe(failure);
     expect(getStoredUser()).toBeNull();
   });
 });

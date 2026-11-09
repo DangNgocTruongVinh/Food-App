@@ -21,11 +21,13 @@ export function AuthProvider({ children }: PropsWithChildren) {
   const value = useMemo<AuthContextValue>(() => ({
     user,
     login: async (email, password, remember = true) => {
-      setUser(acceptAuthSession(queryClient, await authApi.login({ email, password }), remember));
+      setUser(acceptAuthSession(queryClient, await authApi.login({ email, password, remember }), remember));
       saveRememberLoginPreference(remember);
     },
     register: async (name, email, password) => setUser(acceptAuthSession(queryClient, await authApi.register({ name, email, password }))),
     logout: () => {
+      // Thu hồi refresh token phía server (cookie gửi kèm tự động); lỗi mạng không chặn việc đăng xuất ở máy này.
+      void authApi.logout().catch(() => undefined);
       endAuthSession(queryClient);
       setUser(null);
       navigate("/login", { replace: true });

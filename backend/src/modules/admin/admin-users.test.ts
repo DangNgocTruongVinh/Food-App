@@ -15,6 +15,7 @@ const mocks = vi.hoisted(() => ({
   planCount: vi.fn(), planFindMany: vi.fn(),
   recipeCount: vi.fn(),
   auditCreate: vi.fn(),
+  refreshDeleteMany: vi.fn(), refreshUpdateMany: vi.fn(),
   transaction: vi.fn(),
 }));
 
@@ -27,6 +28,7 @@ vi.mock("../../lib/prisma.js", () => ({ prisma: {
   mealPlan: { count: mocks.planCount, findMany: mocks.planFindMany },
   recipe: { count: mocks.recipeCount },
   adminAuditLog: { create: mocks.auditCreate },
+  refreshToken: { deleteMany: mocks.refreshDeleteMany, updateMany: mocks.refreshUpdateMany },
   $transaction: mocks.transaction,
 } }));
 
@@ -55,6 +57,8 @@ beforeEach(() => {
   mocks.postDelete.mockResolvedValue({ id: postId });
   mocks.commentDelete.mockResolvedValue({ id: commentId });
   mocks.auditCreate.mockResolvedValue({ id: "log" });
+  mocks.refreshDeleteMany.mockResolvedValue({ count: 0 });
+  mocks.refreshUpdateMany.mockResolvedValue({ count: 1 });
   mocks.transaction.mockImplementation(tx.run);
 });
 
@@ -118,6 +122,15 @@ describe("Admin user management", () => {
     expect(mocks.userUpdate.mock.calls[0][0].data.lockedAt).toBeInstanceOf(Date);
     const unlocked = await request(app, `/api/admin/users/${userId}/lock`, { method: "PATCH", token: token(), body: { locked: false } });
     expect(unlocked.body).toEqual({ id: userId, lockedAt: null, locked: false });
+  });
+
+  it("revokes every refresh token of the account in the lock transaction (GĐ4), not on unlock", async () => {
+    await request(app, `/api/admin/users/${userId}/lock`, { method: "PATCH", token: token(), body: { locked: true } });
+    expect(mocks.refreshUpdateMany).toHaveBeenCalledWith({ where: { userId, revokedAt: null }, data: { revokedAt: expect.any(Date) } });
+    expect(tx.wasCalledInTransaction(mocks.transaction, mocks.refreshUpdateMany)).toBe(true);
+    mocks.refreshUpdateMany.mockClear();
+    await request(app, `/api/admin/users/${userId}/lock`, { method: "PATCH", token: token(), body: { locked: false } });
+    expect(mocks.refreshUpdateMany).not.toHaveBeenCalled();
   });
 
   it("keeps the first lock time when locking an already locked account", async () => {

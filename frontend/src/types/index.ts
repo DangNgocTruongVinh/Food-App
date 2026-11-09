@@ -9,6 +9,7 @@ export interface User { id: string; name: string; email: string; role?: "USER" |
 export interface AuthResponse { token: string; user: User }
 export interface LoginInput { email: string; password: string }
 export interface RegisterInput extends LoginInput { name: string }
+export interface ChangePasswordInput { currentPassword: string; newPassword: string }
 
 /** `isSample`: tài khoản mẫu minh họa (GĐ3b-R4), giao diện gắn nhãn "Tài khoản mẫu". */
 export interface CommunityAuthor { id: string; name: string; isSample?: boolean }

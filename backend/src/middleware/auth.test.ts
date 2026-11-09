@@ -102,10 +102,19 @@ describe("requireAdmin", () => {
 });
 
 describe("getAccountStatus", () => {
-  it("reads only role and lock state by primary key", async () => {
+  it("reads only role, lock state and password change time by primary key", async () => {
     const actual = await vi.importActual<typeof import("../services/account-status.service.js")>("../services/account-status.service.js");
-    mocks.findUser.mockResolvedValue({ role: "USER", lockedAt: null });
-    await expect(actual.getAccountStatus(userId)).resolves.toEqual({ role: "USER", lockedAt: null });
-    expect(mocks.findUser).toHaveBeenCalledWith({ where: { id: userId }, select: { role: true, lockedAt: true } });
+    mocks.findUser.mockResolvedValue({ role: "USER", lockedAt: null, passwordChangedAt: null });
+    await expect(actual.getAccountStatus(userId)).resolves.toEqual({ role: "USER", lockedAt: null, passwordChangedAt: null });
+    expect(mocks.findUser).toHaveBeenCalledWith({ where: { id: userId }, select: { role: true, lockedAt: true, passwordChangedAt: true } });
+  });
+
+  it("rejects an access token issued before the last password change (GĐ4), accepts one issued after", async () => {
+    const changedAt = new Date("2026-11-10T10:00:00.000Z");
+    const seconds = Math.floor(changedAt.getTime() / 1000);
+    accountStatus.mockResolvedValue({ role: "USER", lockedAt: null, passwordChangedAt: changedAt });
+    expect(await request(app, "/api/test/me", { token: token({ iat: seconds - 60 }) }))
+      .toEqual({ status: 401, body: { message: "Phiên đăng nhập không hợp lệ hoặc đã hết hạn." } });
+    expect((await request(app, "/api/test/me", { token: token({ iat: seconds }) })).status).toBe(200);
   });
 });

@@ -17,4 +17,6 @@ export interface AuthenticatedRequest extends Request {
 export interface TokenPayload {
   sub: string;
   email: string;
+  /** Thời điểm phát (giây), jsonwebtoken tự thêm. */
+  iat?: number;
 }

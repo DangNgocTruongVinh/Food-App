@@ -33,6 +33,10 @@ services:
       CLOUDINARY_API_KEY: ${CLOUDINARY_API_KEY:-}
       CLOUDINARY_API_SECRET: ${CLOUDINARY_API_SECRET:-}
       RECEIPT_SCAN_DAILY_LIMIT: ${RECEIPT_SCAN_DAILY_LIMIT:-}
+      # Bảo mật (GĐ4): request đi qua nginx của frontend (1 proxy) → rate limit đọc IP thật từ X-Forwarded-For.
+      TRUST_PROXY: 1
+      # Để trống = cookie refresh token Secure (production); đặt false nếu mở demo bằng http qua IP mạng LAN.
+      COOKIE_SECURE: ${COOKIE_SECURE:-}
       # Chỉ seed đọc (tạo tài khoản Admin, cập nhật lại món gốc); để trống thì seed bỏ qua.
       ADMIN_EMAIL: ${ADMIN_EMAIL:-}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}

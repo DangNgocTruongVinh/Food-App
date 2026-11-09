@@ -1,10 +1,14 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { type FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { getApiError } from "../api/client";
+import { ChangePasswordForm } from "../components/profile/ChangePasswordForm";
 import { ProfileForm } from "../components/profile/ProfileForm";
 import { ProfileTargetsCard } from "../components/profile/ProfileTargetsCard";
 import { ErrorState, LoadingState, Skeleton, Toast } from "../components/ui";
 import { useAuth } from "../contexts/AuthContext";
+import * as authApi from "../features/auth/auth.api";
+import { type ChangePasswordValues, emptyChangePassword, validateChangePassword } from "../features/auth/auth.logic";
+import { renewAuthSession } from "../features/auth/auth.session";
 import type { ProfileFormValues } from "../features/profile/profile.api";
 import { bodyMassIndex, emptyProfileForm, isProfileDirty, toProfileForm, validateProfileForm } from "../features/profile/profile.logic";
 import { invalidateProfileQueries, profileMutations, profileQueries } from "../features/profile/profile.queries";
@@ -58,6 +62,30 @@ export default function ProfilePage() {
   };
   const update = <K extends keyof ProfileFormValues>(key: K, value: ProfileFormValues[K]) => setForm((current) => ({ ...current, [key]: value }));
 
+  // Đổi mật khẩu (GĐ4): phiên mới thay phiên cũ ngay trên thiết bị này.
+  const [password, setPassword] = useState<ChangePasswordValues>(emptyChangePassword);
+  const [passwordSubmitted, setPasswordSubmitted] = useState(false);
+  const [passwordError, setPasswordError] = useState("");
+  const passwordErrors = passwordSubmitted ? validateChangePassword(password) : {};
+  const changePassword = useMutation({
+    mutationFn: () => authApi.changePassword({ currentPassword: password.currentPassword, newPassword: password.newPassword }),
+    onSuccess: (session) => {
+      syncUser(renewAuthSession(session));
+      setPassword(emptyChangePassword);
+      setPasswordSubmitted(false);
+      setPasswordError("");
+      setToast("Đã đổi mật khẩu. Các thiết bị khác đã được đăng xuất.");
+    },
+    onError: (error) => setPasswordError(`Chưa đổi được mật khẩu: ${getApiError(error)}`),
+  });
+  const submitPassword = (event: FormEvent) => {
+    event.preventDefault();
+    setPasswordSubmitted(true);
+    setPasswordError("");
+    if (Object.keys(validateChangePassword(password)).length) return;
+    changePassword.mutate();
+  };
+
   return (
     <div className="hs-view">
       <header className="hs-hero">
@@ -82,6 +110,14 @@ export default function ProfilePage() {
             saveError={saveError}
             onChange={update}
             onSubmit={submit}
+          />
+          <ChangePasswordForm
+            values={password}
+            errors={passwordErrors}
+            saving={changePassword.isPending}
+            saveError={passwordError}
+            onChange={(key, value) => setPassword((current) => ({ ...current, [key]: value }))}
+            onSubmit={submitPassword}
           />
         </div>
       )}
