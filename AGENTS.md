@@ -19,6 +19,8 @@
 - Không đổi `schema.prisma`, không tạo migration, không chạy
   `prisma migrate`/`db push`; database dùng chung với `main`.
   (Quy tắc chặt hơn CLAUDE.md có chủ đích cho Codex: cần migration thì báo để Claude làm.)
+- C5 (script ảnh món) và C6 (tài liệu quyển) chạy song song với Claude: chỉ sửa trong `docs/` và `scripts/`
+  (kể cả `backend/scripts/`), không đụng mã ứng dụng.
 
 ## Bảo mật và vận hành
 

@@ -109,7 +109,7 @@ Biến môi trường mới phải thêm vào `backend/src/config/env.ts` (Zod) 
 
 **Codex và `AGENTS.md`:** `AGENTS.md` là luật cho Codex, phải giữ khớp với CLAUDE.md (sửa luật ở đây thì sửa cả bên đó). Hai quy tắc chặt hơn có chủ đích cho Codex: không tạo migration, hỏi trước khi `demo:reset`.
 
-**Việc còn lại (theo thứ tự):** C2 thêm món thủ công (đã gộp, chờ người dùng kiểm thử giao diện) → C3 bảo mật nhẹ → C4 Cộng đồng "Dành cho bạn" (= R9) → C5 script ảnh món → C6 tài liệu quyển (ERD, API, đối chiếu UC) → GĐ3c quét hóa đơn → R8 → bản 8 + tách Admin → GĐ4 → R10.
+**Việc còn lại (theo thứ tự, chốt 09/11/2026; đóng băng code 25/11):** GĐ3c phần 1 (không cần key, tối đa 2 lượt) → R8 → C3 + GĐ4 (gộp) → bản 8 + tách Admin + chỉnh UX → dự phòng sửa lỗi → GĐ3c phần 2 (cần `OPENAI_API_KEY`, 1 lượt) → R10. Song song: Codex làm C5 (script ảnh món) và C6 (tài liệu quyển: ERD, API, đối chiếu UC), chỉ sửa `docs/` và `scripts/`. C4 Cộng đồng "Dành cho bạn" (= R9): tùy chọn, chỉ làm nếu còn thời gian. C2 đã gộp, chờ người dùng kiểm thử giao diện.
 
 ### Quy tắc đã áp dụng, cần giữ khi làm tiếp
 - **Giao diện:** `docs/design/DESIGN.md` là nguồn sự thật; CSS mới ở `styles/ui/` chỉ dùng token (test `features/ui/design-rules.test.ts` chặn mã màu cứng, gradient, `backdrop-filter`, emoji, "→"; thư mục component mới phải thêm vào test); thành phần dùng chung ở `components/ui/` (Dialog, ConfirmDialog/`useConfirm`, Toast, States…); không dùng `window.confirm`. Phông phải đủ tiếng Việt (kiểm dấu chồng ố ặ ữ ỗ ẫ ợ ở mọi độ đậm, nghiêng; dự phòng Noto Serif/Noto Sans). Giao diện sẽ đổi sang "bản 8" sau GĐ3c.
@@ -126,7 +126,8 @@ Kiến trúc, công thức và quyết định: `docs/thuat-toan-goi-y.md` và `
 - [ ] R9 — Cộng đồng: tab "Dành cho bạn" (backend + frontend) (trung bình). Làm dưới tên C4.
 - [ ] R10 — `docs/han-che.md`, `docs/cau-hoi-bao-ve.md`, cập nhật CLAUDE.md (dễ).
 
-### Giai đoạn 3c — Quét hóa đơn (OCR) (11–14/11)
+### Giai đoạn 3c — Quét hóa đơn (OCR)
+Kế hoạch chi tiết: `docs/ke-hoach-gd3c.md`. Phần 1 (Tesseract trên server, parser, chuẩn hóa, màn duyệt, hoàn tác lô, đánh giá) làm trước; phần 2 (OpenAI Vision) làm khi có key.
 - [ ] Nút "Quét hóa đơn" nhận ảnh hóa đơn hoặc nhãn sản phẩm; OpenAI đọc ảnh với structured output; trả về tên, số lượng, đơn vị (thuộc `FoodUnit`), nhóm, hạn dùng nếu đọc được, nếu không thì gợi ý hạn ước tính theo nhóm.
 - [ ] Màn hình xem lại bắt buộc: sửa/bỏ từng dòng trước khi thêm hàng loạt vào kho; ghi lịch sử kho nguồn "quét ảnh".
 - [ ] Không lưu ảnh; giới hạn định dạng/dung lượng; không có `OPENAI_API_KEY` thì khóa nút và giải thích.
