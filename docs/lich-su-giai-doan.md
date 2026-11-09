@@ -554,3 +554,18 @@ Kiến trúc `backend/src/modules/recommendation/`: `safety.ts` (lọc cứng d�
   - Tổng quan: món hôm nay và "Gợi ý cho bạn" (đổi tên từ "Món hợp với bạn") hiện lý do của bộ trộn (dashboard API, ngữ cảnh today). Công thức: "Dành cho bạn" dùng ngữ cảnh for-you (thẻ lớn giữ đối chiếu kho + lý do, thẻ nhỏ dùng thẻ chung). Chi tiết món: `RecipeSuggestions` — "Món tương tự" (similar, 4 món) và "Người khác cũng nấu" (also-cooked, ẩn khi rỗng hoặc lỗi); ẩn cả hai với món đã ngừng sử dụng. Kho: "Nấu gì từ kho?" ngữ cảnh pantry; nút "Gợi ý món" (biểu tượng, tên đọc "Gợi ý món dùng …") trên dòng sắp hết hạn mở `PantrySuggestDialog` (`Dialog` sẵn có) liệt kê món dùng đúng thực phẩm đó. Cộng đồng: `authorSelect` trả `isSample` (không có email), `PostCard` gắn nhãn "Tài khoản mẫu".
   - Gỡ mã/CSS cũ không còn dùng: `recommendedRecipePantryNote`, `.dash-rec*`, `.dash-recs__grid`, `.recipes-side*`, `.kho-cook__*`.
   - Playwright 30/30 với demo (lịch sử mẫu) ở 1440/390 sáng (`docs/design/screens/GD3b-R7/`): mỗi khu có món kèm lý do; "Món tương tự" không gồm chính món; "Người khác cũng nấu" có món (nhờ tài khoản mẫu); hộp thoại Gợi ý món chỉ món dùng Đậu hũ, bấm mở chi tiết; 8 nhãn "Tài khoản mẫu"; API cộng đồng không có email; đang tải, lỗi (Thử lại, "Người khác cũng nấu" ẩn), trống; không cuộn ngang; không lỗi JS. Cuối lượt `demo:reset` (demo chỉ có dữ liệu mẫu).
+
+## Việc do Codex làm
+
+- Việc: dựng lại C0 trên nền `origin/giai-doan-3b` (`bd2ac97`), không dựa trên `main` cũ.
+- Phạm vi: tạo `AGENTS.md` và giữ nguyên lịch sử giai đoạn hiện hữu.
+- Commit: `fd76f8c` (`docs: add branch-specific Codex guidelines`).
+- Kiểm thử: backend 908/908, frontend 408/408; typecheck và build đạt.
+- C1: R2 đã hoàn thành trước bởi Claude (a98c4ac..bd2ac97), đã đối chiếu.
+- Đối chiếu: 4/4 mục ĐÃ XONG; không có mục THIẾU hoặc LÀM KHÁC.
+- Commit C1: ghi nhận đối chiếu R2 trên `codex-tuan-45`.
+- Kiểm thử C1: backend 908/908, frontend 408/408; typecheck và build đạt.
+- C2: thêm món thủ công vào bữa bằng công thức có sẵn, chọn khẩu phần, xóa món và tính lại danh sách đi chợ.
+- Backend: kiểm quyền sở hữu, Zod, lọc an toàn theo hồ sơ và chia lượng theo `recipe.servings`; frontend có tìm kiếm, tải/trống/lỗi.
+- Commit C2: ghi nhận trong commit sau khi kiểm tra toàn bộ đạt.
+- Kiểm thử C2: backend 912/912, frontend 411/411; typecheck và build đạt.

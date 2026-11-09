@@ -1,9 +1,9 @@
-import { CircleCheck, Hourglass, Info, Share2, TriangleAlert } from "lucide-react";
+import { CalendarPlus, CircleCheck, Hourglass, Info, Share2, TriangleAlert } from "lucide-react";
 import {
   calorieShareLabel, expiringHint, forYouWarnings, missingIngredientItems, pantryCoverage, unitMismatchNote,
 } from "../../features/recipes/recipe-for-you.logic";
 import type { RecipeForYou } from "../../types";
-import { ButtonLink, Card, ErrorState, Skeleton } from "../ui";
+import { Button, ButtonLink, Card, ErrorState, Skeleton } from "../ui";
 
 /** Cảnh báo theo hồ sơ (dị ứng, món không thích, không hợp chế độ ăn), nền --warn-bg, đặt ngay dưới tên món. */
 export function RecipeForYouAlerts({ data }: { data?: RecipeForYou }) {
@@ -25,10 +25,12 @@ type RecipeForYouCardProps = {
   onRetry: () => void;
   /** Đường dẫn chia sẻ lên cộng đồng (ẩn với món đã ngừng sử dụng — khi đó cả khối không hiện). */
   sharePath: string;
+  /** Mở hộp "Thêm vào thực đơn" (chọn thực đơn, ngày, bữa, khẩu phần). */
+  onAddToPlan: () => void;
 };
 
 /** Cột phải (dính khi cuộn): có trong kho x/y, còn thiếu, % calo; nút chia sẻ. Lỗi/đang tải chỉ ảnh hưởng khối này. */
-export default function RecipeForYouCard({ data, isLoading, isError, onRetry, sharePath }: RecipeForYouCardProps) {
+export default function RecipeForYouCard({ data, isLoading, isError, onRetry, sharePath, onAddToPlan }: RecipeForYouCardProps) {
   return (
     <Card as="aside" className="recipe-fit" aria-labelledby="recipe-fit-title" aria-busy={isLoading}>
       <h2 id="recipe-fit-title" className="ui-section-title">Dành cho bạn</h2>
@@ -39,7 +41,7 @@ export default function RecipeForYouCard({ data, isLoading, isError, onRetry, sh
       ) : (
         <RecipeForYouContent data={data} />
       )}
-      {/* GĐ5: nút "Thêm vào thực đơn" đặt cạnh nút chia sẻ. */}
+      <Button className="recipe-fit__share" variant="primary" icon={<CalendarPlus />} block onClick={onAddToPlan}>Thêm vào thực đơn</Button>
       <ButtonLink className="recipe-fit__share" to={sharePath} icon={<Share2 />} block>Chia sẻ lên cộng đồng</ButtonLink>
     </Card>
   );

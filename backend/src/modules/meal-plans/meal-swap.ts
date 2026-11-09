@@ -1,10 +1,11 @@
-import type { FoodUnit, MealType } from "@prisma/client";
+import type { FoodUnit, MealType, Prisma } from "@prisma/client";
+import { foodCategoryOf } from "../../services/food-category.js";
 import { normalizeFoodText } from "../../services/dietary.service.js";
 import { requiredQuantity } from "../../services/pantry-consumption.js";
 import { safeRecipes, type SafetyProfile, type SafetyRecipe } from "../recommendation/safety.js";
 
-// "Đổi món" một bữa trong thực đơn đã tạo (GĐ3b-R2), không truy cập DB: chọn món thay và tính phần thay đổi
-// của danh sách đi chợ. Dùng khi người dùng thêm dị ứng/đổi chế độ ăn sau khi tạo thực đơn.
+// "Đổi món" một bữa trong thực đơn đã tạo (GĐ3b-R2): chọn món thay và tính phần thay đổi của danh sách đi chợ
+// (thuần, không truy cập DB; riêng `applyShoppingChanges` ghi qua transaction được truyền vào). Dùng khi người dùng thêm dị ứng/đổi chế độ ăn sau khi tạo thực đơn.
 
 export type SwapRecipe = SafetyRecipe & {
   id: string;
@@ -55,21 +56,36 @@ function mealNeeds(recipe: Pick<SwapRecipe, "servings" | "ingredients">, serving
   return needs;
 }
 
+/** Ghi các thay đổi danh sách đi chợ trong transaction đang mở; chỉ đụng dòng chưa mua. */
+export async function applyShoppingChanges(tx: Prisma.TransactionClient, mealPlanId: string, changes: ShoppingChange[]) {
+  for (const change of changes) {
+    if (change.kind === "update") {
+      await tx.shoppingItem.updateMany({ where: { id: change.id, purchased: false }, data: { quantity: change.quantity } });
+    } else if (change.kind === "delete") {
+      await tx.shoppingItem.deleteMany({ where: { id: change.id, purchased: false } });
+    } else {
+      await tx.shoppingItem.create({ data: { mealPlanId, name: change.name, quantity: change.quantity, unit: change.unit, category: foodCategoryOf(change.name) } });
+    }
+  }
+}
+
+export type MealShare = { recipe: Pick<SwapRecipe, "servings" | "ingredients">; servings: number };
+
 /**
- * Điều chỉnh danh sách đi chợ khi đổi món (ước lượng, không tính lại cả tuần): dòng chưa mua của món cũ giảm đúng
- * lượng của bữa đó (về 0 thì xóa); nguyên liệu món mới cộng vào dòng chưa mua cùng tên + đơn vị, chưa có dòng thì
- * tạo dòng phần còn thiếu so với kho hiện tại. Dòng đã mua giữ nguyên (đã vào kho, có lịch sử kho).
+ * Điều chỉnh danh sách đi chợ theo phần của một bữa (ước lượng, không tính lại cả tuần nên bữa đã ăn không bao giờ
+ * quay lại danh sách): bữa bị bỏ (`removed`) làm dòng chưa mua giảm đúng lượng của bữa (về 0 thì xóa); bữa được thêm
+ * (`added`) cộng vào dòng chưa mua cùng tên + đơn vị, chưa có dòng thì tạo dòng phần còn thiếu so với kho hiện tại.
+ * Dòng đã mua giữ nguyên (đã vào kho, có lịch sử kho). Dùng cho đổi món (bỏ + thêm), thêm món, xóa món.
  */
-export function shoppingChangesForSwap(
-  oldRecipe: Pick<SwapRecipe, "servings" | "ingredients">,
-  newRecipe: Pick<SwapRecipe, "servings" | "ingredients">,
-  servings: number,
+export function shoppingChangesForMeal(
+  change: { removed?: MealShare; added?: MealShare },
   shopping: ShoppingLine[],
   pantry: PantryLine[],
 ): ShoppingChange[] {
   const open = new Map(shopping.filter((line) => !line.purchased).map((line) => [keyOf(line.name, line.unit), { ...line }]));
   const touched = new Set<string>();
-  for (const [key, need] of mealNeeds(oldRecipe, servings)) {
+  const removed = change.removed ? mealNeeds(change.removed.recipe, change.removed.servings) : new Map() as ReturnType<typeof mealNeeds>;
+  for (const [key, need] of removed) {
     const line = open.get(key);
     if (!line) continue;
     line.quantity = round1(line.quantity - need.quantity);
@@ -78,7 +94,8 @@ export function shoppingChangesForSwap(
   const created: ShoppingChange[] = [];
   const pantryByKey = new Map<string, number>();
   pantry.forEach((item) => pantryByKey.set(keyOf(item.name, item.unit), (pantryByKey.get(keyOf(item.name, item.unit)) ?? 0) + item.quantity));
-  for (const [key, need] of mealNeeds(newRecipe, servings)) {
+  const added = change.added ? mealNeeds(change.added.recipe, change.added.servings) : new Map() as ReturnType<typeof mealNeeds>;
+  for (const [key, need] of added) {
     const line = open.get(key);
     if (line) {
       line.quantity = round1(Math.max(0, line.quantity) + need.quantity);
@@ -94,3 +111,8 @@ export function shoppingChangesForSwap(
   });
   return [...changed, ...created];
 }
+
+/** Đổi món: bỏ phần của món cũ, thêm phần của món mới, cùng khẩu phần của bữa. */
+export const shoppingChangesForSwap = (
+  oldRecipe: MealShare["recipe"], newRecipe: MealShare["recipe"], servings: number, shopping: ShoppingLine[], pantry: PantryLine[],
+) => shoppingChangesForMeal({ removed: { recipe: oldRecipe, servings }, added: { recipe: newRecipe, servings } }, shopping, pantry);

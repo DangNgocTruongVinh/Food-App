@@ -1,6 +1,6 @@
 import { api } from "../../api/client";
 import type {
-  ConsumptionPreview, FoodUnit, MealCompletionResult, MealPlan, MealPlanStatus, MealSwapResult, ShoppingPurchaseResult,
+  AddMealPlanItemInput, ConsumptionPreview, FoodUnit, MealCompletionResult, MealPlan, MealPlanStatus, MealSwapResult, ShoppingPurchaseResult,
 } from "../../types";
 
 export type MealConsumption = { mode: "deduct"; lines: Array<{ ingredientId: string; quantity: number; unit: FoodUnit }> } | { mode: "none" };
@@ -18,6 +18,14 @@ export async function getMealPlan(id: string) {
 
 export async function generateMealPlan(startDate: string) {
   return (await api.post<MealPlan>("/meal-plans/generate", { startDate })).data;
+}
+
+export async function addMealPlanItem({ planId, dayId, mealType, recipeId, servings }: AddMealPlanItemInput) {
+  return (await api.post<MealPlan>(`/meal-plans/${planId}/items`, { dayId, mealType, recipeId, servings })).data;
+}
+
+export async function deleteMealPlanItem(id: string) {
+  return (await api.delete<MealPlan>(`/meal-plans/items/${id}`)).data;
 }
 
 export async function updateMealPlanStatus({ id, status }: MealPlanStatusUpdate) {

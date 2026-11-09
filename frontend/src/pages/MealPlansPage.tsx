@@ -5,6 +5,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { getApiError } from "../api/client";
 import { queryKeys } from "../api/query-keys";
+import { AddMealDialog } from "../components/meal-plans/AddMealDialog";
+import { defaultMealType } from "../features/meal-plans/add-meal.logic";
 import { dayTabId, MealDayTabs } from "../components/meal-plans/MealDayTabs";
 import { ConsumeMealDialog } from "../components/meal-plans/ConsumeMealDialog";
 import { MealDayList } from "../components/meal-plans/MealDayList";
@@ -26,10 +28,11 @@ import {
 import { profileQueries } from "../features/profile/profile.queries";
 import { useMealConsumption } from "../features/meal-plans/useMealConsumption";
 import { useShoppingPurchase } from "../features/meal-plans/useShoppingPurchase";
-import type { MealPlan } from "../types";
+import type { MealPlan, MealPlanItem } from "../types";
 import { type DateDraftStatus, formatDisplayDate } from "../utils/date";
 
 type MealPlansLocationState = { notice?: string } | null;
+type AddMealTarget = { dayId: string; mealType: MealPlanItem["mealType"] };
 const DAY_PANEL_ID = "td-day-panel";
 
 export default function MealPlansPage() {
@@ -47,6 +50,8 @@ export default function MealPlansPage() {
   const [dateStatus, setDateStatus] = useState<DateDraftStatus>("valid");
   const [error, setError] = useState("");
   const [toast, setToast] = useState("");
+  const [addMealTarget, setAddMealTarget] = useState<AddMealTarget | null>(null);
+  const [addMealError, setAddMealError] = useState("");
   const clearToast = useCallback(() => setToast(""), []);
   const notice = (location.state as MealPlansLocationState)?.notice ?? "";
 
@@ -120,6 +125,27 @@ export default function MealPlansPage() {
     },
     onError: (err) => setError(getApiError(err)),
   });
+  const addMeal = useMutation({
+    ...mealPlanMutations.addItem(),
+    onSuccess: (plan) => {
+      queryClient.setQueryData(queryKeys.mealPlans.detail(plan.id), plan);
+      invalidateMealPlanQueries(queryClient, true);
+      setAddMealTarget(null);
+      setAddMealError("");
+      setToast("Đã thêm món vào bữa.");
+    },
+    onError: (err) => setAddMealError(getApiError(err)),
+  });
+  const removeMeal = useMutation({
+    ...mealPlanMutations.removeItem(),
+    onSuccess: (plan) => {
+      queryClient.setQueryData(queryKeys.mealPlans.detail(plan.id), plan);
+      invalidateMealPlanQueries(queryClient, true);
+      setError("");
+      setToast("Đã xóa món khỏi bữa.");
+    },
+    onError: (err) => setError(getApiError(err)),
+  });
   const remove = useMutation({
     ...mealPlanMutations.remove(),
     onSuccess: (_result, deletedId) => {
@@ -135,6 +161,17 @@ export default function MealPlansPage() {
   const confirmRemove = async (plan: MealPlan) => {
     if (!(await confirm({ ...mealPlanDeleteConfirm(plan), tone: "danger" }))) return;
     remove.mutate(plan.id, { onSuccess: () => setToast(`Đã xóa “${plan.name}”.`) });
+  };
+
+  const confirmRemoveMeal = async (item: MealPlanItem) => {
+    if (!(await confirm({
+      title: `Xóa món “${item.recipe.name}”?`,
+      description: "Món sẽ được bỏ khỏi bữa và danh sách đi chợ sẽ được tính lại.",
+      confirmLabel: "Xóa món",
+      cancelLabel: "Giữ lại",
+      tone: "danger",
+    }))) return;
+    removeMeal.mutate(item.id);
   };
 
   const createForm = (
@@ -227,6 +264,9 @@ export default function MealPlansPage() {
             pendingId={consumption.pendingId}
             swappingId={swap.isPending ? swap.variables ?? null : null}
             onSwap={(item) => swap.mutate(item.id)}
+            onAdd={(target) => { setAddMealError(""); setAddMealTarget({ dayId: target.id, mealType: defaultMealType(target.items) }); }}
+            onDelete={(item) => void confirmRemoveMeal(item)}
+            deletingId={removeMeal.isPending ? removeMeal.variables ?? null : null}
             onToggle={(item, completed) => {
               const meal = { id: item.id, recipeName: item.recipe.name };
               if (completed) consumption.open(meal);
@@ -257,6 +297,15 @@ export default function MealPlansPage() {
           error={consumption.confirmError}
           onClose={consumption.close}
           onConfirm={consumption.confirm}
+        />
+      )}
+      {addMealTarget && (
+        <AddMealDialog
+          initialMealType={addMealTarget.mealType}
+          busy={addMeal.isPending}
+          error={addMealError}
+          onClose={() => { if (!addMeal.isPending) setAddMealTarget(null); }}
+          onSubmit={(input) => addMeal.mutate({ ...input, planId: selected.id, dayId: addMealTarget.dayId })}
         />
       )}
       {toastRegion}
