@@ -211,7 +211,7 @@ describe("Pantry history is written with every stock change, in the same transac
     await request(app, "/api/pantry", { method: "POST", token: token(), body: createBody });
     expect(historyData()).toEqual([{
       userId, pantryItemId: itemId, itemName: "Ức gà", unit: "G", delta: 500, quantityAfter: 500, source: "MANUAL_ADD",
-      note: null, mealPlanItemId: null, shoppingItemId: null, reversalOfId: null,
+      note: null, mealPlanItemId: null, shoppingItemId: null, receiptScanId: null, reversalOfId: null,
     }]);
     expect(tx.wasCalledInTransaction(mocks.transaction, mocks.create)).toBe(true);
     expect(tx.wasCalledInTransaction(mocks.transaction, mocks.createHistory)).toBe(true);

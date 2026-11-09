@@ -16,6 +16,8 @@ export const envSchema = z.object({
   CLOUDINARY_CLOUD_NAME: optionalText,
   CLOUDINARY_API_KEY: optionalText,
   CLOUDINARY_API_SECRET: optionalText,
+  // Quét hóa đơn (GĐ3c): số lần quét tối đa mỗi người mỗi ngày (giờ Việt Nam), tính cả lần đọc lỗi.
+  RECEIPT_SCAN_DAILY_LIMIT: z.preprocess((value) => (value === "" ? undefined : value), z.coerce.number().int().min(1).max(1000).default(10)),
 }).refine(
   (value) => {
     const set = [value.CLOUDINARY_CLOUD_NAME, value.CLOUDINARY_API_KEY, value.CLOUDINARY_API_SECRET].filter(Boolean).length;

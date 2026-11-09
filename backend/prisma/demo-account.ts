@@ -93,6 +93,8 @@ export async function resetDemoAccount(
       notifications: (await tx.notification.deleteMany({ where: { OR: [{ userId }, { relatedId: { in: postIds } }] } })).count,
       chatMessages: (await tx.chatMessage.deleteMany({ where: { userId } })).count,
       pantryTransactions: (await tx.pantryTransaction.deleteMany({ where: { userId } })).count,
+      // Lần quét hóa đơn (GĐ3c): xóa để số lần quét trong ngày của demo về 0.
+      receiptScans: (await tx.receiptScan.deleteMany({ where: { userId } })).count,
       mealPlans: (await tx.mealPlan.deleteMany({ where: { userId } })).count,
       likes: (await tx.communityLike.deleteMany({ where: { userId } })).count,
       comments: (await tx.communityComment.deleteMany({ where: { authorId: userId } })).count,

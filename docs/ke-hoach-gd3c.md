@@ -46,7 +46,8 @@ interface ReceiptOcrProvider { id: ReceiptProviderId; isAvailable(): boolean; re
   `2 x 15.000`, `0,512 kg`, `1.25KG`, `SL: 3`, giá `15.000`/`15,000`/`15000đ`.
 - Tách tên, số lượng, đơn vị (`kg/g/gr/l/ml/lít/cái/quả/trái/bó/gói/hộp/chai/lon/vỉ` → `FoodUnit`; `hộp/chai/lon/vỉ/gói` →
   `PACKAGE`, `quả/trái/cái/bó` → `ITEM`), giá (chỉ để kiểm tra, **không lưu** — `PantryItem` không có cột giá).
-  Trong tên có dung tích/khối lượng ("Sữa tươi 180ml") thì giữ trong tên, đơn vị theo SL.
+  Trong tên có quy cách khối lượng/thể tích × số hộp ("Sữa tươi 180ml" × 4) → tổng lượng 720 ml, tên bỏ quy cách (khớp kho và
+  công thức theo ml; đổi khi làm P1-1).
 - Bỏ dòng (kèm lý do, vẫn hiện ở màn duyệt để khôi phục): tổng tiền, tạm tính, VAT/thuế, giảm giá/khuyến mãi, tiền
   khách đưa/thối, thẻ/QR, túi nilon, phí/phí giao, điểm tích lũy, đầu/cuối hóa đơn (tên cửa hàng, địa chỉ, MST, SĐT, giờ).
 - Nhãn sản phẩm: bắt `HSD|EXP|Hạn sử dụng|Best before` + ngày (dd/mm/yy, dd.mm.yyyy) → `expiryDate` đọc được.
@@ -125,7 +126,7 @@ Module mới `backend/src/modules/receipt-scan/` (route → controller → servi
 
 | Lượt | Nội dung | Kiểm tra |
 |---|---|---|
-| P1-1 (backend) | migration `ReceiptScan`; provider interface + Mock + Tesseract; parser, normalize, aliases; 4 endpoint, quota, ownership, commit một lần, hoàn tác; script eval + file mẫu | test thuần (parser ~30 ca), test API (ownership, 429, commit 2 lần, undo sau khi đã dùng bớt) |
+| P1-1 (backend) — **xong 09/11** | migration `ReceiptScan`; provider interface + Mock + Tesseract; parser, normalize, aliases; 4 endpoint, quota, ownership, commit một lần, hoàn tác; script eval + file mẫu | test thuần (parser ~30 ca), test API (ownership, 429, commit 2 lần, undo sau khi đã dùng bớt) |
 | P1-2 (frontend) | nút, hộp quét, màn duyệt, lịch sử/hoàn tác, logic + test; chạy eval Tesseract trên bộ ảnh | test frontend, build; không Playwright |
 | P2 (cần key) | OpenAIVisionProvider (Responses API + Zod), prompt, chọn chế độ, đọc lại bằng Tesseract khi lỗi; eval OpenAI cùng bộ ảnh, so bảng | test với MockProvider/mock OpenAI; eval thật |
 

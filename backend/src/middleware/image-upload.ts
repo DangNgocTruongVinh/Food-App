@@ -45,3 +45,19 @@ export function communityPostImagesUpload(req: Request, res: Response, next: Nex
     next();
   });
 }
+
+/**
+ * Ảnh hóa đơn để quét (GĐ3c, trường "image"): KHÔNG cần Cloudinary vì ảnh chỉ đọc trong bộ nhớ rồi bỏ.
+ * Quá 5 MB, không có file hoặc không phải jpg/png/webp (theo byte đầu file) → 422.
+ */
+export function receiptImageUpload(req: Request, res: Response, next: NextFunction) {
+  singleImage(req, res, (error: unknown) => {
+    if (error instanceof multer.MulterError) {
+      return next(new HttpError(422, error.code === "LIMIT_FILE_SIZE" ? "Ảnh vượt quá 5 MB." : "Tệp tải lên không hợp lệ."));
+    }
+    if (error) return next(error);
+    if (!req.file) return next(new HttpError(422, "Chưa chọn ảnh."));
+    if (!detectImageFormat(req.file.buffer)) return next(new HttpError(422, "Chỉ nhận ảnh JPG, PNG hoặc WEBP."));
+    next();
+  });
+}

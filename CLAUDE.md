@@ -128,6 +128,8 @@ Kiến trúc, công thức và quyết định: `docs/thuat-toan-goi-y.md` và `
 
 ### Giai đoạn 3c — Quét hóa đơn (OCR)
 Kế hoạch chi tiết: `docs/ke-hoach-gd3c.md`. Phần 1 (Tesseract trên server, parser, chuẩn hóa, màn duyệt, hoàn tác lô, đánh giá) làm trước; phần 2 (OpenAI Vision) làm khi có key.
+- [x] P1-1 backend: migration `ReceiptScan` + `PantryTransaction.receiptScanId`; Tesseract (`vie+eng` đóng gói sẵn) + Mock; parser/chuẩn hóa (`services/receipt/`); API `/api/pantry/receipt-scans` (status, quét nền có tiến trình, commit một lần, hoàn tác lô; `RECEIPT_SCAN_DAILY_LIMIT`); nhập/hoàn kho dùng chung với "Đã mua" (`pantry-intake.ts`); `npm run eval:receipt -w backend`.
+- [ ] P1-2 frontend: nút, hộp quét có tiến trình, màn duyệt, lịch sử/hoàn tác; chạy eval Tesseract trên ảnh thật.
 - [ ] Nút "Quét hóa đơn" nhận ảnh hóa đơn hoặc nhãn sản phẩm; OpenAI đọc ảnh với structured output; trả về tên, số lượng, đơn vị (thuộc `FoodUnit`), nhóm, hạn dùng nếu đọc được, nếu không thì gợi ý hạn ước tính theo nhóm.
 - [ ] Màn hình xem lại bắt buộc: sửa/bỏ từng dòng trước khi thêm hàng loạt vào kho; ghi lịch sử kho nguồn "quét ảnh".
 - [ ] Không lưu ảnh; giới hạn định dạng/dung lượng; không có `OPENAI_API_KEY` thì khóa nút và giải thích.

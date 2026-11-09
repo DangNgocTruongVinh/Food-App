@@ -15,10 +15,13 @@
     "db:seed": "tsx prisma/seed.ts",
     "demo:reset": "node dist/prisma/demo-reset.js",
     "demo:reset:dev": "tsx prisma/demo-reset.ts",
-    "eval:recommend": "tsx scripts/eval-recommendation.ts"
+    "eval:recommend": "tsx scripts/eval-recommendation.ts",
+    "eval:receipt": "tsx scripts/eval-receipt-ocr.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.5.0",
+    "@tesseract.js-data/eng": "^1.0.0",
+    "@tesseract.js-data/vie": "^1.0.0",
     "bcryptjs": "^3.0.2",
     "cloudinary": "^2.11.0",
     "cors": "^2.8.5",
@@ -30,6 +33,7 @@
     "openai": "^5.0.0",
     "prisma": "^6.5.0",
     "sharp": "^0.34.5",
+    "tesseract.js": "^7.0.0",
     "zod": "^3.24.2"
   },
   "devDependencies": {

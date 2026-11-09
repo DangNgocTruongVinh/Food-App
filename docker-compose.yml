@@ -32,6 +32,7 @@ services:
       CLOUDINARY_CLOUD_NAME: ${CLOUDINARY_CLOUD_NAME:-}
       CLOUDINARY_API_KEY: ${CLOUDINARY_API_KEY:-}
       CLOUDINARY_API_SECRET: ${CLOUDINARY_API_SECRET:-}
+      RECEIPT_SCAN_DAILY_LIMIT: ${RECEIPT_SCAN_DAILY_LIMIT:-}
       # Chỉ seed đọc (tạo tài khoản Admin, cập nhật lại món gốc); để trống thì seed bỏ qua.
       ADMIN_EMAIL: ${ADMIN_EMAIL:-}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}

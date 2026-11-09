@@ -13,6 +13,7 @@ export type PantryChange = {
   note?: string | null;
   mealPlanItemId?: string | null;
   shoppingItemId?: string | null;
+  receiptScanId?: string | null;
   reversalOfId?: string | null;
 };
 
@@ -34,6 +35,7 @@ export function recordPantryChange(db: HistoryClient, change: PantryChange) {
       note: change.note ?? null,
       mealPlanItemId: change.mealPlanItemId ?? null,
       shoppingItemId: change.shoppingItemId ?? null,
+      receiptScanId: change.receiptScanId ?? null,
       reversalOfId: change.reversalOfId ?? null,
     },
   });
@@ -70,7 +72,7 @@ export async function listPantryTransactions(userId: string, query: PantryTransa
       take: query.pageSize,
       select: {
         id: true, pantryItemId: true, itemName: true, unit: true, delta: true, quantityAfter: true, source: true, note: true,
-        reversalOfId: true, reversedAt: true, createdAt: true,
+        reversalOfId: true, reversedAt: true, createdAt: true, receiptScanId: true,
         mealPlanItem: { select: { id: true, mealType: true, recipe: { select: { name: true } }, day: { select: { date: true, mealPlanId: true } } } },
         shoppingItem: { select: { id: true, name: true, mealPlanId: true } },
       },
