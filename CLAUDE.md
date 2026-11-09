@@ -103,13 +103,14 @@ Biến môi trường mới phải thêm vào `backend/src/config/env.ts` (Zod) 
 - GĐ3b lượt 1–7 — gzip; lịch sử kho `PantryTransaction`; "Đã ăn" → trừ kho (hộp xem trước) và hoàn lại; 8 nhóm thực phẩm chung, "Đã dùng hết"; "Đã mua" → kho (gộp/dùng lại/tạo mới, hạn ước tính) và hoàn lại; giao diện lịch sử kho; `demo:reset`.
 - GĐ3b-R: R1 (lọc an toàn + `fit` + ràng buộc AI + ma trận an toàn), R3 (thuật toán 1), R4 (thuật toán 2 + tài khoản mẫu `isSample`), R5 (thuật toán 3, bộ trộn, `GET /api/recommendations`), lịch sử mẫu demo, R6 (đánh giá mô phỏng, chốt trọng số), thành phần phổ biến (w_pop0 = 0,3), R7 (gợi ý trên giao diện).
 
+- GĐ3c phần 1 (P1-1 backend Tesseract + parser + API quét/hoàn tác lô; P1-2 giao diện quét, màn duyệt, hoàn tác): xong, người dùng đã kiểm thử, gộp `main` 09/11/2026. Phần 2 (OpenAI Vision) chờ `OPENAI_API_KEY`.
 - Codex (tuần 45, nhánh `codex-tuan-45`): C0 `AGENTS.md`, C1 đối chiếu R2, C2 thêm/xóa món thủ công (Claude sửa: đi chợ chỉ đổi theo phần của bữa, ngày trống/bữa phụ, nút ở chi tiết công thức).
 
-**Nhánh (09/11/2026):** `main` đã đầy đủ (gộp `giai-doan-3b` gồm GĐ3, GĐ3b, R1–R7, R2, C0–C2). Việc mới làm trên nhánh mới tách từ `main`; Codex làm trên `codex/<tên việc>`, không tự merge, Claude rà rồi mới merge.
+**Nhánh (09/11/2026):** `main` đã đầy đủ (gộp `giai-doan-3b` gồm GĐ3, GĐ3b, R1–R7, R2, C0–C2; gộp `giai-doan-3c` gồm GĐ3c phần 1). Việc mới làm trên nhánh mới tách từ `main`; Codex làm trên `codex/<tên việc>`, không tự merge, Claude rà rồi mới merge.
 
 **Codex và `AGENTS.md`:** `AGENTS.md` là luật cho Codex, phải giữ khớp với CLAUDE.md (sửa luật ở đây thì sửa cả bên đó). Hai quy tắc chặt hơn có chủ đích cho Codex: không tạo migration, hỏi trước khi `demo:reset`.
 
-**Việc còn lại (theo thứ tự, chốt 09/11/2026; đóng băng code 25/11):** GĐ3c phần 1 (không cần key, tối đa 2 lượt) → R8 → C3 + GĐ4 (gộp) → bản 8 + tách Admin + chỉnh UX → dự phòng sửa lỗi → GĐ3c phần 2 (cần `OPENAI_API_KEY`, 1 lượt) → R10. Song song: Codex làm C5 (script ảnh món) và C6 (tài liệu quyển: ERD, API, đối chiếu UC), chỉ sửa `docs/` và `scripts/`. C4 Cộng đồng "Dành cho bạn" (= R9): tùy chọn, chỉ làm nếu còn thời gian. C2 đã gộp, chờ người dùng kiểm thử giao diện.
+**Việc còn lại (theo thứ tự, chốt 09/11/2026; đóng băng code 25/11):** ~~GĐ3c phần 1~~ (xong) → R8 → C3 + GĐ4 (gộp) → bản 8 + tách Admin + chỉnh UX → dự phòng sửa lỗi → GĐ3c phần 2 (cần `OPENAI_API_KEY`, 1 lượt) → R10. Song song: Codex làm C5 (script ảnh món) và C6 (tài liệu quyển: ERD, API, đối chiếu UC), chỉ sửa `docs/` và `scripts/`. C4 Cộng đồng "Dành cho bạn" (= R9): tùy chọn, chỉ làm nếu còn thời gian. C2 đã gộp, chờ người dùng kiểm thử giao diện.
 
 ### Quy tắc đã áp dụng, cần giữ khi làm tiếp
 - **Giao diện:** `docs/design/DESIGN.md` là nguồn sự thật; CSS mới ở `styles/ui/` chỉ dùng token (test `features/ui/design-rules.test.ts` chặn mã màu cứng, gradient, `backdrop-filter`, emoji, "→"; thư mục component mới phải thêm vào test); thành phần dùng chung ở `components/ui/` (Dialog, ConfirmDialog/`useConfirm`, Toast, States…); không dùng `window.confirm`. Phông phải đủ tiếng Việt (kiểm dấu chồng ố ặ ữ ỗ ẫ ợ ở mọi độ đậm, nghiêng; dự phòng Noto Serif/Noto Sans). Giao diện sẽ đổi sang "bản 8" sau GĐ3c.
