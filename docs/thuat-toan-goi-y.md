@@ -261,8 +261,18 @@ Giới hạn dưới của lệch calo ngày với bộ món hiện có (mỗi b
 
 - Bộ tạo mới tốt hơn bộ cũ ở cả ba mục tiêu: lệch calo thấp hơn, dùng được nhiều đồ sắp hết hạn hơn trước khi hỏng, ít bữa lặp hơn;
   không có vi phạm an toàn (cả hai đều chạy sau lọc an toàn; ma trận `dietary-matrix.test.ts` có thêm nguồn `scoredPlan`).
-- Khoảng calo ±35% là đánh đổi có chủ đích: giảm lệch calo nhưng bớt một phần lượng đồ sắp hết hạn dùng được (dòng "không có khoảng
-  calo"), vì món dùng đồ sắp hết hạn không phải lúc nào cũng hợp calo của bữa. Vẫn hơn hẳn bộ cũ ở cả hai chỉ số.
+- **Ràng buộc calo ±35% (chốt giữ).** Hai dòng "Bộ tạo mới" trong bảng chỉ khác nhau ở ràng buộc này:
+
+  | Bộ tạo mới | Lệch calo ngày | Lượng đồ sắp hết hạn dùng trước hạn |
+  |---|---|---|
+  | Có ràng buộc ±35% **(dùng)** | 25,2% | 54,7% |
+  | Không có ràng buộc | 28,0% | 59,2% |
+
+  Lý do giữ: (1) thực đơn tuần là kế hoạch ăn uống, nên khớp năng lượng theo bữa là yêu cầu của chức năng, còn dùng đồ sắp hết hạn là
+  ưu tiên trong số các món đã hợp bữa; (2) bỏ ràng buộc thì món dùng đồ sắp hết hạn có thể lệch calo nhiều so với bữa (ví dụ món 600 kcal
+  cho bữa sáng 450 kcal), lỗi dễ thấy với người dùng có mục tiêu giảm cân/tăng cơ; (3) có ràng buộc vẫn hơn hẳn bộ cũ ở cả hai chỉ số
+  (lệch calo 32,6% → 25,2%; đồ sắp hết hạn 44,1% → 54,7%); (4) ±35% dùng lại σ của `f_dd`, không thêm tham số mới, và chỉ áp dụng
+  khi có món trong khoảng (không có thì bỏ qua). Phần đồ sắp hết hạn bị mất (4,5 điểm) là đánh đổi được chấp nhận.
 - Lệch calo còn lớn chủ yếu do bộ món: khẩu phần cố định 1, món nhiều nhất khoảng 660 kcal; với mục tiêu trên 2.000 kcal/ngày và
   3 bữa thì không đạt được (xem giới hạn dưới). Điều chỉnh khẩu phần theo mục tiêu là hướng phát triển.
 - "Bữa lặp trong 3 ngày" của bộ mới không về 0 vì có hồ sơ chỉ còn ít món cho một bữa (ví dụ thuần chay ăn 4 bữa: 3 món bữa phụ).
