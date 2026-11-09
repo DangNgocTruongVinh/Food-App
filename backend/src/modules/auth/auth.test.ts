@@ -1,22 +1,27 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import authRoutes from "./auth.routes.js";
+import authRoutes, { credentialsLimit } from "./auth.routes.js";
 import { request, testApp } from "../../test/http-test-utils.js";
 
 const mocks = vi.hoisted(() => ({
   secret: "nouri-test-only-secret-at-least-32-characters",
-  findUser: vi.fn(), createUser: vi.fn(),
+  findUser: vi.fn(), createUser: vi.fn(), createRefresh: vi.fn(),
 }));
 vi.mock("../../config/env.js", () => ({ env: { JWT_SECRET: mocks.secret } }));
 vi.mock("../../lib/prisma.js", () => ({ prisma: {
   user: { findUnique: mocks.findUser, create: mocks.createUser },
+  refreshToken: { create: mocks.createRefresh },
 } }));
 
 const app = testApp("/api/auth", authRoutes);
 const user = { id: "user-a", name: "Minh Anh", email: "demo@nouri.vn", passwordHash: "private-hash", role: "USER", lockedAt: null };
 const credentials = { email: "Demo@Nouri.vn", password: "Demo@123" };
-beforeEach(() => vi.resetAllMocks());
+beforeEach(() => {
+  vi.resetAllMocks();
+  credentialsLimit.reset();
+  mocks.createRefresh.mockResolvedValue({});
+});
 
 describe("Auth HTTP contract (no database)", () => {
   it("registers with the same normalization, hash cost, default profile and public response", async () => {
@@ -34,7 +39,8 @@ describe("Auth HTTP contract (no database)", () => {
     expect(await bcrypt.compare(credentials.password, data.passwordHash)).toBe(true);
     const token = jwt.verify(response.body.token, mocks.secret) as jwt.JwtPayload;
     expect(token).toMatchObject({ sub: user.id, email: user.email });
-    expect(token.exp! - token.iat!).toBe(7 * 24 * 60 * 60);
+    // GĐ4: access token ngắn hạn 15 phút (refresh token đi trong cookie, không có trong body).
+    expect(token.exp! - token.iat!).toBe(15 * 60);
     expect(Object.keys(response.body).sort()).toEqual(["token", "user"]);
   });
 

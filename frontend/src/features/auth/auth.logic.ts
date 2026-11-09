@@ -17,6 +17,21 @@ export function validateAuthForm(form: AuthFormValues, mode: AuthMode): AuthForm
   return errors;
 }
 
+export type ChangePasswordValues = { currentPassword: string; newPassword: string; confirmPassword: string };
+export type ChangePasswordErrors = Partial<Record<keyof ChangePasswordValues, string>>;
+export const emptyChangePassword: ChangePasswordValues = { currentPassword: "", newPassword: "", confirmPassword: "" };
+
+/** Đổi mật khẩu (GĐ4), khớp backend: 8–72 ký tự, mật khẩu mới khác mật khẩu hiện tại; nhập lại phải trùng. */
+export function validateChangePassword(values: ChangePasswordValues): ChangePasswordErrors {
+  const errors: ChangePasswordErrors = {};
+  if (!values.currentPassword) errors.currentPassword = "Nhập mật khẩu bạn đang dùng.";
+  if (values.newPassword.length < 8) errors.newPassword = "Mật khẩu mới cần ít nhất 8 ký tự.";
+  else if (values.newPassword.length > 72) errors.newPassword = "Mật khẩu mới tối đa 72 ký tự.";
+  else if (values.newPassword === values.currentPassword) errors.newPassword = "Chọn mật khẩu khác mật khẩu hiện tại.";
+  if (values.confirmPassword !== values.newPassword) errors.confirmPassword = "Nhập lại đúng mật khẩu mới.";
+  return errors;
+}
+
 /** Lời báo lỗi đăng nhập/đăng ký nói rõ chuyện gì xảy ra và làm gì tiếp. */
 export function authErrorMessage(error: unknown, mode: AuthMode) {
   if (!axios.isAxiosError(error)) return "Đã có lỗi. Thử lại sau ít phút.";

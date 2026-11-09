@@ -16,7 +16,7 @@ const invalidSession = () => new HttpError(401, "Phiên đăng nhập không h�
 
 /**
  * Xác thực JWT rồi đọc quyền và trạng thái khóa từ DB: tài khoản bị khóa bị chặn ngay ở request kế tiếp,
- * không đợi token hết hạn. GĐ4: khóa tài khoản sẽ thu hồi thêm refresh token.
+ * không đợi token hết hạn. Khóa tài khoản còn thu hồi refresh token (admin-users.service.ts).
  */
 export async function requireAuth(req: Request, _res: Response, next: NextFunction) {
   const token = req.headers.authorization?.replace(/^Bearer\s+/i, "");
@@ -32,6 +32,8 @@ export async function requireAuth(req: Request, _res: Response, next: NextFuncti
   const account = await getAccountStatus(payload.sub);
   if (!account) return next(invalidSession());
   if (account.lockedAt) return next(accountLockedError());
+  // Đổi mật khẩu (GĐ4): access token phát trước lần đổi bị từ chối ngay, không đợi hết 15 phút.
+  if (account.passwordChangedAt && (payload.iat ?? 0) < Math.floor(account.passwordChangedAt.getTime() / 1000)) return next(invalidSession());
   (req as AuthenticatedRequest).userId = payload.sub;
   (req as AuthenticatedRequest).userRole = account.role;
   next();

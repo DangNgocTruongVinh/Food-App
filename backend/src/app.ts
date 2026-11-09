@@ -17,9 +17,12 @@ import profileRoutes from "./modules/profile/profile.routes.js";
 import recipeRoutes from "./modules/recipes/recipes.routes.js";
 
 export const app = express();
+app.set("trust proxy", env.TRUST_PROXY);
 app.use(helmet());
+// CORS: chỉ origin của frontend trong .env (FRONTEND_URL), cho phép gửi cookie refresh token.
 app.use(cors({ origin: env.FRONTEND_URL, credentials: true }));
-app.use(express.json({ limit: "1mb" }));
+// JSON hợp lệ lớn nhất (công thức của Admin) khoảng 20 KB; ảnh đi multipart với giới hạn riêng (image-upload.ts).
+app.use(express.json({ limit: "100kb" }));
 
 app.get("/api/health", (_req, res) => res.json({ status: "ok", service: "nouri-api" }));
 app.use("/api/auth", authRoutes);

@@ -17,6 +17,11 @@ export const envSchema = z.object({
   CLOUDINARY_API_KEY: optionalText,
   CLOUDINARY_API_SECRET: optionalText,
   // Quét hóa đơn (GĐ3c): số lần quét tối đa mỗi người mỗi ngày (giờ Việt Nam), tính cả lần đọc lỗi.
+  // Bảo mật (GĐ4): cookie refresh token chỉ gửi qua HTTPS. Bỏ trống = bật khi NODE_ENV=production (trình duyệt coi
+  // http://localhost là an toàn nên demo Docker vẫn chạy). Truy cập bằng http qua IP mạng LAN thì đặt false.
+  COOKIE_SECURE: z.preprocess((value) => (value === "" || value === undefined ? undefined : value === "true" || value === true), z.boolean().optional()),
+  // Số proxy tin cậy phía trước backend (nginx của frontend = 1) để rate limit đọc đúng IP người dùng; 0 = kết nối trực tiếp.
+  TRUST_PROXY: z.preprocess((value) => (value === "" ? undefined : value), z.coerce.number().int().min(0).max(5).default(0)),
   RECEIPT_SCAN_DAILY_LIMIT: z.preprocess((value) => (value === "" ? undefined : value), z.coerce.number().int().min(1).max(1000).default(10)),
 }).refine(
   (value) => {

@@ -1,11 +1,26 @@
 import { AxiosError, AxiosHeaders } from "axios";
 import { describe, expect, it } from "vitest";
-import { authErrorMessage, validateAuthForm } from "./auth.logic";
+import { authErrorMessage, validateAuthForm, validateChangePassword } from "./auth.logic";
 
 const httpError = (status: number, data?: unknown) => {
   const config = { headers: new AxiosHeaders() };
   return new AxiosError("Request failed", "ERR_BAD_REQUEST", config, null, { status, statusText: "", headers: {}, config, data });
 };
+
+describe("Change password form (GĐ4)", () => {
+  it("matches the backend limits and asks for a matching confirmation", () => {
+    expect(validateChangePassword({ currentPassword: "Demo@123", newPassword: "Moi@123456", confirmPassword: "Moi@123456" })).toEqual({});
+    expect(validateChangePassword({ currentPassword: "", newPassword: "ngan", confirmPassword: "khac" })).toEqual({
+      currentPassword: "Nhập mật khẩu bạn đang dùng.",
+      newPassword: "Mật khẩu mới cần ít nhất 8 ký tự.",
+      confirmPassword: "Nhập lại đúng mật khẩu mới.",
+    });
+    expect(validateChangePassword({ currentPassword: "Demo@123", newPassword: "Demo@123", confirmPassword: "Demo@123" }).newPassword)
+      .toBe("Chọn mật khẩu khác mật khẩu hiện tại.");
+    expect(validateChangePassword({ currentPassword: "a", newPassword: "x".repeat(73), confirmPassword: "x".repeat(73) }).newPassword)
+      .toBe("Mật khẩu mới tối đa 72 ký tự.");
+  });
+});
 
 describe("Auth form", () => {
   it("validates with the backend limits and says how to fix each field", () => {

@@ -1,4 +1,5 @@
 import type { Prisma } from "@prisma/client";
+import { revokeUserRefreshTokens } from "../auth/refresh-token.service.js";
 import { prisma } from "../../lib/prisma.js";
 import { HttpError } from "../../utils/http-error.js";
 import { recordAdminAction } from "./admin-audit.service.js";
@@ -47,8 +48,8 @@ export async function setUserLock(actorId: string, targetId: string, locked: boo
         actorId, action: locked ? "USER_LOCK" : "USER_UNLOCK", targetType: "USER", targetId, targetLabel: target.email,
       });
     }
-    // GĐ4: khi khóa, thu hồi toàn bộ refresh token của tài khoản trong cùng transaction này
-    // (vd. tx.refreshToken.deleteMany({ where: { userId: targetId } })).
+    // Khóa: thu hồi mọi refresh token trong cùng transaction (không làm mới được nữa; access token bị requireAuth chặn ngay).
+    if (locked) await revokeUserRefreshTokens(tx, targetId);
     return { ...user, locked: user.lockedAt !== null };
   });
 }
