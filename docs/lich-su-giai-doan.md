@@ -555,6 +555,12 @@ Kiến trúc `backend/src/modules/recommendation/`: `safety.ts` (lọc cứng d�
   - Gỡ mã/CSS cũ không còn dùng: `recommendedRecipePantryNote`, `.dash-rec*`, `.dash-recs__grid`, `.recipes-side*`, `.kho-cook__*`.
   - Playwright 30/30 với demo (lịch sử mẫu) ở 1440/390 sáng (`docs/design/screens/GD3b-R7/`): mỗi khu có món kèm lý do; "Món tương tự" không gồm chính món; "Người khác cũng nấu" có món (nhờ tài khoản mẫu); hộp thoại Gợi ý món chỉ món dùng Đậu hũ, bấm mở chi tiết; 8 nhãn "Tài khoản mẫu"; API cộng đồng không có email; đang tải, lỗi (Thử lại, "Người khác cũng nấu" ẩn), trống; không cuộn ngang; không lỗi JS. Cuối lượt `demo:reset` (demo chỉ có dữ liệu mẫu).
 
+- [x] R8 (09/11, nhánh `giai-doan-r8`) — Bộ tạo thực đơn khi không có OpenAI: `meal-plan-scorer.ts` (`scoredPlan`), điểm `s3 + 0,3·s1 − 0,1·số lần đã xếp`, chỉ gọi hàm có sẵn của `recommendation/` (không đổi công thức/trọng số gợi ý).
+  - Lọc an toàn + đúng bữa; khi còn lựa chọn: không lặp trong ngày, không lặp trong 3 ngày (kể cả món ăn ngay trước ngày bắt đầu), calo trong ±35% mục tiêu bữa; kho ảo trừ theo `planConsumption` sau mỗi bữa (đồ sắp hết hạn không dùng quá lượng đang có, chỉ thưởng các ngày trước hạn); E* tính theo phần còn lại của ngày.
+  - Service: nạp thêm `loadUserInteractions(userId)`; có OpenAI thì vẫn `reconcileAIPlan`, AI hỏng quá nửa → bộ tạo mới. `fallbackPlan` cũ giữ cho thay bữa trong `reconcileAIPlan` và để so sánh.
+  - Đánh giá `npm run eval:mealplan -w backend` (500 thực đơn mô phỏng, `docs/thuat-toan-goi-y.md` mục 9): lệch calo ngày 32,6% → 25,2% (giới hạn dưới của bộ món 16,0%), lượng đồ sắp hết hạn dùng trước hạn 44,1% → 54,7%, bữa lặp trong 3 ngày 2,34 → 1,65 mỗi thực đơn, vi phạm an toàn 0% (cả OpenAI giả lập qua `reconcileAIPlan`). Bỏ khoảng calo: đồ sắp hết hạn 59,2% nhưng calo 28,0% (giữ khoảng calo).
+  - Test: `meal-plan-scorer.test.ts` (80), ma trận an toàn thêm nguồn `scoredPlan`. Backend 1086/1086, typecheck đạt.
+
 ## Giai đoạn 3c — Quét hóa đơn, phần 1 (không cần OPENAI_API_KEY, nhánh `giai-doan-3c`)
 
 Kế hoạch và quyết định: `docs/ke-hoach-gd3c.md`.

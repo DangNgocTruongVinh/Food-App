@@ -34,6 +34,7 @@ const mocks = vi.hoisted(() => ({
   updateShopping: vi.fn(),
   deleteShopping: vi.fn(),
   createShopping: vi.fn(),
+  queryRaw: vi.fn(),
 }));
 
 vi.mock("../../config/env.js", () => ({ env: { JWT_SECRET: mocks.secret } }));
@@ -42,6 +43,7 @@ vi.mock("../ai/ai.service.js", () => ({
 }));
 vi.mock("../notifications/notifications.service.js", () => ({ syncPantryNotifications: mocks.syncNotifications }));
 const client = () => ({
+  $queryRaw: mocks.queryRaw,
   mealPlan: {
     findMany: mocks.listPlans,
     findFirst: mocks.findPlan,
@@ -74,7 +76,7 @@ const ingredient = { id: "ingredient-a", recipeId: "recipe-a", name: "Ức gà",
 const recipe = {
   id: "recipe-a", slug: "uc-ga", name: "Ức gà", description: "Món giàu protein", instructions: ["Áp chảo"],
   prepMinutes: 10, cookMinutes: 20, servings: 1, calories: 400, proteinG: 35, carbsG: 25,
-  fatG: 12, fiberG: 5, cuisine: "Việt Nam", dietTags: ["BALANCED"], ingredients: [ingredient],
+  fatG: 12, fiberG: 5, cuisine: "Việt Nam", dietTags: ["BALANCED"], mealTypes: [], ingredients: [ingredient],
   createdAt: new Date("2026-09-01T00:00:00.000Z"), updatedAt: new Date("2026-09-01T00:00:00.000Z"),
 };
 const mealItem = {
@@ -128,7 +130,8 @@ beforeEach(() => {
       dailyCalorieTarget: 2000,
     },
   });
-  mocks.listPantry.mockResolvedValue([{ name: "Ức gà", quantity: 50, unit: "G", expiryDate: null }]);
+  mocks.listPantry.mockResolvedValue([{ id: "pantry-a", name: "Ức gà", quantity: 50, unit: "G", expiryDate: null }]);
+  mocks.queryRaw.mockResolvedValue([]);
   mocks.listRecipes.mockResolvedValue([recipe]);
   mocks.generatePlanWithAI.mockResolvedValue(null);
   mocks.createPlan.mockResolvedValue(plan);

@@ -7,16 +7,20 @@ import { foodCategoryOf, withFoodCategory } from "../../services/food-category.j
 import { requiredQuantity } from "../../services/pantry-consumption.js";
 import { HttpError } from "../../utils/http-error.js";
 import { generatePlanWithAI } from "../ai/ai.service.js";
+import { loadUserInteractions } from "../recommendation/interaction-loader.js";
 import { recipeFit, type SafetyProfile } from "../recommendation/safety.js";
-import { fallbackPlan, reconcileAIPlan } from "./meal-plan-generator.js";
+import { reconcileAIPlan } from "./meal-plan-generator.js";
+import { scoredPlan } from "./meal-plan-scorer.js";
 import { planSuggestions, type SuggestionProfile } from "./meal-plan-suggestions.js";
 
 export async function generateWeeklyPlan(userId: string, startDateInput: string) {
-  const [user, pantry, allRecipes] = await Promise.all([
+  const [user, pantry, allRecipes, history] = await Promise.all([
     prisma.user.findUnique({ where: { id: userId }, include: { profile: true } }),
     prisma.pantryItem.findMany({ where: { userId, quantity: { gt: 0 } }, orderBy: { expiryDate: "asc" } }),
     // Món đã ẩn không vào danh sách gửi OpenAI lẫn thuật toán dự phòng; AI trả id món ẩn thì reconcileAIPlan coi là ngoài danh sách.
     prisma.recipe.findMany({ where: visibleRecipeWhere, include: { ingredients: true } }),
+    // Lịch sử của chính người dùng cho thuật toán 1 và độ đa dạng (bộ tạo không dùng OpenAI, GĐ3b-R8).
+    loadUserInteractions(userId),
   ]);
   if (!user) throw new HttpError(404, "Không tìm thấy người dùng.");
   const profile = user.profile;
@@ -40,17 +44,20 @@ export async function generateWeeklyPlan(userId: string, startDateInput: string)
     })),
   };
 
+  const startDate = new Date(`${startDateInput}T00:00:00.000Z`);
   const aiPlan = await generatePlanWithAI(aiContext);
-  const { plan: rawPlan, source } = aiPlan
-    ? reconcileAIPlan(aiPlan, recipes, pantryNames, mealsPerDay, dietType)
-    : { plan: fallbackPlan(recipes, pantryNames, mealsPerDay, dietType), source: "fallback" as const };
+  // Kết quả OpenAI luôn qua reconcileAIPlan (đúng danh sách đã lọc, đúng bữa); không có key, hoặc AI hỏng quá nửa số bữa → bộ
+  // tạo chấm điểm (thuật toán 3 + 0,3·thuật toán 1, kho ảo, không lặp trong 3 ngày).
+  const reconciled = aiPlan ? reconcileAIPlan(aiPlan, recipes, pantryNames, mealsPerDay, dietType) : null;
+  const { plan: rawPlan, source } = reconciled && reconciled.source !== "fallback"
+    ? reconciled
+    : { plan: scoredPlan({ recipes, catalog: allRecipes, profile, mealsPerDay, pantry, history, startDate }), source: "fallback" as const };
   const recipeById = new Map(recipes.map((recipe) => [recipe.id, recipe]));
   const validDays = rawPlan.days
     .filter((day) => day.dayIndex >= 0 && day.dayIndex <= 6)
     .sort((a, b) => a.dayIndex - b.dayIndex);
   if (!validDays.length) throw new HttpError(502, "AI chưa tạo được thực đơn hợp lệ.");
 
-  const startDate = new Date(`${startDateInput}T00:00:00.000Z`);
   const endDate = new Date(startDate);
   endDate.setUTCDate(endDate.getUTCDate() + 6);
   const selectedIngredients: Array<{ name: string; quantity: number; unit: FoodUnit }> = [];

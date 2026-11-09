@@ -13,6 +13,7 @@ Nouri dùng ba thuật toán và một bộ trộn:
 | 2 | Lọc cộng tác theo món (item-based collaborative filtering) | `interactions.ts`, `collaborative.ts` | R4 |
 | 3 | Dựa trên tri thức, tối ưu đa tiêu chí (knowledge-based) | `knowledge-based.ts` | R5 |
 | — | Bộ trộn (hybrid), đa dạng hóa, lý do, API `GET /api/recommendations` | `hybrid.ts`, `reasons.ts`, `recommendation.*.ts` | R5 |
+| — | Bộ tạo thực đơn tuần (thuật toán 3 + 0,3 · thuật toán 1, mục 9) | `meal-plans/meal-plan-scorer.ts` | R8 |
 
 ## 2. Lọc an toàn
 
@@ -219,3 +220,51 @@ vài món Nhật; "chỉ đánh dấu", không có lịch sử kho) và 3 lượ
 lạnh. Đây là dữ liệu mẫu, không phải hoạt động thật.
 
 Dữ liệu dùng để **đánh giá** thuật toán (R6) là dữ liệu mô phỏng riêng, sinh trong bộ nhớ, không đưa vào cơ sở dữ liệu.
+
+## 9. Bộ tạo thực đơn tuần (R8)
+
+Mã nguồn: `backend/src/modules/meal-plans/meal-plan-scorer.ts` (`scoredPlan`), gọi từ `meal-plans.service.ts`. Không có
+`OPENAI_API_KEY` (hoặc OpenAI trả thực đơn hỏng quá nửa số bữa) thì dùng bộ tạo này. Có key thì vẫn dùng OpenAI, kết quả luôn qua
+`reconcileAIPlan` (đúng danh sách đã lọc an toàn, đúng bữa, không lặp trong ngày; bữa vi phạm được thay).
+
+Bộ tạo chỉ **gọi lại** các hàm có sẵn của bộ gợi ý, không đổi công thức hay trọng số của chúng. Xếp lần lượt từng ngày, từng bữa:
+
+1. Ứng viên = lọc an toàn (`safety.ts`: dị ứng, không thích, chay/thuần chay, món ẩn) + đúng bữa.
+2. Điều kiện cứng khi còn lựa chọn (theo thứ tự): không lặp trong ngày; không lặp món của 2 ngày trước (không lặp trong 3 ngày liên
+   tiếp, tính cả món đã ăn ngay trước ngày bắt đầu); calo trong ±35% mục tiêu bữa E* (cùng σ với `f_dd`).
+3. Điểm `S = s3 + 0,3 · s1 − 0,1 · (số lần món đã được xếp trong tuần)`, s3 = thuật toán 3 (mục 5), s1 = thuật toán 1 (mục 3, lịch sử
+   của người dùng). Khác với khi gợi ý:
+   - **Kho ảo:** sau mỗi bữa trừ nguyên liệu như khi bấm "Đã ăn" (`planConsumption`: hạn sớm trước, quy đổi g↔kg, ml↔l, không trừ
+     đồ đã hết hạn). Một thực phẩm sắp hết hạn chỉ được thưởng (`f_hạn`, `f_kho`) khi kho ảo còn, nên không bị dùng quá lượng đang có.
+   - `now` = ngày của bữa: thực phẩm đã qua hạn ở ngày đó không được thưởng (chỉ các ngày trước hạn).
+   - E*, P* (`mealTarget`) tính theo phần còn lại của ngày sau các bữa đã xếp, nên bữa sau bù cho bữa trước.
+   - `f_dạng` so với món đã ăn/xếp trong 3 ngày gần nhất (kể cả các bữa đã xếp hôm đó).
+
+Đánh giá (bộ tạo cũ `fallbackPlan`: xếp theo số nguyên liệu có trong kho + quy tắc giảm lặp, không xét calo hay hạn dùng):
+
+<!-- EVAL-MEALPLAN:START -->
+Sinh bằng `npm run eval:mealplan -w backend`: 5 lần mô phỏng (seed 20261109–20261113), mỗi lần 100 người (500 thực đơn 7 ngày cho mỗi phương pháp). Hồ sơ ngẫu nhiên (5 chế độ ăn, 20% có một dị ứng, 10% có món không thích, 30% ăn 4 bữa), kho 8 thực phẩm (lượng 1–4 lần định lượng một món, hạn 0–10 ngày, 20% không có hạn), lịch sử 0–25 bữa đã ăn trong 4 tuần trước. Dữ liệu **mô phỏng**, chỉ trong bộ nhớ. Số trong bảng là trung bình trên mọi thực đơn.
+
+| Phương pháp | Lệch calo ngày | Ngày lệch ≤ 10% | Lượng đồ sắp hết hạn dùng trước hạn | Đồ sắp hết hạn được dùng | Bữa lặp trong 3 ngày / thực đơn | Số món khác nhau | Vi phạm an toàn | Thời gian / thực đơn |
+|---|---|---|---|---|---|---|---|---|
+| Bộ tạo cũ (fallbackPlan) | 32,6% | 11,2% | 44,1% | 59,7% | 2,34 | 16,7 | 0,0% | 0,4 ms |
+| Bộ tạo mới, không có khoảng calo (so sánh) | 28,0% | 17,3% | 59,2% | 74,5% | 1,60 | 16,6 | 0,0% | 9,1 ms |
+| Bộ tạo mới (scoredPlan) **(dùng)** | 25,2% | 20,6% | 54,7% | 69,4% | 1,65 | 15,7 | 0,0% | 6,9 ms |
+| OpenAI giả lập → reconcileAIPlan | 31,4% | 10,5% | 36,4% | 49,6% | 5,55 | 14,6 | 0,0% | 0,6 ms |
+
+Giới hạn dưới của lệch calo ngày với bộ món hiện có (mỗi bữa chọn món chỉ theo calo, khẩu phần 1, bỏ mọi tiêu chí khác): 16,0%; mục tiêu calo trung bình của hồ sơ mô phỏng 2131 kcal/ngày.
+
+"OpenAI giả lập": 3/500 thực đơn hỏng quá nửa số bữa nên dùng cả thực đơn của bộ tạo mới; còn lại bữa vi phạm được thay. Thời gian chạy: 10.6 s.
+<!-- EVAL-MEALPLAN:END -->
+
+**Nhận xét:**
+
+- Bộ tạo mới tốt hơn bộ cũ ở cả ba mục tiêu: lệch calo thấp hơn, dùng được nhiều đồ sắp hết hạn hơn trước khi hỏng, ít bữa lặp hơn;
+  không có vi phạm an toàn (cả hai đều chạy sau lọc an toàn; ma trận `dietary-matrix.test.ts` có thêm nguồn `scoredPlan`).
+- Khoảng calo ±35% là đánh đổi có chủ đích: giảm lệch calo nhưng bớt một phần lượng đồ sắp hết hạn dùng được (dòng "không có khoảng
+  calo"), vì món dùng đồ sắp hết hạn không phải lúc nào cũng hợp calo của bữa. Vẫn hơn hẳn bộ cũ ở cả hai chỉ số.
+- Lệch calo còn lớn chủ yếu do bộ món: khẩu phần cố định 1, món nhiều nhất khoảng 660 kcal; với mục tiêu trên 2.000 kcal/ngày và
+  3 bữa thì không đạt được (xem giới hạn dưới). Điều chỉnh khẩu phần theo mục tiêu là hướng phát triển.
+- "Bữa lặp trong 3 ngày" của bộ mới không về 0 vì có hồ sơ chỉ còn ít món cho một bữa (ví dụ thuần chay ăn 4 bữa: 3 món bữa phụ).
+- Bộ tạo mới chậm hơn (vài ms mỗi thực đơn) nhưng không đáng kể so với thời gian ghi DB.
+- Hạn chế: dữ liệu mô phỏng; "dùng trước hạn" giả định người dùng ăn đúng thực đơn; kho ảo không tính đồ mua thêm trong tuần.
