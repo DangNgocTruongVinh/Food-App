@@ -1,6 +1,8 @@
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
-import { useState } from "react";
+import { useCallback, useState } from "react";
+import { getApiError } from "../api/client";
+import { AddToPlanDialog } from "../components/meal-plans/AddToPlanDialog";
 import { useParams } from "react-router-dom";
 import { RecipeDetailHero } from "../components/recipes/RecipeDetailHero";
 import { RecipeBackLink, RecipeDetailError, RecipeDetailSkeleton } from "../components/recipes/RecipeDetailStates";
@@ -8,7 +10,10 @@ import RecipeForYouCard, { RecipeForYouAlerts } from "../components/recipes/Reci
 import RecipeIngredientsCard from "../components/recipes/RecipeIngredientsCard";
 import RecipeNutritionStrip from "../components/recipes/RecipeNutritionStrip";
 import RecipeStepsCard from "../components/recipes/RecipeStepsCard";
+import { RecipeSuggestions } from "../components/recipes/RecipeSuggestions";
+import { Toast } from "../components/ui";
 import { communityShareRecipePath } from "../features/community/community.logic";
+import { invalidateMealPlanQueries, mealPlanMutations } from "../features/meal-plans/meal-plans.queries";
 import { clampServings } from "../features/recipes/recipes.logic";
 import { recipeQueries } from "../features/recipes/recipes.queries";
 
@@ -19,6 +24,20 @@ export default function RecipeDetailPage() {
   const forYou = useQuery(recipeQueries.forYou(id));
   // Số khẩu phần gắn với id công thức: sang món khác thì tự về số khẩu phần của món đó.
   const [servingChoice, setServingChoice] = useState<{ recipeId: string; servings: number } | null>(null);
+  const queryClient = useQueryClient();
+  const [addOpen, setAddOpen] = useState(false);
+  const [addError, setAddError] = useState("");
+  const [toast, setToast] = useState("");
+  const clearToast = useCallback(() => setToast(""), []);
+  const addToPlan = useMutation({
+    ...mealPlanMutations.addItem(),
+    onSuccess: (plan) => {
+      invalidateMealPlanQueries(queryClient, true);
+      setAddOpen(false);
+      setToast(`Đã thêm món vào “${plan.name}”.`);
+    },
+    onError: (err) => setAddError(getApiError(err)),
+  });
 
   if (isLoading) return <RecipeDetailSkeleton />;
   if (isError || !recipe) {
@@ -56,10 +75,22 @@ export default function RecipeDetailPage() {
               isError={forYou.isError}
               onRetry={() => void forYou.refetch()}
               sharePath={communityShareRecipePath(recipe.id)}
+              onAddToPlan={() => { setAddError(""); setAddOpen(true); }}
             />
           </div>
         )}
       </div>
+      {!recipe.hidden && <RecipeSuggestions recipeId={recipe.id} recipeName={recipe.name} />}
+      {addOpen && (
+        <AddToPlanDialog
+          recipe={recipe}
+          busy={addToPlan.isPending}
+          error={addError}
+          onClose={() => { if (!addToPlan.isPending) setAddOpen(false); }}
+          onSubmit={(input) => addToPlan.mutate({ ...input, recipeId: recipe.id })}
+        />
+      )}
+      <Toast message={toast} onDone={clearToast} />
     </div>
   );
 }

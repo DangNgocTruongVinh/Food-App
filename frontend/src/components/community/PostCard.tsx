@@ -6,7 +6,7 @@ import {
 import { useDisclosure } from "../../features/layout/useDisclosure";
 import { cx } from "../../features/ui/ui.logic";
 import type { CommunityPost } from "../../types";
-import { Card } from "../ui";
+import { Card, Tag } from "../ui";
 import CommentForm from "./CommentForm";
 import PostImages from "./PostImages";
 import RecipeAttachmentCard from "./RecipeAttachmentCard";
@@ -62,7 +62,10 @@ export default function PostCard(props: PostCardProps) {
       <header className="cm-post__head">
         <span className="cm-avatar" aria-hidden="true">{communityInitials(post.author.name)}</span>
         <div className="cm-post__who">
-          <span className="cm-post__author">{post.author.name}</span>
+          <span className="cm-post__author">
+            {post.author.name}
+            {post.author.isSample && <Tag className="cm-sample-tag">Tài khoản mẫu</Tag>}
+          </span>
           <PostTime value={post.createdAt} />
         </div>
         {isOwn && <PostMenu onDelete={props.onDelete} deleting={props.isDeleting} />}

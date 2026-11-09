@@ -1,49 +1,38 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
-import { getApiError } from "../api/client";
 import { DashboardHero } from "../components/dashboard/DashboardHero";
 import { DashboardSkeleton } from "../components/dashboard/DashboardSkeleton";
+import { ConsumeMealDialog } from "../components/meal-plans/ConsumeMealDialog";
+import { MealStatusNotice } from "../components/meal-plans/MealStatusNotice";
 import { NutritionTodayCard } from "../components/dashboard/NutritionTodayCard";
 import { PantrySnapshot } from "../components/dashboard/PantrySnapshot";
 import { RecommendedRecipes } from "../components/dashboard/RecommendedRecipes";
 import { TodayMealsCard } from "../components/dashboard/TodayMealsCard";
 import { WaterTracker } from "../components/dashboard/WaterTracker";
-import { Button, ErrorState, PageHeader } from "../components/ui";
+import { ErrorState, PageHeader } from "../components/ui";
 import { useAuth } from "../contexts/AuthContext";
 import {
-  buildNutritionSummary, dashboardRecipeSearchPath, nextMealId, nextWaterGlasses, orderTodayMeals, type TodayMeal, usableTargets,
+  buildNutritionSummary, dashboardRecipeSearchPath, nextMealId, nextWaterGlasses, orderTodayMeals, usableTargets,
 } from "../features/dashboard/dashboard.logic";
 import { dashboardQueries } from "../features/dashboard/dashboard.queries";
-import { invalidateMealPlanQueries, mealPlanMutations, mealPlanQueries } from "../features/meal-plans/meal-plans.queries";
+import { mealPlanQueries } from "../features/meal-plans/meal-plans.queries";
+import { useMealConsumption } from "../features/meal-plans/useMealConsumption";
 import { greetingForHour } from "../features/ui/ui.logic";
-
-type MealStatus = { kind: "done" | "undone" | "error"; meal: TodayMeal; message?: string };
 
 export default function DashboardPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [waterGlasses, setWaterGlasses] = useState(0);
-  const [status, setStatus] = useState<MealStatus | null>(null);
 
   const overview = useQuery(dashboardQueries.overview());
   const planId = overview.data?.activePlan?.id ?? null;
   // Đạm/tinh bột/béo và ảnh món của các bữa hôm nay lấy từ chi tiết thực đơn đang dùng (API có sẵn).
   const plan = useQuery({ ...mealPlanQueries.detail(planId ?? ""), enabled: Boolean(planId) });
 
-  const updateMeal = useMutation({
-    ...mealPlanMutations.updateMeal(),
-    onSuccess: () => invalidateMealPlanQueries(queryClient, true),
-  });
-
-  const setCompleted = (meal: TodayMeal, completed: boolean) => {
-    updateMeal.mutate({ id: meal.id, completed }, {
-      onSuccess: () => setStatus({ kind: completed ? "done" : "undone", meal }),
-      onError: (error) => setStatus({ kind: "error", meal, message: getApiError(error) }),
-    });
-  };
+  // "Đã ăn" mở hộp xem trước trừ kho (dùng chung với trang Thực đơn).
+  const consumption = useMealConsumption();
 
   const greeting = greetingForHour(new Date().getHours());
 
@@ -85,19 +74,10 @@ export default function DashboardPage() {
               meals={meals}
               nextId={nextMealId(meals)}
               planItems={planItems}
-              pendingId={updateMeal.isPending ? updateMeal.variables?.id ?? null : null}
-              onMarkEaten={(meal) => setCompleted(meal, true)}
+              pendingId={consumption.pendingId}
+              onMarkEaten={(meal) => consumption.open({ id: meal.id, recipeName: meal.recipe.name })}
             />
-            {status && (
-              <p className={status.kind === "error" ? "ui-notice ui-notice--error" : "ui-notice"} role={status.kind === "error" ? "alert" : "status"}>
-                {status.kind === "done" && <>Đã đánh dấu đã ăn: {status.meal.recipe.name}.</>}
-                {status.kind === "undone" && <>Đã bỏ đánh dấu đã ăn: {status.meal.recipe.name}.</>}
-                {status.kind === "error" && <>Chưa cập nhật được bữa {status.meal.recipe.name}. {status.message}</>}
-                {status.kind === "done" && (
-                  <Button busy={updateMeal.isPending} onClick={() => setCompleted(status.meal, false)}>Hoàn tác</Button>
-                )}
-              </p>
-            )}
+            <MealStatusNotice notice={consumption.notice} busy={consumption.pending} onUndo={(notice) => consumption.undo(notice.target)} />
           </div>
         </div>
 
@@ -107,6 +87,15 @@ export default function DashboardPage() {
 
         <WaterTracker glasses={waterGlasses} onAddGlass={() => setWaterGlasses(nextWaterGlasses)} />
       </div>
+      {consumption.target && (
+        <ConsumeMealDialog
+          target={consumption.target}
+          busy={consumption.pending}
+          error={consumption.confirmError}
+          onClose={consumption.close}
+          onConfirm={consumption.confirm}
+        />
+      )}
     </div>
   );
 }

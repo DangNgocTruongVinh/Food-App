@@ -1,0 +1,26 @@
+GĐ3b lượt 1 — bật gzip ở nginx frontend (03/11/2026)
+
+Đo bằng Playwright trên container frontend (nginx, bản build), cổng 8080, backend Docker; bộ nhớ đệm trống, trung vị 3 lần.
+Điện thoại giả lập: mạng 1,6 Mb/s, độ trễ 150 ms, CPU chậm 4 lần. Dung lượng = tổng byte nhận về (JS, CSS, ảnh, phông, API).
+Trước: cùng mã, chưa bật gzip (đo 03/11 khi nghiệm thu UI-12). Sau: bật gzip (HTML, JS, CSS, SVG, JSON kể cả API).
+
+Trang | Thiết bị | Trước FCP/LCP | Sau FCP/LCP | Trước KB (JS/CSS) | Sau KB (JS/CSS)
+/ | máy tính | 0,60/0,60 s | 0,51/0,51 s | 1023 (550/105) | 552 (169/17)
+/ | điện thoại | 5,14/5,14 s | 2,20/2,20 s | 976 (550/105) | 505 (169/17)
+/login | máy tính | 0,44/0,44 s | 0,44/0,44 s | 973 (550/105) | 503 (169/17)
+/login | điện thoại | 4,64/4,64 s | 1,98/1,98 s | 893 (550/105) | 503 (169/17)
+/dashboard | máy tính | 0,34/0,46 s | 0,43/0,61 s | 1105 (550/105) | 574 (169/17)
+/dashboard | điện thoại | 4,46/5,69 s | 2,18/3,00 s | 1105 (550/105) | 527 (169/17)
+/pantry | máy tính | 0,43/0,54 s | 0,45/0,56 s | 1060 (550/105) | 588 (169/17)
+/pantry | điện thoại | 4,49/5,29 s | 1,96/2,80 s | 1060 (550/105) | 588 (169/17)
+/meal-plans | máy tính | 0,34/0,54 s | 0,54/0,60 s | 1083 (550/105) | 554 (169/17)
+/meal-plans | điện thoại | 4,65/6,74 s | 2,12/2,75 s | 1082 (550/105) | 507 (169/17)
+/recipes | máy tính | 0,36/0,48 s | 0,36/0,54 s | 1096 (550/105) | 569 (169/17)
+/recipes | điện thoại | 4,54/7,18 s | 2,00/2,98 s | 1096 (550/105) | 569 (169/17)
+/community | máy tính | 0,33/0,33 s | 0,35/0,35 s | 1070 (550/105) | 599 (169/17)
+/community | điện thoại | 4,69/5,30 s | 2,37/2,37 s | 1023 (550/105) | 348 (169/17)
+/assistant | máy tính | 0,34/0,42 s | 0,46/0,51 s | 1062 (550/105) | 590 (169/17)
+/assistant | điện thoại | 4,84/5,59 s | 2,02/2,54 s | 1015 (550/105) | 543 (169/17)
+
+Tệp JS gói chính: 562.627 B gốc → 172.359 B khi nén (curl -H "Accept-Encoding: gzip").
+Phần còn lại chủ yếu là phông (Google Fonts, woff2 vốn đã nén).

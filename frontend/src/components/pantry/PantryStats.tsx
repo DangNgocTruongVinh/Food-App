@@ -15,6 +15,9 @@ const STATS: Array<{ key: PantryStatFilter; label: string; note: string }> = [
 ];
 
 const statValue = (counts: PantryCounts, key: PantryStatFilter) => (key === "all" ? counts.total : counts[key]);
+const statNote = (counts: PantryCounts, key: PantryStatFilter, note: string) => (
+  key === "all" && counts.depleted ? `Không tính ${counts.depleted} món đã dùng hết` : note
+);
 
 /** Bốn ô thống kê (số thật), mỗi ô là một nút lọc bật/tắt. */
 export function PantryStats({ counts, active, onSelect }: PantryStatsProps) {
@@ -28,7 +31,7 @@ export function PantryStats({ counts, active, onSelect }: PantryStatsProps) {
             <span className={alert ? "kho-stat__value kho-stat__value--alert" : "kho-stat__value"}>{value}</span>
             <span className="kho-stat__text">
               <span className="kho-stat__label">{label}</span>
-              <span className="kho-stat__note">{note}</span>
+              <span className="kho-stat__note">{statNote(counts, key, note)}</span>
             </span>
           </button>
         );

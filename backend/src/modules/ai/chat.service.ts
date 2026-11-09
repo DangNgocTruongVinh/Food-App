@@ -1,6 +1,6 @@
 import { prisma } from "../../lib/prisma.js";
 import { answerNutritionQuestion } from "./ai.service.js";
-import { CHAT_PLAN_DAYS, chatMealPlanContext, chatProfileContext, vietnamDateKey } from "./chat-context.js";
+import { CHAT_PLAN_DAYS, chatMealPlanContext, chatProfileContext, chatSafetyContext, vietnamDateKey } from "./chat-context.js";
 
 export function listChatHistory(userId: string) {
   return prisma.chatMessage.findMany({
@@ -42,6 +42,7 @@ export async function sendChatMessage(userId: string, message: string, now = new
   ]);
   const context = {
     profile: chatProfileContext(profile),
+    safety: chatSafetyContext(profile),
     pantry,
     mealPlan: chatMealPlanContext(activePlan, profile?.dailyCalorieTarget, now),
   };

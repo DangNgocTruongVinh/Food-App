@@ -3,11 +3,12 @@ import { type FormEvent, useRef, useState } from "react";
 import { getApiError } from "../../api/client";
 import { toPantryFormValues, type PantryFormValues } from "../../features/pantry/pantry.api";
 import {
-  initialPantryForm, pantryCategoryOptions, pantryDoneMessage, storageLabel, validatePantryForm,
+  initialPantryForm, isExpiryEstimated, pantryCategoryOptions, pantryDoneMessage, storageLabel, validatePantryForm,
 } from "../../features/pantry/pantry.logic";
 import { invalidatePantryQueries, pantryMutations } from "../../features/pantry/pantry.queries";
 import type { FoodUnit, PantryItem, StorageLocation } from "../../types";
 import DateInput from "../DateInput";
+import { PantryItemHistory } from "./PantryHistory";
 import { Button, Dialog, ErrorState, Field } from "../ui";
 
 type PantryItemDialogProps = {
@@ -33,6 +34,9 @@ export function PantryItemDialog({ item, onClose, onSaved }: PantryItemDialogPro
   const [submitted, setSubmitted] = useState(false);
   const errors = submitted ? validatePantryForm(form, expiryInvalid) : {};
   const editing = Boolean(item);
+  // Hạn ước tính (đã mua → kho) còn nguyên ngày cũ thì nhắc; sửa sang ngày khác thì lưu xong mất chữ này.
+  const estimated = item && isExpiryEstimated(item) && form.expiryDate === toPantryFormValues(item).expiryDate;
+  const expiryHint = estimated ? "Hạn ước tính theo nhóm thực phẩm. Sửa nếu bao bì ghi ngày khác." : "Để trống nếu không có hạn.";
 
   const onSuccess = () => {
     invalidatePantryQueries(queryClient);
@@ -83,7 +87,7 @@ export function PantryItemDialog({ item, onClose, onSaved }: PantryItemDialogPro
             </select>
           )}
         </Field>
-        <Field label="Hạn sử dụng" error={errors.expiryDate} hint={errors.expiryDate ? undefined : "Để trống nếu không có hạn."}>
+        <Field label="Hạn sử dụng" error={errors.expiryDate} hint={errors.expiryDate ? undefined : expiryHint}>
           {({ className, ...control }) => (
             <DateInput
               {...control}
@@ -155,6 +159,11 @@ export function PantryItemDialog({ item, onClose, onSaved }: PantryItemDialogPro
             />
           )}
         </Field>
+        {item && (
+          <div className="kho-form__wide">
+            <PantryItemHistory itemId={item.id} itemName={item.name} />
+          </div>
+        )}
         {saveError && (
           <div className="kho-form__wide">
             <ErrorState message={`Chưa lưu được: ${getApiError(saveError)}`} />

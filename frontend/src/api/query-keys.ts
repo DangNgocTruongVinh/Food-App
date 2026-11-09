@@ -2,9 +2,16 @@
 export const queryKeys = {
   profile: ["profile"],
   dashboard: ["dashboard"],
+  recommendations: {
+    all: ["recommendations"] as const,
+    list: (params: { context: string; recipeId?: string; pantryItemId?: string; limit: number }) => ["recommendations", params] as const,
+  },
   pantry: ["pantry"],
+  // Cùng tiền tố "pantry": mọi chỗ làm mới kho cũng làm mới lịch sử kho.
+  pantryTransactions: (filters: { source?: string; pantryItemId?: string; page: number; pageSize: number }) => ["pantry", "transactions", filters] as const,
   recipes: {
     all: ["recipes"] as const,
+    lists: ["recipes", "list"] as const,
     list: (filters: { search?: string; cuisine?: string } = {}) => ["recipes", "list", filters] as const,
     detail: (id: string) => ["recipes", "detail", id] as const,
     stats: ["recipes", "stats"] as const,
@@ -16,6 +23,7 @@ export const queryKeys = {
     all: ["meal-plans"] as const,
     list: () => ["meal-plans", "list"] as const,
     detail: (id: string) => ["meal-plans", "detail", id] as const,
+    consumptionPreview: (itemId: string) => ["meal-plans", "consumption-preview", itemId] as const,
   },
   ai: {
     all: ["ai"] as const,

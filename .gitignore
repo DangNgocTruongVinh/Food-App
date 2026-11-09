@@ -19,3 +19,6 @@ backend/prisma/dev.db*
 # Cấu hình skill của công cụ AI (cục bộ, không thuộc mã nguồn dự án)
 .agents/
 skills-lock.json
+
+# Ảnh/kết quả khi chạy script nghiệm thu (npm run e2e:acceptance)
+e2e/output/

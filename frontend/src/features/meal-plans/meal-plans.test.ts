@@ -5,13 +5,14 @@ import { createAppQueryClient, retryUnlessClientError } from "../../api/query-cl
 import { queryKeys } from "../../api/query-keys";
 import type { MealPlan, MealPlanItem, NutritionProfile, Recipe } from "../../types";
 import {
-  deleteMealPlan, generateMealPlan, getMealPlan, listMealPlans, updateMealCompletion,
-  updateMealPlanStatus, updateShoppingPurchased,
+  addMealPlanItem, deleteMealPlan, deleteMealPlanItem, generateMealPlan, getMealPlan, listMealPlans, updateMealCompletion,
+  swapMealItem, updateMealPlanStatus, updateShoppingPurchased,
 } from "./meal-plans.api";
+import { addablePlans, addableRecipes, defaultMealType, mealTypeOptions, planDayOptions, portionOptions } from "./add-meal.logic";
 import {
   alternativeMeals, dayNutrition, generateMealPlanLabel, generateSourceLabel, groupShoppingItems, initialDayIndex, latestMealPlanId,
-  mealPlanDeleteConfirm, mealPlanPath, mealPlanSourceLabel, mealPlanSuggestions, nextMealPlanIdAfterDelete, orderDayMeals, planDayLabels,
-  planTargets, planTitleParts, selectMealPlanDay, shoppingGroupOf, summarizeMealPlan, todayDayIndex,
+  mealPlanDeleteConfirm, mealPlanPath, mealViolation, mealPlanSourceLabel, nextMealPlanIdAfterDelete, orderDayMeals, planDayLabels,
+  planTargets, planTitleParts, selectMealPlanDay, summarizeMealPlan, todayDayIndex,
 } from "./meal-plans.logic";
 import { invalidateMealPlanQueries, mealPlanQueries, removeDeletedMealPlan, removeMealPlanDetail } from "./meal-plans.queries";
 
@@ -82,6 +83,17 @@ describe("Meal Plan and Shopping API adapters (no network)", () => {
     expect(JSON.parse(adapter.mock.calls[0][0].data)).toEqual({ startDate: "2026-10-01" });
   });
 
+  it("adds and deletes a meal item with the plan ownership in the URL", async () => {
+    const adapter = vi.fn(async (config) => ({ config, data: plan, status: 200, statusText: "OK", headers: {} }));
+    api.defaults.adapter = adapter;
+    await addMealPlanItem({ planId: plan.id, dayId: "day-a", mealType: "LUNCH", recipeId: "recipe-a", servings: 1.5 });
+    await deleteMealPlanItem("meal-a");
+    expect(adapter.mock.calls.map(([config]) => [config.method, config.url])).toEqual([
+      ["post", `/meal-plans/${plan.id}/items`], ["delete", "/meal-plans/items/meal-a"],
+    ]);
+    expect(JSON.parse(adapter.mock.calls[0][0].data)).toEqual({ dayId: "day-a", mealType: "LUNCH", recipeId: "recipe-a", servings: 1.5 });
+  });
+
   it("updates plan status with the existing PATCH contract", async () => {
     const adapter = vi.fn(async (config) => ({ config, data: plan, status: 200, statusText: "OK", headers: {} }));
     api.defaults.adapter = adapter;
@@ -126,10 +138,47 @@ describe("Meal Plan and Shopping API adapters (no network)", () => {
         meal: () => updateMealCompletion({ id: "meal-a", completed: true }),
         shopping: () => updateShoppingPurchased({ id: "shop-a", purchased: true }),
         delete: () => deleteMealPlan(plan.id),
+        add: () => addMealPlanItem({ planId: plan.id, dayId: "day-a", mealType: "LUNCH", recipeId: "recipe-a", servings: 1 }),
+        removeItem: () => deleteMealPlanItem("meal-a"),
       };
       await expect(actions[operation]()).rejects.toBe(failure);
     },
   );
+});
+
+describe("Manual meal selection", () => {
+  it("filters unsafe recipes, wrong meal types and searches by name or ingredient", () => {
+    const recipes = [
+      recipe({ id: "safe", name: "Đậu hũ rau", mealTypes: ["LUNCH"], fit: { safe: true, allergens: [], dislikedFoods: [], dietConflict: null } }),
+      recipe({ id: "unsafe", name: "Tôm rang", mealTypes: ["LUNCH"], fit: { safe: false, allergens: ["tôm"], dislikedFoods: [], dietConflict: null } }),
+      recipe({ id: "breakfast", name: "Cháo sáng", mealTypes: ["BREAKFAST"], fit: { safe: true, allergens: [], dislikedFoods: [], dietConflict: null }, ingredients: [{ id: "i", name: "gạo", quantity: 1, unit: "G", optional: false }] }),
+    ];
+    expect(addableRecipes(recipes, "LUNCH", "rau").map((item) => item.id)).toEqual(["safe"]);
+    expect(addableRecipes(recipes, "BREAKFAST", "").map((item) => item.id)).toEqual(["breakfast"]);
+  });
+
+  it("offers half-serving steps up to four portions", () => {
+    expect(portionOptions).toEqual([0.5, 1, 1.5, 2, 3, 4]);
+  });
+
+  it("can add to an empty day and to the snack slot: defaults to the first free meal, snack when the day is full", () => {
+    expect(mealTypeOptions.map((option) => option.value)).toEqual(["BREAKFAST", "LUNCH", "SNACK", "DINNER"]);
+    expect(defaultMealType([])).toBe("BREAKFAST");
+    expect(defaultMealType([{ mealType: "BREAKFAST" }])).toBe("LUNCH");
+    expect(defaultMealType([{ mealType: "BREAKFAST" }, { mealType: "LUNCH" }, { mealType: "DINNER" }])).toBe("SNACK");
+    expect(defaultMealType(["BREAKFAST", "LUNCH", "SNACK", "DINNER"].map((mealType) => ({ mealType: mealType as MealPlanItem["mealType"] })))).toBe("SNACK");
+  });
+
+  it("from a recipe page: only plans not completed, the active one first, with weekday day labels", () => {
+    const plans = [
+      { ...plan, id: "old", status: "COMPLETED" as const },
+      { ...plan, id: "draft", status: "DRAFT" as const, startDate: "2026-11-20T00:00:00.000Z" },
+      { ...plan, id: "active", status: "ACTIVE" as const, startDate: "2026-11-01T00:00:00.000Z" },
+    ];
+    expect(addablePlans(plans).map((item) => item.id)).toEqual(["active", "draft"]);
+    expect(planDayOptions({ days: [{ id: "d1", date: "2026-11-09T00:00:00.000Z", items: [] }] })).toEqual([{ value: "d1", label: "Thứ Hai, 09/11" }]);
+    expect(planDayOptions(undefined)).toEqual([]);
+  });
 });
 
 describe("Meal Plan query definitions", () => {
@@ -209,17 +258,15 @@ describe("Meal Plan and Shopping page business logic", () => {
     expect(alternativeMeals(plan, "BREAKFAST", "meal-a").map(({ item, day }) => [item.id, day.id])).toEqual([["meal-b", "day-b"]]);
   });
 
-  it("groups shopping items by type, unpurchased first", () => {
-    const names = ["Cà chua", "Cá lóc", "Đậu bắp", "Đậu hũ", "Nước mắm", "Sữa chua", "Bún tươi", "Chuối", "Đá viên", "Ức gà", "Lá dứa"];
-    expect(names.map((name) => shoppingGroupOf({ name }))).toEqual([
-      "Rau củ", "Thịt & cá", "Rau củ", "Đậu & hạt", "Gia vị", "Trứng & sữa", "Gạo, bún & bánh", "Trái cây", "Khác", "Thịt & cá", "Rau củ",
-    ]);
-    expect(shoppingGroupOf({ name: "Cà chua", category: "Đồ tươi" })).toBe("Đồ tươi");
+  it("groups shopping items by the backend category in the 8 shared groups' order, unpurchased first", () => {
     const result = groupShoppingItems([
-      { name: "Muối", purchased: false }, { name: "Tỏi", purchased: true }, { name: "Hành lá", purchased: false }, { name: "Tôm", purchased: false },
+      { name: "Muối", purchased: false, category: "Gia vị" }, { name: "Tỏi", purchased: true, category: "Rau củ" },
+      { name: "Hành lá", purchased: false, category: "Rau củ" }, { name: "Tôm", purchased: false, category: "Thịt & cá" },
+      { name: "Đậu hũ", purchased: false, category: "Đậu & hạt" }, { name: "Gạo", purchased: false, category: "Ngũ cốc" },
+      { name: "Đá viên", purchased: false, category: null },
     ]);
     expect(result.map((group) => [group.name, group.items.map((item) => item.name)])).toEqual([
-      ["Rau củ", ["Hành lá", "Tỏi"]], ["Thịt & cá", ["Tôm"]], ["Gia vị", ["Muối"]],
+      ["Rau củ", ["Hành lá", "Tỏi"]], ["Thịt & cá", ["Tôm"]], ["Đậu & hạt", ["Đậu hũ"]], ["Ngũ cốc", ["Gạo"]], ["Gia vị", ["Muối"]], ["Khác", ["Đá viên"]],
     ]);
   });
 });
@@ -262,48 +309,24 @@ describe("Meal plan route and delete helpers", () => {
   });
 });
 
-describe("Meal plan suggestions respect the profile", () => {
-  const profile = (overrides: Partial<NutritionProfile> = {}): NutritionProfile => ({
-    activityLevel: "MODERATE", goal: "MAINTAIN", dietType: "BALANCED", allergies: [], dislikedFoods: [],
-    preferredCuisines: [], mealsPerDay: 3, ...overrides,
-  });
-  const fatSuggestion = (value: NutritionProfile | null | undefined) => mealPlanSuggestions(value, { fiber: 30, fat: 40 }, 60)[1];
+describe("Old plan meals that violate the current profile (GĐ3b-R2)", () => {
+  const fit = { allergens: ["tôm"], dislikedFoods: [], dietConflict: null, safe: false };
 
-  it("suggests oily fish only when nothing in the profile rules it out", () => {
-    expect(fatSuggestion(profile()).key).toBe("omega3-fish");
-    expect(fatSuggestion(undefined).key).toBe("omega3-fish");
+  it("warns about an unsafe meal and offers a swap only while it is not eaten", () => {
+    expect(mealViolation(meal({ completed: false, recipe: recipe({ fit }) }))).toEqual({ warnings: fit, canSwap: true });
+    expect(mealViolation(meal({ completed: true, recipe: recipe({ fit }) }))).toEqual({ warnings: fit, canSwap: false });
   });
-  it.each([
-    ["vegetarian", profile({ dietType: "VEGETARIAN" })],
-    ["vegan", profile({ dietType: "VEGAN" })],
-    ["seafood allergy", profile({ allergies: ["Hải sản"] })],
-    ["fish allergy written differently", profile({ allergies: ["  CÁ  hồi "] })],
-    ["disliked fish", profile({ dislikedFoods: ["cá"] })],
-  ])("never suggests fish for %s", (_label, value) => {
-    const suggestion = fatSuggestion(value);
-    expect(suggestion.key).toBe("omega3-plant");
-    expect(suggestion.text).not.toMatch(/\bcá\b|cá béo|cá hồi/i);
+
+  it("shows nothing for a safe meal or when the API sends no fit", () => {
+    expect(mealViolation(meal({ recipe: recipe({ fit: { ...fit, allergens: [], safe: true } }) }))).toBeNull();
+    expect(mealViolation(meal())).toBeNull();
   });
-  it("falls back to a neutral suggestion when plant sources are also restricted", () => {
-    const suggestion = fatSuggestion(profile({ dietType: "VEGAN", allergies: ["Đậu nành"] }));
-    expect(suggestion.key).toBe("fat-plant-oil");
-    expect(suggestion.text).not.toMatch(/cá|đậu nành|óc chó/i);
-  });
-  it("does not mistake an unrelated allergy for fish", () => {
-    expect(fatSuggestion(profile({ allergies: ["Cà chua", "Đậu phộng"] })).key).toBe("omega3-fish");
-  });
-  it("states the plan's own numbers and keeps the reduce-fat advice free of fish", () => {
-    const [fiber, fat] = mealPlanSuggestions(profile({ dietType: "VEGAN" }), { fiber: 10, fat: 80 }, 60);
-    expect(fiber.text).toBe("Chất xơ trung bình 10 g mỗi ngày, dưới mức 30 g: thêm 1–2 khẩu phần rau xanh mỗi ngày.");
-    expect(fat.key).toBe("fat-reduce");
-    expect(fat.text).toBe("Chất béo trung bình 80 g mỗi ngày (mục tiêu 60 g): bớt món chiên, ưu tiên hấp, luộc, kho.");
-    expect(fat.text).not.toMatch(/cá/);
-  });
-  it("skips the fat comparison when the profile has no target", () => {
-    const [fiber, fat] = mealPlanSuggestions(undefined, { fiber: 31, fat: 90 }, null);
-    expect(fiber.text).toBe("Chất xơ trung bình 31 g mỗi ngày, đạt mức 30 g.");
-    expect(fat.key).toBe("omega3-fish");
-    expect(fat.text).not.toContain("mục tiêu");
+
+  it("posts the swap without choosing the recipe on the client", async () => {
+    const adapter = vi.fn(async (config) => ({ config, data: { plan, from: "Tôm rang", to: "Đậu hũ" }, status: 200, statusText: "OK", headers: {} }));
+    api.defaults.adapter = adapter;
+    expect(await swapMealItem("meal-a")).toEqual({ plan, from: "Tôm rang", to: "Đậu hũ" });
+    expect(adapter.mock.calls.map(([config]) => [config.method, config.url, config.data])).toEqual([["post", "/meal-plans/items/meal-a/swap", "{}"]]);
   });
 });
 

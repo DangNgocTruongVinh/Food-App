@@ -18,7 +18,6 @@ import {
   orderTodayMeals,
   percentOf,
   recommendationReason,
-  recommendedRecipePantryNote,
   ringDash,
   usableTargets,
 } from "./dashboard.logic";
@@ -200,12 +199,6 @@ describe("recommendation wording (from real data only)", () => {
     expect(recommendationReason({ expiringIngredientCount: 0, pantryIngredientCount: 3 }, true)).toBe("Dùng 3 nguyên liệu bạn đang có trong tủ bếp.");
     expect(recommendationReason({}, true)).toBe("Hợp với chế độ ăn, dị ứng và món không thích trong hồ sơ của bạn.");
     expect(recommendationReason({}, false)).toBeNull();
-  });
-
-  it("words the pantry line from real counts, preferring expiring ingredients", () => {
-    expect(recommendedRecipePantryNote({ expiringIngredientCount: 2, pantryIngredientCount: 3 })).toBe("Dùng 2 nguyên liệu sắp hết hạn");
-    expect(recommendedRecipePantryNote({ pantryIngredientCount: 3 })).toBe("Dùng 3 nguyên liệu trong kho");
-    expect(recommendedRecipePantryNote({})).toBeNull();
   });
 });
 

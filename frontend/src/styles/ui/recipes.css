@@ -62,29 +62,16 @@
 }
 .recipes-feature__pantry dt { color: var(--ink); font-weight: 600; }
 .recipes-feature__pantry dd { margin: 0; color: var(--ink-2); }
-.recipes-for-you__side { display: grid; gap: var(--space-3); margin: 0; padding: 0; list-style: none; }
-.recipes-side {
-  display: grid;
-  grid-template-columns: 96px minmax(0, 1fr);
-  align-items: center;
-  gap: var(--space-4);
-  padding: var(--space-3);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-card);
-  background: var(--surface);
-}
-.recipes-side__image { width: 96px; height: 96px; border-radius: var(--radius-field); }
-.recipes-side__body { display: grid; gap: var(--space-1); min-width: 0; }
-.recipes-side__title { color: var(--ink); font-size: 1.0625rem; font-weight: 600; text-decoration: none; }
-.recipes-side__title:hover,
+.recipes-for-you__side { display: grid; align-content: start; min-width: 0; }
 .recipe-tile__title a:hover { text-decoration: underline; text-underline-offset: 4px; }
-.recipes-side__note { margin: 0; color: var(--action-text); font-size: var(--fs-label); font-weight: 600; }
 
 /* Tất cả công thức. */
 .recipes-results__header { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-4); }
 .recipes-results__count { margin: 0 auto 0 0; color: var(--muted); font-size: var(--fs-small); }
 .recipes-results__tools { display: flex; align-items: center; gap: var(--space-1); }
 .recipes-results__sort.ui-input { width: auto; min-height: var(--control-h); margin-left: var(--space-2); padding-right: var(--space-6); }
+.recipes-results__profile { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-2) var(--space-4); }
+.recipes-results__profile .ui-small { margin: 0; }
 .recipes-results__list { display: grid; gap: var(--space-5); margin: 0; padding: 0; list-style: none; }
 .recipes-results__list--grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 .recipes-results__list--list { grid-template-columns: minmax(0, 1fr); gap: var(--space-3); }
@@ -95,6 +82,9 @@
 .recipe-tile__title { margin: 0; color: var(--ink); font-size: var(--fs-h3); font-weight: 600; line-height: var(--lh-h3); }
 .recipe-tile__title a { color: inherit; text-decoration: none; }
 .recipe-tile__desc { display: -webkit-box; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+.recipe-tile__warnings { display: grid; gap: var(--space-1); margin: 0; padding: var(--space-2) var(--space-3); border-radius: var(--radius-card); background: var(--warn-bg); list-style: none; }
+.recipe-tile__warnings li { display: flex; align-items: flex-start; gap: var(--space-2); color: var(--ink); font-size: var(--fs-small); font-weight: 500; line-height: var(--lh-small); }
+.recipe-tile__warnings svg { width: 16px; height: 16px; flex: 0 0 auto; margin-top: 2px; color: var(--warn); stroke-width: 1.75; }
 .recipe-tile--list { display: grid; grid-template-columns: 200px minmax(0, 1fr); }
 .recipe-tile--list .recipe-tile__image { height: 100%; min-height: 150px; aspect-ratio: auto; }
 

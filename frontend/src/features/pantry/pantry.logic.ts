@@ -1,10 +1,12 @@
 import { differenceInCalendarDays } from "date-fns";
 import type { FoodUnit, PantryItem, StorageLocation } from "../../types";
 import { formatDisplayDate } from "../../utils/date";
+import { FOOD_CATEGORIES } from "../../utils/food-categories";
 import { foodUnitLabel } from "../../utils/units";
 import type { PantryFormValues } from "./pantry.api";
 
-export type PantryItemStatus = "good" | "expiring" | "expired";
+/** depleted: số lượng 0 (giữ lại trong kho sau khi trừ hết, GĐ3b quyết định 1). */
+export type PantryItemStatus = "good" | "expiring" | "expired" | "depleted";
 export type PantryStatusFilter = "all" | PantryItemStatus;
 export type PantryView = "list" | "grid";
 export type PantryFilters = {
@@ -24,7 +26,8 @@ export const initialPantryForm: PantryFormValues = {
   storageLocation: "REFRIGERATOR" as StorageLocation, expiryDate: "", minimumStock: 0, note: "",
 };
 
-export const PANTRY_CATEGORIES = ["Rau củ", "Thịt & cá", "Trứng & sữa", "Ngũ cốc", "Trái cây", "Gia vị", "Khác"];
+/** Bộ 8 nhóm chung với danh sách đi chợ; nhóm cũ của thực phẩm đã có vẫn giữ (pantryCategoryOptions). */
+export const PANTRY_CATEGORIES: string[] = [...FOOD_CATEGORIES];
 
 /** Nhóm của thực phẩm đang sửa không có trong danh sách cố định thì vẫn giữ làm một lựa chọn. */
 export function pantryCategoryOptions(current: string) {
@@ -35,7 +38,7 @@ export const storageLabel: Record<StorageLocation, string> = {
   REFRIGERATOR: "Ngăn mát", FREEZER: "Ngăn đông", DRY_STORAGE: "Nơi khô ráo",
 };
 
-const statusLabel: Record<PantryItemStatus, string> = { good: "Còn tốt", expiring: "Sắp hết hạn", expired: "Đã hết hạn" };
+const statusLabel: Record<PantryItemStatus, string> = { good: "Còn tốt", expiring: "Sắp hết hạn", expired: "Đã hết hạn", depleted: "Đã dùng hết" };
 
 export function pantryStatusLabel(status: PantryItemStatus) {
   return statusLabel[status];
@@ -45,8 +48,12 @@ export function getDaysLeft(item: Pick<PantryItem, "expiryDate">, now = new Date
   return item.expiryDate ? differenceInCalendarDays(new Date(item.expiryDate), now) : null;
 }
 
-/** Hết hạn khi đã qua ngày; sắp hết hạn khi còn ≤ 3 ngày (cùng ngưỡng với cảnh báo ở backend). */
-export function getPantryStatus(item: Pick<PantryItem, "expiryDate">, now = new Date()): PantryItemStatus {
+/**
+ * Đã dùng hết khi số lượng 0 (ưu tiên hơn hạn dùng); hết hạn khi đã qua ngày; sắp hết hạn khi còn ≤ 3 ngày
+ * (cùng ngưỡng với cảnh báo ở backend).
+ */
+export function getPantryStatus(item: Pick<PantryItem, "expiryDate"> & { quantity?: number }, now = new Date()): PantryItemStatus {
+  if (item.quantity !== undefined && item.quantity <= 0) return "depleted";
   const days = getDaysLeft(item, now);
   if (days !== null && days < 0) return "expired";
   if (days !== null && days <= 3) return "expiring";
@@ -61,6 +68,11 @@ export function expiryCopy(item: Pick<PantryItem, "expiryDate">, now = new Date(
   if (days < 0) return { date, relative: `Quá hạn ${Math.abs(days)} ngày` };
   if (days === 0) return { date, relative: "Hết hạn hôm nay" };
   return { date, relative: `Còn ${days} ngày` };
+}
+
+/** Hạn do hệ thống gợi ý theo nhóm (đã mua → kho), người dùng chưa xác nhận; sửa sang ngày khác thì backend bỏ cờ. */
+export function isExpiryEstimated(item: Pick<PantryItem, "expiryDate" | "expiryEstimated">) {
+  return Boolean(item.expiryEstimated && item.expiryDate);
 }
 
 export function formatPantryQuantity(quantity: number, unit: FoodUnit) {
@@ -80,7 +92,9 @@ export function stockWarning(item: Pick<PantryItem, "quantity" | "minimumStock" 
 
 export function pantryCounts(items: PantryItem[], now = new Date()) {
   return {
-    total: items.length,
+    // "Tất cả" chỉ đếm thực phẩm còn số lượng; món đã dùng hết đếm riêng (ghi chú dưới ô).
+    total: items.filter((item) => item.quantity > 0).length,
+    depleted: items.filter((item) => item.quantity <= 0).length,
     good: items.filter((item) => getPantryStatus(item, now) === "good").length,
     expiring: items.filter((item) => getPantryStatus(item, now) === "expiring").length,
     expired: items.filter((item) => getPantryStatus(item, now) === "expired").length,
@@ -93,11 +107,11 @@ export type PantryCounts = ReturnType<typeof pantryCounts>;
 /** Bốn ô thống kê đầu trang, mỗi ô là một bộ lọc. */
 export type PantryStatFilter = "all" | "expiring" | "expired" | "lowStock";
 
-/** Ô đang được chọn theo bộ lọc hiện tại; null khi bộ lọc tình trạng không ứng với ô nào (vd. "Còn tốt"). */
+/** Ô đang được chọn theo bộ lọc hiện tại; null khi bộ lọc tình trạng không ứng với ô nào ("Còn tốt", "Đã dùng hết"). */
 export function activeStatFilter(filters: Pick<PantryFilters, "status" | "lowStock">): PantryStatFilter | null {
   if (filters.lowStock) return filters.status === "all" ? "lowStock" : null;
   if (filters.status === "all") return "all";
-  return filters.status === "good" ? null : filters.status;
+  return filters.status === "good" || filters.status === "depleted" ? null : filters.status;
 }
 
 /** Bấm một ô: bật bộ lọc của ô đó; bấm lại ô đang chọn thì về "Tất cả". */
@@ -125,6 +139,9 @@ export function filterAndSortPantry(items: PantryItem[], filters: PantryFilters,
     .filter((item) => filters.storage === "all" || item.storageLocation === filters.storage)
     .filter((item) => !filters.lowStock || isBelowMinimum(item))
     .sort((a, b) => {
+      // Món đã dùng hết luôn xếp cuối (trừ khi sắp theo số lượng, khi đó tự nằm cuối).
+      const depleted = Number(a.quantity <= 0) - Number(b.quantity <= 0);
+      if (depleted && filters.sortBy !== "quantity") return depleted;
       if (filters.sortBy === "name") return a.name.localeCompare(b.name, "vi");
       if (filters.sortBy === "quantity") return b.quantity - a.quantity;
       return expiryTime(a) - expiryTime(b);

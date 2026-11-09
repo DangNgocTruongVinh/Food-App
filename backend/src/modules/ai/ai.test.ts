@@ -76,7 +76,12 @@ describe("AI chat HTTP contract (no database or OpenAI request)", () => {
     });
     expect(mocks.findPlan).toHaveBeenCalledWith(expect.objectContaining({ where: expect.objectContaining({ userId, status: "ACTIVE" }) }));
     expect(mocks.requestNutritionAnswer).toHaveBeenCalledWith(
-      { profile: { dietType: "BALANCED", allergies: ["Tôm"] }, pantry, mealPlan: { status: "chưa có thực đơn" } },
+      {
+        profile: { dietType: "BALANCED", allergies: ["Tôm"] },
+        safety: { avoidForAllergy: ["tôm"], avoidDisliked: [], requiredDiet: null },
+        pantry,
+        mealPlan: { status: "chưa có thực đơn" },
+      },
       "Tôi nên ăn gì?",
     );
     expect(mocks.createMessages).toHaveBeenCalledWith({ data: [

@@ -1,6 +1,7 @@
 import { prisma } from "../../lib/prisma.js";
-import { recommendRecipes } from "../../services/recipe-fit.service.js";
-import { visibleRecipeWhere } from "../../services/recipe-visibility.js";
+import { matchRecipeToPantry } from "../../services/recipe-fit.service.js";
+import { vietnamToday } from "../../utils/vietnam-date.js";
+import { engineRecipeQuery, recommendWithData } from "../recommendation/recommendation.service.js";
 
 const DAY_MS = 86_400_000;
 const DASHBOARD_WINDOW_DAYS = 7;
@@ -27,12 +28,24 @@ export async function getDashboard(userId: string, now = new Date()) {
       include: { days: { include: { items: { include: { recipe: true } } } } },
       orderBy: { startDate: "desc" },
     }),
-    prisma.recipe.findMany({ where: visibleRecipeWhere, orderBy: { createdAt: "asc" }, include: { ingredients: true } }),
+    prisma.recipe.findMany(engineRecipeQuery),
     prisma.pantryItem.findMany({ where: { userId, quantity: { gt: 0 } } }),
   ]);
-  // Gợi ý theo hồ sơ (chế độ ăn, dị ứng, món không thích) và kho: ưu tiên nguyên liệu sắp hết hạn.
-  const recommendedRecipes = recommendRecipes(recipes, profile, pantry, DASHBOARD_RECOMMENDATIONS, now)
-    .map(({ recipe, totalIngredients, pantryIngredientCount, expiringIngredientCount }) => ({
+  // Gợi ý "hôm nay nấu gì" bằng bộ trộn 3 thuật toán (GĐ3b-R5, ngữ cảnh today): lọc an toàn theo hồ sơ trước, ưu tiên đồ sắp
+  // hết hạn và nguyên liệu trong kho, khẩu vị, người có khẩu vị giống; mỗi món kèm lý do. Dạng trả về giữ như trước.
+  const todayDate = vietnamToday(now).getTime();
+  const eaten = (activePlan?.days.find((day) => day.date.getTime() === todayDate)?.items ?? []).filter((item) => item.completed);
+  const today = {
+    calories: eaten.reduce((sum, item) => sum + item.calories, 0),
+    proteinG: eaten.reduce((sum, item) => sum + item.recipe.proteinG * item.servings, 0),
+    meals: eaten.length,
+  };
+  const suggestions = await recommendWithData({ userId, recipes, profile, pantry, now, today }, { context: "today", limit: DASHBOARD_RECOMMENDATIONS });
+  const byId = new Map(recipes.map((recipe) => [recipe.id, recipe]));
+  const recommendedRecipes = suggestions.items.map(({ recipe: summary, reason }) => {
+    const recipe = byId.get(summary.id)!;
+    const match = matchRecipeToPantry(recipe, pantry, now);
+    return {
       id: recipe.id,
       name: recipe.name,
       calories: recipe.calories,
@@ -40,10 +53,12 @@ export async function getDashboard(userId: string, now = new Date()) {
       cookMinutes: recipe.cookMinutes,
       dietTags: recipe.dietTags,
       imageUrl: recipe.imageUrl,
-      totalIngredients,
-      pantryIngredientCount,
-      expiringIngredientCount,
-    }));
+      totalIngredients: match.totalIngredients,
+      pantryIngredientCount: match.inPantry.length,
+      expiringIngredientCount: match.expiring.length,
+      reason,
+    };
+  });
 
   const mealItems = activePlan?.days.flatMap((day) => day.items) ?? [];
   const todayKey = now.toISOString().slice(0, 10);

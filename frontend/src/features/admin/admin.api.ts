@@ -69,6 +69,8 @@ export async function deleteAdminRecipe(id: string) {
 export type AdminUser = {
   id: string; name: string; email: string; role: "USER" | "ADMIN"; lockedAt: string | null; createdAt: string;
   locked: boolean; postCount: number; mealPlanCount: number;
+  /** Tài khoản mẫu minh họa tạo bằng seed (GĐ3b-R4), không tính vào thống kê. */
+  isSample?: boolean;
 };
 export type AdminPage<T> = { items: T[]; total: number; page: number; pageSize: number };
 

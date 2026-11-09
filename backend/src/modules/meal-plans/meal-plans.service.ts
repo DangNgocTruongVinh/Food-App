@@ -3,9 +3,13 @@ import { prisma } from "../../lib/prisma.js";
 import { filterRecipesForProfile, normalizeFoodText } from "../../services/dietary.service.js";
 import { calculateNutritionTargets } from "../../services/nutrition.service.js";
 import { visibleRecipeWhere } from "../../services/recipe-visibility.js";
+import { foodCategoryOf, withFoodCategory } from "../../services/food-category.js";
+import { requiredQuantity } from "../../services/pantry-consumption.js";
 import { HttpError } from "../../utils/http-error.js";
 import { generatePlanWithAI } from "../ai/ai.service.js";
+import { recipeFit, type SafetyProfile } from "../recommendation/safety.js";
 import { fallbackPlan, reconcileAIPlan } from "./meal-plan-generator.js";
+import { planSuggestions, type SuggestionProfile } from "./meal-plan-suggestions.js";
 
 export async function generateWeeklyPlan(userId: string, startDateInput: string) {
   const [user, pantry, allRecipes] = await Promise.all([
@@ -57,7 +61,8 @@ export async function generateWeeklyPlan(userId: string, startDateInput: string)
       if (!recipe) return [];
       recipe.ingredients.forEach((ingredient) => selectedIngredients.push({
         name: ingredient.name,
-        quantity: ingredient.quantity * meal.servings,
+        // Định lượng công thức tính cho recipe.servings khẩu phần; bữa ăn meal.servings khẩu phần.
+        quantity: requiredQuantity(ingredient.quantity, meal.servings, recipe.servings),
         unit: ingredient.unit,
       }));
       return [{
@@ -78,10 +83,10 @@ export async function generateWeeklyPlan(userId: string, startDateInput: string)
   }
   const shoppingItems = [...required.entries()].flatMap(([key, item]) => {
     const missing = item.quantity - (pantryByKey.get(key) ?? 0);
-    return missing > 0.01 ? [{ ...item, quantity: Math.round(missing * 10) / 10 }] : [];
+    return missing > 0.01 ? [{ ...item, quantity: Math.round(missing * 10) / 10, category: foodCategoryOf(item.name) }] : [];
   });
 
-  return prisma.mealPlan.create({
+  const created = await prisma.mealPlan.create({
     data: {
       userId,
       name: `Thực đơn ${startDate.toLocaleDateString("vi-VN", { timeZone: "UTC" })}`,
@@ -95,6 +100,7 @@ export async function generateWeeklyPlan(userId: string, startDateInput: string)
     },
     include: planInclude,
   });
+  return forReading(created, profile);
 }
 
 export const planInclude = {
@@ -102,53 +108,56 @@ export const planInclude = {
   shoppingItems: { orderBy: [{ purchased: "asc" as const }, { name: "asc" as const }] },
 };
 
-export function listMealPlans(userId: string) {
-  return prisma.mealPlan.findMany({
-    where: { userId },
-    include: planInclude,
-    // Mới nhất trước; trùng ngày bắt đầu thì thực đơn tạo sau đứng trước.
-    orderBy: [{ startDate: "desc" }, { createdAt: "desc" }],
-  });
+type ReadablePlan = {
+  shoppingItems: Array<{ name: string; category: string | null }>;
+  days: Array<{ items: Array<{ recipe: Parameters<typeof recipeFit>[0] & { fiberG: number; fatG: number } }> }>;
+};
+
+/**
+ * Dữ liệu trả về khi đọc thực đơn: dòng đi chợ tạo trước GĐ3b lượt 5 chưa có `category` thì tính theo tên (không đổi
+ * dữ liệu đã lưu); mỗi món kèm `fit` theo hồ sơ hiện tại (GĐ3b-R2: thực đơn tạo trước khi thêm dị ứng hiện cảnh báo);
+ * `suggestions`: gợi ý dinh dưỡng của tuần theo hồ sơ hiện tại.
+ */
+function forReading<T extends ReadablePlan>(plan: T, profile: SafetyProfile & SuggestionProfile) {
+  return {
+    suggestions: planSuggestions(plan, profile),
+    ...plan,
+    days: plan.days.map((day) => ({
+      ...day,
+      items: day.items.map((item) => ({ ...item, recipe: { ...item.recipe, fit: recipeFit(item.recipe, profile) } })),
+    })),
+    shoppingItems: plan.shoppingItems.map(withFoodCategory),
+  };
+}
+
+const profileOf = (userId: string) => prisma.nutritionProfile.findUnique({ where: { userId } });
+
+export async function listMealPlans(userId: string) {
+  const [plans, profile] = await Promise.all([
+    prisma.mealPlan.findMany({
+      where: { userId },
+      include: planInclude,
+      // Mới nhất trước; trùng ngày bắt đầu thì thực đơn tạo sau đứng trước.
+      orderBy: [{ startDate: "desc" }, { createdAt: "desc" }],
+    }),
+    profileOf(userId),
+  ]);
+  return plans.map((plan) => forReading(plan, profile));
 }
 
 export async function getMealPlan(userId: string, id: string) {
-  const plan = await prisma.mealPlan.findFirst({ where: { id, userId }, include: planInclude });
+  const [plan, profile] = await Promise.all([prisma.mealPlan.findFirst({ where: { id, userId }, include: planInclude }), profileOf(userId)]);
   if (!plan) throw new HttpError(404, "Không tìm thấy thực đơn.");
-  return plan;
+  return forReading(plan, profile);
 }
 
 export async function updateMealPlanStatus(userId: string, id: string, status: PlanStatus) {
-  return prisma.$transaction(async (transaction) => {
+  const plan = await prisma.$transaction(async (transaction) => {
     const result = await transaction.mealPlan.updateMany({ where: { id, userId }, data: { status } });
     if (!result.count) throw new HttpError(404, "Không tìm thấy thực đơn.");
     return transaction.mealPlan.findUnique({ where: { id }, include: planInclude });
   });
-}
-
-export async function updateMealCompletion(userId: string, id: string, completed: boolean) {
-  return prisma.$transaction(async (transaction) => {
-    const result = await transaction.mealPlanItem.updateMany({
-      where: { id, day: { mealPlan: { userId } } },
-      data: { completed },
-    });
-    if (!result.count) throw new HttpError(404, "Không tìm thấy bữa ăn.");
-    const item = await transaction.mealPlanItem.findUnique({ where: { id } });
-    if (!item) throw new HttpError(404, "Không tìm thấy bữa ăn.");
-    return item;
-  });
-}
-
-export async function updateShoppingPurchased(userId: string, id: string, purchased: boolean) {
-  return prisma.$transaction(async (transaction) => {
-    const result = await transaction.shoppingItem.updateMany({
-      where: { id, mealPlan: { userId } },
-      data: { purchased },
-    });
-    if (!result.count) throw new HttpError(404, "Không tìm thấy nguyên liệu mua sắm.");
-    const item = await transaction.shoppingItem.findUnique({ where: { id } });
-    if (!item) throw new HttpError(404, "Không tìm thấy nguyên liệu mua sắm.");
-    return item;
-  });
+  return plan && forReading(plan, await profileOf(userId));
 }
 
 export async function deleteMealPlan(userId: string, id: string) {

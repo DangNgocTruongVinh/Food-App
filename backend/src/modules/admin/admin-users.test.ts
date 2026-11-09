@@ -257,7 +257,20 @@ describe("Admin stats", () => {
     expect(response.body.timeZone).toBe("Asia/Ho_Chi_Minh");
     expect(response.body.weekly).toHaveLength(12);
     expect(response.body.weekly.at(-1)).toMatchObject({ users: 1, mealPlans: 0, posts: 0 });
-    expect(mocks.userCount).toHaveBeenCalledWith({ where: { lockedAt: { not: null } } });
+    expect(mocks.userCount).toHaveBeenCalledWith({ where: { isSample: false, lockedAt: { not: null } } });
     expect(mocks.recipeCount).toHaveBeenCalledWith({ where: { hiddenAt: { not: null } } });
+  });
+
+  it("leaves sample accounts (isSample) and their meal plans and posts out of every count (GĐ3b-R4)", async () => {
+    mocks.userCount.mockResolvedValue(0);
+    mocks.planCount.mockResolvedValue(0);
+    mocks.postCount.mockResolvedValue(0);
+    mocks.recipeCount.mockResolvedValue(0);
+    mocks.userFindMany.mockResolvedValue([]);
+    await request(app, "/api/admin/stats", { token: token() });
+    expect(mocks.userCount).toHaveBeenCalledWith({ where: { isSample: false } });
+    expect(mocks.planCount).toHaveBeenCalledWith({ where: { user: { isSample: false } } });
+    expect(mocks.postCount).toHaveBeenCalledWith({ where: { author: { isSample: false } } });
+    for (const call of mocks.userFindMany.mock.calls) expect(call[0].where).toMatchObject({ isSample: false });
   });
 });

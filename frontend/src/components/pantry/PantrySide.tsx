@@ -1,11 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
-import { recommendedRecipePantryNote } from "../../features/dashboard/dashboard.logic";
-import { dashboardQueries } from "../../features/dashboard/dashboard.queries";
 import { expiryCopy, formatPantryQuantity } from "../../features/pantry/pantry.logic";
+import { recommendationQueries } from "../../features/recommendations/recommendations.api";
 import type { PantryItem } from "../../types";
-import { IMAGE_WIDTHS } from "../../utils/images";
-import { Button, Card, RecipeImage } from "../ui";
+import { RecommendationList } from "../recommendations/RecommendationList";
+import { Button, Card, Dialog } from "../ui";
 
 const SOON_LIMIT = 5;
 
@@ -55,28 +53,52 @@ export function PantrySoonCard({ expiring, expired, onOpen, onShowAll }: PantryS
 }
 
 /**
- * "Nấu gì từ kho?": dùng gợi ý theo hồ sơ có sẵn của Tổng quan (API đã ưu tiên món dùng nguyên liệu sắp hết hạn,
- * rồi món dùng nhiều nguyên liệu trong kho). Chỉ hiện món thật sự dùng nguyên liệu trong kho; không có thì ẩn khối.
+ * "Nấu gì từ kho?": bộ gợi ý, ngữ cảnh pantry (thuật toán 3 là chính: dùng đồ sắp hết hạn, nguyên liệu đang có), chỉ món có ít nhất
+ * một nguyên liệu trong kho, đã lọc theo hồ sơ; mỗi món có lý do.
  */
 export function PantryCookIdeas() {
-  const overview = useQuery(dashboardQueries.overview());
-  const recipes = (overview.data?.recommendedRecipes ?? []).filter((recipe) => (recipe.pantryIngredientCount ?? 0) > 0);
-  if (!recipes.length) return null;
+  const ideas = useQuery(recommendationQueries.list({ context: "pantry", limit: 3 }));
   return (
     <Card as="section" className="kho-cook" aria-labelledby="kho-cook-title">
       <h2 id="kho-cook-title" className="kho-side__title">Nấu gì từ kho?</h2>
-      <p className="ui-small">Món hợp hồ sơ của bạn, dùng nguyên liệu đang có.</p>
-      <ul className="kho-cook__list">
-        {recipes.map((recipe) => (
-          <li key={recipe.id} className="kho-cook__item">
-            <RecipeImage className="kho-cook__image" recipe={recipe} width={IMAGE_WIDTHS.thumb} alt="" />
-            <div className="kho-cook__text">
-              <Link className="kho-cook__name" to={`/recipes/${recipe.id}`}>{recipe.name}</Link>
-              <span className="kho-cook__note">{recommendedRecipePantryNote(recipe)}</span>
-            </div>
-          </li>
-        ))}
-      </ul>
+      <p className="ui-small">Món hợp hồ sơ của bạn, ưu tiên dùng thực phẩm sắp hết hạn.</p>
+      <RecommendationList
+        entries={ideas.data?.items ?? []}
+        variant="row"
+        isLoading={ideas.isLoading}
+        isError={ideas.isError}
+        isFetching={ideas.isFetching}
+        onRetry={() => void ideas.refetch()}
+        loadingLabel="Đang tìm món nấu từ kho"
+        errorMessage="Chưa tải được gợi ý món."
+        emptyMessage="Chưa có món nào dùng được thực phẩm trong kho."
+      />
     </Card>
+  );
+}
+
+/** Hộp thoại "Gợi ý món" cho một thực phẩm sắp hết hạn: món dùng đúng thực phẩm đó (ngữ cảnh pantry + pantryItemId). */
+export function PantrySuggestDialog({ item, onClose }: { item: PantryItem; onClose: () => void }) {
+  const ideas = useQuery(recommendationQueries.list({ context: "pantry", pantryItemId: item.id, limit: 6 }));
+  return (
+    <Dialog
+      title={`Món dùng ${item.name}`}
+      description={`${item.name} ${expiryCopy(item).relative.toLocaleLowerCase("vi")}. Các món dưới đây dùng thực phẩm này và hợp hồ sơ của bạn.`}
+      onClose={onClose}
+      className="kho-suggest"
+    >
+      <RecommendationList
+        entries={ideas.data?.items ?? []}
+        variant="row"
+        isLoading={ideas.isLoading}
+        isError={ideas.isError}
+        isFetching={ideas.isFetching}
+        onRetry={() => void ideas.refetch()}
+        loadingLabel={`Đang tìm món dùng ${item.name}`}
+        errorMessage="Chưa tải được gợi ý món."
+        emptyMessage={`Chưa có món nào dùng ${item.name} hợp với hồ sơ của bạn.`}
+      />
+      <div className="ui-dialog__actions"><Button onClick={onClose}>Đóng</Button></div>
+    </Dialog>
   );
 }

@@ -16,7 +16,7 @@ export async function listUsersForAdmin(query: AdminUserListQuery) {
       skip: (query.page - 1) * query.pageSize,
       take: query.pageSize,
       select: {
-        id: true, name: true, email: true, role: true, lockedAt: true, createdAt: true,
+        id: true, name: true, email: true, role: true, lockedAt: true, isSample: true, createdAt: true,
         _count: { select: { communityPosts: true, mealPlans: true } },
       },
     }),

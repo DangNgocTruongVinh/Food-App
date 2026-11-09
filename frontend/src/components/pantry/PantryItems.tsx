@@ -1,6 +1,6 @@
-import { Pencil, Trash2 } from "lucide-react";
+import { ChefHat, Pencil, Trash2 } from "lucide-react";
 import {
-  expiryCopy, formatPantryQuantity, getPantryStatus, pantryStatusLabel, stockWarning, storageLabel, type PantryItemStatus,
+  expiryCopy, formatPantryQuantity, isExpiryEstimated, getPantryStatus, pantryStatusLabel, stockWarning, storageLabel, type PantryItemStatus,
 } from "../../features/pantry/pantry.logic";
 import { pantryItemElementId } from "../../features/pantry/usePantryItemFocus";
 import { cx } from "../../features/ui/ui.logic";
@@ -13,15 +13,20 @@ type PantryItemsProps = {
   deletingId: string | null;
   onEdit: (item: PantryItem) => void;
   onDelete: (item: PantryItem) => void;
+  /** "Gợi ý món" trên dòng sắp hết hạn (GĐ3b-R7). */
+  onSuggest: (item: PantryItem) => void;
 };
 
 export function PantryStatusTag({ status }: { status: PantryItemStatus }) {
   return <span className={`kho-status kho-status--${status}`}>{pantryStatusLabel(status)}</span>;
 }
 
-function ItemActions({ item, deleting, onEdit, onDelete }: { item: PantryItem; deleting: boolean } & Pick<PantryItemsProps, "onEdit" | "onDelete">) {
+function ItemActions({ item, deleting, onEdit, onDelete, onSuggest }: { item: PantryItem; deleting: boolean } & Pick<PantryItemsProps, "onEdit" | "onDelete" | "onSuggest">) {
   return (
     <div className="kho-actions">
+      {getPantryStatus(item) === "expiring" && (
+        <IconButton label={`Gợi ý món dùng ${item.name}`} icon={<ChefHat />} quiet className="kho-actions__suggest" onClick={() => onSuggest(item)} />
+      )}
       <IconButton label={`Sửa ${item.name}`} icon={<Pencil />} quiet onClick={() => onEdit(item)} />
       <IconButton label={`Xóa ${item.name}`} icon={<Trash2 />} quiet className="kho-actions__delete" disabled={deleting} onClick={() => onDelete(item)} />
     </div>
@@ -43,7 +48,8 @@ function Expiry({ item, status }: { item: PantryItem; status: PantryItemStatus }
   return (
     <>
       <span className="kho-date">{expiry.date}</span>
-      {expiry.relative && <span className={cx("kho-sub", status !== "good" && "kho-sub--warn")}>{expiry.relative}</span>}
+      {expiry.relative && <span className={cx("kho-sub", (status === "expiring" || status === "expired") && "kho-sub--warn")}>{expiry.relative}</span>}
+      {isExpiryEstimated(item) && <span className="kho-sub">Hạn ước tính</span>}
     </>
   );
 }
@@ -52,7 +58,7 @@ const itemClass = (base: string, item: PantryItem, status: PantryItemStatus, foc
   cx(base, status === "expiring" && `${base}--soon`, item.id === focusedItemId && "kho-item--focus");
 
 /** Bảng thực phẩm; ≤ 760px mỗi dòng thành một thẻ (CSS). Dòng sắp hết hạn nền --warn-bg. */
-export function PantryTable({ items, focusedItemId, deletingId, onEdit, onDelete }: PantryItemsProps) {
+export function PantryTable({ items, focusedItemId, deletingId, onEdit, onDelete, onSuggest }: PantryItemsProps) {
   return (
     <table className="kho-table">
       <thead>
@@ -79,7 +85,7 @@ export function PantryTable({ items, focusedItemId, deletingId, onEdit, onDelete
               <td data-label="Nơi bảo quản">{storageLabel[item.storageLocation]}</td>
               <td data-label="Tình trạng"><PantryStatusTag status={status} /></td>
               <td className="kho-row__actions">
-                <ItemActions item={item} deleting={deletingId === item.id} onEdit={onEdit} onDelete={onDelete} />
+                <ItemActions item={item} deleting={deletingId === item.id} onEdit={onEdit} onDelete={onDelete} onSuggest={onSuggest} />
               </td>
             </tr>
           );
@@ -90,7 +96,7 @@ export function PantryTable({ items, focusedItemId, deletingId, onEdit, onDelete
 }
 
 /** Dạng lưới: mỗi thực phẩm một thẻ nhỏ, cùng thông tin và thao tác như bảng. */
-export function PantryGrid({ items, focusedItemId, deletingId, onEdit, onDelete }: PantryItemsProps) {
+export function PantryGrid({ items, focusedItemId, deletingId, onEdit, onDelete, onSuggest }: PantryItemsProps) {
   return (
     <ul className="kho-grid">
       {items.map((item) => {
@@ -109,7 +115,7 @@ export function PantryGrid({ items, focusedItemId, deletingId, onEdit, onDelete 
               <div><dt>Hạn sử dụng</dt><dd><Expiry item={item} status={status} /></dd></div>
               <div><dt>Nơi bảo quản</dt><dd>{storageLabel[item.storageLocation]}</dd></div>
             </dl>
-            <ItemActions item={item} deleting={deletingId === item.id} onEdit={onEdit} onDelete={onDelete} />
+            <ItemActions item={item} deleting={deletingId === item.id} onEdit={onEdit} onDelete={onDelete} onSuggest={onSuggest} />
           </li>
         );
       })}

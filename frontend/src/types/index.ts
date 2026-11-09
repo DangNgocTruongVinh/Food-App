@@ -10,7 +10,8 @@ export interface AuthResponse { token: string; user: User }
 export interface LoginInput { email: string; password: string }
 export interface RegisterInput extends LoginInput { name: string }
 
-export interface CommunityAuthor { id: string; name: string }
+/** `isSample`: tài khoản mẫu minh họa (GĐ3b-R4), giao diện gắn nhãn "Tài khoản mẫu". */
+export interface CommunityAuthor { id: string; name: string; isSample?: boolean }
 export interface CommunityComment {
   id: string; content: string; createdAt: string; updatedAt: string; author: CommunityAuthor;
 }
@@ -76,7 +77,19 @@ export type ProfileUpdateInput = Partial<Pick<NutritionProfile,
 export interface PantryItem {
   id: string; name: string; category: string; quantity: number; unit: FoodUnit;
   storageLocation: StorageLocation; expiryDate: string | null; minimumStock: number; note?: string | null;
+  /** Hạn do hệ thống gợi ý (đã mua, quét ảnh), chưa được người dùng xác nhận (GĐ3b). */
+  expiryEstimated?: boolean;
 }
+
+export type PantryTransactionSource = "MANUAL_ADD" | "MANUAL_EDIT" | "MANUAL_DELETE" | "CONSUMPTION" | "PURCHASE" | "RECEIPT_SCAN";
+/** Một dòng lịch sử kho (GET /api/pantry/transactions): `delta` theo `unit`, `quantityAfter` là số còn lại sau thay đổi. */
+export interface PantryTransaction {
+  id: string; pantryItemId: string | null; itemName: string; unit: FoodUnit; delta: number; quantityAfter: number;
+  source: PantryTransactionSource; note: string | null; reversalOfId: string | null; reversedAt: string | null; createdAt: string;
+  mealPlanItem: { id: string; mealType: MealType; recipe: { name: string }; day: { date: string; mealPlanId: string } } | null;
+  shoppingItem: { id: string; name: string; mealPlanId: string } | null;
+}
+export interface PantryTransactionPage { items: PantryTransaction[]; total: number; page: number; pageSize: number }
 
 export interface PantryInput {
   name: string; category: string; quantity: number; unit: FoodUnit;
@@ -92,7 +105,13 @@ export interface Recipe {
   cuisine: string; dietTags: string[]; mealTypes?: MealType[]; imageUrl?: string | null; ingredients: Ingredient[];
   /** Món đã ngừng sử dụng (Admin ẩn): vẫn xem được chi tiết, không chia sẻ/không chọn mới. */
   hidden?: boolean;
+  /** GET /api/recipes: độ phù hợp với hồ sơ người đang đăng nhập (GĐ3b-R1). */
+  fit?: RecipeFit;
 }
+
+/** Vi phạm theo hồ sơ: thành phần gây dị ứng (theo nhóm), món không thích, không hợp chế độ chay/thuần chay. */
+export interface RecipeWarnings { allergens: string[]; dislikedFoods: string[]; dietConflict: string | null }
+export interface RecipeFit extends RecipeWarnings { safe: boolean }
 
 /** GET /api/recipes/:id/for-you: mức phù hợp của công thức với hồ sơ và kho của người dùng đang đăng nhập. */
 export interface RecipeForYou {
@@ -103,7 +122,7 @@ export interface RecipeForYou {
     unitMismatches: Array<{ name: string; recipeUnit: FoodUnit; pantryUnits: FoodUnit[] }>;
   };
   calories: { recipeCalories: number; dailyTarget: number; percentOfDailyTarget: number };
-  warnings: { allergens: string[]; dislikedFoods: string[]; dietConflict: string | null };
+  warnings: RecipeWarnings;
 }
 
 /** GET /api/recipes/featured (công khai): món tiêu biểu cho Landing, chỉ trường tóm tắt, món có ảnh thật đứng trước. */
@@ -115,20 +134,81 @@ export interface FeaturedRecipe {
 /** GET /api/recipes/stats (công khai): số công thức theo nhóm cho Landing. */
 export interface RecipeStats { total: number; breakfast: number; vegetarian: number; vegan: number; lowCarb: number; highProtein: number }
 
+/** "Đã ăn" → trừ kho (GĐ3b): trạng thái từng nguyên liệu trong hộp xem trước. */
+export type ConsumptionStatus = "ENOUGH" | "SHORT" | "NOT_IN_PANTRY" | "UNIT_MISMATCH" | "EXPIRED_ONLY" | "OPTIONAL";
+export interface ConsumptionDeduction {
+  pantryItemId: string; name: string; quantity: number; unit: FoodUnit; expiryDate: string | null; quantityAfter: number;
+}
+export interface ConsumptionLine {
+  ingredientId: string; name: string; optional: boolean; required: { quantity: number; unit: FoodUnit }; status: ConsumptionStatus;
+  deductions: ConsumptionDeduction[]; shortfall: number; defaultQuantity: number; otherUnits: FoodUnit[];
+}
+/** GET /api/meal-plans/items/:id/consumption-preview */
+export interface ConsumptionPreview {
+  mealPlanItemId: string; completed: boolean; alreadyDeducted: boolean; servings: number;
+  recipe: { id: string; name: string; servings: number }; lines: ConsumptionLine[];
+}
+export type ConsumptionSkipReason = "DELETED" | "UNIT_MISMATCH" | "CHANGED";
+/** PATCH /api/meal-plans/items/:id: bữa đã cập nhật + tóm tắt trừ kho / hoàn lại. */
+export interface MealCompletionResult {
+  id: string; completed: boolean; alreadyCompleted: boolean;
+  consumption: {
+    lines: Array<ConsumptionLine & { skipped: Array<{ pantryItemId: string; reason: ConsumptionSkipReason }> }>;
+    skippedIngredients: Array<{ ingredientId: string; name: string }>;
+  } | null;
+  restoration: {
+    restored: Array<{ pantryItemId: string; name: string; quantity: number; unit: FoodUnit; quantityAfter: number }>;
+    skipped: Array<{ itemName: string; quantity: number; unit: FoodUnit; reason: ConsumptionSkipReason }>;
+  } | null;
+}
+
 export interface MealPlanItem { id: string; mealType: MealType; servings: number; calories: number; completed: boolean; recipe: Recipe }
 export interface MealPlanDay { id: string; date: string; items: MealPlanItem[] }
 export interface ShoppingItem { id: string; name: string; quantity: number; unit: FoodUnit; purchased: boolean; category?: string | null }
+/** PATCH /api/meal-plans/shopping/:id: dòng đi chợ đã cập nhật + tóm tắt thêm vào kho / hoàn lại (GĐ3b lượt 6). */
+export interface ShoppingPurchaseResult extends ShoppingItem {
+  alreadyPurchased: boolean;
+  pantry: {
+    action: "MERGED" | "REUSED" | "CREATED"; pantryItemId: string; name: string; quantity: number; unit: FoodUnit; quantityAfter: number;
+    expiryDate: string | null; expiryEstimated: boolean;
+  } | null;
+  restoration: {
+    restored: Array<{ pantryItemId: string; name: string; quantity: number; unit: FoodUnit; quantityAfter: number; removed: boolean }>;
+    skipped: Array<{ itemName: string; quantity: number; unit: FoodUnit; reason: ConsumptionSkipReason | "INSUFFICIENT" }>;
+  } | null;
+}
+/** Gợi ý dinh dưỡng của tuần (chất xơ, chất béo), backend tính theo hồ sơ hiện tại (GĐ3b-R2). */
+export interface MealPlanSuggestion { key: string; text: string }
 export interface MealPlan {
   id: string; name: string; startDate: string; endDate: string; status: MealPlanStatus;
   calorieTarget: number; aiGenerated: boolean; summary?: string; days: MealPlanDay[]; shoppingItems: ShoppingItem[];
   createdAt?: string;
+  suggestions?: MealPlanSuggestion[];
 }
+/** POST /api/meal-plans/:id/items: thêm món có sẵn vào một ngày/bữa. */
+export interface AddMealPlanItemInput { planId: string; dayId: string; mealType: MealType; recipeId: string; servings: number }
+/** POST /api/meal-plans/items/:id/swap: thực đơn sau khi đổi, tên món cũ và món mới. */
+export interface MealSwapResult { plan: MealPlan; from: string; to: string }
 
 // Số liệu kho chỉ có ở món gợi ý thật từ API; món mẫu dự phòng không có.
 export interface DashboardRecommendedRecipe {
   id: string; name: string; calories: number; prepMinutes: number; cookMinutes: number; dietTags: string[];
   imageUrl?: string | null; totalIngredients?: number; pantryIngredientCount?: number; expiringIngredientCount?: number;
+  /** Lý do gợi ý của bộ trộn (GĐ3b-R5). */
+  reason?: string;
 }
+
+export type RecommendationContext = "today" | "for-you" | "pantry" | "similar" | "also-cooked";
+/** GET /api/recommendations: món gợi ý (tóm tắt) + lý do ngắn. */
+export interface RecommendationItem {
+  recipe: {
+    id: string; slug: string; name: string; imageUrl: string | null; calories: number; prepMinutes: number; cookMinutes: number;
+    cuisine: string; dietTags: string[]; mealTypes: MealType[];
+  };
+  score: number; reason: string;
+  components: { content: number; collaborative: number; knowledge: number; popularity: number };
+}
+export interface RecommendationResponse { coldStart: boolean; items: RecommendationItem[] }
 
 export interface DashboardData {
   nutritionTargets: { calories: number; proteinG: number; carbsG: number; fatG: number } | null;

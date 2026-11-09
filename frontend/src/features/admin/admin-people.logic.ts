@@ -1,18 +1,10 @@
 import type { AdminUser, AuditAction, AuditLog, ModerationPost } from "./admin.api";
 
 // Logic cho Người dùng, Kiểm duyệt, Nhật ký (UI-10). Giờ hiển thị theo giờ Việt Nam như backend thống kê.
+import { vietnamTime } from "../../utils/date";
 
-const VN_TIME = new Intl.DateTimeFormat("vi-VN", {
-  timeZone: "Asia/Ho_Chi_Minh", hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit", year: "numeric", hour12: false,
-});
-const VN_DATE = new Intl.DateTimeFormat("vi-VN", { timeZone: "Asia/Ho_Chi_Minh", day: "2-digit", month: "2-digit", year: "numeric" });
-
-/** "14:05, 02/11/2026" theo giờ Việt Nam. */
-export function vietnamTime(value: string) {
-  const parts = Object.fromEntries(VN_TIME.formatToParts(new Date(value)).map((part) => [part.type, part.value]));
-  return `${parts.hour}:${parts.minute}, ${parts.day}/${parts.month}/${parts.year}`;
-}
-export const vietnamDate = (value: string) => VN_DATE.format(new Date(value));
+// Giờ Việt Nam dùng chung với Kho (lịch sử kho): định nghĩa ở utils/date.ts.
+export { vietnamDate, vietnamTime } from "../../utils/date";
 
 // ---------- Người dùng ----------
 

@@ -18,7 +18,7 @@ export async function listRecipesController(
   req: ValidatedRequest<unknown, Record<string, never>, RecipeListQuery>,
   res: Response,
 ) {
-  res.json(await listRecipes(req.query));
+  res.json(await listRecipes(authenticatedUserId(req), req.query));
 }
 
 export async function getRecipeController(

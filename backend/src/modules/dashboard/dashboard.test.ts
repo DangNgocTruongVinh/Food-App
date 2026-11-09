@@ -11,6 +11,7 @@ const mocks = vi.hoisted(() => ({
   findPantry: vi.fn(),
   findPlan: vi.fn(),
   findRecipes: vi.fn(),
+  queryRaw: vi.fn(),
 }));
 
 vi.mock("../../config/env.js", () => ({ env: { JWT_SECRET: mocks.secret } }));
@@ -20,6 +21,8 @@ vi.mock("../../lib/prisma.js", () => ({
     pantryItem: { count: mocks.countPantry, findMany: mocks.findPantry },
     mealPlan: { findFirst: mocks.findPlan },
     recipe: { findMany: mocks.findRecipes },
+    // Lịch sử tương tác cho bộ gợi ý (GĐ3b-R5): rỗng = người dùng mới.
+    $queryRaw: mocks.queryRaw,
   },
 }));
 
@@ -51,11 +54,13 @@ const recipe = {
   dietTags: ["BALANCED"],
   imageUrl: "/assets/nutrition-hero.jpg",
   ingredients: [{ name: "Ức gà", quantity: 150, unit: "G" }, { name: "Cà rốt", quantity: 50, unit: "G" }],
+  slug: "uc-ga-rau-cu", cuisine: "Việt Nam", mealTypes: ["LUNCH"], proteinG: 35, carbsG: 30, fatG: 12, updatedAt: new Date(0),
 };
 // Món gợi ý trả về cho frontend: thông tin món + số nguyên liệu trong kho / sắp hết hạn.
 const recommended = {
   id: "recipe-a", name: "Ức gà rau củ", calories: 450, prepMinutes: 10, cookMinutes: 20, dietTags: ["BALANCED"],
   imageUrl: "/assets/nutrition-hero.jpg", totalIngredients: 2, pantryIngredientCount: 1, expiringIngredientCount: 1,
+  reason: "Dùng 1 thực phẩm sắp hết hạn: Ức gà",
 };
 const fullPantry = [{ ...pantryItem, unit: "G" }];
 const meal = (id: string, completed: boolean, calories = 450) => ({
@@ -63,6 +68,7 @@ const meal = (id: string, completed: boolean, calories = 450) => ({
   mealType: "LUNCH",
   calories,
   completed,
+  servings: 1,
   recipe: { ...recipe, description: "Món cân bằng", instructions: ["Áp chảo"] },
 });
 const activePlan = {
@@ -82,6 +88,7 @@ beforeEach(() => {
   mocks.findPantry.mockImplementation(({ where }) => Promise.resolve(where.expiryDate ? [pantryItem] : fullPantry));
   mocks.findPlan.mockResolvedValue(activePlan);
   mocks.findRecipes.mockResolvedValue([recipe]);
+  mocks.queryRaw.mockResolvedValue([]);
 });
 
 describe("Dashboard service contract (mock Prisma, no database)", () => {
@@ -111,7 +118,7 @@ describe("Dashboard service contract (mock Prisma, no database)", () => {
       include: { days: { include: { items: { include: { recipe: true } } } } },
       orderBy: { startDate: "desc" },
     });
-    expect(mocks.findRecipes).toHaveBeenCalledWith({ where: { hiddenAt: null }, orderBy: { createdAt: "asc" }, include: { ingredients: true } });
+    expect(mocks.findRecipes).toHaveBeenCalledWith({ where: { hiddenAt: null }, include: { ingredients: true }, orderBy: { createdAt: "asc" } });
     expect(mocks.findPantry).toHaveBeenCalledWith({ where: { userId, quantity: { gt: 0 } } });
   });
 

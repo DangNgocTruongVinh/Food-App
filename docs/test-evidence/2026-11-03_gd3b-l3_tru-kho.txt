@@ -1,0 +1,24 @@
+GĐ3b lượt 3 — "Đã ăn" → trừ kho, bỏ "đã ăn" → hoàn lại — kiểm trên Docker bằng API (03/11/2026)
+
+Môi trường: docker compose (backend build lại), API qua nginx :8080, tài khoản demo@nouri.vn.
+Kho demo lúc đầu: Ức gà 500 g (đã hết hạn), Bông cải xanh 300 g, Khoai lang 600 g, Trứng 8 cái, Gạo 1000 g.
+
+Kịch bản 1 (dữ liệu thật của demo) — 14/14 đạt:
+- Tạo thực đơn 7 ngày; bữa "Cháo gà hành gừng". Xem trước:
+  Gạo ENOUGH (cần 50 g, trừ 50 g từ Gạo); Ức gà EXPIRED_ONLY (không trừ, quyết định 2); Gừng, Hành tím, Hành lá,
+  Nước mắm, Tiêu NOT_IN_PANTRY. Xem trước không đổi kho; tài khoản khác xem trước bữa của demo → 404.
+- PATCH deduct (lượng mặc định) → Gạo 1000 → 950 g; 1 dòng lịch sử CONSUMPTION gắn bữa ăn.
+- Gửi lại deduct → alreadyCompleted, kho không đổi (không trừ hai lần).
+- Sửa tay Gạo +100 g rồi bỏ "đã ăn" → Gạo = số hiện tại + 50 g đã trừ; dòng hoàn lại trỏ reversalOfId về dòng gốc,
+  dòng gốc có reversedAt. Bỏ "đã ăn" lần nữa → không hoàn lại hai lần.
+- "Chỉ đánh dấu, không trừ kho" (mode none) → kho không đổi.
+
+Kịch bản 2 (thực phẩm tạm: Gừng 0,2 kg; Hành tím 6 g hạn sau 1 ngày + 100 g hạn sau 6 ngày) — 6/6 đạt:
+- Gừng: công thức cần 15 g, kho tính kg → trừ 0,015 kg, còn 0,185 kg.
+- Hành tím cần 10 g: trừ 6 g của món hạn sớm trước (về 0, vẫn giữ trong kho), 4 g từ món hạn sau.
+- Xóa Hành tím (hạn sau) rồi bỏ "đã ăn": Gừng về 0,2 kg, Hành tím (hạn sớm) về 6 g; Hành tím đã xóa không bị tạo lại,
+  phản hồi báo { itemName: "Hành tím", quantity: 4, unit: "G", reason: "DELETED" }.
+
+Dọn dữ liệu: xóa thực đơn thử và thực phẩm tạm qua API; trả số lượng Gạo về như cũ; xóa bằng SQL các dòng lịch sử kho và
+thông báo của demo tạo sau thời điểm bắt đầu lượt thử. Sau cùng: kho demo đúng như đầu (tên, số lượng, đơn vị, hạn),
+0 thực đơn, bảng PantryTransaction 0 dòng.

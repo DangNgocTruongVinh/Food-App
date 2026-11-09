@@ -5,32 +5,42 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { getApiError } from "../api/client";
 import { queryKeys } from "../api/query-keys";
+import { AddMealDialog } from "../components/meal-plans/AddMealDialog";
+import { defaultMealType } from "../features/meal-plans/add-meal.logic";
 import { dayTabId, MealDayTabs } from "../components/meal-plans/MealDayTabs";
+import { ConsumeMealDialog } from "../components/meal-plans/ConsumeMealDialog";
 import { MealDayList } from "../components/meal-plans/MealDayList";
 import { MealPlanCreateForm } from "../components/meal-plans/MealPlanCreateForm";
 import { MealPlanHeader } from "../components/meal-plans/MealPlanHeader";
 import { MealPlanNutritionCard, MealPlanSuggestionsCard } from "../components/meal-plans/MealPlanSide";
 import { MealPlansSkeleton } from "../components/meal-plans/MealPlansSkeleton";
+import { MealStatusNotice } from "../components/meal-plans/MealStatusNotice";
 import { ShoppingListCard } from "../components/meal-plans/ShoppingListCard";
-import { Button, EmptyState, ErrorState, Toast, useConfirm } from "../components/ui";
+import { EmptyState, ErrorState, Toast, useConfirm } from "../components/ui";
 import { aiQueries } from "../features/ai/ai.queries";
 import {
-  dayNutrition, generateSourceLabel, initialDayIndex, latestMealPlanId, mealPlanDeleteConfirm, mealPlanPath, mealPlanSuggestions,
+  dayNutrition, generateSourceLabel, initialDayIndex, latestMealPlanId, mealPlanDeleteConfirm, mealPlanPath,
   nextMealPlanIdAfterDelete, planTargets, selectMealPlanDay, summarizeMealPlan, todayDayIndex,
 } from "../features/meal-plans/meal-plans.logic";
 import {
   invalidateMealPlanQueries, mealPlanMutations, mealPlanQueries, removeDeletedMealPlan, removeMealPlanDetail,
 } from "../features/meal-plans/meal-plans.queries";
 import { profileQueries } from "../features/profile/profile.queries";
+import { useMealConsumption } from "../features/meal-plans/useMealConsumption";
+import { useShoppingPurchase } from "../features/meal-plans/useShoppingPurchase";
 import type { MealPlan, MealPlanItem } from "../types";
 import { type DateDraftStatus, formatDisplayDate } from "../utils/date";
 
 type MealPlansLocationState = { notice?: string } | null;
-type MealStatus = { kind: "done" | "undone" | "error"; item: MealPlanItem; message?: string };
+type AddMealTarget = { dayId: string; mealType: MealPlanItem["mealType"] };
 const DAY_PANEL_ID = "td-day-panel";
 
 export default function MealPlansPage() {
   const queryClient = useQueryClient();
+  // "Đã ăn" mở hộp xem trước trừ kho (dùng chung với Tổng quan); bỏ đánh dấu thì hoàn lại kho.
+  const consumption = useMealConsumption();
+  // Tick "Đã mua" thêm vào kho, bỏ tick thì hoàn lại; không hộp thoại, chỉ dòng nhắc trong thẻ Đi chợ.
+  const shopping = useShoppingPurchase();
   const navigate = useNavigate();
   const location = useLocation();
   const confirm = useConfirm();
@@ -39,8 +49,9 @@ export default function MealPlansPage() {
   const [startDate, setStartDate] = useState(format(addDays(new Date(), 1), "yyyy-MM-dd"));
   const [dateStatus, setDateStatus] = useState<DateDraftStatus>("valid");
   const [error, setError] = useState("");
-  const [mealStatus, setMealStatus] = useState<MealStatus | null>(null);
   const [toast, setToast] = useState("");
+  const [addMealTarget, setAddMealTarget] = useState<AddMealTarget | null>(null);
+  const [addMealError, setAddMealError] = useState("");
   const clearToast = useCallback(() => setToast(""), []);
   const notice = (location.state as MealPlansLocationState)?.notice ?? "";
 
@@ -82,7 +93,8 @@ export default function MealPlansPage() {
   // Mở thực đơn: chọn sẵn hôm nay (nếu thuộc thực đơn); đổi ngày sau đó chỉ đổi state, không tải lại trang.
   useEffect(() => {
     if (selected) setSelectedDayIndex(initialDayIndex(selected));
-    setMealStatus(null);
+    consumption.dismissNotice();
+    shopping.dismissNotice();
   }, [selected?.id]); // chỉ khi đổi thực đơn, không chạy lại khi dữ liệu thực đơn được làm mới
 
   const week = useMemo(() => summarizeMealPlan(selected), [selected]);
@@ -98,11 +110,40 @@ export default function MealPlansPage() {
     },
     onError: (err) => setError(getApiError(err)),
   });
-  const updateMeal = useMutation({ ...mealPlanMutations.updateMeal(), onSuccess: () => invalidateMealPlanQueries(queryClient, true) });
-  const toggleShop = useMutation({ ...mealPlanMutations.updateShopping(), onSuccess: () => invalidateMealPlanQueries(queryClient, false) });
   const activate = useMutation({
     ...mealPlanMutations.updateStatus(),
     onSuccess: (plan) => { invalidateMealPlanQueries(queryClient, true); setToast(`Đã áp dụng “${plan.name}”.`); },
+    onError: (err) => setError(getApiError(err)),
+  });
+  const swap = useMutation({
+    ...mealPlanMutations.swap(),
+    onSuccess: (result) => {
+      queryClient.setQueryData(queryKeys.mealPlans.detail(result.plan.id), result.plan);
+      invalidateMealPlanQueries(queryClient, true);
+      setError("");
+      setToast(`Đã đổi “${result.from}” thành “${result.to}”.`);
+    },
+    onError: (err) => setError(getApiError(err)),
+  });
+  const addMeal = useMutation({
+    ...mealPlanMutations.addItem(),
+    onSuccess: (plan) => {
+      queryClient.setQueryData(queryKeys.mealPlans.detail(plan.id), plan);
+      invalidateMealPlanQueries(queryClient, true);
+      setAddMealTarget(null);
+      setAddMealError("");
+      setToast("Đã thêm món vào bữa.");
+    },
+    onError: (err) => setAddMealError(getApiError(err)),
+  });
+  const removeMeal = useMutation({
+    ...mealPlanMutations.removeItem(),
+    onSuccess: (plan) => {
+      queryClient.setQueryData(queryKeys.mealPlans.detail(plan.id), plan);
+      invalidateMealPlanQueries(queryClient, true);
+      setError("");
+      setToast("Đã xóa món khỏi bữa.");
+    },
     onError: (err) => setError(getApiError(err)),
   });
   const remove = useMutation({
@@ -117,15 +158,20 @@ export default function MealPlansPage() {
     onError: (err) => setError(getApiError(err)),
   });
 
-  const setCompleted = (item: MealPlanItem, completed: boolean) => {
-    updateMeal.mutate({ id: item.id, completed }, {
-      onSuccess: () => setMealStatus({ kind: completed ? "done" : "undone", item }),
-      onError: (err) => setMealStatus({ kind: "error", item, message: getApiError(err) }),
-    });
-  };
   const confirmRemove = async (plan: MealPlan) => {
     if (!(await confirm({ ...mealPlanDeleteConfirm(plan), tone: "danger" }))) return;
     remove.mutate(plan.id, { onSuccess: () => setToast(`Đã xóa “${plan.name}”.`) });
+  };
+
+  const confirmRemoveMeal = async (item: MealPlanItem) => {
+    if (!(await confirm({
+      title: `Xóa món “${item.recipe.name}”?`,
+      description: "Món sẽ được bỏ khỏi bữa và danh sách đi chợ sẽ được tính lại.",
+      confirmLabel: "Xóa món",
+      cancelLabel: "Giữ lại",
+      tone: "danger",
+    }))) return;
+    removeMeal.mutate(item.id);
   };
 
   const createForm = (
@@ -208,22 +254,24 @@ export default function MealPlansPage() {
       <div className="td-layout">
         <div className="td-main">
           <MealDayTabs days={selected.days} selectedIndex={dayIndex} todayIndex={todayIndex} panelId={DAY_PANEL_ID} onSelect={setSelectedDayIndex} />
-          {mealStatus && (
-            <p className={mealStatus.kind === "error" ? "ui-notice ui-notice--error" : "ui-notice"} role={mealStatus.kind === "error" ? "alert" : "status"}>
-              {mealStatus.kind === "done" && <>Đã đánh dấu đã ăn: {mealStatus.item.recipe.name}.</>}
-              {mealStatus.kind === "undone" && <>Đã bỏ đánh dấu đã ăn: {mealStatus.item.recipe.name}.</>}
-              {mealStatus.kind === "error" && <>Chưa cập nhật được bữa {mealStatus.item.recipe.name}. {mealStatus.message}</>}
-              {mealStatus.kind === "done" && <Button busy={updateMeal.isPending} onClick={() => setCompleted(mealStatus.item, false)}>Hoàn tác</Button>}
-            </p>
-          )}
+          <MealStatusNotice notice={consumption.notice} busy={consumption.pending} onUndo={(notice) => consumption.undo(notice.target)} />
           <MealDayList
             plan={selected}
             day={day}
             isToday={dayIndex === todayIndex}
             panelId={DAY_PANEL_ID}
             labelledBy={dayTabId(dayIndex)}
-            pendingId={updateMeal.isPending ? updateMeal.variables?.id ?? null : null}
-            onToggle={setCompleted}
+            pendingId={consumption.pendingId}
+            swappingId={swap.isPending ? swap.variables ?? null : null}
+            onSwap={(item) => swap.mutate(item.id)}
+            onAdd={(target) => { setAddMealError(""); setAddMealTarget({ dayId: target.id, mealType: defaultMealType(target.items) }); }}
+            onDelete={(item) => void confirmRemoveMeal(item)}
+            deletingId={removeMeal.isPending ? removeMeal.variables ?? null : null}
+            onToggle={(item, completed) => {
+              const meal = { id: item.id, recipeName: item.recipe.name };
+              if (completed) consumption.open(meal);
+              else consumption.undo(meal);
+            }}
           />
         </div>
 
@@ -232,15 +280,34 @@ export default function MealPlansPage() {
             nutrition={targets ? dayNutrition(day.items, targets) : null}
             week={{ completedMeals: week.completedMeals, totalMeals: week.planMeals.length, averageCalories: week.averages.calories }}
           />
-          <MealPlanSuggestionsCard suggestions={mealPlanSuggestions(profileData?.profile, week.averages, targets?.fat ?? null)} />
+          <MealPlanSuggestionsCard suggestions={selected.suggestions ?? []} />
         </aside>
 
         <ShoppingListCard
           items={selected.shoppingItems}
-          pendingId={toggleShop.isPending ? toggleShop.variables?.id ?? null : null}
-          onToggle={(item) => toggleShop.mutate({ id: item.id, purchased: !item.purchased })}
+          pendingId={shopping.pendingId}
+          notice={shopping.notice}
+          onToggle={shopping.toggle}
         />
       </div>
+      {consumption.target && (
+        <ConsumeMealDialog
+          target={consumption.target}
+          busy={consumption.pending}
+          error={consumption.confirmError}
+          onClose={consumption.close}
+          onConfirm={consumption.confirm}
+        />
+      )}
+      {addMealTarget && (
+        <AddMealDialog
+          initialMealType={addMealTarget.mealType}
+          busy={addMeal.isPending}
+          error={addMealError}
+          onClose={() => { if (!addMeal.isPending) setAddMealTarget(null); }}
+          onSubmit={(input) => addMeal.mutate({ ...input, planId: selected.id, dayId: addMealTarget.dayId })}
+        />
+      )}
       {toastRegion}
     </div>
   );

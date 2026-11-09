@@ -101,6 +101,7 @@
 .kho-status--good { color: var(--action-text); background: var(--tag-bg); }
 .kho-status--expiring { border-color: var(--warn); color: var(--warn); background: var(--surface); }
 .kho-status--expired { border-color: var(--warn); color: var(--surface); background: var(--warn); }
+.kho-status--depleted { border-color: var(--line); color: var(--ink-2); background: var(--surface-2); }
 
 .kho-actions { display: flex; justify-content: flex-end; gap: var(--space-1); }
 .kho-actions .ui-icon-button { color: var(--ink-2); }
@@ -146,13 +147,47 @@
 
 /* Cột phải. */
 .kho-side { display: grid; gap: var(--space-5); min-width: 0; }
+
+/* Lịch sử kho (GĐ3b lượt 7): khu riêng dưới danh sách; cùng danh sách dùng trong "Xem lịch sử" của hộp thoại Sửa. */
+.kho-history-section { grid-column: 1; display: grid; gap: var(--space-4); min-width: 0; }
+.kho-history-section__head { display: grid; gap: var(--space-1); }
+.kho-history-section__title { margin: 0; color: var(--ink); font-family: var(--font-serif); font-size: 1.5rem; font-weight: 500; line-height: var(--lh-h2); }
+.kho-history { margin: 0; padding: 0; list-style: none; }
+.kho-history__row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-3) var(--space-5);
+  border-top: 1px solid var(--line);
+}
+.kho-history__row:first-child { border-top: 0; }
+.kho-history__main { display: grid; gap: var(--space-1); min-width: 0; }
+.kho-history__tags { display: flex; flex-wrap: wrap; gap: var(--space-1); }
+.kho-history__reversal { color: var(--ink); background: var(--warn-bg); }
+.kho-history__link { color: var(--action-text); font-size: var(--fs-small); font-weight: 600; text-underline-offset: 3px; overflow-wrap: anywhere; }
+.kho-history__change { flex: 0 0 auto; text-align: right; }
+.kho-history__delta { display: block; color: var(--ink); font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.kho-history__delta.is-minus { color: var(--warn); }
+.kho-history__page { align-self: center; padding: 0 var(--space-2); color: var(--muted); font-size: var(--fs-small); }
+.kho-item-history { border-top: 1px solid var(--line); padding-top: var(--space-3); }
+.kho-item-history > summary {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--action-text);
+  font-weight: 600;
+  cursor: pointer;
+}
+.kho-item-history .kho-history { margin-top: var(--space-2); border: 1px solid var(--line); border-radius: var(--radius-card); }
+.kho-item-history .kho-history__row { padding: var(--space-3) var(--space-4); }
+.kho-item-history .kho-pager { padding: var(--space-3) 0 0; border-top: 0; }
 .kho-side__title { margin: 0; color: var(--ink); font-family: var(--font-serif); font-size: 1.5rem; font-weight: 500; line-height: var(--lh-h2); }
 .kho-soon,
 .kho-cook { display: grid; gap: var(--space-3); }
 .kho-soon__subtitle { margin: var(--space-3) 0 0; color: var(--ink); font-size: var(--fs-body); font-weight: 600; }
 .kho-soon__empty { font-size: var(--fs-small); }
 .kho-soon__list,
-.kho-cook__list { display: grid; gap: var(--space-2); margin: 0; padding: 0; list-style: none; }
 .kho-soon__item {
   display: grid;
   gap: 2px;
@@ -173,12 +208,6 @@
 .kho-soon__qty { color: var(--ink-2); font-size: var(--fs-small); font-weight: 400; }
 .kho-soon__when { color: var(--warn); font-size: var(--fs-small); font-weight: 600; }
 
-.kho-cook__item { display: grid; grid-template-columns: 48px minmax(0, 1fr); align-items: center; gap: var(--space-3); padding-top: var(--space-3); border-top: 1px solid var(--line); }
-.kho-cook__image { width: 48px; height: 48px; border-radius: var(--radius-sm); }
-.kho-cook__text { display: grid; gap: 2px; min-width: 0; }
-.kho-cook__name { color: var(--ink); font-weight: 600; text-decoration: none; }
-.kho-cook__name:hover { color: var(--action-text); text-decoration: underline; text-underline-offset: 3px; }
-.kho-cook__note { color: var(--muted); font-size: var(--fs-small); }
 
 /* Hộp thoại Thêm/Sửa. */
 .kho-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; gap: var(--space-4); }

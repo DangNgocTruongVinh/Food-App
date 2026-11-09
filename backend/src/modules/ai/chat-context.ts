@@ -1,4 +1,5 @@
 import type { MealType } from "@prisma/client";
+import { expandRestrictedTerms } from "../../services/dietary.service.js";
 
 // Ngữ cảnh gửi cho trợ lý AI: chỉ những trường cần cho câu trả lời, không có id, email, mật khẩu hay token.
 
@@ -30,6 +31,19 @@ export function chatProfileContext(profile: ProfileInput | null) {
   return {
     age, gender, heightCm, weightKg, targetWeightKg, activityLevel, goal, dietType, allergies, dislikedFoods, preferredCuisines,
     mealsPerDay, dailyCalorieTarget, proteinTargetG, carbTargetG, fatTargetG,
+  };
+}
+
+/**
+ * Ràng buộc an toàn gửi kèm câu hỏi (GĐ3b-R1): các cụm thành phần phải tránh (dị ứng mở rộng theo nhóm, vd. "Hải sản" → tôm, cá,
+ * nước mắm…; món không thích) và yêu cầu chay/thuần chay. Lời nhắc hệ thống cấm gợi ý món chứa chúng.
+ */
+export function chatSafetyContext(profile: Pick<ProfileInput, "dietType" | "allergies" | "dislikedFoods"> | null) {
+  const strictDiet = profile?.dietType === "VEGAN" || profile?.dietType === "VEGETARIAN" ? profile.dietType : null;
+  return {
+    avoidForAllergy: expandRestrictedTerms(profile?.allergies ?? []),
+    avoidDisliked: expandRestrictedTerms(profile?.dislikedFoods ?? []),
+    requiredDiet: strictDiet === "VEGAN" ? "thuần chay" : strictDiet === "VEGETARIAN" ? "chay" : null,
   };
 }
 

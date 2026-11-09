@@ -1,7 +1,8 @@
 import { UserRound } from "lucide-react";
 import { Link } from "react-router-dom";
 import { formatNumber } from "../../features/dashboard/dashboard.logic";
-import type { dayNutrition, MealPlanSuggestion } from "../../features/meal-plans/meal-plans.logic";
+import type { dayNutrition } from "../../features/meal-plans/meal-plans.logic";
+import type { MealPlanSuggestion } from "../../types";
 import { ButtonLink, CalorieRing, Card, EmptyState, MacroList } from "../ui";
 
 type DayNutrition = ReturnType<typeof dayNutrition>;

@@ -1,4 +1,4 @@
-import type { RecipeForYou } from "../../types";
+import type { RecipeForYou, RecipeWarnings } from "../../types";
 
 // Nội dung hiển thị của khối "Dành cho bạn" ở trang chi tiết công thức (dữ liệu từ GET /api/recipes/:id/for-you).
 
@@ -36,7 +36,7 @@ export function calorieShareLabel(calories: RecipeForYou["calories"]) {
   return `${numberFormat.format(calories.recipeCalories)} / ${numberFormat.format(calories.dailyTarget)} kcal mục tiêu ngày`;
 }
 
-export function forYouWarnings(warnings: RecipeForYou["warnings"]) {
+export function forYouWarnings(warnings: RecipeWarnings) {
   const items: Array<{ kind: "allergen" | "disliked" | "diet"; text: string }> = [];
   if (warnings.allergens.length) items.push({ kind: "allergen", text: `Có thành phần bạn dị ứng: ${warnings.allergens.join(", ")}` });
   if (warnings.dislikedFoods.length) items.push({ kind: "disliked", text: `Có món bạn không thích: ${warnings.dislikedFoods.join(", ")}` });

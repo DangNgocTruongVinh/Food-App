@@ -1,4 +1,5 @@
 import type { MealPlan, MealPlanDay, MealPlanItem, MealPlanStatus, MealType, NutritionProfile, ShoppingItem } from "../../types";
+import { FOOD_CATEGORIES } from "../../utils/food-categories";
 
 export const mealLabels: Record<MealType, string> = {
   BREAKFAST: "Bữa sáng", LUNCH: "Bữa trưa", DINNER: "Bữa tối", SNACK: "Bữa phụ",
@@ -101,6 +102,16 @@ export function dayNutrition(items: MealPlanItem[], targets: PlanTargets) {
   };
 }
 
+/**
+ * Bữa vi phạm hồ sơ hiện tại (thực đơn tạo trước khi người dùng thêm dị ứng/đổi chế độ ăn, GĐ3b-R2): cảnh báo, và
+ * nút "Đổi món" khi bữa chưa ăn. Thực đơn tạo sau đã lọc theo hồ sơ nên không có bữa vi phạm.
+ */
+export function mealViolation(item: Pick<MealPlanItem, "completed" | "recipe">) {
+  const fit = item.recipe.fit;
+  if (!fit || fit.safe) return null;
+  return { warnings: fit, canSwap: !item.completed };
+}
+
 /** Món cùng bữa ở các ngày khác trong tuần (tối đa 2), kèm ngày của món. */
 export function alternativeMeals(plan: MealPlan, mealType: MealType, primaryId?: string) {
   return plan.days.flatMap((day) => day.items.map((item) => ({ item, day })))
@@ -141,38 +152,17 @@ export function mealPlanDeleteConfirm(plan: Pick<MealPlan, "name" | "status">) {
 
 // ---------- Danh sách đi chợ ----------
 
-export const SHOPPING_GROUPS = ["Rau củ", "Thịt & cá", "Trứng & sữa", "Đậu & hạt", "Gạo, bún & bánh", "Trái cây", "Gia vị", "Khác"] as const;
-export type ShoppingGroup = (typeof SHOPPING_GROUPS)[number];
-
-// Xét theo từ đầu tên nguyên liệu, theo thứ tự (ngoại lệ trước: "đậu bắp" là rau, "cà" khác "cá").
-const GROUP_RULES: Array<[ShoppingGroup, RegExp]> = [
-  ["Rau củ", /^(đậu bắp|đậu hà lan|bắp ngọt|đu đủ xanh|ớt chuông)/],
-  ["Gia vị", /^(muối|đường|tiêu|nước mắm|nước tương|tương|giấm|dầu|mật ong|quế|hoa hồi|lá oregano|mè|hạt nêm|bột ngọt|ô liu)/],
-  ["Thịt & cá", /^(thịt|sườn|xương|đùi gà|ức gà|cánh gà|gà|bò|heo|cá|tôm|mực|cua|nghêu)/],
-  ["Trứng & sữa", /^(trứng|sữa|phô mai|bơ lạt)/],
-  ["Đậu & hạt", /^(đậu|hạt|lạc)/],
-  ["Gạo, bún & bánh", /^(gạo|nếp|bún|bánh|mì|miến|yến mạch|bột)/],
-  ["Trái cây", /^(chuối|chanh|thơm|dứa|quả|táo|cam|xoài|nước dừa|nước cốt dừa|dừa|me)/],
-  ["Rau củ", /^(rau|cải|cà|bí|hành|tỏi|gừng|sả|ớt|nấm|giá|xà lách|dưa|khoai|bông cải|hẹ|ngò|bạc hà|lá|su|măng|đu đủ)/],
-];
-
-/** Nhóm của một món cần mua: dùng category nếu backend có, không thì đoán theo tên (chỉ để trình bày). */
-export function shoppingGroupOf(item: Pick<ShoppingItem, "name"> & { category?: string | null }): string {
-  if (item.category?.trim()) return item.category.trim();
-  const name = item.name.normalize("NFC").toLocaleLowerCase("vi").trim();
-  return GROUP_RULES.find(([, pattern]) => pattern.test(name))?.[0] ?? "Khác";
-}
-
-/** Danh sách đi chợ theo nhóm (thứ tự nhóm cố định), trong nhóm: chưa mua trước, rồi theo tên. */
+/** Danh sách đi chợ theo nhóm (thứ tự 8 nhóm chung), trong nhóm: chưa mua trước, rồi theo tên. */
 export function groupShoppingItems<T extends Pick<ShoppingItem, "name" | "purchased"> & { category?: string | null }>(items: T[]) {
   const groups = new Map<string, T[]>();
   items.forEach((item) => {
-    const group = shoppingGroupOf(item);
+    // Nhóm do backend gán (services/food-category.ts); thiếu thì "Khác".
+    const group = item.category?.trim() || "Khác";
     groups.set(group, [...(groups.get(group) ?? []), item]);
   });
   const rank = (group: string) => {
-    const index = (SHOPPING_GROUPS as readonly string[]).indexOf(group);
-    return index < 0 ? SHOPPING_GROUPS.length - 1 : index;
+    const index = (FOOD_CATEGORIES as readonly string[]).indexOf(group);
+    return index < 0 ? FOOD_CATEGORIES.length - 1 : index;
   };
   return [...groups.entries()]
     .sort(([a], [b]) => rank(a) - rank(b) || a.localeCompare(b, "vi"))
@@ -180,59 +170,6 @@ export function groupShoppingItems<T extends Pick<ShoppingItem, "name" | "purcha
       name,
       items: [...groupItems].sort((a, b) => Number(a.purchased) - Number(b.purchased) || a.name.localeCompare(b.name, "vi")),
     }));
-}
-
-// ---------- Gợi ý dinh dưỡng ----------
-
-/** Lượng chất xơ khuyến nghị mỗi ngày dùng cho gợi ý (hồ sơ chưa có chỉ tiêu chất xơ). */
-export const FIBER_TARGET_G = 30;
-
-export type MealPlanSuggestion = { key: string; text: string };
-type SuggestionCandidate = MealPlanSuggestion & { excludedDiets?: string[]; conflicts?: string[] };
-
-const asWords = (value: string) => ` ${value.trim().toLocaleLowerCase("vi").replace(/[^\p{L}\p{N}]+/gu, " ").trim()} `;
-
-// Gợi ý không được mâu thuẫn với chế độ ăn, dị ứng hoặc món không thích (vd. "cá hồi" ↔ "cá", "Hải sản").
-function conflictsWithProfile(candidate: SuggestionCandidate, profile: NutritionProfile | null | undefined) {
-  if (!profile) return false;
-  if (candidate.excludedDiets?.includes(profile.dietType)) return true;
-  const restrictions = [...(profile.allergies ?? []), ...(profile.dislikedFoods ?? [])].map(asWords).filter((item) => item.trim());
-  return (candidate.conflicts ?? []).map(asWords).some((term) => restrictions.some((item) => item.includes(term) || term.includes(item)));
-}
-
-const fatCandidates: SuggestionCandidate[] = [
-  {
-    key: "omega3-fish", text: "Thêm cá béo như cá hồi, cá thu 1–2 bữa để có thêm Omega-3.",
-    excludedDiets: ["VEGETARIAN", "VEGAN"], conflicts: ["hải sản", "thủy sản", "đồ biển", "seafood", "cá"],
-  },
-  {
-    key: "omega3-plant", text: "Thêm Omega-3 từ thực vật: đậu nành, đậu hũ hoặc hạt óc chó.",
-    conflicts: ["đậu nành", "đậu hũ", "óc chó", "các loại hạt"],
-  },
-  { key: "fat-plant-oil", text: "Nấu bằng dầu thực vật và giữ lượng chất béo như hiện tại." },
-];
-
-const formatGram = (value: number) => `${value.toLocaleString("vi-VN")} g`;
-
-/** Hai gợi ý theo số liệu trung bình của thực đơn: chất xơ và chất béo; đã loại gợi ý mâu thuẫn với hồ sơ. */
-export function mealPlanSuggestions(
-  profile: NutritionProfile | null | undefined,
-  averages: { fiber: number; fat: number },
-  fatTarget: number | null,
-): MealPlanSuggestion[] {
-  const fiberHead = `Chất xơ trung bình ${formatGram(averages.fiber)} mỗi ngày`;
-  const fiber: MealPlanSuggestion = {
-    key: "fiber",
-    text: averages.fiber < FIBER_TARGET_G
-      ? `${fiberHead}, dưới mức ${formatGram(FIBER_TARGET_G)}: thêm 1–2 khẩu phần rau xanh mỗi ngày.`
-      : `${fiberHead}, đạt mức ${formatGram(FIBER_TARGET_G)}.`,
-  };
-  const fatHead = fatTarget ? `Chất béo trung bình ${formatGram(averages.fat)} mỗi ngày (mục tiêu ${formatGram(fatTarget)})` : "";
-  if (fatTarget && averages.fat > fatTarget) {
-    return [fiber, { key: "fat-reduce", text: `${fatHead}: bớt món chiên, ưu tiên hấp, luộc, kho.` }];
-  }
-  const candidate = fatCandidates.find((item) => !conflictsWithProfile(item, profile))!;
-  return [fiber, { key: candidate.key, text: fatHead ? `${fatHead}. ${candidate.text}` : candidate.text }];
 }
 
 /** Nhãn trung thực cho nguồn tạo thực đơn. */

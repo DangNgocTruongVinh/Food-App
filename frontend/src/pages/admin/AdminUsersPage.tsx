@@ -3,7 +3,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { getApiError } from "../../api/client";
 import { AdminPager, AdminSearch } from "../../components/admin/AdminListParts";
-import { Button, Card, EmptyState, ErrorState, LoadingState, Skeleton, Toast, useConfirm } from "../../components/ui";
+import { Button, Card, EmptyState, ErrorState, LoadingState, Skeleton, Tag, Toast, useConfirm } from "../../components/ui";
 import { useAuth } from "../../contexts/AuthContext";
 import type { AdminUser } from "../../features/admin/admin.api";
 import { lockBlockedReason, lockConfirm, vietnamDate, vietnamTime } from "../../features/admin/admin-people.logic";
@@ -75,7 +75,10 @@ export default function AdminUsersPage() {
                         <span className="ad-row__strong ad-block">{user.name}</span>
                         <span className="ad-sub ad-block">{user.email}</span>
                       </td>
-                      <td data-label="Vai trò">{user.role === "ADMIN" ? "Quản trị viên" : "Người dùng"}</td>
+                      <td data-label="Vai trò">
+                        {user.role === "ADMIN" ? "Quản trị viên" : "Người dùng"}
+                        {user.isSample && <span className="ad-sub ad-block"><Tag>Tài khoản mẫu</Tag></span>}
+                      </td>
                       <td data-label="Ngày tạo" className="ad-num">{vietnamDate(user.createdAt)}</td>
                       <td data-label="Bài viết" className="ad-num">{user.postCount}</td>
                       <td data-label="Thực đơn" className="ad-num">{user.mealPlanCount}</td>

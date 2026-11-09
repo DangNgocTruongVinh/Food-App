@@ -7,7 +7,14 @@ export const mealPlanSystemPrompt = [
   "Không chẩn đoán hoặc điều trị bệnh. Viết lý do ngắn gọn bằng tiếng Việt.",
 ].join(" ");
 
-export const nutritionChatSystemPrompt = "Bạn là trợ lý dinh dưỡng NOURI AI. Trả lời ngắn gọn bằng tiếng Việt, dựa trên hồ sơ và thực phẩm được cung cấp. Không chẩn đoán bệnh; với vấn đề y khoa, khuyên người dùng gặp chuyên gia.";
+export const nutritionChatSystemPrompt = [
+  "Bạn là trợ lý dinh dưỡng NOURI AI. Trả lời ngắn gọn bằng tiếng Việt, dựa trên hồ sơ và thực phẩm được cung cấp.",
+  "Tuyệt đối không gợi ý món, nguyên liệu hay công thức chứa bất kỳ cụm nào trong safety.avoidForAllergy (dị ứng) hoặc safety.avoidDisliked",
+  "(món không thích), và nếu safety.requiredDiet có giá trị thì chỉ gợi ý món đúng chế độ đó (chay: không thịt, cá, hải sản, nước mắm;",
+  "thuần chay: thêm không trứng, sữa, mật ong).",
+  "Nếu người dùng hỏi về một món vi phạm, nói rõ món đó không phù hợp với hồ sơ và đề xuất món thay thế phù hợp.",
+  "Không chẩn đoán bệnh; với vấn đề y khoa, khuyên người dùng gặp chuyên gia.",
+].join(" ");
 
 export const missingAIChatResponse = "AI chưa được cấu hình. Bạn vẫn có thể dùng chức năng lập thực đơn theo quy tắc. Hãy thêm OPENAI_API_KEY ở backend để bật trợ lý dinh dưỡng.";
 

@@ -44,10 +44,10 @@ export function buildPantryNotificationCandidates(
   const candidates: NotificationCandidate[] = [];
 
   for (const item of items) {
-    if (item.quantity <= 0) continue;
     const actionUrl = `/pantry?item=${encodeURIComponent(item.id)}`;
 
-    if (item.expiryDate) {
+    // Thực phẩm đã dùng hết (= 0, giữ lại trong kho từ GĐ3b) không còn nhắc hạn sử dụng, chỉ còn nhắc mua lại.
+    if (item.expiryDate && item.quantity > 0) {
       const expiryDay = startOfUtcDay(item.expiryDate);
       if (expiryDay < today) {
         candidates.push({
@@ -80,7 +80,7 @@ export function buildPantryNotificationCandidates(
         userId: item.userId,
         type: "PANTRY_LOW_STOCK",
         title: "Thực phẩm sắp hết",
-        message: `${item.name} đã chạm mức tồn kho tối thiểu.`,
+        message: item.quantity <= 0 ? `${item.name} đã dùng hết, cần mua thêm.` : `${item.name} đã chạm mức tồn kho tối thiểu.`,
         relatedId: item.id,
         actionUrl,
         dedupeKey: `pantry-low-stock:${item.id}:${item.updatedAt.toISOString()}`,
@@ -97,9 +97,8 @@ export async function syncPantryNotifications(userId: string, now = new Date()) 
   const items = await prisma.pantryItem.findMany({
     where: {
       userId,
-      quantity: { gt: 0 },
       OR: [
-        { expiryDate: { lte: expiryLimit } },
+        { quantity: { gt: 0 }, expiryDate: { lte: expiryLimit } },
         { minimumStock: { gt: 0 } },
       ],
     },
