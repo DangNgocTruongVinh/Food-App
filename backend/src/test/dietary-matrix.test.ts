@@ -2,6 +2,7 @@ import type { DietType, MealType } from "@prisma/client";
 import { describe, expect, it } from "vitest";
 import { filterRecipesForProfile } from "../services/dietary.service.js";
 import { fallbackPlan, reconcileAIPlan } from "../modules/meal-plans/meal-plan-generator.js";
+import { scoredPlan } from "../modules/meal-plans/meal-plan-scorer.js";
 import { pickSwapRecipe } from "../modules/meal-plans/meal-swap.js";
 import { isRecipeSafe, recipeFit, safeRecipes } from "../modules/recommendation/safety.js";
 import { buildCollaborativeModel } from "../modules/recommendation/collaborative.js";
@@ -94,6 +95,15 @@ const SUGGESTERS: Record<string, (profile: Profile) => Recipe[]> = {
     // AI "trả" thực đơn chọn trên toàn bộ món (kể cả món vi phạm, món ẩn) → bữa vi phạm phải bị thay.
     const aiPlan = { ...fallbackPlan(recipes, pantryNames, 4, "BALANCED"), summary: "AI" };
     const { plan } = reconcileAIPlan(aiPlan, filterRecipesForProfile(visible, profile), pantryNames, 4, profile.dietType);
+    return plan.days.flatMap((planDay) => planDay.meals.map((meal) => recipes.find((recipe) => recipe.id === meal.recipeId)!));
+  },
+  "thực đơn chấm điểm (scoredPlan, R8), nhận cả bộ món chưa lọc": (profile) => {
+    // Đưa cả món vi phạm và món ẩn vào, kèm lịch sử ăn món vi phạm và kho có tôm sắp hết hạn: lọc an toàn bên trong vẫn phải loại.
+    const plan = scoredPlan({
+      recipes, profile: { ...profile, mealsPerDay: 4 }, mealsPerDay: 4, startDate: now,
+      pantry: pantry.map((item, index) => ({ ...item, id: `pantry-${index}` })),
+      history: ["pho-bo", "ca-kho-to", "canh-chua-ca-loc"].map((slug) => ({ userId: "nguoi-xem", recipeId: slug, kind: "EATEN" as const, at: now, count: 3 })),
+    });
     return plan.days.flatMap((planDay) => planDay.meals.map((meal) => recipes.find((recipe) => recipe.id === meal.recipeId)!));
   },
   "đổi món trong thực đơn cũ (pickSwapRecipe), mọi bữa": (profile) => mealTypes.flatMap((mealType) => {
