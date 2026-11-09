@@ -1,9 +1,8 @@
 import { prisma } from "../../lib/prisma.js";
-import { foodCategoryOf } from "../../services/food-category.js";
 import { visibleRecipeWhere } from "../../services/recipe-visibility.js";
 import { HttpError } from "../../utils/http-error.js";
 import { getMealPlan } from "./meal-plans.service.js";
-import { pickSwapRecipe, shoppingChangesForSwap } from "./meal-swap.js";
+import { applyShoppingChanges, pickSwapRecipe, shoppingChangesForSwap } from "./meal-swap.js";
 
 const NOT_FOUND = "Không tìm thấy bữa ăn.";
 
@@ -47,17 +46,7 @@ export async function swapMealItem(userId: string, id: string) {
       data: { recipeId: replacement.id, calories: Math.round(replacement.calories * item.servings) },
     });
     if (!updated.count) throw new HttpError(409, "Bữa này vừa thay đổi. Tải lại thực đơn rồi thử lại.");
-    for (const change of changes) {
-      if (change.kind === "update") {
-        await transaction.shoppingItem.updateMany({ where: { id: change.id, purchased: false }, data: { quantity: change.quantity } });
-      } else if (change.kind === "delete") {
-        await transaction.shoppingItem.deleteMany({ where: { id: change.id, purchased: false } });
-      } else {
-        await transaction.shoppingItem.create({
-          data: { mealPlanId: plan.id, name: change.name, quantity: change.quantity, unit: change.unit, category: foodCategoryOf(change.name) },
-        });
-      }
-    }
+    await applyShoppingChanges(transaction, plan.id, changes);
   });
 
   return { plan: await getMealPlan(userId, plan.id), from: item.recipe.name, to: replacement.name };

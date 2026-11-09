@@ -19,7 +19,8 @@ type MealDayListProps = {
   /** Bữa đang đổi món (nút bận). */
   swappingId: string | null;
   onSwap: (item: MealPlanItem) => void;
-  onAdd: (dayId: string, mealType: MealPlanItem["mealType"]) => void;
+  /** Thêm món vào ngày đang chọn (kể cả ngày trống, bữa phụ); ẩn với thực đơn đã hoàn tất. */
+  onAdd: (day: MealPlanDay) => void;
   onDelete: (item: MealPlanItem) => void;
   deletingId: string | null;
 };
@@ -43,7 +44,9 @@ function EatenButton({ item, pendingId, onToggle, label, primary }: EatenButtonP
 }
 
 /** Các bữa của ngày đang chọn (sáng, trưa, phụ, tối): ảnh, tên món (link chi tiết), thời gian, calo, "Đã ăn"; món cùng bữa ở ngày khác. */
-export function MealDayList({ plan, day, isToday, panelId, labelledBy, pendingId, onToggle, swappingId, onSwap, onAdd, onDelete, deletingId }: MealDayListProps) {
+export function MealDayList(props: MealDayListProps) {
+  const { plan, day, isToday, panelId, labelledBy, pendingId, onToggle, swappingId, onSwap, onDelete, deletingId } = props;
+  const addButton = plan.status !== "COMPLETED" && <Button icon={<Plus />} onClick={() => props.onAdd(day)}>Thêm món</Button>;
   const labels = planDayLabels(day);
   const meals = orderDayMeals(day.items);
   const nextId = meals.find((item) => !item.completed)?.id;
@@ -54,7 +57,7 @@ export function MealDayList({ plan, day, isToday, panelId, labelledBy, pendingId
         {isToday && <span className="td-day-panel__today">Hôm nay</span>}
       </h2>
       {!meals.length ? (
-        <EmptyState message="Ngày này chưa có bữa nào trong thực đơn." />
+        <EmptyState message="Ngày này chưa có bữa nào trong thực đơn." action={addButton || undefined} />
       ) : (
         <ol className="td-meals">
           {meals.map((item) => {
@@ -84,13 +87,14 @@ export function MealDayList({ plan, day, isToday, panelId, labelledBy, pendingId
                   )}
                 </div>
                 <div className="td-meal__action">
-                  {plan.status !== "COMPLETED" && <Button icon={<Plus />} onClick={() => onAdd(day.id, item.mealType)}>Thêm món</Button>}
                   {violation?.canSwap && (
                     <Button icon={<Repeat />} busy={swappingId === item.id} onClick={() => onSwap(item)} aria-label={`Đổi món: ${item.recipe.name}`}>
                       Đổi món
                     </Button>
                   )}
-                  {!item.completed && <Button variant="danger" icon={<Trash2 />} busy={deletingId === item.id} onClick={() => onDelete(item)}>Xóa món</Button>}
+                  {!item.completed && (
+                    <Button variant="danger" icon={<Trash2 />} busy={deletingId === item.id} onClick={() => onDelete(item)}>Xóa món</Button>
+                  )}
                   <EatenButton item={item} pendingId={pendingId} onToggle={onToggle} label={item.recipe.name} primary={item.id === nextId} />
                 </div>
                 {others.length > 0 && (
@@ -120,6 +124,7 @@ export function MealDayList({ plan, day, isToday, panelId, labelledBy, pendingId
           })}
         </ol>
       )}
+      {meals.length > 0 && addButton && <div className="td-day-panel__add">{addButton}</div>}
     </section>
   );
 }

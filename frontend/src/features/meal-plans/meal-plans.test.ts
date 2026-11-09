@@ -8,7 +8,7 @@ import {
   addMealPlanItem, deleteMealPlan, deleteMealPlanItem, generateMealPlan, getMealPlan, listMealPlans, updateMealCompletion,
   swapMealItem, updateMealPlanStatus, updateShoppingPurchased,
 } from "./meal-plans.api";
-import { addableRecipes, portionOptions } from "./add-meal.logic";
+import { addablePlans, addableRecipes, defaultMealType, mealTypeOptions, planDayOptions, portionOptions } from "./add-meal.logic";
 import {
   alternativeMeals, dayNutrition, generateMealPlanLabel, generateSourceLabel, groupShoppingItems, initialDayIndex, latestMealPlanId,
   mealPlanDeleteConfirm, mealPlanPath, mealViolation, mealPlanSourceLabel, nextMealPlanIdAfterDelete, orderDayMeals, planDayLabels,
@@ -159,6 +159,25 @@ describe("Manual meal selection", () => {
 
   it("offers half-serving steps up to four portions", () => {
     expect(portionOptions).toEqual([0.5, 1, 1.5, 2, 3, 4]);
+  });
+
+  it("can add to an empty day and to the snack slot: defaults to the first free meal, snack when the day is full", () => {
+    expect(mealTypeOptions.map((option) => option.value)).toEqual(["BREAKFAST", "LUNCH", "SNACK", "DINNER"]);
+    expect(defaultMealType([])).toBe("BREAKFAST");
+    expect(defaultMealType([{ mealType: "BREAKFAST" }])).toBe("LUNCH");
+    expect(defaultMealType([{ mealType: "BREAKFAST" }, { mealType: "LUNCH" }, { mealType: "DINNER" }])).toBe("SNACK");
+    expect(defaultMealType(["BREAKFAST", "LUNCH", "SNACK", "DINNER"].map((mealType) => ({ mealType: mealType as MealPlanItem["mealType"] })))).toBe("SNACK");
+  });
+
+  it("from a recipe page: only plans not completed, the active one first, with weekday day labels", () => {
+    const plans = [
+      { ...plan, id: "old", status: "COMPLETED" as const },
+      { ...plan, id: "draft", status: "DRAFT" as const, startDate: "2026-11-20T00:00:00.000Z" },
+      { ...plan, id: "active", status: "ACTIVE" as const, startDate: "2026-11-01T00:00:00.000Z" },
+    ];
+    expect(addablePlans(plans).map((item) => item.id)).toEqual(["active", "draft"]);
+    expect(planDayOptions({ days: [{ id: "d1", date: "2026-11-09T00:00:00.000Z", items: [] }] })).toEqual([{ value: "d1", label: "Thứ Hai, 09/11" }]);
+    expect(planDayOptions(undefined)).toEqual([]);
   });
 });
 

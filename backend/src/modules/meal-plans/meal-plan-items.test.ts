@@ -55,7 +55,7 @@ beforeEach(() => {
   mocks.findProfile.mockResolvedValue({ dietType: "BALANCED", allergies: [], dislikedFoods: [] });
   mocks.findPantry.mockResolvedValue([]);
   mocks.createItem.mockResolvedValue(added);
-  mocks.findItem.mockResolvedValue({ ...added, day: { mealPlanId: planId } });
+  mocks.findItem.mockResolvedValue({ ...added, day: { mealPlanId: planId, mealPlan: { shoppingItems: [] } } });
   mocks.deleteItem.mockResolvedValue({ count: 1 });
   mocks.updateShopping.mockResolvedValue({ count: 1 });
   mocks.deleteShopping.mockResolvedValue({ count: 1 });
@@ -106,10 +106,44 @@ describe("Manual meal plan items", () => {
 
   it("deletes an uneaten owned meal and removes its now-unneeded shopping line", async () => {
     const openLine = { id: "cm62345678901234567890123", mealPlanId: planId, name: "Đậu hũ", quantity: 200, unit: "G", purchased: false, category: "Đậu & hạt" };
-    mocks.findPlan.mockResolvedValue({ ...plan, days: [{ ...plan.days[0], items: [] }], shoppingItems: [openLine] });
+    mocks.findItem.mockResolvedValue({ ...added, day: { mealPlanId: planId, mealPlan: { shoppingItems: [openLine] } } });
     expect((await request(app, `/api/meal-plans/items/${itemId}`, { method: "DELETE", token: token() })).status).toBe(200);
     expect(mocks.deleteItem).toHaveBeenCalledWith({ where: { id: itemId, completed: false, day: { mealPlan: { userId } } } });
     expect(mocks.deleteShopping).toHaveBeenCalledWith({ where: { id: openLine.id, purchased: false } });
     expect(tx.wasCalledInTransaction(mocks.transaction, mocks.deleteItem)).toBe(true);
+  });
+
+  // Bữa đã ăn: kho đã bị trừ và dòng đi chợ của nó đã mua/xóa; thêm hoặc xóa món khác không được làm nó quay lại.
+  const shrimp = { ...recipe, id: "cm72345678901234567890123", name: "Tôm rang", ingredients: [{ ...ingredient, name: "Tôm", quantity: 300 }] };
+  const eaten = { ...added, id: "cm82345678901234567890123", completed: true, recipeId: shrimp.id, recipe: shrimp };
+  const planWithEaten = { ...plan, days: [{ ...plan.days[0], items: [eaten] }], shoppingItems: [] };
+  const shoppingNames = () => mocks.createShopping.mock.calls.map(([arg]) => arg.data.name);
+
+  it("adding a meal only adds that meal's share: an eaten meal never comes back to the shopping list", async () => {
+    mocks.findPlan.mockResolvedValue(planWithEaten);
+    expect((await request(app, `/api/meal-plans/${planId}/items`, {
+      method: "POST", token: token(), body: { dayId, mealType: "LUNCH", recipeId, servings: 1 },
+    })).status).toBe(201);
+    expect(shoppingNames()).toEqual(["Đậu hũ"]);
+    expect(mocks.updateShopping).not.toHaveBeenCalled();
+  });
+
+  it("deleting a meal only removes its own share and never recreates lines of eaten meals", async () => {
+    mocks.findPlan.mockResolvedValue(planWithEaten);
+    const tofuLine = { id: "cm62345678901234567890123", mealPlanId: planId, name: "Đậu hũ", quantity: 500, unit: "G", purchased: false, category: "Đậu & hạt" };
+    mocks.findItem.mockResolvedValue({ ...added, day: { mealPlanId: planId, mealPlan: { shoppingItems: [tofuLine] } } });
+    expect((await request(app, `/api/meal-plans/items/${itemId}`, { method: "DELETE", token: token() })).status).toBe(200);
+    expect(mocks.updateShopping).toHaveBeenCalledWith({ where: { id: tofuLine.id, purchased: false }, data: { quantity: 300 } });
+    expect(mocks.createShopping).not.toHaveBeenCalled();
+    expect(mocks.findPantry).not.toHaveBeenCalled();
+  });
+
+  it("adds a snack to an empty day (no meal yet) when the recipe fits every meal", async () => {
+    mocks.findPlan.mockResolvedValue({ ...plan, days: [{ ...plan.days[0], items: [] }] });
+    mocks.findRecipe.mockResolvedValue({ ...recipe, mealTypes: [] });
+    expect((await request(app, `/api/meal-plans/${planId}/items`, {
+      method: "POST", token: token(), body: { dayId, mealType: "SNACK", recipeId, servings: 0.5 },
+    })).status).toBe(201);
+    expect(mocks.createItem).toHaveBeenCalledWith({ data: { dayId, recipeId, mealType: "SNACK", servings: 0.5, calories: 150 } });
   });
 });

@@ -117,6 +117,7 @@
 .td-add-meal__portion { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); }
 .td-add-meal__portion label { color: var(--muted); font-size: var(--fs-label); font-weight: 600; }
 .td-add-meal__portion .ui-input { width: 180px; }
+.td-day-panel__add { display: flex; padding-top: var(--space-4); border-top: 1px solid var(--line); }
 
 /* Món cùng bữa ở ngày khác (giữ chức năng trang cũ). */
 .td-meal__others { grid-column: 2 / -1; font-size: var(--fs-small); }

@@ -6,6 +6,7 @@ import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { getApiError } from "../api/client";
 import { queryKeys } from "../api/query-keys";
 import { AddMealDialog } from "../components/meal-plans/AddMealDialog";
+import { defaultMealType } from "../features/meal-plans/add-meal.logic";
 import { dayTabId, MealDayTabs } from "../components/meal-plans/MealDayTabs";
 import { ConsumeMealDialog } from "../components/meal-plans/ConsumeMealDialog";
 import { MealDayList } from "../components/meal-plans/MealDayList";
@@ -263,7 +264,7 @@ export default function MealPlansPage() {
             pendingId={consumption.pendingId}
             swappingId={swap.isPending ? swap.variables ?? null : null}
             onSwap={(item) => swap.mutate(item.id)}
-            onAdd={(dayId, mealType) => { setAddMealError(""); setAddMealTarget({ dayId, mealType }); }}
+            onAdd={(target) => { setAddMealError(""); setAddMealTarget({ dayId: target.id, mealType: defaultMealType(target.items) }); }}
             onDelete={(item) => void confirmRemoveMeal(item)}
             deletingId={removeMeal.isPending ? removeMeal.variables ?? null : null}
             onToggle={(item, completed) => {
@@ -300,12 +301,11 @@ export default function MealPlansPage() {
       )}
       {addMealTarget && (
         <AddMealDialog
-          dayId={addMealTarget.dayId}
-          mealType={addMealTarget.mealType}
+          initialMealType={addMealTarget.mealType}
           busy={addMeal.isPending}
           error={addMealError}
           onClose={() => { if (!addMeal.isPending) setAddMealTarget(null); }}
-          onSubmit={(recipeId, servings) => addMeal.mutate({ planId: selected.id, dayId: addMealTarget.dayId, mealType: addMealTarget.mealType, recipeId, servings })}
+          onSubmit={(input) => addMeal.mutate({ ...input, planId: selected.id, dayId: addMealTarget.dayId })}
         />
       )}
       {toastRegion}
