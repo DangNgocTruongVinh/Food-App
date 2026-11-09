@@ -27,10 +27,15 @@ describe("Auth form", () => {
     expect(validateAuthForm({ name: "", email: "demo@nouri.vn", password: "Demo@123" }, "login")).toEqual({});
     expect(validateAuthForm({ name: "A", email: "demo@nouri", password: "1234567" }, "register")).toEqual({
       name: "Nhập họ tên từ 2 đến 80 ký tự.",
-      email: "Nhập email đúng dạng, ví dụ ten@gmail.com.",
+      email: "Email thiếu phần @ hoặc tên miền, ví dụ: ten@email.com.",
       password: "Mật khẩu cần ít nhất 8 ký tự.",
     });
     expect(validateAuthForm({ name: "", email: "a@b.vn", password: "x".repeat(73) }, "login").password).toBe("Mật khẩu tối đa 72 ký tự.");
+    // Bỏ trống: nói rõ cần nhập gì (bản thiết kế đăng nhập).
+    expect(validateAuthForm({ name: "", email: "  ", password: "" }, "login")).toEqual({
+      email: "Nhập email của bạn.",
+      password: "Nhập mật khẩu của bạn.",
+    });
   });
 
   it("explains wrong credentials, a locked account and an existing email", () => {
