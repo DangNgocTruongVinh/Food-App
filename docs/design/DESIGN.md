@@ -272,7 +272,16 @@ Quy tắc:
 - Form chia nhóm có tiêu đề: Thông tin cơ bản, Mục tiêu, Chế độ ăn & dị ứng, Khẩu vị. Kết quả chỉ tiêu dinh dưỡng hiện bên cạnh (≥1024px), cập nhật sau khi lưu.
 - Một nút "Lưu hồ sơ" ở cuối form (không dính khi cuộn, để không che trường), kèm dòng "Có thay đổi chưa lưu"; dị ứng, món không thích, ẩm thực nhập dạng thẻ.
 
-### Đăng nhập / Đăng ký (chưa có mockup)
+### Đăng nhập / Đăng ký (bản thiết kế đã duyệt 10/11/2026: "nouri-login-handoff")
+- Chia đôi: ảnh món ăn trái (11fr ≈ 55%, slogan Fraunces "Hôm nay ăn gì cho khỏe?" trên lớp tối `--login-scrim`), form phải nền
+  `--login-forest`; màu riêng `--login-*` (forest #173F32, gold #F6DFA6, ivory #FAF8F2), giống nhau ở chế độ sáng và tối, không có
+  nút đổi chế độ. Fraunces cho tiêu đề/slogan, Be Vietnam Pro cho nội dung. ≤ 1023px ảnh lên trên 300px, ≤ 640px 176px.
+- Tinh chỉnh 10/11: logo cùng cỡ trang chủ (`ui-logo` 1.75rem, dấu chấm vàng trên nền tối); tiêu đề Fraunces 400; ô nhập và nút cao
+  52px, bo 10px (không pill); focus là outline vàng tách khỏi ô; autofill giữ nền ngà (`:-webkit-autofill`, `:autofill`); lỗi viền 2px +
+  chữ dưới ô; điều khoản ở chân cột form sau đường kẻ mảnh; một cột (≤ 1023px) form nằm ngay dưới logo.
+- Không hiện nút Google/Apple/Microsoft và "Quên mật khẩu?" của bản thiết kế (chưa có luồng). Mã: `pages/LoginPage.tsx`,
+  `components/auth/AuthForm.tsx`, `styles/ui/auth.css`; ảnh `public/assets/login/`.
+- (Bản cũ, trước 10/11, giữ để tra:)
 - Hai cột ≥1024px: trái form, phải khối `--surface-2` với một câu giới thiệu cụ thể về Nouri (thay bằng ảnh món thật khi có). Điện thoại: chỉ form.
 - Checkbox "Nhớ đăng nhập" giữ hành vi hiện có. Lỗi nói rõ ("Email hoặc mật khẩu chưa đúng").
 
@@ -313,6 +322,6 @@ Các điểm đã ghi vào mục 3–14 ở trên; tóm tắt để tra nhanh. V
 | Thực đơn | Nhóm đi chợ đoán theo tên (tới GĐ3b) | Backend chưa điền `category` |
 | Cộng đồng | Không Lưu bài/Theo dõi/thành viên nổi bật (GĐ5) | Trước đây chỉ là state giả |
 | Hồ sơ | Nút lưu không dính | Thanh dính che trường cuối trên điện thoại |
-| Đăng nhập | Cột phải là khối chữ, chưa có ảnh | Chưa có ảnh món thật |
+| Đăng nhập | ~~Cột phải là khối chữ, chưa có ảnh~~ → làm theo bản thiết kế đã duyệt 10/11 (mục 14); ẩn nút OAuth và "Quên mật khẩu?"; giữ dòng điều khoản; gradient duy nhất `--login-scrim` (lớp tối để slogan đọc được) | Chưa có OAuth/quên mật khẩu; lớp tối là chức năng, không trang trí |
 | Admin | Bảng thành thẻ từ ≤ 1023px (không phải 760px) | Bảng Công thức 8 cột tràn khung ở 768px |
 | Landing | Hero 4:3; ≤ 1024px ảnh xếp dưới chữ; thẻ chưa có ảnh chỉ có chữ | Cân với cột chữ; không phủ lớp mờ lên ảnh; tránh lưới ô xám |
