@@ -74,6 +74,7 @@ describe("resetDemoAccount", () => {
     notification: { deleteMany: vi.fn() },
     chatMessage: { deleteMany: vi.fn() },
     pantryTransaction: { deleteMany: vi.fn() },
+    receiptScan: { deleteMany: vi.fn() },
     mealPlan: { deleteMany: vi.fn() },
     communityLike: { deleteMany: vi.fn() },
     communityComment: { deleteMany: vi.fn() },
@@ -99,7 +100,7 @@ describe("resetDemoAccount", () => {
     for (const [model, where] of [
       [tx.chatMessage, { userId: "demo-id" }], [tx.pantryTransaction, { userId: "demo-id" }], [tx.mealPlan, { userId: "demo-id" }],
       [tx.communityLike, { userId: "demo-id" }], [tx.communityComment, { authorId: "demo-id" }], [tx.communityPost, { authorId: "demo-id" }],
-      [tx.pantryItem, { userId: "demo-id" }],
+      [tx.pantryItem, { userId: "demo-id" }], [tx.receiptScan, { userId: "demo-id" }],
     ] as const) expect(model.deleteMany).toHaveBeenCalledWith({ where });
     expect(result.imagePublicIds).toEqual(["nouri/posts/a"]);
   });

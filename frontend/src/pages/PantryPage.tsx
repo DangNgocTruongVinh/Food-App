@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { getApiError } from "../api/client";
 import { PantryCategoryChips, PantryToolbar } from "../components/pantry/PantryFilterBar";
 import { PantryHero } from "../components/pantry/PantryHero";
@@ -9,6 +10,7 @@ import { PantryGrid, PantryTable } from "../components/pantry/PantryItems";
 import { PantryPager } from "../components/pantry/PantryPager";
 import { PantryCookIdeas, PantrySoonCard, PantrySuggestDialog } from "../components/pantry/PantrySide";
 import { PantrySkeleton } from "../components/pantry/PantrySkeleton";
+import { ReceiptScanDialog } from "../components/pantry/ReceiptScanDialog";
 import { PantryStats } from "../components/pantry/PantryStats";
 import { Button, Card, EmptyState, ErrorState, Toast, useConfirm } from "../components/ui";
 import {
@@ -16,12 +18,14 @@ import {
   type PantryStatusFilter, type PantryView,
 } from "../features/pantry/pantry.logic";
 import { invalidatePantryQueries, pantryMutations, pantryQueries } from "../features/pantry/pantry.queries";
+import { undoReceiptScan } from "../features/pantry/receipt-scan.api";
+import { commitMessage, undoMessage } from "../features/pantry/receipt-scan.logic";
 import { usePantryItemFocus } from "../features/pantry/usePantryItemFocus";
-import type { PantryItem, StorageLocation } from "../types";
+import type { PantryItem, ReceiptCommitResult, StorageLocation } from "../types";
 
 type DialogState = { item: PantryItem | null } | null;
 
-// "Quét hóa đơn" (GĐ3c) và "Gợi ý món" trên dòng sắp hết hạn (GĐ3b) chưa hiện.
+// "Gợi ý món" trên dòng sắp hết hạn (GĐ3b) chưa hiện. "Quét hóa đơn" (GĐ3c): nút ở đầu trang, hoặc mở từ Tổng quan bằng ?scan=1.
 export default function PantryPage() {
   const queryClient = useQueryClient();
   const confirm = useConfirm();
@@ -37,6 +41,15 @@ export default function PantryPage() {
   const [suggestFor, setSuggestFor] = useState<PantryItem | null>(null);
   const [toast, setToast] = useState("");
   const clearToast = useCallback(() => setToast(""), []);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [scanOpen, setScanOpen] = useState(() => searchParams.get("scan") === "1");
+  const [savedScan, setSavedScan] = useState<ReceiptCommitResult | null>(null);
+  // ?scan=1 (nút "Quét hóa đơn" ở Tổng quan): mở hộp quét một lần rồi bỏ tham số khỏi URL.
+  useEffect(() => {
+    if (searchParams.get("scan") !== "1") return;
+    setScanOpen(true);
+    setSearchParams((current) => { const next = new URLSearchParams(current); next.delete("scan"); return next; }, { replace: true });
+  }, [searchParams, setSearchParams]);
 
   const list = useQuery(pantryQueries.list());
   const data = useMemo(() => list.data ?? [], [list.data]);
@@ -61,6 +74,24 @@ export default function PantryPage() {
     ...pantryMutations.remove(),
     onSuccess: () => invalidatePantryQueries(queryClient),
   });
+  const undoScan = useMutation({
+    mutationFn: undoReceiptScan,
+    onSuccess: (result) => {
+      invalidatePantryQueries(queryClient);
+      setSavedScan((current) => (current?.id === result.id ? null : current));
+      setToast(undoMessage(result));
+    },
+  });
+  const confirmUndoScan = async (scanId: string) => {
+    const confirmed = await confirm({
+      title: "Hoàn tác cả hóa đơn?",
+      description: "Thực phẩm tạo mới từ hóa đơn sẽ bị xóa; phần cộng vào thực phẩm có sẵn sẽ được trừ lại (phần đã dùng thì không trừ được).",
+      confirmLabel: "Hoàn tác hóa đơn",
+      tone: "danger",
+    });
+    if (confirmed) undoScan.mutate(scanId);
+  };
+
   const confirmRemove = async (item: PantryItem) => {
     const confirmed = await confirm({
       title: `Xóa “${item.name}” khỏi kho?`,
@@ -96,7 +127,18 @@ export default function PantryPage() {
 
   return (
     <div className="kho-view">
-      <PantryHero search={search} onSearchChange={setSearch} onAdd={() => setDialog({ item: null })} />
+      <PantryHero search={search} onSearchChange={setSearch} onAdd={() => setDialog({ item: null })} onScan={() => setScanOpen(true)} />
+
+      {savedScan && (
+        <div className="ui-notice" role="status">
+          <span>{commitMessage(savedScan)}</span>
+          <span className="kho-notice__actions">
+            <Button busy={undoScan.isPending} onClick={() => undoScan.mutate(savedScan.id)}>Hoàn tác</Button>
+            <Button onClick={() => setSavedScan(null)}>Đóng</Button>
+          </span>
+        </div>
+      )}
+      {undoScan.isError && <ErrorState message={`Chưa hoàn tác được hóa đơn: ${getApiError(undoScan.error)}`} />}
 
       {focus.focusMissing && (
         <p className="ui-notice" role="status">
@@ -147,7 +189,9 @@ export default function PantryPage() {
           <PantryCookIdeas />
         </aside>
 
-        <PantryHistorySection />
+        <PantryHistorySection
+          receiptUndo={{ onUndo: (scanId) => void confirmUndoScan(scanId), undoingScanId: undoScan.isPending ? undoScan.variables ?? null : null }}
+        />
       </div>
 
       {dialog && (
@@ -158,6 +202,13 @@ export default function PantryPage() {
         />
       )}
       {suggestFor && <PantrySuggestDialog item={suggestFor} onClose={() => setSuggestFor(null)} />}
+      {scanOpen && (
+        <ReceiptScanDialog
+          onClose={() => setScanOpen(false)}
+          onManual={() => { setScanOpen(false); setDialog({ item: null }); }}
+          onSaved={(result) => { setScanOpen(false); setSavedScan(result); }}
+        />
+      )}
       <Toast message={toast} onDone={clearToast} />
     </div>
   );

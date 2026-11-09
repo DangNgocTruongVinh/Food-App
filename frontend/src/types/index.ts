@@ -86,9 +86,42 @@ export type PantryTransactionSource = "MANUAL_ADD" | "MANUAL_EDIT" | "MANUAL_DEL
 export interface PantryTransaction {
   id: string; pantryItemId: string | null; itemName: string; unit: FoodUnit; delta: number; quantityAfter: number;
   source: PantryTransactionSource; note: string | null; reversalOfId: string | null; reversedAt: string | null; createdAt: string;
+  /** Lô quét hóa đơn đã thêm dòng này (GĐ3c); hoàn tác lô qua /pantry/receipt-scans/:id/undo. */
+  receiptScanId?: string | null;
   mealPlanItem: { id: string; mealType: MealType; recipe: { name: string }; day: { date: string; mealPlanId: string } } | null;
   shoppingItem: { id: string; name: string; mealPlanId: string } | null;
 }
+// Quét hóa đơn (GĐ3c). Dòng nháp do backend đọc và chuẩn hóa; người dùng duyệt rồi mới lưu.
+export type ReceiptProviderId = "tesseract" | "openai";
+export type ReceiptScanPhase = "queued" | "reading" | "parsing" | "ready" | "failed" | "expired" | "committed" | "reversed";
+export type ReceiptSkipReason = "HEADER" | "TOTAL" | "TAX" | "DISCOUNT" | "PAYMENT" | "BAG" | "FEE" | "POINTS" | "LABEL_INFO" | "NOISE";
+export type ReceiptLineFlag = "LOW_CONFIDENCE" | "QUANTITY_GUESSED" | "UNIT_GUESSED" | "NAME_UNMATCHED" | "PRICE_MISMATCH";
+export type ReceiptLineTarget =
+  | { kind: "merge" | "reuse"; pantryItemId: string; name: string; quantity: number; unit: FoodUnit }
+  | { kind: "create" };
+export interface ReceiptDraftLine {
+  key: string; rawText: string; name: string; quantity: number; unit: FoodUnit; category: string; storageLocation: StorageLocation;
+  expiryDate: string | null; expiryEstimated: boolean; price: number | null; target: ReceiptLineTarget;
+  warnings: Array<{ kind: "ALLERGY" | "DISLIKED"; term: string }>; flags: ReceiptLineFlag[];
+}
+export interface ReceiptScanStatus {
+  providers: Array<{ id: ReceiptProviderId; available: boolean; reason: string | null }>;
+  defaultProvider: ReceiptProviderId | null; dailyLimit: number; usedToday: number; remainingToday: number;
+}
+export interface ReceiptScan {
+  id: string; provider: ReceiptProviderId; phase: ReceiptScanPhase; progress: number | null; error: string | null;
+  draft: { items: ReceiptDraftLine[]; skipped: Array<{ rawText: string; reason: ReceiptSkipReason }> } | null;
+}
+export interface ReceiptCommitLine {
+  name: string; quantity: number; unit: FoodUnit; category: string; storageLocation: StorageLocation; expiryDate: string | null; expiryEstimated: boolean;
+}
+export interface ReceiptCommitResult { id: string; status: "COMMITTED"; added: Array<{ action: "MERGED" | "REUSED" | "CREATED"; name: string }> }
+export interface ReceiptUndoResult {
+  id: string; status: "REVERSED";
+  restored: Array<{ name: string; removed: boolean }>;
+  skipped: Array<{ itemName: string; quantity: number; unit: FoodUnit; reason: "DELETED" | "UNIT_MISMATCH" | "CHANGED" | "INSUFFICIENT" }>;
+}
+
 export interface PantryTransactionPage { items: PantryTransaction[]; total: number; page: number; pageSize: number }
 
 export interface PantryInput {

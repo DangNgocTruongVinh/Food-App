@@ -1,0 +1,13 @@
+{
+  "id": "r00",
+  "kind": "receipt",
+  "store": "Siêu thị (đã che tên chi nhánh)",
+  "note": "Mẫu đáp án. Chụp thẳng, giấy in nhiệt, đủ sáng. Đổi tên file thành rNN.json cùng tên với ảnh rNN.jpg.",
+  "items": [
+    { "name": "Thịt heo xay", "quantity": 0.5, "unit": "KG", "price": 65000 },
+    { "name": "Trứng gà", "quantity": 10, "unit": "ITEM", "price": 32000 },
+    { "name": "Rau muống", "quantity": 1, "unit": "ITEM", "price": 8000 },
+    { "name": "Sữa tươi", "quantity": 720, "unit": "ML", "price": 34000, "expiryDate": null }
+  ],
+  "ignored": ["Túi nilon", "Tổng cộng", "VAT", "Tiền khách đưa", "Tiền thối"]
+}

@@ -110,6 +110,7 @@ model User {
   profile           NutritionProfile?
   pantryItems       PantryItem[]
   pantryTransactions PantryTransaction[]
+  receiptScans      ReceiptScan[]
   mealPlans         MealPlan[]
   chatMessages      ChatMessage[]
   communityPosts    CommunityPost[]
@@ -306,12 +307,49 @@ model PantryTransaction {
   reversalOf     PantryTransaction?      @relation("PantryTransactionReversal", fields: [reversalOfId], references: [id], onDelete: SetNull)
   reversals      PantryTransaction[]     @relation("PantryTransactionReversal")
   reversedAt     DateTime?
+  // Lô quét hóa đơn (GĐ3c) đã thêm dòng này; hoàn tác lô trừ lại mọi dòng cùng receiptScanId.
+  receiptScanId  String?
+  receiptScan    ReceiptScan?            @relation(fields: [receiptScanId], references: [id], onDelete: SetNull)
   createdAt      DateTime                @default(now())
 
   @@index([userId, createdAt])
   @@index([pantryItemId, createdAt])
   @@index([mealPlanItemId])
   @@index([shoppingItemId])
+  @@index([receiptScanId])
+}
+
+enum ReceiptOcrProvider {
+  TESSERACT
+  OPENAI
+  MOCK
+}
+
+enum ReceiptScanStatus {
+  PROCESSING
+  READY
+  COMMITTED
+  REVERSED
+  FAILED
+}
+
+// Một lần quét hóa đơn (GĐ3c). Không lưu ảnh, không lưu văn bản đọc được; dòng nháp chỉ giữ trong bộ nhớ server.
+// Dùng để đếm số lần quét mỗi ngày (kể cả lần lỗi) và gom các dòng lịch sử kho của một lần lưu để hoàn tác cả lô.
+model ReceiptScan {
+  id           String              @id @default(cuid())
+  userId       String
+  user         User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  provider     ReceiptOcrProvider
+  status       ReceiptScanStatus   @default(PROCESSING)
+  lineCount    Int                 @default(0)
+  durationMs   Int?
+  errorCode    String?
+  committedAt  DateTime?
+  reversedAt   DateTime?
+  transactions PantryTransaction[]
+  createdAt    DateTime            @default(now())
+
+  @@index([userId, createdAt])
 }
 
 model Recipe {

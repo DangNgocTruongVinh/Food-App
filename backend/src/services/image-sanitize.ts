@@ -8,7 +8,7 @@ import type { ImageFormat } from "./image-file.js";
 // vì vậy không còn EXIF/GPS. Đổi lại ảnh được nén lại một lần (chất lượng 90).
 
 // Chặn ảnh "bom giải nén" (kích thước khai báo cực lớn) dù file nhỏ hơn 5 MB.
-const MAX_INPUT_PIXELS = 40_000_000;
+export const MAX_INPUT_PIXELS = 40_000_000;
 
 export async function stripImageMetadata(buffer: Buffer, format: ImageFormat) {
   try {

@@ -1,10 +1,10 @@
-import { Plus, Search } from "lucide-react";
+import { Plus, ReceiptText, Search } from "lucide-react";
 import { Button } from "../ui";
 
-type PantryHeroProps = { search: string; onSearchChange: (value: string) => void; onAdd: () => void };
+type PantryHeroProps = { search: string; onSearchChange: (value: string) => void; onAdd: () => void; onScan: () => void };
 
-/** Đầu trang Kho (gọn, không ảnh). "Quét hóa đơn" hiện ở GĐ3c. */
-export function PantryHero({ search, onSearchChange, onAdd }: PantryHeroProps) {
+/** Đầu trang Kho (gọn, không ảnh): tìm kiếm, "Quét hóa đơn" (GĐ3c), "Thêm thực phẩm". */
+export function PantryHero({ search, onSearchChange, onAdd, onScan }: PantryHeroProps) {
   return (
     <header className="kho-hero">
       <div className="kho-hero__text">
@@ -24,6 +24,7 @@ export function PantryHero({ search, onSearchChange, onAdd }: PantryHeroProps) {
             placeholder="Tìm thực phẩm"
           />
         </div>
+        <Button icon={<ReceiptText />} onClick={onScan}>Quét hóa đơn</Button>
         <Button variant="primary" icon={<Plus />} onClick={onAdd}>Thêm thực phẩm</Button>
       </div>
     </header>

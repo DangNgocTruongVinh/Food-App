@@ -8,6 +8,11 @@ export const queryKeys = {
   },
   pantry: ["pantry"],
   // Cùng tiền tố "pantry": mọi chỗ làm mới kho cũng làm mới lịch sử kho.
+  // Quét hóa đơn: tiền tố riêng để làm mới kho không hỏi lại trạng thái lần quét.
+  receiptScans: {
+    status: ["receipt-scans", "status"] as const,
+    detail: (id: string) => ["receipt-scans", id] as const,
+  },
   pantryTransactions: (filters: { source?: string; pantryItemId?: string; page: number; pageSize: number }) => ["pantry", "transactions", filters] as const,
   recipes: {
     all: ["recipes"] as const,
