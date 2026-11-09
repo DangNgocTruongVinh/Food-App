@@ -90,6 +90,7 @@ async function runScan(scanId: string, userId: string, provider: ReceiptOcrProvi
   try {
     const output = await provider.read(image, (progress) => receiptJobs.update(scanId, { phase: "reading", progress }));
     receiptJobs.update(scanId, { phase: "parsing", progress: 1 });
+    if (receiptJobs.get(scanId, userId)?.cancelled) return;
     const parsed = parseOcrOutput(output);
     const items = normalizeReceiptItems(parsed.items, await loadNormalizeContext(userId));
     await prisma.receiptScan.updateMany({
@@ -108,6 +109,19 @@ async function runScan(scanId: string, userId: string, provider: ReceiptOcrProvi
       data: { status: "FAILED", errorCode: timeout ? "TIMEOUT" : "READ_FAILED", durationMs: Date.now() - startedAt },
     }).catch(() => undefined);
   }
+}
+
+/**
+ * POST /:id/cancel: hủy lần quét đang đọc (nút "Hủy" ở màn tiến trình). Lần quét thành FAILED (CANCELLED), vẫn tính lượt;
+ * OCR đang chạy dở vẫn chạy hết ở nền nhưng kết quả bị bỏ. Đã đọc xong hoặc đã lưu thì không hủy được (409).
+ */
+export async function cancelReceiptScan(userId: string, id: string) {
+  const scan = await prisma.receiptScan.findFirst({ where: { id, userId }, select: { status: true } });
+  if (!scan) throw notFound();
+  if (scan.status !== "PROCESSING") throw new HttpError(409, "Lần quét này đã đọc xong, không hủy được.");
+  receiptJobs.cancel(id, userId); // false khi server đã khởi động lại (không còn trong bộ nhớ): vẫn đánh FAILED
+  await prisma.receiptScan.updateMany({ where: { id, userId, status: "PROCESSING" }, data: { status: "FAILED", errorCode: "CANCELLED" } });
+  return { id, status: "FAILED" as const };
 }
 
 const DONE_PHASE: Partial<Record<ReceiptScanStatus, "committed" | "reversed">> = { COMMITTED: "committed", REVERSED: "reversed" };

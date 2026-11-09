@@ -4,15 +4,23 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import {
   HISTORY_PAGE_SIZE, HISTORY_SOURCE_LABELS, HISTORY_SOURCES, historyAfter, historyDelta, historyLink, historyNote, historyPageCount,
-  historyRange, historyReversalTag, historyTime, ITEM_HISTORY_PAGE_SIZE,
+  historyRange, historyReversalTag, historyTime, ITEM_HISTORY_PAGE_SIZE, receiptUndoTargets,
 } from "../../features/pantry/pantry-history.logic";
 import { pantryQueries } from "../../features/pantry/pantry.queries";
 import { cx } from "../../features/ui/ui.logic";
 import type { PantryTransaction, PantryTransactionSource } from "../../types";
 import { Button, Card, Chip, EmptyState, ErrorState, IconButton, LoadingState, Skeleton, Tag } from "../ui";
 
-/** Các dòng lịch sử: thời gian (giờ Việt Nam), thực phẩm, thay đổi, nguồn, liên kết bữa ăn/thực đơn, "Hoàn lại", số còn lại. */
-export function PantryHistoryList({ entries, showName = true }: { entries: PantryTransaction[]; showName?: boolean }) {
+type ReceiptUndo = { onUndo: (scanId: string) => void; undoingScanId: string | null };
+
+/**
+ * Các dòng lịch sử: thời gian (giờ Việt Nam), thực phẩm, thay đổi, nguồn, liên kết bữa ăn/thực đơn, "Hoàn lại", số còn lại.
+ * `receiptUndo`: nút "Hoàn tác hóa đơn" ở dòng đầu của mỗi lô quét hóa đơn chưa hoàn tác (GĐ3c).
+ */
+export function PantryHistoryList({ entries, showName = true, receiptUndo }: {
+  entries: PantryTransaction[]; showName?: boolean; receiptUndo?: ReceiptUndo;
+}) {
+  const undoTargets = receiptUndo ? receiptUndoTargets(entries) : new Map<string, string>();
   return (
     <ol className="kho-history">
       {entries.map((entry) => {
@@ -30,6 +38,10 @@ export function PantryHistoryList({ entries, showName = true }: { entries: Pantr
               <span className="kho-sub"><time dateTime={entry.createdAt}>{historyTime(entry)}</time></span>
               {link && <Link className="kho-history__link" to={link.to}>{link.label}</Link>}
               {note && <span className="kho-sub">{note}</span>}
+              {receiptUndo && undoTargets.has(entry.id) && (
+                <Button className="kho-history__undo" busy={receiptUndo.undoingScanId === undoTargets.get(entry.id)}
+                  onClick={() => receiptUndo.onUndo(undoTargets.get(entry.id)!)}>Hoàn tác hóa đơn</Button>
+              )}
             </div>
             <div className="kho-history__change">
               <span className={cx("kho-history__delta", entry.delta < 0 && "is-minus")}>{historyDelta(entry)}</span>
@@ -69,7 +81,7 @@ const HistorySkeleton = ({ rows }: { rows: number }) => (
 const ALL_CHIP_ID = "kho-history-source-all";
 
 /** Phần "Lịch sử" ở trang Kho: mọi thay đổi số lượng của kho, lọc theo nguồn, phân trang (mới nhất trước). */
-export function PantryHistorySection() {
+export function PantryHistorySection({ receiptUndo }: { receiptUndo?: ReceiptUndo }) {
   const [source, setSource] = useState<PantryTransactionSource | undefined>();
   const [page, setPage] = useState(1);
   const history = useQuery(pantryQueries.transactions({ source, page, pageSize: HISTORY_PAGE_SIZE }));
@@ -85,7 +97,7 @@ export function PantryHistorySection() {
     <section className="kho-history-section" aria-labelledby="kho-history-title">
       <header className="kho-history-section__head">
         <h2 id="kho-history-title" className="kho-history-section__title">Lịch sử kho</h2>
-        <p className="kho-sub">Mỗi lần thêm, sửa, xóa, ăn (trừ kho) hay mua (cộng kho) đều được ghi lại.</p>
+        <p className="kho-sub">Mỗi lần thêm, sửa, xóa, ăn (trừ kho), mua hay quét hóa đơn (cộng kho) đều được ghi lại.</p>
       </header>
       <div className="kho-chips" role="group" aria-label="Lọc lịch sử theo nguồn">
         <Chip id={ALL_CHIP_ID} selected={!source} onClick={() => choose()}>Tất cả</Chip>
@@ -109,7 +121,7 @@ export function PantryHistorySection() {
           )
         ) : (
           <>
-            <PantryHistoryList entries={data.items} />
+            <PantryHistoryList entries={data.items} receiptUndo={receiptUndo} />
             <HistoryPager page={data.page} pageSize={data.pageSize} total={data.total} label="Phân trang lịch sử kho" onPageChange={setPage} />
           </>
         )}

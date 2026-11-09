@@ -5,6 +5,7 @@ import type { PantryTransaction } from "../../types";
 import { listPantryTransactions } from "./pantry.api";
 import {
   HISTORY_SOURCE_LABELS, historyAfter, historyDelta, historyLink, historyNote, historyPageCount, historyRange, historyReversalTag, historyTime,
+  receiptUndoTargets,
 } from "./pantry-history.logic";
 
 const entry = (patch: Partial<PantryTransaction>): PantryTransaction => ({
@@ -69,5 +70,16 @@ describe("Pantry history API", () => {
     await listPantryTransactions({ source: "CONSUMPTION", pantryItemId: "p1", page: 2, pageSize: 10 });
     expect(adapter.mock.calls[1][0].params).toEqual({ page: 2, pageSize: 10, source: "CONSUMPTION", pantryItemId: "p1" });
     expect(queryKeys.pantryTransactions({ page: 1, pageSize: 20 }).slice(0, 1)).toEqual(queryKeys.pantry);
+  });
+});
+
+describe("receiptUndoTargets", () => {
+  const row = (id: string, receiptScanId: string | null, extra = {}) => ({ id, receiptScanId, reversalOfId: null, reversedAt: null, ...extra });
+  it("một nút cho mỗi lô chưa hoàn tác, ở dòng đầu tiên của lô", () => {
+    const targets = receiptUndoTargets([
+      row("a", "scan-1"), row("b", "scan-1"), row("c", null), row("d", "scan-2", { reversedAt: "2026-11-09T00:00:00.000Z" }), row("e", "scan-2"),
+      row("f", "scan-3", { reversalOfId: "x" }),
+    ]);
+    expect([...targets]).toEqual([["a", "scan-1"]]);
   });
 });

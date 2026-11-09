@@ -6,7 +6,11 @@ import type { SkippedReceiptLine } from "../../services/receipt/receipt-types.js
 
 export type ReceiptScanPhase = "queued" | "reading" | "parsing" | "ready" | "failed";
 export type ReceiptDraft = { items: ReceiptDraftLine[]; skipped: SkippedReceiptLine[] };
-export type ReceiptJob = { userId: string; phase: ReceiptScanPhase; progress: number; draft: ReceiptDraft | null; error: string | null; expiresAt: number };
+export type ReceiptJob = {
+  userId: string; phase: ReceiptScanPhase; progress: number; draft: ReceiptDraft | null; error: string | null; expiresAt: number;
+  /** Người dùng bấm "Hủy": OCR vẫn chạy xong ở nền nhưng kết quả bị bỏ, không còn chặn lần quét mới. */
+  cancelled: boolean;
+};
 
 export const DRAFT_TTL_MS = 30 * 60_000;
 const ACTIVE: ReceiptScanPhase[] = ["queued", "reading", "parsing"];
@@ -19,7 +23,7 @@ function sweep(now: number) {
 export const receiptJobs = {
   create(scanId: string, userId: string, now = Date.now()) {
     sweep(now);
-    jobs.set(scanId, { userId, phase: "queued", progress: 0, draft: null, error: null, expiresAt: now + DRAFT_TTL_MS });
+    jobs.set(scanId, { userId, phase: "queued", progress: 0, draft: null, error: null, expiresAt: now + DRAFT_TTL_MS, cancelled: false });
   },
   /** Chỉ trả lần quét của đúng người dùng. */
   get(scanId: string, userId: string, now = Date.now()) {
@@ -27,9 +31,17 @@ export const receiptJobs = {
     const job = jobs.get(scanId);
     return job && job.userId === userId ? job : null;
   },
-  update(scanId: string, patch: Partial<Omit<ReceiptJob, "userId" | "expiresAt">>) {
+  /** Cập nhật tiến trình; lần quét đã hủy thì bỏ qua. */
+  update(scanId: string, patch: Partial<Omit<ReceiptJob, "userId" | "expiresAt" | "cancelled">>) {
     const job = jobs.get(scanId);
-    if (job) Object.assign(job, patch);
+    if (job && !job.cancelled) Object.assign(job, patch);
+  },
+  /** Hủy lần quét đang chạy của đúng người dùng; true nếu đã hủy. */
+  cancel(scanId: string, userId: string) {
+    const job = jobs.get(scanId);
+    if (!job || job.userId !== userId || !ACTIVE.includes(job.phase)) return false;
+    Object.assign(job, { phase: "failed", error: "Đã hủy lần quét.", cancelled: true });
+    return true;
   },
   hasActive(userId: string, now = Date.now()) {
     sweep(now);

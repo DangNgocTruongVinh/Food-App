@@ -1,7 +1,7 @@
 import type { Request, Response } from "express";
 import type { AuthenticatedRequest, ValidatedRequest } from "../../types/http.js";
 import type { CommitReceiptScanInput, ReceiptScanParams, StartReceiptScanInput } from "./receipt-scan.schema.js";
-import { commitReceiptScan, getReceiptScan, getReceiptScanStatus, startReceiptScan, undoReceiptScan } from "./receipt-scan.service.js";
+import { cancelReceiptScan, commitReceiptScan, getReceiptScan, getReceiptScanStatus, startReceiptScan, undoReceiptScan } from "./receipt-scan.service.js";
 
 const authenticatedUserId = (req: Request) => (req as AuthenticatedRequest).userId;
 
@@ -25,4 +25,8 @@ export async function commitReceiptScanController(req: ValidatedRequest<CommitRe
 
 export async function undoReceiptScanController(req: ValidatedRequest<unknown, ReceiptScanParams>, res: Response) {
   res.json(await undoReceiptScan(authenticatedUserId(req), req.params.id));
+}
+
+export async function cancelReceiptScanController(req: ValidatedRequest<unknown, ReceiptScanParams>, res: Response) {
+  res.json(await cancelReceiptScan(authenticatedUserId(req), req.params.id));
 }

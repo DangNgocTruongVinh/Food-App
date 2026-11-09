@@ -555,6 +555,12 @@ Kiến trúc `backend/src/modules/recommendation/`: `safety.ts` (lọc cứng d�
   - Gỡ mã/CSS cũ không còn dùng: `recommendedRecipePantryNote`, `.dash-rec*`, `.dash-recs__grid`, `.recipes-side*`, `.kho-cook__*`.
   - Playwright 30/30 với demo (lịch sử mẫu) ở 1440/390 sáng (`docs/design/screens/GD3b-R7/`): mỗi khu có món kèm lý do; "Món tương tự" không gồm chính món; "Người khác cũng nấu" có món (nhờ tài khoản mẫu); hộp thoại Gợi ý món chỉ món dùng Đậu hũ, bấm mở chi tiết; 8 nhãn "Tài khoản mẫu"; API cộng đồng không có email; đang tải, lỗi (Thử lại, "Người khác cũng nấu" ẩn), trống; không cuộn ngang; không lỗi JS. Cuối lượt `demo:reset` (demo chỉ có dữ liệu mẫu).
 
+## Giai đoạn 3c — Quét hóa đơn, phần 1 (không cần OPENAI_API_KEY, nhánh `giai-doan-3c`)
+
+Kế hoạch và quyết định: `docs/ke-hoach-gd3c.md`.
+- [x] P1-1 (09/11) — backend: migration `ReceiptScan` + `PantryTransaction.receiptScanId`; Tesseract (`tesseract.js`, dữ liệu `vie`+`eng` đóng gói sẵn, một worker xếp hàng, quá 90 s thì hủy); bộ phân tích dòng và chuẩn hóa ở `services/receipt/`; API `/api/pantry/receipt-scans` (status, quét nền có tiến trình, commit một lần, hoàn tác lô); giới hạn `RECEIPT_SCAN_DAILY_LIMIT`; nhập/hoàn kho dùng chung với "Đã mua" (`modules/pantry/pantry-intake.ts`); `npm run eval:receipt -w backend`. Commit `fb0f094`.
+- [x] P1-2 (09/11) — frontend: nút ở Kho và Tổng quan, chụp/chọn ảnh, tiến trình 3 bước có Hủy (`POST /:id/cancel`), màn duyệt bắt buộc (sửa tên/số lượng/đơn vị/nhóm/hạn, đích trong kho, cảnh báo dị ứng, dòng bị bỏ khôi phục được, ghi rõ chế độ dự phòng), dải "Hoàn tác" sau khi lưu, "Hoàn tác hóa đơn" trong lịch sử kho. Kiểm trong container Alpine qua API (ảnh mẫu tự tạo): 4/4 dòng, khoảng 3 s. Chưa có ảnh hóa đơn thật nên chưa chạy `eval:receipt`.
+
 ## Việc do Codex làm
 
 - Việc: dựng lại C0 trên nền `origin/giai-doan-3b` (`bd2ac97`), không dựa trên `main` cũ.

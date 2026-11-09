@@ -50,6 +50,21 @@ export function historyLink(entry: Pick<PantryTransaction, "mealPlanItem" | "sho
   return null;
 }
 
+/**
+ * Dòng hiện nút "Hoàn tác hóa đơn" (GĐ3c): dòng đầu tiên trong danh sách của mỗi lô quét hóa đơn còn chưa hoàn tác
+ * (một lô nhiều dòng chỉ một nút). Trả id dòng → id lô.
+ */
+export function receiptUndoTargets(entries: Array<Pick<PantryTransaction, "id" | "receiptScanId" | "reversalOfId" | "reversedAt">>) {
+  const targets = new Map<string, string>();
+  const seen = new Set<string>();
+  for (const entry of entries) {
+    if (!entry.receiptScanId || seen.has(entry.receiptScanId)) continue;
+    seen.add(entry.receiptScanId);
+    if (!entry.reversalOfId && !entry.reversedAt) targets.set(entry.id, entry.receiptScanId);
+  }
+  return targets;
+}
+
 /** Ghi chú cho người dùng (vd. "Đổi đơn vị: 2 cái → 300 g", "Tạo mới từ danh sách đi chợ"). */
 export const historyNote = (entry: Pick<PantryTransaction, "note">) => entry.note?.trim() || null;
 

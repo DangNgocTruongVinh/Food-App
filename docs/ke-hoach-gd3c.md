@@ -127,7 +127,7 @@ Module mới `backend/src/modules/receipt-scan/` (route → controller → servi
 | Lượt | Nội dung | Kiểm tra |
 |---|---|---|
 | P1-1 (backend) — **xong 09/11** | migration `ReceiptScan`; provider interface + Mock + Tesseract; parser, normalize, aliases; 4 endpoint, quota, ownership, commit một lần, hoàn tác; script eval + file mẫu | test thuần (parser ~30 ca), test API (ownership, 429, commit 2 lần, undo sau khi đã dùng bớt) |
-| P1-2 (frontend) | nút, hộp quét, màn duyệt, lịch sử/hoàn tác, logic + test; chạy eval Tesseract trên bộ ảnh | test frontend, build; không Playwright |
+| P1-2 (frontend) — **xong 09/11** (eval chờ ảnh thật) | nút, hộp quét, màn duyệt, lịch sử/hoàn tác, logic + test; chạy eval Tesseract trên bộ ảnh | test frontend, build; không Playwright |
 | P2 (cần key) | OpenAIVisionProvider (Responses API + Zod), prompt, chọn chế độ, đọc lại bằng Tesseract khi lỗi; eval OpenAI cùng bộ ảnh, so bảng | test với MockProvider/mock OpenAI; eval thật |
 
 **Ước lượng chi phí OpenAI mỗi lần quét** (`gpt-5-mini`, ảnh thu nhỏ 2000 px, `detail: high`): vào ~1.000–1.500 token ảnh +

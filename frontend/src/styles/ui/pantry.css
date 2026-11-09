@@ -281,3 +281,48 @@
 @media (max-width: 400px) {
   .kho-stat { flex-direction: column; align-items: flex-start; gap: var(--space-2); }
 }
+
+/* Quét hóa đơn (GĐ3c): hộp quét, tiến trình, màn duyệt từng dòng. Giao diện sẽ đổi theo bản 8. */
+.ui-dialog--form.kho-scan-dialog { width: min(760px, calc(100vw - 2 * var(--gutter))); }
+.kho-scan { display: grid; gap: var(--space-4); min-width: 0; }
+.kho-scan__error { display: grid; justify-items: start; gap: var(--space-3); }
+.kho-scan__tips { display: grid; gap: var(--space-1); margin: 0; padding-left: var(--space-5); color: var(--ink-2); font-size: var(--fs-small); }
+.kho-scan__status { display: grid; gap: var(--space-2); }
+.kho-scan__bar { width: 100%; height: var(--space-2); accent-color: var(--action); }
+.kho-scan-steps { display: grid; gap: var(--space-2); margin: 0; padding: 0; list-style: none; }
+.kho-scan-steps li { display: flex; align-items: center; gap: var(--space-2); color: var(--muted); font-size: var(--fs-body); }
+.kho-scan-steps li.is-done { color: var(--ink-2); }
+.kho-scan-steps li.is-current { color: var(--ink); font-weight: 600; }
+.kho-scan-steps__icon { display: inline-flex; }
+.kho-scan-steps__icon svg { width: 18px; height: 18px; }
+.kho-scan-steps li.is-done .kho-scan-steps__icon { color: var(--action-text); }
+
+.kho-scan-list { display: grid; gap: var(--space-3); margin: 0; padding: 0; list-style: none; }
+.kho-scan-row { display: grid; gap: var(--space-3); min-width: 0; padding: var(--space-4); border: 1px solid var(--line); border-radius: var(--radius-card); background: var(--surface); }
+.kho-scan-row.is-off { background: var(--surface-2); }
+.kho-scan-row.is-off .kho-scan-row__fields,
+.kho-scan-row.is-off .kho-scan-row__meta { opacity: 0.55; }
+.kho-scan-row__head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-2); }
+.kho-scan-row__check { display: inline-flex; align-items: center; gap: var(--space-2); font-weight: 600; cursor: pointer; }
+.kho-scan-row__check input { width: 18px; height: 18px; margin: 0; accent-color: var(--action); }
+.kho-scan-row__raw { margin: 0; color: var(--muted); font-size: var(--fs-small); overflow-wrap: anywhere; }
+.kho-scan-row__warn { display: flex; align-items: flex-start; gap: var(--space-2); margin: 0; color: var(--warn); font-size: var(--fs-small); font-weight: 600; }
+.kho-scan-row__warn svg { flex: 0 0 auto; width: 16px; height: 16px; margin-top: 2px; }
+.kho-scan-row__fields { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); align-items: start; gap: var(--space-3); min-width: 0; margin: 0; padding: 0; border: 0; }
+.kho-scan-row__name { grid-column: span 2; }
+.kho-scan-row__half { grid-column: span 2; }
+.kho-scan-row__meta { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); color: var(--ink-2); font-size: var(--fs-small); }
+.kho-scan-row__flag { background: var(--warn-bg); }
+.kho-scan__skipped summary { font-weight: 600; cursor: pointer; }
+.kho-scan-skips { display: grid; margin: var(--space-2) 0 0; padding: 0; list-style: none; }
+.kho-scan-skip { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-3); padding: var(--space-2) 0; border-bottom: 1px solid var(--line); }
+.kho-scan-skip__text { flex: 1 1 160px; min-width: 0; color: var(--ink-2); font-size: var(--fs-small); overflow-wrap: anywhere; }
+.kho-notice__actions { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.kho-history__undo { justify-self: start; }
+
+@media (max-width: 760px) {
+  .kho-scan-row { padding: var(--space-3); }
+  .kho-scan-row__fields { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .kho-scan-row__name,
+  .kho-scan-row__half { grid-column: 1 / -1; }
+}

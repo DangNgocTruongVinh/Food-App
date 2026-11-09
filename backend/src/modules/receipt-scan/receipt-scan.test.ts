@@ -180,6 +180,33 @@ describe("POST / — nhận ảnh, đọc nền", () => {
   });
 });
 
+describe("POST /:id/cancel", () => {
+  const cancel = (sub = userId) => request(app, `/api/pantry/receipt-scans/${scanId}/cancel`, { method: "POST", token: token(sub) });
+
+  it("hủy lần quét đang đọc: FAILED (CANCELLED), kết quả đọc về sau bị bỏ, quét tiếp được ngay", async () => {
+    let finish!: (value: Awaited<ReturnType<MockProvider["read"]>>) => void;
+    vi.mocked(provider.read).mockReturnValue(new Promise((resolve) => { finish = resolve; }));
+    await upload(await jpegWithGps());
+    const response = await cancel();
+    expect(response.status).toBe(200);
+    expect(mocks.updateScans).toHaveBeenCalledWith({ where: { id: scanId, userId, status: "PROCESSING" }, data: { status: "FAILED", errorCode: "CANCELLED" } });
+    expect((await get()).body).toMatchObject({ phase: "failed", error: "Đã hủy lần quét." });
+
+    finish({ kind: "text", lines: [{ text: "Trứng gà 10 3.200 32.000", confidence: 95 }] });
+    await new Promise((resolve) => setTimeout(resolve, 10));
+    expect((await get()).body).toMatchObject({ phase: "failed", draft: null });
+    expect(mocks.updateScans).not.toHaveBeenCalledWith(expect.objectContaining({ data: expect.objectContaining({ status: "READY" }) }));
+    expect((await upload(await jpegWithGps())).status).toBe(202);
+  });
+
+  it("đã đọc xong → 409; của người khác → 404", async () => {
+    mocks.findScan.mockResolvedValueOnce({ status: "READY" }).mockResolvedValueOnce(null);
+    expect((await cancel()).status).toBe(409);
+    expect((await cancel("user-b")).status).toBe(404);
+    expect(mocks.updateScans).not.toHaveBeenCalled();
+  });
+});
+
 describe("GET /:id", () => {
   it("lần quét của người khác → 404 (lọc theo userId từ JWT)", async () => {
     mocks.findScan.mockResolvedValue(null);

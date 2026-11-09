@@ -1,4 +1,4 @@
-import { CircleAlert, Package, Plus } from "lucide-react";
+import { CircleAlert, Package, Plus, ReceiptText } from "lucide-react";
 import { Link } from "react-router-dom";
 import { daysLeft, daysLeftLabel, expiringCountLabel, formatNumber } from "../../features/dashboard/dashboard.logic";
 import type { PantryItem } from "../../types";
@@ -18,7 +18,12 @@ export function PantrySnapshot({ pantryCount, expiringItems, expiredCount }: Pan
         <EmptyState
           icon={<Package />}
           message="Kho chưa có thực phẩm nào. Thêm thực phẩm để Nouri gợi ý món và nhắc hạn sử dụng."
-          action={<ButtonLink variant="primary" to="/pantry" icon={<Plus />}>Thêm thực phẩm</ButtonLink>}
+          action={(
+            <div className="dash-pantry__actions">
+              <ButtonLink variant="primary" to="/pantry" icon={<Plus />}>Thêm thực phẩm</ButtonLink>
+              <ButtonLink to="/pantry?scan=1" icon={<ReceiptText />}>Quét hóa đơn</ButtonLink>
+            </div>
+          )}
         />
       ) : (
         <div className="dash-pantry">
@@ -32,7 +37,10 @@ export function PantrySnapshot({ pantryCount, expiringItems, expiredCount }: Pan
             {expiredCount > 0 && (
               <p className="dash-warning"><CircleAlert aria-hidden="true" />{expiredCount} thực phẩm đã hết hạn. Kiểm tra và bỏ khỏi kho.</p>
             )}
-            <ButtonLink to="/pantry" icon={<Plus />}>Thêm thực phẩm</ButtonLink>
+            <div className="dash-pantry__actions">
+              <ButtonLink to="/pantry" icon={<Plus />}>Thêm thực phẩm</ButtonLink>
+              <ButtonLink to="/pantry?scan=1" icon={<ReceiptText />}>Quét hóa đơn</ButtonLink>
+            </div>
           </div>
           <div className="dash-pantry__soon">
             <h3 className="ui-card-title">Cần dùng sớm</h3>
