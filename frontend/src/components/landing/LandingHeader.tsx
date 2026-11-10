@@ -3,7 +3,8 @@ import { Link } from "react-router-dom";
 import { loginPath } from "../../features/auth/auth.logic";
 import { LANDING_SECTIONS } from "../../features/landing/landing.data";
 import { useDisclosure } from "../../features/layout/useDisclosure";
-import { Logo, ThemeToggle } from "../ui";
+import { ThemeToggle } from "../ui";
+import { NouriWordmark } from "./NouriWordmark";
 
 /**
  * Menu trên của trang chủ: logo, liên kết neo tới các phần, chế độ sáng/tối, Đăng nhập + Đăng ký (đã đăng nhập: "Về Tổng quan").
@@ -26,7 +27,7 @@ export function LandingHeader({ signedIn }: { signedIn: boolean }) {
   return (
     <header className="ld-header" ref={mobile.rootRef}>
       <div className="ld-header__inner">
-        <Link to="/" className="ld-brand" aria-label="Nouri, trang chủ"><Logo /></Link>
+        <Link to="/" className="ld-brand" aria-label="Nouri, trang chủ"><NouriWordmark /></Link>
         <nav className="ld-nav" aria-label="Các phần của trang">
           <ul>{links()}</ul>
         </nav>

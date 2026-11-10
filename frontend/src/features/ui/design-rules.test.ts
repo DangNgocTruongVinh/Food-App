@@ -35,8 +35,9 @@ describe("new UI CSS uses tokens only", () => {
   });
 
   it("uses no decorative gradient, frosted glass or bouncing hover", () => {
-    // Ngoại lệ duy nhất: --login-scrim (lớp tối dưới slogan trên ảnh đăng nhập để chữ đạt tương phản; xem tokens.css).
-    const withoutLoginScrim = (css: string) => css.replace(/--login-scrim:[^;]*;/g, "");
+    // Ngoại lệ có chủ đích (xem tokens.css): --login-scrim (lớp tối để slogan đạt tương phản) và --home-photo-fade (mask làm mờ mép
+    // ảnh hero vào nền); cả hai là chức năng, không phải gradient trang trí.
+    const withoutLoginScrim = (css: string) => css.replace(/--(?:login-scrim|home-photo-fade[\w-]*):[^;]*;/g, "");
     const offenders = cssFiles.filter((file) => /gradient\(|backdrop-filter|:hover[^{]*\{[^}]*(?:scale|translate)/i.test(withoutLoginScrim(withoutComments(read(file)))));
     expect(offenders).toEqual([]);
   });

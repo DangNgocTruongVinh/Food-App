@@ -53,6 +53,8 @@ Lấy tinh thần của các sản phẩm hiện nay (ứng dụng nấu ăn, s�
 ### 3.1 Cấm tuyệt đối
 - [ ] Emoji trong giao diện (kể cả tiêu đề, nút, chip).
 - [ ] Gradient trang trí, kính mờ (`backdrop-filter`), blob, lá/chanh/hoa văn trang trí, icon ✨/sparkle.
+  Ngoại lệ (chốt 10/11/2026): **ảnh hero trang chủ được dùng mask mờ dần ở mép trái và mép dưới** (màn hẹp: mép trên), token
+  `--home-photo-fade*`; trang đăng nhập có lớp tối `--login-scrim` dưới slogan. Mọi nơi khác vẫn không gradient.
 - [ ] Số liệu minh họa không có thật ("2.340 thành viên", "245 món", "tiết kiệm 120.000đ" tự đặt).
 - [ ] Chữ < 13px; chữ xám nhạt không đạt tương phản 4.5:1.
 - [ ] Tiêu đề phụ in hoa giãn chữ (eyebrow) đặt trên **mọi** tiêu đề. Nhãn in hoa chỉ dùng cho nhãn cột bảng hoặc nhãn trường rất ngắn, và không quá 1 lần trong một khối.

@@ -65,8 +65,10 @@
   border-bottom: 1px solid var(--home-line);
   background: var(--home-bg);
 }
+/* Logo trái, menu đúng tâm thanh trên, cụm nút phải; cùng lưới 1240px + lề với nội dung. */
 .ld-header__inner {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
   align-items: center;
   gap: var(--space-5);
   width: 100%;
@@ -75,7 +77,7 @@
   margin: 0 auto;
   padding: 0 var(--gutter);
 }
-.ld-nav { flex: 1; }
+.ld-brand { justify-self: start; }
 .ld-nav ul { display: flex; justify-content: center; gap: var(--space-1); margin: 0; padding: 0; list-style: none; }
 .ld-nav__link {
   display: inline-flex;
@@ -90,7 +92,7 @@
   transition: color var(--duration-fast) ease, background-color var(--duration-fast) ease;
 }
 .ld-nav__link:hover { color: var(--home-ink); background: var(--home-soft); }
-.ld-header__actions { display: flex; align-items: center; gap: var(--space-2); margin-left: auto; }
+.ld-header__actions { display: flex; align-items: center; justify-self: end; gap: var(--space-2); }
 .ld-header__account { display: flex; align-items: center; gap: var(--space-2); }
 .ld-header__icon { color: var(--home-ink); }
 .ld-header__menu {
@@ -115,37 +117,62 @@
 .ld-mobile-nav__account { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2); padding: var(--space-3) var(--gutter) var(--space-4); }
 .ld-mobile-nav__account .ld-btn--quiet { border-color: var(--home-line); }
 
-/* ---------- Hero: kiểu tạp chí ẩm thực, nền ngà, ảnh tràn mép phải ---------- */
+/* ---------- Logo chữ "nouri." (chữ o là chiếc bát có chồi lá; chỉ ở menu trên của trang chủ) ---------- */
+.ld-wordmark {
+  display: inline-flex;
+  align-items: baseline;
+  color: var(--home-ink);
+  font-family: var(--font-sans);
+  font-size: 1.625rem;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -.03em;
+}
+.ld-wordmark__bowl { width: .7em; height: 1.04em; margin: 0 .035em 0 .045em; overflow: visible; }
+.ld-wordmark__leaf { fill: var(--home-leaf); stroke: var(--home-leaf); }
+.ld-wordmark__bowl path.ld-wordmark__leaf[fill="none"] { fill: none; }
+
+/* ---------- Hero: chữ trái trên nền ngà, ảnh nửa phải mờ dần vào nền ---------- */
+/*
+ * ≥ 1024px: ảnh bắt đầu đúng ở mép phải cột chữ (lề lưới + --ld-hero-copy) nên chữ chỉ nằm trên nền ngà; vùng mờ của mask nằm trong
+ * khoảng trống giữa chữ và món ăn. Mép phải ảnh tràn tới mép màn hình, mép trái và mép dưới mờ dần vào nền.
+ */
 .ld-hero {
-  display: grid;
-  /* Cột 1 là lề trái khớp lưới 1240px của trang; chữ ở cột 2, ảnh ở cột 3 chạm mép phải màn hình. */
-  grid-template-columns: max(var(--gutter), calc((100% - 1240px) / 2 + var(--gutter))) minmax(0, 5fr) minmax(0, 6fr);
-  align-items: stretch;
+  --ld-hero-copy: 540px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-height: clamp(560px, 80vh, 740px);
   overflow: hidden;
   color: var(--home-ink);
   background: var(--home-bg);
 }
-.ld-hero__copy {
-  grid-column: 2;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  padding: clamp(48px, 7vw, 96px) clamp(32px, 5vw, 80px) clamp(48px, 7vw, 96px) 0;
+.ld-hero__visual { position: absolute; top: 0; right: 0; bottom: 0; left: calc(max(var(--gutter), (100% - 1240px) / 2 + var(--gutter)) + var(--ld-hero-copy)); }
+.ld-hero__photo {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 55% 50%;
+  -webkit-mask-image: var(--home-photo-fade), var(--home-photo-fade-bottom);
+  -webkit-mask-composite: source-in;
+  mask-image: var(--home-photo-fade), var(--home-photo-fade-bottom);
+  mask-composite: intersect;
 }
+.ld-hero__inner { position: relative; width: 100%; max-width: 1240px; margin: 0 auto; padding: clamp(56px, 7vw, 96px) var(--gutter); }
+.ld-hero__copy { max-width: var(--ld-hero-copy); padding-right: var(--space-5); }
 .ld-hero__title {
   margin: 0;
   color: var(--home-ink);
-  font-size: clamp(2.5rem, 1.7rem + 2.6vw, 4rem);
-  font-weight: 600;
-  line-height: 1.04;
+  font-size: clamp(40px, 4vw, 60px);
+  font-weight: 700;
+  line-height: 1.08;
   letter-spacing: -.035em;
   text-wrap: balance;
 }
-.ld-hero__lead { max-width: 46ch; margin: var(--space-5) 0 0; color: var(--home-ink-2); font-size: 1.125rem; line-height: 1.65; }
+.ld-hero__lead { max-width: 42ch; margin: var(--space-5) 0 0; color: var(--home-ink-2); font-size: 1.125rem; line-height: 1.65; }
 .ld-hero__actions { display: flex; flex-wrap: wrap; gap: var(--space-3); margin-top: var(--space-6); }
 .ld-hero__note { margin: var(--space-4) 0 0; color: var(--home-ink-2); font-size: .875rem; }
-.ld-hero__visual { grid-column: 3; min-height: min(86vh, 780px); }
-.ld-hero__photo { display: block; width: 100%; height: 100%; object-fit: cover; object-position: 50% 45%; }
 
 /* Thông tin ngắn của món (thời gian, calo) trên thẻ món. */
 .ld-facts { display: flex; flex-wrap: wrap; gap: 4px 14px; margin: 0; padding: 0; color: var(--home-ink-2); font-size: .875rem; list-style: none; }
@@ -332,12 +359,13 @@
 
 @media (max-width: 1023px) {
   .ld-nav, .ld-header__account { display: none; }
+  .ld-header__inner { grid-template-columns: 1fr auto; }
   .ld-header__menu { display: grid; }
-  /* Chữ trên, ảnh tràn hết bề ngang phía dưới. */
-  .ld-hero { grid-template-columns: minmax(0, 1fr); }
-  .ld-hero__copy { grid-column: 1; padding: clamp(40px, 8vw, 64px) var(--gutter) var(--space-7); }
-  .ld-hero__visual { grid-column: 1; min-height: 0; }
-  .ld-hero__photo { height: auto; aspect-ratio: 4 / 5; max-height: 80vh; }
+  /* Chữ trên, ảnh tràn hết bề ngang phía dưới (không làm mờ mép). */
+  .ld-hero { flex-direction: column; align-items: stretch; min-height: 0; }
+  .ld-hero__visual { position: static; order: 2; width: 100%; }
+  .ld-hero__photo { height: auto; aspect-ratio: 3 / 2; -webkit-mask-image: var(--home-photo-fade-top); mask-image: var(--home-photo-fade-top); }
+  .ld-hero__inner { padding: clamp(40px, 8vw, 64px) var(--gutter) var(--space-7); }
   .ld-recipes { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .ld-split { grid-template-columns: minmax(0, 1fr); }
   .ld-footer__inner { grid-template-columns: repeat(3, minmax(0, 1fr)); }
@@ -346,7 +374,7 @@
 
 @media (max-width: 640px) {
   .ld-hero__actions .ld-btn { flex: 1 1 100%; }
-  .ld-hero__photo { aspect-ratio: 1 / 1; }
+  .ld-hero__photo { aspect-ratio: 4 / 3; }
   .ld-features, .ld-recipes, .ld-steps { grid-template-columns: minmax(0, 1fr); }
   .ld-feature--lead { padding: var(--space-5); }
   .ld-footer__inner { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
