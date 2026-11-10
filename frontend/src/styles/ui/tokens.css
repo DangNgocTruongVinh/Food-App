@@ -30,6 +30,12 @@
   --dot: #ff8a52;
   --shadow-overlay: 0 12px 32px rgba(21, 72, 60, .12);
   --backdrop: rgba(23, 48, 42, .45);
+  --home-bg: #faf8f2;
+  --home-surface: #ffffff;
+  --home-ink: #173f32;
+  --home-ink-2: #4a5c54;
+  --home-line: #dce3da;
+  --home-soft: #e6ece4;
   color-scheme: light;
 }
 
@@ -55,6 +61,12 @@
   --dot: #ff8a52;
   --shadow-overlay: 0 12px 32px rgba(0, 0, 0, .4);
   --backdrop: rgba(0, 0, 0, .6);
+  --home-bg: #0f2a21;
+  --home-surface: #143629;
+  --home-ink: #faf8f2;
+  --home-ink-2: #b9c8b7;
+  --home-line: #2b4b3f;
+  --home-soft: #1b4234;
   color-scheme: dark;
 }
 
@@ -107,6 +119,21 @@
   --ease-out: cubic-bezier(.2, .7, .2, 1);
   --duration-fast: 160ms;
   --duration-dialog: 200ms;
+}
+
+/*
+ * Trang chủ công khai (Landing, làm lại 10/11/2026): --home-* đổi theo chế độ sáng/tối (khai báo ở hai khối trên);
+ * các màu thương hiệu dưới đây giống nhau ở cả hai chế độ (hero, dải mời cuối trang, footer luôn nền xanh rừng).
+ * Tương phản: ivory/forest 11,0:1; sage/forest 5,9:1; forest/gold 8,9:1; ivory/forest-deep 12,8:1.
+ */
+:root {
+  --home-forest: #173f32;
+  --home-forest-deep: #12342a;
+  --home-gold: #f6dfa6;
+  --home-gold-hover: #fbecc6;
+  --home-ivory: #faf8f2;
+  --home-sage: #a8bda5;
+  --home-forest-line: #3f6557;
 }
 
 /*

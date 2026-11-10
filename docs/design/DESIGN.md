@@ -75,6 +75,10 @@ Lấy tinh thần của các sản phẩm hiện nay (ứng dụng nấu ăn, s�
 ---
 
 ## 4. Màu (token CSS, hai chế độ)
+
+> **Hai nhóm trang (chốt 10/11/2026):** trang **công khai** — trang chủ, đăng nhập, đăng ký — dùng bộ màu thương hiệu **xanh rừng / ngà**
+> (`--home-*`, `--login-*`: forest #173F32, ivory #FAF8F2, gold #F6DFA6, sage #A8BDA5). Trang **trong ứng dụng** (sau khi đăng nhập) dùng
+> **bảng màu bản 8** (`docs/design/ke-hoach-ui8.md`); bảng dưới đây là bản 2, sẽ được thay khi làm bản 8.
 Chỉ dùng biến; **không viết mã màu cứng** trong CSS của trang/thành phần.
 
 | Token | Sáng | Tối | Dùng cho |
@@ -292,6 +296,11 @@ Quy tắc:
 - Mọi thao tác xóa/khóa dùng ConfirmDialog.
 
 ### Landing
+- **Làm lại 10/11/2026** (thay các ý dưới): màu thương hiệu `--home-*` (forest #173F32, gold #F6DFA6, ivory #FAF8F2, sage #A8BDA5; có bản
+  tối), chỉ Be Vietnam Pro, logo đậm không nghiêng. Header riêng (neo + Đăng nhập/Đăng ký), hero nền xanh với ảnh món (cùng ảnh trang
+  đăng nhập) và thẻ một món thật từ `/featured` chồng lên góc [thay 10/11: hero nền ngà, ảnh Monaz Hastam tràn mép phải, bỏ thẻ món,
+  xem `docs/superpowers/specs/2026-11-10-home-hero-editorial-design.md`]; 5 chức năng (Kho là khối lớn, kèm quét hóa đơn); món thật + số theo nhóm
+  từ `/stats`; 4 bước; Cộng đồng; dải mời cuối; footer riêng nền xanh. Khách bấm trang cần đăng nhập → `/login?next=…` (`landingLink`).
 - Menu bản cho khách (logo, liên kết neo tới các phần, chế độ tối, Đăng nhập) + footer chung.
 - Hero: một câu nói rõ Nouri làm gì + "Đăng ký miễn phí" / "Đăng nhập"; ảnh món thật nếu có (`GET /api/recipes/featured`), chưa có thì chỉ chữ.
 - Các phần, mỗi phần một ý: Nouri giúp gì (3 việc, không icon) → Món trong Nouri (số thật từ `/api/recipes/stats`, 6 món từ `/featured`; khách bấm món thì sang đăng nhập rồi mở đúng món) → Cách hoạt động (4 bước đánh số: kho → hồ sơ → thực đơn → đi chợ) → Cộng đồng (chỉ mô tả) → lời kêu gọi đăng ký.

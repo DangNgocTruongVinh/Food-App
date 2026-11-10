@@ -1,0 +1,10 @@
+Nguồn ảnh của trang chủ (public/assets/home/)
+
+hero-1200.webp, hero-720.webp
+  Tác giả:   Monaz Hastam (Unsplash)
+  Liên kết:  https://unsplash.com/photos/qk6EjQHVLkY
+  Giấy phép: Unsplash License (https://unsplash.com/license) — dùng miễn phí cho mục đích thương mại và phi thương mại,
+             không bắt buộc ghi công.
+  Chỉnh sửa: cắt tỉ lệ 4:5 (giữ phần giữa), thu nhỏ về 1200×1500 và 720×900, xuất WebP.
+  Tệp gốc:   docs/design-references/ảnh/monaz-hastam-qk6EjQHVLkY-unsplash.jpg
+  Ghi chú:   tên tác giả và mã ảnh lấy từ tên tệp tải về từ Unsplash.

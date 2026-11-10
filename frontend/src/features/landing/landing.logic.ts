@@ -1,5 +1,4 @@
 import type { FeaturedRecipe, RecipeStats } from "../../types";
-import { isUploadedImageUrl } from "../../utils/images";
 import { loginPath } from "../auth/auth.logic";
 import { mealLabels } from "../meal-plans/meal-plans.logic";
 import { recipeDetailPath, recipeDietLabel, recipeTotalMinutes } from "../recipes/recipes.logic";
@@ -20,23 +19,17 @@ export function landingRecipeIntro(stats: RecipeStats | undefined) {
   return stats ? `Nouri đang có ${stats.total} món, chủ yếu là món Việt nấu ở nhà. ${detail}` : `Món Việt nấu ở nhà và một số món nước ngoài. ${detail}`;
 }
 
-/** Ảnh hero: món đầu tiên có ảnh đã tải lên (Cloudinary). Không có thì hero chỉ có chữ. */
-export function heroPhotoRecipe(recipes: FeaturedRecipe[] | undefined) {
-  return recipes?.find((recipe) => isUploadedImageUrl(recipe.imageUrl)) ?? null;
-}
+/** Số món tải về cho phần "Món trong Nouri" (6 thẻ). */
+export const LANDING_FEATURED_LIMIT = 6;
 
-/** Số món tải về cho Landing: 6 thẻ + 1 món có thể dùng làm ảnh hero (không lặp lại món đó trong danh sách thẻ). */
-export const LANDING_FEATURED_LIMIT = 7;
-export const LANDING_CARD_COUNT = 6;
-
-export function landingCards(recipes: FeaturedRecipe[], hero: FeaturedRecipe | null) {
-  return recipes.filter((recipe) => recipe.id !== hero?.id).slice(0, LANDING_CARD_COUNT);
+/** Liên kết tới một trang trong ứng dụng: khách sang đăng nhập rồi quay lại đúng trang đó; đã đăng nhập thì mở thẳng. */
+export function landingLink(path: string, signedIn: boolean) {
+  return signedIn ? path : loginPath({ next: path });
 }
 
 /** Khách bấm món: sang đăng nhập rồi mở đúng món; đã đăng nhập: mở thẳng trang chi tiết. */
 export function featuredRecipeLink(recipe: Pick<FeaturedRecipe, "id">, signedIn: boolean) {
-  const path = recipeDetailPath(recipe.id);
-  return signedIn ? path : loginPath({ next: path });
+  return landingLink(recipeDetailPath(recipe.id), signedIn);
 }
 
 /** Thông tin ngắn trên thẻ món: thời gian, calo, bữa đầu tiên, nhãn chế độ ăn (bỏ "Cân bằng" vì món nào cũng có). */
