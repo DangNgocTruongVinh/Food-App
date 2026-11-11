@@ -332,3 +332,12 @@ body:has(.ad-shell) { background: var(--bg); }
 .ad-ingredient.has-diet-error { border-color: var(--warn); background: var(--warn-bg); }
 .ad-image__frame { border-radius: var(--radius-card); }
 .ad-row__image { border-radius: var(--radius-field); }
+
+/*
+ * Đồng bộ trang người dùng (11/11/2026) — Người dùng, Kiểm duyệt, Nhật ký: thẻ bài viết bo 24px như bài viết ở Cộng đồng,
+ * ô bình luận bo theo thẻ, ô lọc dạng viên như ô tìm kiếm. Bảng thành thẻ ở ≤ 1023px (đã có ở trên).
+ */
+.ad-post,
+.ad-section > .ui-card { border-radius: 24px; }
+.ad-comment { border-radius: var(--radius-card); }
+.ad-filter-field .ui-input { border-radius: var(--radius-pill); padding-left: var(--space-4); }
