@@ -222,3 +222,19 @@
   .ad-form__row,
   .ad-form__row--5 { grid-template-columns: minmax(0, 1fr); }
 }
+
+/* ADMIN xem trước công thức trong khung người dùng: dải nhắc + nút "Về trang quản trị" ngay dưới menu (AppLayout). */
+.ad-preview-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3) var(--space-5);
+  width: 100%;
+  max-width: var(--content-max);
+  margin: 0 auto;
+  padding: var(--space-3) var(--gutter);
+  border-bottom: 1px solid var(--line);
+}
+.ad-preview-bar__text { display: inline-flex; align-items: center; gap: var(--space-2); margin: 0; color: var(--ink-2); font-size: var(--fs-small); }
+.ad-preview-bar__text svg { width: 18px; height: 18px; color: var(--action-text); stroke-width: 1.75; }

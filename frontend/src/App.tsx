@@ -54,16 +54,17 @@ export default function App() {
           <Route path="community" element={<CommunityPage />} />
           <Route path="assistant" element={<AiAssistantPage />} />
           <Route path="profile" element={<ProfilePage />} />
-          <Route element={<AdminRoute />}>
-            <Route path="admin" element={<Suspense fallback={null}><AdminLayout /></Suspense>}>
-              <Route index element={<Suspense fallback={null}><AdminStatsPage /></Suspense>} />
-              <Route path="recipes" element={<Suspense fallback={null}><AdminRecipesPage /></Suspense>} />
-              <Route path="recipes/new" element={<Suspense fallback={null}><AdminRecipeEditorPage /></Suspense>} />
-              <Route path="recipes/:id/edit" element={<Suspense fallback={null}><AdminRecipeEditorPage /></Suspense>} />
-              <Route path="users" element={<Suspense fallback={null}><AdminUsersPage /></Suspense>} />
-              <Route path="moderation" element={<Suspense fallback={null}><AdminModerationPage /></Suspense>} />
-              <Route path="audit-logs" element={<Suspense fallback={null}><AdminAuditLogsPage /></Suspense>} />
-            </Route>
+        </Route>
+        {/* Khu Quản trị tách riêng khung (AdminLayout), không dùng menu/footer của người dùng; USER vào /admin → Tổng quan. */}
+        <Route element={<AdminRoute />}>
+          <Route path="admin" element={<Suspense fallback={null}><AdminLayout /></Suspense>}>
+            <Route index element={<Suspense fallback={null}><AdminStatsPage /></Suspense>} />
+            <Route path="recipes" element={<Suspense fallback={null}><AdminRecipesPage /></Suspense>} />
+            <Route path="recipes/new" element={<Suspense fallback={null}><AdminRecipeEditorPage /></Suspense>} />
+            <Route path="recipes/:id/edit" element={<Suspense fallback={null}><AdminRecipeEditorPage /></Suspense>} />
+            <Route path="users" element={<Suspense fallback={null}><AdminUsersPage /></Suspense>} />
+            <Route path="moderation" element={<Suspense fallback={null}><AdminModerationPage /></Suspense>} />
+            <Route path="audit-logs" element={<Suspense fallback={null}><AdminAuditLogsPage /></Suspense>} />
           </Route>
         </Route>
       </Route>

@@ -7,8 +7,9 @@ import { getStoredUser, saveRememberLoginPreference } from "../features/auth/aut
 import type { User } from "../types";
 
 type AuthContextValue = {
-  user: User | null; login: (email: string, password: string, remember?: boolean) => Promise<void>;
-  register: (name: string, email: string, password: string) => Promise<void>; logout: () => void;
+  // login/register trả người dùng vừa đăng nhập để chọn trang mở tiếp theo vai trò (postLoginPath).
+  user: User | null; login: (email: string, password: string, remember?: boolean) => Promise<User>;
+  register: (name: string, email: string, password: string) => Promise<User>; logout: () => void;
   syncUser: (user: User) => void;
 };
 
@@ -21,10 +22,16 @@ export function AuthProvider({ children }: PropsWithChildren) {
   const value = useMemo<AuthContextValue>(() => ({
     user,
     login: async (email, password, remember = true) => {
-      setUser(acceptAuthSession(queryClient, await authApi.login({ email, password, remember }), remember));
+      const signedIn = acceptAuthSession(queryClient, await authApi.login({ email, password, remember }), remember);
+      setUser(signedIn);
       saveRememberLoginPreference(remember);
+      return signedIn;
     },
-    register: async (name, email, password) => setUser(acceptAuthSession(queryClient, await authApi.register({ name, email, password }))),
+    register: async (name, email, password) => {
+      const signedIn = acceptAuthSession(queryClient, await authApi.register({ name, email, password }));
+      setUser(signedIn);
+      return signedIn;
+    },
     logout: () => {
       // Thu hồi refresh token phía server (cookie gửi kèm tự động); lỗi mạng không chặn việc đăng xuất ở máy này.
       void authApi.logout().catch(() => undefined);

@@ -5,6 +5,7 @@ import { Logo } from "../components/ui";
 import { useAuth } from "../contexts/AuthContext";
 import { type AuthFormValues, type AuthMode, authErrorMessage, safeNextPath, validateAuthForm } from "../features/auth/auth.logic";
 import { getRememberLoginPreference } from "../features/auth/auth.storage";
+import { postLoginPath } from "../features/layout/layout.logic";
 
 const asset = (path: string) => `${import.meta.env.BASE_URL}assets/login/${path}`;
 
@@ -40,9 +41,11 @@ export default function LoginPage() {
     }
     setLoading(true);
     try {
-      if (mode === "register") await auth.register(form.name.trim(), form.email.trim(), form.password);
-      else await auth.login(form.email.trim(), form.password, rememberLogin);
-      navigate(nextPath, { replace: true });
+      const signedIn = mode === "register"
+        ? await auth.register(form.name.trim(), form.email.trim(), form.password)
+        : await auth.login(form.email.trim(), form.password, rememberLogin);
+      // ADMIN vào thẳng khu Quản trị; USER mở trang trong next (Landing: món vừa bấm).
+      navigate(postLoginPath(signedIn, nextPath), { replace: true });
     } catch (error) {
       setServerError(authErrorMessage(error, mode));
       if (mode === "login") {

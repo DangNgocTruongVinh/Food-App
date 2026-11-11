@@ -18,6 +18,30 @@ export function isAdmin(user: { role?: string } | null | undefined) {
   return user?.role === "ADMIN";
 }
 
+/** Trang xem trước công thức (/recipes/:id): trang người dùng duy nhất ADMIN được mở (có nút "Về trang quản trị"). */
+export function isRecipePreviewPath(pathname: string) {
+  return /^\/recipes\/[^/]+\/?$/.test(pathname);
+}
+
+/**
+ * Khu Admin tách riêng: ADMIN mở một trang người dùng thì chuyển về "/admin", trừ xem trước công thức.
+ * null: giữ nguyên (USER, chưa đăng nhập, hoặc ADMIN đang xem trước công thức).
+ */
+export function adminRedirect(user: { role?: string } | null | undefined, pathname: string): string | null {
+  if (!isAdmin(user)) return null;
+  return isRecipePreviewPath(pathname) ? null : "/admin";
+}
+
+/**
+ * Trang mở sau khi đăng nhập/đăng ký. `next` đã qua safeNextPath. ADMIN vào thẳng "/admin" (giữ next nếu là trang Admin
+ * hoặc xem trước công thức); USER giữ next, trừ trang Admin (không có quyền) thì về Tổng quan.
+ */
+export function postLoginPath(user: { role?: string } | null | undefined, next: string): string {
+  const isAdminPath = next === "/admin" || next.startsWith("/admin/");
+  if (isAdmin(user)) return isAdminPath || isRecipePreviewPath(next) ? next : "/admin";
+  return isAdminPath ? "/dashboard" : next;
+}
+
 /** Hồ sơ, Quản trị (chỉ ADMIN), Đăng xuất. */
 export function accountMenuItems(user: { role?: string } | null | undefined): AccountMenuItem[] {
   return [
