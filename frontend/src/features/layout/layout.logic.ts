@@ -12,6 +12,15 @@ export const PRIMARY_NAV: NavLinkItem[] = [
   { to: "/assistant", label: "Trợ lý AI" },
 ];
 
+/** Menu trái của khu Quản trị (AdminLayout); mỗi mục một route con của /admin. */
+export const ADMIN_NAV: NavLinkItem[] = [
+  { to: "/admin", label: "Tổng quan", end: true },
+  { to: "/admin/recipes", label: "Công thức" },
+  { to: "/admin/users", label: "Người dùng" },
+  { to: "/admin/moderation", label: "Kiểm duyệt" },
+  { to: "/admin/audit-logs", label: "Nhật ký" },
+];
+
 export type AccountMenuItem = { kind: "link"; to: string; label: string } | { kind: "logout"; label: string };
 
 export function isAdmin(user: { role?: string } | null | undefined) {

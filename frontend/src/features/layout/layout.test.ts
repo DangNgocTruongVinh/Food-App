@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { accountMenuItems, adminRedirect, FOOTER_GROUPS, isAdmin, isRecipePreviewPath, postLoginPath, PRIMARY_NAV, userInitial } from "./layout.logic";
+import { accountMenuItems, ADMIN_NAV, adminRedirect, FOOTER_GROUPS, isAdmin, isRecipePreviewPath, postLoginPath, PRIMARY_NAV, userInitial } from "./layout.logic";
 
 describe("account menu", () => {
   it("shows Quản trị only to an ADMIN account", () => {
@@ -73,5 +73,13 @@ describe("separate Admin area", () => {
     expect(postLoginPath(user, "/admin")).toBe("/dashboard");
     expect(postLoginPath(user, "/admin/users")).toBe("/dashboard");
     expect(postLoginPath(undefined, "/pantry")).toBe("/pantry");
+  });
+});
+
+describe("Admin side menu", () => {
+  it("lists the five Admin sections in order, each a route under /admin", () => {
+    expect(ADMIN_NAV.map((item) => item.label)).toEqual(["Tổng quan", "Công thức", "Người dùng", "Kiểm duyệt", "Nhật ký"]);
+    expect(ADMIN_NAV.every((item) => item.to === "/admin" || item.to.startsWith("/admin/"))).toBe(true);
+    expect(ADMIN_NAV[0].end).toBe(true);
   });
 });
