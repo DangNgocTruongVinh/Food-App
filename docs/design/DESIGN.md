@@ -221,7 +221,7 @@ Quy tắc:
 
 ## 13. Khung chung
 **Menu trên** (đồng bộ trang chủ 11/11/2026; sticky, cao 68px, nền `--bg`, kẻ dưới 1px):
-- Trái: logo chiếc bát `NouriWordmark` (components/ui, Fraunces 600, màu `--home-ink`; cùng logo trang chủ). `Logo` cũ chỉ còn ở Admin, Đăng nhập.
+- Trái: logo chiếc bát `NouriWordmark` (components/ui, Fraunces 600, màu `--home-ink`; cùng logo trang chủ). `Logo` cũ chỉ còn ở Đăng nhập (Admin dùng `NouriWordmark` + nhãn "Quản trị").
 - Chính giữa thanh (lưới `1fr auto 1fr`, cột hai bên tối thiểu bằng nội dung): liên kết chữ phẳng 15px, bo 8px, nền `--home-soft` khi rê chuột; đang chọn: chữ `--action-text` 600 trên nền `--home-soft`. ≤ 1200px thu vào nút menu.
 - Phải (sát mép phải): nút chế độ tối (aria-pressed), chuông có chấm `--dot`, nút tài khoản (avatar + tên) mở menu: Hồ sơ, Quản trị (chỉ ADMIN), Đăng xuất. Nút biểu tượng và nút tài khoản không viền, nền `--home-soft` khi rê chuột/mở.
 
@@ -295,11 +295,13 @@ Quy tắc:
 - Hai cột ≥1024px: trái form, phải khối `--surface-2` với một câu giới thiệu cụ thể về Nouri (thay bằng ảnh món thật khi có). Điện thoại: chỉ form.
 - Checkbox "Nhớ đăng nhập" giữ hành vi hiện có. Lỗi nói rõ ("Email hoặc mật khẩu chưa đúng").
 
-### Admin (chưa có mockup)
-- Trang công cụ: không ảnh, mật độ thông tin cao nhưng gọn. Điều hướng con bằng tab: Thống kê, Công thức, Người dùng, Kiểm duyệt, Nhật ký.
-- Thống kê: 4 số tổng (có chú thích: "trong đó 1 bị khóa") + biểu đồ 12 tuần (Recharts, màu token, có nhãn trục, đọc được ở chế độ tối).
+### Admin (tách khu riêng 11/11/2026)
+- Điều hướng: ADMIN đăng nhập xong vào thẳng `/admin` (giữ `next` nếu là trang Admin hoặc `/recipes/:id`); ADMIN mở trang người dùng → `/admin`, trừ xem trước công thức `/recipes/:id` (dải "Về trang quản trị" dưới menu). USER mở `/admin` → Tổng quan. Hàm thuần `postLoginPath`, `adminRedirect` (`features/layout/layout.logic.ts`, có test).
+- Khung riêng `AdminLayout` (không menu trên/footer của người dùng): ≥ 1024px menu trái 264px — logo chiếc bát + nhãn "Quản trị", Tổng quan / Công thức / Người dùng / Kiểm duyệt / Nhật ký (`ADMIN_NAV`, liên kết kiểu `.site-nav__link`), cuối menu: chế độ tối, tài khoản admin, Đăng xuất. < 1024px: thanh trên (logo + nút menu) mở menu dạng ngăn kéo. Không có chuông thông báo.
+- Kiểu trang theo trang người dùng: tiêu đề lớn Fraunces, khung bảng/biểu đồ/bài viết bo 24px, ô lọc dạng viên. Trang công cụ: không ảnh, mật độ thông tin cao nhưng gọn.
+- Tổng quan: 4 số tổng (có chú thích: "trong đó 1 bị khóa") thành dải ngăn bằng đường mảnh, ghi "không tính tài khoản mẫu minh họa" + biểu đồ 12 tuần (Recharts, màu token, có nhãn trục, đọc được ở chế độ tối).
 - Bảng có tìm kiếm, lọc, phân trang. Công thức: form tạo/sửa có upload ảnh (xem trước), báo lỗi nhãn chay theo từng nguyên liệu. Người dùng: Khóa/Mở khóa. Kiểm duyệt: xem bài + xóa. Nhật ký: thời gian, người thực hiện, hành động, đối tượng.
-- Mọi thao tác xóa/khóa dùng ConfirmDialog.
+- Mọi thao tác xóa/khóa dùng ConfirmDialog. Test kiểm kê `features/admin/admin-controls.test.ts`: mọi nút/hộp thoại Admin phải còn.
 
 ### Landing
 - **Làm lại 10/11/2026** (thay các ý dưới): màu thương hiệu `--home-*` (forest #173F32, gold #F6DFA6, ivory #FAF8F2, sage #A8BDA5; có bản
