@@ -3,7 +3,7 @@ import type { FeaturedRecipe, RecipeStats } from "../../types";
 import { loginPath, safeNextPath } from "../auth/auth.logic";
 import {
   featuredRecipeFacts, featuredRecipeLink, landingRecipeGroups,
-  landingLink, landingRecipeIntro,
+  landingLink,
 } from "./landing.logic";
 import { LANDING_COMMUNITY, LANDING_FEATURES, LANDING_SECTIONS, LANDING_STEPS } from "./landing.data";
 
@@ -22,8 +22,6 @@ describe("Landing recipe numbers come from the public stats API", () => {
 
   it("hides every number while stats are missing", () => {
     expect(landingRecipeGroups(undefined)).toEqual([]);
-    expect(landingRecipeIntro(undefined)).not.toMatch(/\d/);
-    expect(landingRecipeIntro(stats)).toContain("Nouri đang có 33 món");
   });
 });
 

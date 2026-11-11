@@ -53,8 +53,10 @@ Lấy tinh thần của các sản phẩm hiện nay (ứng dụng nấu ăn, s�
 ### 3.1 Cấm tuyệt đối
 - [ ] Emoji trong giao diện (kể cả tiêu đề, nút, chip).
 - [ ] Gradient trang trí, kính mờ (`backdrop-filter`), blob, lá/chanh/hoa văn trang trí, icon ✨/sparkle.
-  Ngoại lệ (chốt 10/11/2026): **ảnh hero trang chủ được dùng mask mờ dần ở mép trái và mép dưới** (màn hẹp: mép trên), token
-  `--home-photo-fade*`; trang đăng nhập có lớp tối `--login-scrim` dưới slogan. Mọi nơi khác vẫn không gradient.
+  Ngoại lệ (chốt 10/11/2026): **hero trang chủ** ("bàn ăn trong vòm") được dùng **ảnh trong khung vòm** (bo tròn đỉnh) có viền
+  sage mảnh đồng tâm (`outline-offset`); tiêu đề và logo trang chủ dùng **Fraunces** (không nghiêng).
+  Không có chữ đặt trên ảnh, không gradient. Trang đăng nhập có lớp tối `--login-scrim` dưới slogan. Mọi nơi khác vẫn không gradient,
+  không blob.
 - [ ] Số liệu minh họa không có thật ("2.340 thành viên", "245 món", "tiết kiệm 120.000đ" tự đặt).
 - [ ] Chữ < 13px; chữ xám nhạt không đạt tương phản 4.5:1.
 - [ ] Tiêu đề phụ in hoa giãn chữ (eyebrow) đặt trên **mọi** tiêu đề. Nhãn in hoa chỉ dùng cho nhãn cột bảng hoặc nhãn trường rất ngắn, và không quá 1 lần trong một khối.
@@ -300,8 +302,11 @@ Quy tắc:
 ### Landing
 - **Làm lại 10/11/2026** (thay các ý dưới): màu thương hiệu `--home-*` (forest #173F32, gold #F6DFA6, ivory #FAF8F2, sage #A8BDA5; có bản
   tối), chỉ Be Vietnam Pro, logo đậm không nghiêng. Header riêng (neo + Đăng nhập/Đăng ký), hero nền xanh với ảnh món (cùng ảnh trang
-  đăng nhập) và thẻ một món thật từ `/featured` chồng lên góc [thay 10/11: hero nền ngà, ảnh Monaz Hastam tràn mép phải, bỏ thẻ món,
-  xem `docs/superpowers/specs/2026-11-10-home-hero-editorial-design.md`]; 5 chức năng (Kho là khối lớn, kèm quét hóa đơn); món thật + số theo nhóm
+  đăng nhập) và thẻ một món thật từ `/featured` chồng lên góc [thay 10/11: hero "bàn ăn trong vòm" — nền ngà, mảng xanh rừng từ giữa cột ảnh tràn mép phải; một ảnh bàn
+  ăn thật (nhiều bữa) trong khung vòm vắt qua ranh giới hai màu; mockup màn Thực đơn (HTML/CSS, dải 7 ngày + 3 bữa có thật trong bộ 33 món + tổng calo,
+  `HeroMealPlanMockup`) đè chân vòm nối với cột chữ; không dãy số liệu, không ảnh trang trí; nút phụ "Xem cách hoạt động"; cao vừa một
+  màn hình, chữ thẳng lề logo; ≤ 1023px: chữ trên, vòm giữa, mảng xanh nửa dưới; ảnh do người dùng cung cấp, xem
+  `public/assets/home/NGUON.txt`]; 5 chức năng (Kho là khối lớn, kèm quét hóa đơn); món thật + số theo nhóm
   từ `/stats`; 4 bước; Cộng đồng; dải mời cuối; footer riêng nền xanh. Khách bấm trang cần đăng nhập → `/login?next=…` (`landingLink`).
 - Menu bản cho khách (logo, liên kết neo tới các phần, chế độ tối, Đăng nhập) + footer chung.
 - Hero: một câu nói rõ Nouri làm gì + "Đăng ký miễn phí" / "Đăng nhập"; ảnh món thật nếu có (`GET /api/recipes/featured`), chưa có thì chỉ chữ.

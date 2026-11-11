@@ -13,12 +13,6 @@ export function landingRecipeGroups(stats: RecipeStats | undefined) {
   return stats ? LANDING_RECIPE_GROUPS.map(([key, label]) => ({ key, label, count: stats[key] })) : [];
 }
 
-/** Câu dẫn của phần "Món trong Nouri": có tổng thật thì nêu số, chưa có thì không nêu. */
-export function landingRecipeIntro(stats: RecipeStats | undefined) {
-  const detail = "Mỗi món ghi rõ nguyên liệu, các bước làm, calo và đạm, tinh bột, béo cho một khẩu phần.";
-  return stats ? `Nouri đang có ${stats.total} món, chủ yếu là món Việt nấu ở nhà. ${detail}` : `Món Việt nấu ở nhà và một số món nước ngoài. ${detail}`;
-}
-
 /** Số món tải về cho phần "Món trong Nouri" (6 thẻ). */
 export const LANDING_FEATURED_LIMIT = 6;
 

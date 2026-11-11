@@ -136,11 +136,11 @@
   --home-forest-line: #3f6557;
   /* Màu lá trong logo (chồi trên chiếc bát); chỉ dùng cho hình, không dùng cho chữ. */
   --home-leaf: #6b9a5e;
-  /* Ảnh hero mờ dần vào nền: mép trái + mép dưới (≥ 1024px), mép trên (màn hẹp). Ngoại lệ có chủ đích của luật "không gradient":
-     mask của ảnh, không phải màu trang trí (DESIGN.md mục 3.1). */
-  --home-photo-fade: linear-gradient(to right, transparent 0, rgba(0, 0, 0, .18) 12%, rgba(0, 0, 0, .62) 26%, #000 40%);
-  --home-photo-fade-bottom: linear-gradient(to top, transparent 0, rgba(0, 0, 0, .55) 12%, #000 26%);
-  --home-photo-fade-top: linear-gradient(to bottom, transparent 0, #000 22%);
+  /* Chữ phụ trên mảng ngà của hero (6,7:1 trên ivory). */
+  --home-forest-muted: #4a5c54;
+  /* Mockup màn Thực đơn trong hero (giao diện sáng cố định): nền dòng, nền nhãn calo. */
+  --home-paper: #ffffff;
+  --home-mist: #e6ece4;
 }
 
 /*

@@ -3,8 +3,9 @@ import { Clock3, Flame } from "lucide-react";
 import { Link } from "react-router-dom";
 import { formatNumber } from "../../features/dashboard/dashboard.logic";
 import {
-  featuredRecipeFacts, featuredRecipeLink, landingLink, landingRecipeGroups, landingRecipeIntro,
+  featuredRecipeFacts, featuredRecipeLink, landingLink, landingRecipeGroups,
 } from "../../features/landing/landing.logic";
+import { LANDING_RECIPE_INTRO } from "../../features/landing/landing.data";
 import { cx } from "../../features/ui/ui.logic";
 import type { FeaturedRecipe, RecipeStats } from "../../types";
 import { IMAGE_WIDTHS, isUploadedImageUrl } from "../../utils/images";
@@ -50,7 +51,7 @@ export function LandingRecipes({ stats, featured, signedIn }: LandingRecipesProp
         <div className="ld-section__head ld-section__head--split">
           <div>
             <h2 id="ld-recipes-title" className="ld-section__title">Món trong Nouri</h2>
-            <p className="ld-section__lead">{landingRecipeIntro(stats)}</p>
+            <p className="ld-section__lead">{LANDING_RECIPE_INTRO}</p>
           </div>
           {groups.length > 0 && (
             <dl className="ld-groups" aria-label="Số món theo nhóm">

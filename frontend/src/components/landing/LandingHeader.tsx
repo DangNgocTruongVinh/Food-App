@@ -3,8 +3,7 @@ import { Link } from "react-router-dom";
 import { loginPath } from "../../features/auth/auth.logic";
 import { LANDING_SECTIONS } from "../../features/landing/landing.data";
 import { useDisclosure } from "../../features/layout/useDisclosure";
-import { ThemeToggle } from "../ui";
-import { NouriWordmark } from "./NouriWordmark";
+import { NouriWordmark, ThemeToggle } from "../ui";
 
 /**
  * Menu trên của trang chủ: logo, liên kết neo tới các phần, chế độ sáng/tối, Đăng nhập + Đăng ký (đã đăng nhập: "Về Tổng quan").

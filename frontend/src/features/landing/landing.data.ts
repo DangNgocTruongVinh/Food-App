@@ -57,3 +57,21 @@ export const LANDING_COMMUNITY = [
   "Đăng món bạn vừa nấu kèm tối đa 4 ảnh và gắn công thức có sẵn trong Nouri, để người khác mở xem nguyên liệu và cách làm.",
   "Bạn thích và bình luận bài của người khác, nhận thông báo khi bài của mình có lượt thích hoặc bình luận, và tự xóa bài của mình khi cần.",
 ] as const;
+
+/**
+ * Mockup màn Thực đơn trong hero: một ngày mẫu gồm các món có thật trong bộ 33 món (tên, calo đúng như seed-data.ts), để minh họa
+ * giao diện thật, không phải số liệu quảng cáo. `day`: ngày đang xem trong dải 7 ngày.
+ */
+export const HERO_MEAL_PLAN = {
+  days: ["T2", "T3", "T4", "T5", "T6", "T7", "CN"],
+  day: "T4",
+  meals: [
+    { mealType: "BREAKFAST", name: "Bánh mì ốp la", calories: 410 },
+    { mealType: "LUNCH", name: "Bún chả Hà Nội", calories: 640 },
+    { mealType: "DINNER", name: "Canh chua cá lóc", calories: 470 },
+  ],
+} as const;
+
+/** Câu dẫn của phần "Món trong Nouri". */
+export const LANDING_RECIPE_INTRO = "Nouri mang đến bộ sưu tập công thức món ăn, ưu tiên những món Việt quen thuộc, dễ nấu tại nhà. "
+  + "Mỗi công thức đều có nguyên liệu, hướng dẫn chế biến và thông tin dinh dưỡng chi tiết cho một khẩu phần.";

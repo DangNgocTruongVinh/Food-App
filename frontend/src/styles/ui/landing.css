@@ -5,7 +5,14 @@
  * Điểm nhấn duy nhất: ảnh món ăn ở hero kèm thẻ một món thật chồng lên góc. Không hiệu ứng khi cuộn; rê chuột chỉ đổi màu.
  */
 
+/*
+ * Khung nội dung chung của Landing (header, hero, section, dải đăng ký, footer): bề rộng nội dung --ld-max (không tính lề),
+ * lề ngang --ld-pad. Màn rộng được khung rộng hơn để bớt khoảng trống hai bên.
+ */
 .ld-root {
+  --ld-max: 1220px;
+  --ld-pad: clamp(20px, 4vw, 48px);
+  --ld-container: calc(var(--ld-max) + 2 * var(--ld-pad));
   min-height: 100dvh;
   color: var(--home-ink);
   background: var(--home-bg);
@@ -14,6 +21,10 @@
   line-height: 1.6;
 }
 .ld-page:focus { outline: none; }
+@media (min-width: 1600px) {
+  .ld-root { --ld-max: 1400px; }
+}
+@media (min-width: 1920px) { .ld-root { --ld-max: 1520px; } }
 .ld-root a, .ld-root button { touch-action: manipulation; }
 .ld-page { display: block; }
 
@@ -65,17 +76,17 @@
   border-bottom: 1px solid var(--home-line);
   background: var(--home-bg);
 }
-/* Logo trái, menu đúng tâm thanh trên, cụm nút phải; cùng lưới 1240px + lề với nội dung. */
+/* Logo trái, menu đúng tâm thanh trên, cụm nút phải; cùng khung --ld-container với nội dung. */
 .ld-header__inner {
   display: grid;
   grid-template-columns: 1fr auto 1fr;
   align-items: center;
   gap: var(--space-5);
   width: 100%;
-  max-width: 1240px;
+  max-width: var(--ld-container);
   min-height: 68px;
   margin: 0 auto;
-  padding: 0 var(--gutter);
+  padding: 0 var(--ld-pad);
 }
 .ld-brand { justify-self: start; }
 .ld-nav ul { display: flex; justify-content: center; gap: var(--space-1); margin: 0; padding: 0; list-style: none; }
@@ -94,7 +105,8 @@
 .ld-nav__link:hover { color: var(--home-ink); background: var(--home-soft); }
 .ld-header__actions { display: flex; align-items: center; justify-self: end; gap: var(--space-2); }
 .ld-header__account { display: flex; align-items: center; gap: var(--space-2); }
-.ld-header__icon { color: var(--home-ink); }
+.ld-header__icon, .ld-header__icon[aria-pressed="true"] { border-color: transparent; color: var(--home-ink); background: transparent; }
+.ld-header__icon:hover { background: var(--home-soft); }
 .ld-header__menu {
   display: none;
   place-items: center;
@@ -112,67 +124,102 @@
 .ld-mobile-nav[hidden] { display: none; }
 /* Màn rộng có menu ngang: bảng menu điện thoại luôn ẩn, kể cả khi đang mở lúc đổi cỡ cửa sổ. */
 @media (min-width: 1024px) { .ld-mobile-nav { display: none; } }
-.ld-mobile-nav ul { display: grid; gap: var(--space-1); margin: 0; padding: var(--space-3) var(--gutter) 0; list-style: none; }
+.ld-mobile-nav ul { display: grid; gap: var(--space-1); margin: 0; padding: var(--space-3) var(--ld-pad) 0; list-style: none; }
 .ld-mobile-nav .ld-nav__link { display: flex; min-height: var(--control-h); }
-.ld-mobile-nav__account { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2); padding: var(--space-3) var(--gutter) var(--space-4); }
+.ld-mobile-nav__account { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2); padding: var(--space-3) var(--ld-pad) var(--space-4); }
 .ld-mobile-nav__account .ld-btn--quiet { border-color: var(--home-line); }
 
-/* ---------- Logo chữ "nouri." (chữ o là chiếc bát có chồi lá; chỉ ở menu trên của trang chủ) ---------- */
-.ld-wordmark {
-  display: inline-flex;
-  align-items: baseline;
-  color: var(--home-ink);
-  font-family: var(--font-sans);
-  font-size: 1.625rem;
-  font-weight: 700;
-  line-height: 1;
-  letter-spacing: -.03em;
-}
-.ld-wordmark__bowl { width: .7em; height: 1.04em; margin: 0 .035em 0 .045em; overflow: visible; }
-.ld-wordmark__leaf { fill: var(--home-leaf); stroke: var(--home-leaf); }
-.ld-wordmark__bowl path.ld-wordmark__leaf[fill="none"] { fill: none; }
 
-/* ---------- Hero: chữ trái trên nền ngà, ảnh nửa phải mờ dần vào nền ---------- */
+/* ---------- Hero "bàn ăn trong vòm": nền ngà, mảng xanh rừng tràn phải, ảnh thật trong khung vòm, mockup màn Thực đơn ---------- */
 /*
- * ≥ 1024px: ảnh bắt đầu đúng ở mép phải cột chữ (lề lưới + --ld-hero-copy) nên chữ chỉ nằm trên nền ngà; vùng mờ của mask nằm trong
- * khoảng trống giữa chữ và món ăn. Mép phải ảnh tràn tới mép màn hình, mép trái và mép dưới mờ dần vào nền.
+ * >= 1024px: khung --ld-container như thanh trên (chữ thẳng lề logo), cao vừa một màn hình. Mảng xanh bắt đầu ở giữa cột ảnh và tràn tới mép
+ * phải, nên khung vòm nằm vắt qua ranh giới ngà / xanh; viền sage mảnh đồng tâm quanh vòm. Mockup Thực đơn đè góc dưới trái của vòm, nối
+ * ảnh với cột chữ. Màu thương hiệu cố định ở cả chế độ sáng/tối.
  */
 .ld-hero {
-  --ld-hero-copy: 540px;
+  --home-ink: var(--home-forest);
+  --home-ink-2: var(--home-forest-muted);
+  --home-soft: var(--home-mist);
+  --home-line: var(--home-sage);
   position: relative;
-  display: flex;
-  align-items: center;
-  min-height: clamp(560px, 80vh, 740px);
   overflow: hidden;
-  color: var(--home-ink);
-  background: var(--home-bg);
+  color: var(--home-forest);
+  background: var(--home-ivory);
 }
-.ld-hero__visual { position: absolute; top: 0; right: 0; bottom: 0; left: calc(max(var(--gutter), (100% - 1240px) / 2 + var(--gutter)) + var(--ld-hero-copy)); }
-.ld-hero__photo {
-  display: block;
+.ld-hero__inner {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+  column-gap: clamp(32px, 4vw, 72px);
   width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: 55% 50%;
-  -webkit-mask-image: var(--home-photo-fade), var(--home-photo-fade-bottom);
-  -webkit-mask-composite: source-in;
-  mask-image: var(--home-photo-fade), var(--home-photo-fade-bottom);
-  mask-composite: intersect;
+  max-width: var(--ld-container);
+  min-height: max(600px, calc(100svh - 69px));
+  margin: 0 auto;
+  padding: 0 var(--ld-pad);
 }
-.ld-hero__inner { position: relative; width: 100%; max-width: 1240px; margin: 0 auto; padding: clamp(56px, 7vw, 96px) var(--gutter); }
-.ld-hero__copy { max-width: var(--ld-hero-copy); padding-right: var(--space-5); }
+.ld-hero__copy { position: relative; z-index: 2; align-self: center; padding: clamp(48px, 7vh, 88px) 0; }
 .ld-hero__title {
   margin: 0;
-  color: var(--home-ink);
-  font-size: clamp(40px, 4vw, 60px);
-  font-weight: 700;
-  line-height: 1.08;
-  letter-spacing: -.035em;
+  color: var(--home-forest);
+  font-family: var(--font-serif);
+  font-size: clamp(40px, 4.2vw, 76px);
+  font-weight: 500;
+  line-height: 1.04;
+  letter-spacing: -.02em;
   text-wrap: balance;
 }
-.ld-hero__lead { max-width: 42ch; margin: var(--space-5) 0 0; color: var(--home-ink-2); font-size: 1.125rem; line-height: 1.65; }
-.ld-hero__actions { display: flex; flex-wrap: wrap; gap: var(--space-3); margin-top: var(--space-6); }
-.ld-hero__note { margin: var(--space-4) 0 0; color: var(--home-ink-2); font-size: .875rem; }
+.ld-hero__lead { max-width: 60ch; margin: var(--space-6) 0 0; color: var(--home-forest-muted); font-size: 1.125rem; line-height: 1.65; }
+.ld-hero__actions { display: flex; flex-wrap: wrap; gap: var(--space-3); margin-top: var(--space-7); }
+[data-theme="dark"] .ld-hero .ld-btn--solid { color: var(--home-ivory); background: var(--home-forest); }
+[data-theme="dark"] .ld-hero .ld-btn--solid:hover { background: var(--home-forest-deep); }
+
+.ld-hero__visual { --hero-photo-h: clamp(440px, calc(100svh - 69px - 132px), 660px); position: relative; display: grid; place-items: center; }
+/* Màn >= 1600px (khung rộng hơn): vòm cao tối đa 720px, vẫn trừ khoảng thở theo chiều cao màn. */
+@media (min-width: 1600px) { .ld-hero__visual { --hero-photo-h: clamp(440px, calc(100svh - 69px - 132px), 720px); } }
+/* Mảng xanh: từ giữa cột ảnh tràn hết mép phải (hero cắt phần thừa). */
+.ld-hero__visual::before { position: absolute; top: 0; bottom: 0; left: 50%; right: -100vw; background: var(--home-forest-deep); content: ""; }
+.ld-hero__photo {
+  position: relative;
+  display: block;
+  width: auto;
+  max-width: 100%;
+  height: var(--hero-photo-h);
+  aspect-ratio: 2 / 3;
+  object-fit: cover;
+  border-radius: 999px 999px 24px 24px;
+  /* Viền sage mảnh đồng tâm quanh vòm (outline theo bo góc). */
+  outline: 1px solid var(--home-sage);
+  outline-offset: 14px;
+}
+
+/* Mockup điện thoại (HTML/CSS): màn Thực đơn với một ngày mẫu (món, calo thật). Màu cố định (giao diện sáng của app). */
+.ld-phone {
+  position: absolute;
+  z-index: 3;
+  /* Chân mockup thấp hơn chân vòm 24px (bám theo chiều cao ảnh). */
+  bottom: calc((100% - var(--hero-photo-h)) / 2 - 24px);
+  left: -6%;
+  width: clamp(248px, 19vw, 264px);
+  padding: 10px;
+  border-radius: 40px;
+  background: var(--home-forest);
+  box-shadow: 0 0 0 1px var(--home-forest-line), var(--shadow-overlay);
+}
+/* Màn 1024–1499px: cột chữ hẹp, mockup không lấn sang trái để giữ khoảng cách với đoạn mô tả. */
+@media (min-width: 1024px) and (max-width: 1499px) { .ld-phone { left: 0; } }
+.ld-phone__screen { padding: 18px 12px 12px; border-radius: 30px; color: var(--home-forest); background: var(--home-ivory); }
+.ld-phone__bar { display: flex; align-items: center; gap: var(--space-2); padding: 2px 6px 12px; font-size: .9375rem; font-weight: 600; }
+.ld-phone__bar svg { width: 18px; height: 18px; stroke-width: 1.8; }
+.ld-phone__days { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 3px; margin: 0 0 10px; }
+.ld-phone__day { padding: 5px 0; border-radius: 8px; color: var(--home-forest-muted); font-size: .75rem; font-weight: 600; text-align: center; }
+.ld-phone__day--active { color: var(--home-ivory); background: var(--home-forest); }
+.ld-phone__list { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.ld-phone__row { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); padding: 9px 10px; border-radius: 12px; background: var(--home-paper); }
+.ld-phone__name { display: grid; font-size: .875rem; font-weight: 600; line-height: 1.3; }
+.ld-phone__name small { color: var(--home-forest-muted); font-size: .8125rem; font-weight: 400; }
+.ld-phone__chip { flex: none; padding: 3px 8px; border-radius: 6px; color: var(--home-forest); background: var(--home-mist); font-size: .8125rem; font-weight: 600; white-space: nowrap; }
+.ld-phone__suggest { display: flex; gap: var(--space-2); margin-top: 10px; padding: 10px 12px; border-radius: 12px; color: var(--home-ivory); background: var(--home-forest); font-size: .8125rem; line-height: 1.4; }
+.ld-phone__suggest svg { flex: none; width: 18px; height: 18px; margin-top: 1px; color: var(--home-sage); stroke-width: 1.8; }
+.ld-phone__suggest strong { display: block; font-size: .875rem; font-weight: 600; }
 
 /* Thông tin ngắn của món (thời gian, calo) trên thẻ món. */
 .ld-facts { display: flex; flex-wrap: wrap; gap: 4px 14px; margin: 0; padding: 0; color: var(--home-ink-2); font-size: .875rem; list-style: none; }
@@ -183,7 +230,7 @@
 .ld-section { padding: clamp(64px, 8vw, 112px) 0; scroll-margin-top: 68px; }
 .ld-section--surface { background: var(--home-surface); }
 .ld-section--soft { background: var(--home-soft); }
-.ld-section__inner { width: 100%; max-width: 1240px; margin: 0 auto; padding: 0 var(--gutter); }
+.ld-section__inner { width: 100%; max-width: var(--ld-container); margin: 0 auto; padding: 0 var(--ld-pad); }
 .ld-section__head { display: grid; gap: var(--space-3); max-width: 640px; margin-bottom: clamp(32px, 4vw, 56px); }
 .ld-section__head--split { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: var(--space-5) var(--space-7); max-width: none; }
 .ld-section__head--split > div:first-child { display: grid; gap: var(--space-3); max-width: 600px; }
@@ -314,9 +361,9 @@
   justify-content: space-between;
   gap: var(--space-6);
   width: 100%;
-  max-width: 1240px;
+  max-width: var(--ld-container);
   margin: 0 auto;
-  padding: clamp(56px, 7vw, 96px) var(--gutter);
+  padding: clamp(56px, 7vw, 96px) var(--ld-pad);
 }
 .ld-signup__title { max-width: 18ch; margin: 0; color: var(--home-ivory); font-size: clamp(1.75rem, 1.3rem + 1.6vw, 2.5rem); font-weight: 600; line-height: 1.15; letter-spacing: -.025em; }
 .ld-signup__text { max-width: 54ch; margin: var(--space-3) 0 0; color: var(--home-sage); font-size: 1.0625rem; }
@@ -332,12 +379,12 @@
   grid-template-columns: minmax(0, 2fr) repeat(3, minmax(0, 1fr));
   gap: var(--space-5);
   width: 100%;
-  max-width: 1240px;
+  max-width: var(--ld-container);
   margin: 0 auto;
-  padding: 40px var(--gutter);
+  padding: 40px var(--ld-pad);
 }
 .ld-footer__brand { display: grid; align-content: start; gap: var(--space-2); max-width: 34ch; }
-.ld-footer .ui-logo__dot { color: var(--home-gold); }
+.ld-footer .ui-wordmark { color: var(--home-ivory); }
 .ld-footer__tagline { margin: 0; color: var(--home-ivory); font-size: .9375rem; font-weight: 600; }
 .ld-footer__text { margin: 0; color: var(--home-sage); font-size: .875rem; line-height: 1.55; }
 .ld-footer__copy { margin: var(--space-1) 0 0; color: var(--home-sage); font-size: .8125rem; }
@@ -358,14 +405,16 @@
 }
 
 @media (max-width: 1023px) {
+  /* Hero: chữ trên, ảnh vòm giữa, mảng xanh nửa dưới; mockup đè chân vòm lệch trái. */
+  .ld-hero__inner { grid-template-columns: minmax(0, 1fr); min-height: 0; }
+  .ld-hero__copy { padding: clamp(40px, 8vw, 64px) 0 clamp(32px, 6vw, 48px); }
+  .ld-hero__visual { display: flex; flex-direction: column; align-items: center; padding-bottom: clamp(40px, 7vw, 64px); }
+  .ld-hero__visual::before { top: 28%; left: -100vw; }
+  .ld-hero__visual { --hero-photo-h: clamp(420px, 66vw, 560px); }
+  .ld-phone { position: relative; bottom: auto; left: auto; margin: -150px min(220px, 28vw) 0 0; }
   .ld-nav, .ld-header__account { display: none; }
   .ld-header__inner { grid-template-columns: 1fr auto; }
   .ld-header__menu { display: grid; }
-  /* Chữ trên, ảnh tràn hết bề ngang phía dưới (không làm mờ mép). */
-  .ld-hero { flex-direction: column; align-items: stretch; min-height: 0; }
-  .ld-hero__visual { position: static; order: 2; width: 100%; }
-  .ld-hero__photo { height: auto; aspect-ratio: 3 / 2; -webkit-mask-image: var(--home-photo-fade-top); mask-image: var(--home-photo-fade-top); }
-  .ld-hero__inner { padding: clamp(40px, 8vw, 64px) var(--gutter) var(--space-7); }
   .ld-recipes { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .ld-split { grid-template-columns: minmax(0, 1fr); }
   .ld-footer__inner { grid-template-columns: repeat(3, minmax(0, 1fr)); }
@@ -374,7 +423,9 @@
 
 @media (max-width: 640px) {
   .ld-hero__actions .ld-btn { flex: 1 1 100%; }
-  .ld-hero__photo { aspect-ratio: 4 / 3; }
+  .ld-hero__visual { --hero-photo-h: clamp(380px, 110vw, 440px); }
+  .ld-hero__photo { outline-offset: 10px; }
+  .ld-phone { width: min(264px, 80vw); margin: -120px 0 0; }
   .ld-features, .ld-recipes, .ld-steps { grid-template-columns: minmax(0, 1fr); }
   .ld-feature--lead { padding: var(--space-5); }
   .ld-footer__inner { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }

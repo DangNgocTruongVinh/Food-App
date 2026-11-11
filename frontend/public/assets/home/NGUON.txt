@@ -1,10 +1,7 @@
-Nguồn ảnh của trang chủ (public/assets/home/)
+Nguồn ảnh của hero trang chủ (public/assets/home/)
 
-hero-wide-1600.webp, hero-wide-900.webp
-  Tác giả:   Monaz Hastam (Unsplash)
-  Liên kết:  https://unsplash.com/photos/qk6EjQHVLkY
-  Giấy phép: Unsplash License (https://unsplash.com/license) — dùng miễn phí cho mục đích thương mại và phi thương mại,
-             không bắt buộc ghi công.
-  Chỉnh sửa: cắt dải ngang ở giữa ảnh (3580×2363 từ y = 1500), thu nhỏ về 1600×1056 và 900×594, xuất WebP.
-  Tệp gốc:   docs/design-references/ảnh/monaz-hastam-qk6EjQHVLkY-unsplash.jpg
-  Ghi chú:   tên tác giả và mã ảnh lấy từ tên tệp tải về từ Unsplash.
+Ảnh dưới đây DO NGƯỜI DÙNG CUNG CẤP (thư mục docs/design-references/ảnh, 10/11/2026). Tên tệp gốc cho thấy ảnh lấy từ Unsplash
+(tác giả Monaz Hastam); chưa đối chiếu trang ảnh gốc. Cần xác minh nguồn và giấy phép trước khi phát hành công khai.
+
+  hero-table-560.webp, hero-table-960.webp  (bàn ăn nhìn từ trên: nhiều bữa trên mặt gỗ, nắng chiếu)
+      gốc: docs/design-references/ảnh/monaz-hastam-qk6EjQHVLkY-unsplash.jpg — thu nhỏ theo chiều ngang, xuất WebP

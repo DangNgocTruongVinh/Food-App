@@ -1,27 +1,17 @@
 import { Link } from "react-router-dom";
 import { loginPath } from "../../features/auth/auth.logic";
+import { HeroMealPlanMockup } from "./HeroMealPlanMockup";
 
 const asset = (path: string) => `${import.meta.env.BASE_URL}assets/home/${path}`;
 
 /**
- * Hero theo ảnh tham chiếu: chữ căn trái trên nền ngà; ảnh món ăn thật chiếm nửa phải, mép trái mờ dần vào nền (≥ 1024px).
- * Màn hẹp: chữ trên, ảnh dưới. Ảnh: Monaz Hastam, Unsplash License (public/assets/home/NGUON.txt).
+ * Hero "bàn ăn trong vòm": nền ngà, mảng xanh rừng tràn mép phải; một ảnh bàn ăn thật (nhiều bữa, nhìn từ trên) trong khung vòm
+ * cao đặt vắt qua ranh giới hai mảng màu; mockup màn Thực đơn đè lên góc dưới vòm, nối ảnh với cột chữ. Hero cao vừa một màn hình.
+ * Ảnh do người dùng cung cấp (public/assets/home/NGUON.txt).
  */
 export function LandingHero({ signedIn }: { signedIn: boolean }) {
   return (
     <section className="ld-hero" aria-labelledby="ld-hero-title">
-      <div className="ld-hero__visual">
-        <img
-          className="ld-hero__photo"
-          src={asset("hero-wide-1600.webp")}
-          srcSet={`${asset("hero-wide-900.webp")} 900w, ${asset("hero-wide-1600.webp")} 1600w`}
-          sizes="(min-width: 1024px) 62vw, 100vw"
-          alt="Bàn ăn sáng dưới nắng: bát rau củ với trứng, nấm, cà rốt, đĩa bánh mì nướng, bát granola trái cây"
-          width={1600}
-          height={1056}
-          fetchPriority="high"
-        />
-      </div>
       <div className="ld-hero__inner">
         <div className="ld-hero__copy">
           <h1 id="ld-hero-title" className="ld-hero__title">Biết tủ bếp còn gì,<br /> tuần này ăn gì.</h1>
@@ -33,13 +23,24 @@ export function LandingHero({ signedIn }: { signedIn: boolean }) {
             {signedIn ? (
               <Link className="ld-btn ld-btn--solid ld-btn--lg" to="/dashboard">Về Tổng quan</Link>
             ) : (
-              <>
-                <Link className="ld-btn ld-btn--solid ld-btn--lg" to={loginPath({ mode: "register" })}>Đăng ký miễn phí</Link>
-                <Link className="ld-btn ld-btn--outline-ink ld-btn--lg" to="/login">Đăng nhập</Link>
-              </>
+              <Link className="ld-btn ld-btn--solid ld-btn--lg" to={loginPath({ mode: "register" })}>Đăng ký miễn phí</Link>
             )}
+            <a className="ld-btn ld-btn--outline-ink ld-btn--lg" href="#cach-hoat-dong">Xem cách hoạt động</a>
           </div>
-          {!signedIn && <p className="ld-hero__note">Đăng ký chỉ cần tên, email và mật khẩu.</p>}
+        </div>
+
+        <div className="ld-hero__visual">
+          <img
+            className="ld-hero__photo"
+            src={asset("hero-table-960.webp")}
+            srcSet={`${asset("hero-table-560.webp")} 560w, ${asset("hero-table-960.webp")} 960w`}
+            sizes="(max-width: 1023px) min(78vw, 420px), 440px"
+            alt="Bàn gỗ nắng chiều bày nhiều bữa: salad trứng, bát yến mạch trái cây, bánh mì giăm bông, bánh kếp và cà phê."
+            width={960}
+            height={1438}
+            fetchPriority="high"
+          />
+          <HeroMealPlanMockup />
         </div>
       </div>
     </section>
