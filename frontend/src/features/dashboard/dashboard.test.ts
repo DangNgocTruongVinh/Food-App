@@ -19,6 +19,9 @@ import {
   percentOf,
   recommendationReason,
   ringDash,
+  heroRecipeCandidates,
+  todayFigures,
+  todayLabel,
   usableTargets,
 } from "./dashboard.logic";
 import { dashboardQueries } from "./dashboard.queries";
@@ -212,5 +215,57 @@ describe("search and water", () => {
     expect(dashboardWaterLiters(5)).toBe(1.25);
     expect(nextWaterGlasses(0)).toBe(1);
     expect(nextWaterGlasses(DASHBOARD_MAX_WATER_GLASSES)).toBe(DASHBOARD_MAX_WATER_GLASSES);
+  });
+});
+
+describe("Today label on the Dashboard", () => {
+  it("writes the weekday and date in Vietnamese with a capital first letter", () => {
+    expect(todayLabel(new Date(2026, 10, 11, 9))).toBe("Thứ Tư, 11 tháng 11");
+    expect(todayLabel(new Date(2026, 10, 15, 9))).toBe("Chủ Nhật, 15 tháng 11");
+  });
+});
+
+describe("Figures strip under the Dashboard header", () => {
+  const meal = (id: string, completed: boolean) => ({
+    id, mealType: "LUNCH" as const, calories: 500, completed, recipe: { id: "r", name: "Món", prepMinutes: 5, cookMinutes: 5 },
+  });
+
+  it("counts eaten meals, pantry items and warns only when something expires", () => {
+    const figures = todayFigures({ hasPlan: true, meals: [meal("a", true), meal("b", false)], pantryCount: 1200, expiringCount: 5, expiredCount: 0 });
+    expect(figures.map((figure) => [figure.label, figure.value, figure.warn])).toEqual([
+      ["Bữa đã ăn hôm nay", "1/2", false],
+      ["Thực phẩm trong kho", "1.200", false],
+      ["Sắp hết hạn trong 7 ngày", "5+", true],
+      ["Đã hết hạn", "0", false],
+    ]);
+  });
+
+  it("says there is no meal plan instead of showing 0/0", () => {
+    expect(todayFigures({ hasPlan: false, meals: [], pantryCount: 0, expiringCount: 0, expiredCount: 2 })[0].value).toBe("Chưa có thực đơn");
+    expect(todayFigures({ hasPlan: false, meals: [], pantryCount: 0, expiringCount: 0, expiredCount: 2 })[3].warn).toBe(true);
+  });
+
+  it("offers a button to the pantry instead of a 0 when the pantry is empty", () => {
+    const empty = todayFigures({ hasPlan: false, meals: [], pantryCount: 0, expiringCount: 0, expiredCount: 0 })[1];
+    expect(empty.action).toEqual({ label: "Thêm thực phẩm đầu tiên", to: "/pantry" });
+    expect(todayFigures({ hasPlan: false, meals: [], pantryCount: 3, expiringCount: 0, expiredCount: 0 })[1].action).toBeNull();
+  });
+});
+
+describe("Recipes the Dashboard hero can browse with \"Đổi món khác\"", () => {
+  const dash = (id: string) => ({ id, name: id, calories: 400, prepMinutes: 5, cookMinutes: 10, dietTags: [], imageUrl: null, reason: "Từ dashboard" });
+  const item = (id: string, imageUrl: string | null = null) => ({
+    recipe: { id, slug: id, name: `Món ${id}`, imageUrl, calories: 500, prepMinutes: 10, cookMinutes: 20, cuisine: "Việt Nam", dietTags: [], mealTypes: [] },
+    score: 1, reason: `Lý do ${id}`, components: { content: 0, collaborative: 0, knowledge: 0, popularity: 0 },
+  });
+
+  it("keeps the 3 dashboard recipes first, then adds the rest of the ranked list without repeats", () => {
+    const list = heroRecipeCandidates([dash("a"), dash("b"), dash("c")], [item("b"), item("d", "https://res.cloudinary.com/x/image/upload/d.jpg"), item("a"), item("e"), item("d")]);
+    expect(list.map((recipe) => recipe.id)).toEqual(["a", "b", "c", "d", "e"]);
+    expect(list[3]).toMatchObject({ name: "Món d", reason: "Lý do d", imageUrl: "https://res.cloudinary.com/x/image/upload/d.jpg" });
+  });
+
+  it("falls back to the dashboard recipes while the full list is loading or failed", () => {
+    expect(heroRecipeCandidates([dash("a")], undefined).map((recipe) => recipe.id)).toEqual(["a"]);
   });
 });

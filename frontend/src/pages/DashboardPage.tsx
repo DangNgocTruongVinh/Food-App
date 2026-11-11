@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
+import { DashboardFigures } from "../components/dashboard/DashboardFigures";
 import { DashboardHero } from "../components/dashboard/DashboardHero";
 import { DashboardSkeleton } from "../components/dashboard/DashboardSkeleton";
 import { ConsumeMealDialog } from "../components/meal-plans/ConsumeMealDialog";
@@ -13,10 +14,12 @@ import { WaterTracker } from "../components/dashboard/WaterTracker";
 import { ErrorState, PageHeader } from "../components/ui";
 import { useAuth } from "../contexts/AuthContext";
 import {
-  buildNutritionSummary, dashboardRecipeSearchPath, nextMealId, nextWaterGlasses, orderTodayMeals, usableTargets,
+  buildNutritionSummary, dashboardRecipeSearchPath, HERO_RECIPE_LIMIT, heroRecipeCandidates, nextMealId, nextWaterGlasses, orderTodayMeals,
+  todayFigures, usableTargets,
 } from "../features/dashboard/dashboard.logic";
 import { dashboardQueries } from "../features/dashboard/dashboard.queries";
 import { mealPlanQueries } from "../features/meal-plans/meal-plans.queries";
+import { recommendationQueries } from "../features/recommendations/recommendations.api";
 import { useMealConsumption } from "../features/meal-plans/useMealConsumption";
 import { greetingForHour } from "../features/ui/ui.logic";
 
@@ -30,6 +33,8 @@ export default function DashboardPage() {
   const planId = overview.data?.activePlan?.id ?? null;
   // Đạm/tinh bột/béo và ảnh món của các bữa hôm nay lấy từ chi tiết thực đơn đang dùng (API có sẵn).
   const plan = useQuery({ ...mealPlanQueries.detail(planId ?? ""), enabled: Boolean(planId) });
+  // "Đổi món khác" duyệt mọi món phù hợp (bộ gợi ý, ngữ cảnh today), không chỉ 3 món của dashboard API.
+  const heroMore = useQuery({ ...recommendationQueries.list({ context: "today", limit: HERO_RECIPE_LIMIT }), enabled: overview.isSuccess });
 
   // "Đã ăn" mở hộp xem trước trừ kho (dùng chung với trang Thực đơn).
   const consumption = useMealConsumption();
@@ -63,12 +68,24 @@ export default function DashboardPage() {
 
   return (
     <div className="dash-page">
-      <DashboardHero greeting={greeting} userName={user?.name} recipes={data.recommendedRecipes} hasProfile={Boolean(targets)} />
+      <DashboardHero
+        greeting={greeting}
+        userName={user?.name}
+        recipes={heroRecipeCandidates(data.recommendedRecipes, heroMore.data?.items)}
+        loadingMore={heroMore.isLoading}
+        hasProfile={Boolean(targets)}
+      />
 
       <div className="dash-content">
-        <div className="dash-row">
-          <NutritionTodayCard summary={summary} macrosStatus={macrosStatus} onRetryMacros={() => void plan.refetch()} />
-          <div className="dash-stack">
+        <DashboardFigures
+          figures={todayFigures({
+            hasPlan: Boolean(planId), meals, pantryCount: data.pantryCount, expiringCount: data.expiringItems.length, expiredCount: data.expiredCount,
+          })}
+        />
+
+        {/* Hôm nay: các bữa (cột chính) | dinh dưỡng + nước (cột phụ, nền dịu). */}
+        <div className="dash-today">
+          <div className="dash-today__meals">
             <TodayMealsCard
               planId={planId}
               meals={meals}
@@ -79,13 +96,15 @@ export default function DashboardPage() {
             />
             <MealStatusNotice notice={consumption.notice} busy={consumption.pending} onUndo={(notice) => consumption.undo(notice.target)} />
           </div>
+          <aside className="dash-today__side" aria-label="Dinh dưỡng và nước hôm nay">
+            <NutritionTodayCard summary={summary} macrosStatus={macrosStatus} onRetryMacros={() => void plan.refetch()} />
+            <WaterTracker glasses={waterGlasses} onAddGlass={() => setWaterGlasses(nextWaterGlasses)} />
+          </aside>
         </div>
 
         <PantrySnapshot pantryCount={data.pantryCount} expiringItems={data.expiringItems} expiredCount={data.expiredCount} />
 
         <RecommendedRecipes recipes={data.recommendedRecipes} search={search} onSearchChange={setSearch} onSearchSubmit={submitSearch} />
-
-        <WaterTracker glasses={waterGlasses} onAddGlass={() => setWaterGlasses(nextWaterGlasses)} />
       </div>
       {consumption.target && (
         <ConsumeMealDialog

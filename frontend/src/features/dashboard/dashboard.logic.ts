@@ -1,5 +1,6 @@
-import { differenceInCalendarDays } from "date-fns";
-import type { DashboardData, DashboardRecommendedRecipe, MealPlanItem, MealType } from "../../types";
+import { differenceInCalendarDays, format } from "date-fns";
+import { vi } from "date-fns/locale";
+import type { DashboardData, DashboardRecommendedRecipe, MealPlanItem, MealType, RecommendationItem } from "../../types";
 
 // Logic thuần của trang Tổng quan (UI-3): chỉ dùng dữ liệu thật của dashboard API và chi tiết thực đơn đang dùng.
 
@@ -94,6 +95,40 @@ export function expiringCountLabel(count: number) {
   return count >= EXPIRING_LIST_LIMIT ? `${EXPIRING_LIST_LIMIT}+` : String(count);
 }
 
+/**
+ * Dải số liệu dưới đầu trang Tổng quan: bữa đã ăn hôm nay, thực phẩm trong kho, sắp hết hạn (7 ngày), đã hết hạn. Chỉ dùng số
+ * thật của dashboard API; chưa có thực đơn thì ô bữa ăn ghi "Chưa có thực đơn" thay vì 0/0. `warn`: tô màu cảnh báo.
+ * `action`: kho trống thì ô "Thực phẩm trong kho" hiện nút tới trang Kho thay cho số 0.
+ */
+export function todayFigures(input: { hasPlan: boolean; meals: TodayMeal[]; pantryCount: number; expiringCount: number; expiredCount: number }) {
+  const eaten = input.meals.filter((meal) => meal.completed).length;
+  return [
+    { key: "meals", label: "Bữa đã ăn hôm nay", value: input.hasPlan ? `${eaten}/${input.meals.length}` : "Chưa có thực đơn", warn: false, action: null },
+    {
+      key: "pantry", label: "Thực phẩm trong kho", value: formatNumber(input.pantryCount), warn: false,
+      action: input.pantryCount === 0 ? { label: "Thêm thực phẩm đầu tiên", to: "/pantry" } : null,
+    },
+    { key: "expiring", label: "Sắp hết hạn trong 7 ngày", value: expiringCountLabel(input.expiringCount), warn: input.expiringCount > 0, action: null },
+    { key: "expired", label: "Đã hết hạn", value: formatNumber(input.expiredCount), warn: input.expiredCount > 0, action: null },
+  ];
+}
+
+/** Số món tối đa xin bộ gợi ý cho "Đổi món khác" (= trần của API, đủ cho cả bộ món). */
+export const HERO_RECIPE_LIMIT = 50;
+
+/**
+ * Danh sách món cho "Món của hôm nay": 3 món của dashboard API trước (giữ thứ tự cũ), rồi các món còn lại của bộ gợi ý
+ * (ngữ cảnh today, cùng bộ lọc an toàn) theo thứ hạng; bỏ món trùng theo id để "Đổi món khác" không lặp lại món đã xem.
+ */
+export function heroRecipeCandidates(dashboard: DashboardRecommendedRecipe[], more: RecommendationItem[] | undefined): DashboardRecommendedRecipe[] {
+  const seen = new Set(dashboard.map((recipe) => recipe.id));
+  const extra = (more ?? []).filter(({ recipe }) => !seen.has(recipe.id) && seen.add(recipe.id)).map(({ recipe, reason }) => ({
+    id: recipe.id, name: recipe.name, calories: recipe.calories, prepMinutes: recipe.prepMinutes, cookMinutes: recipe.cookMinutes,
+    dietTags: recipe.dietTags, imageUrl: recipe.imageUrl, reason,
+  }));
+  return [...dashboard, ...extra];
+}
+
 /** Lý do gợi ý món ở đầu trang, dựa trên dữ liệu thật của món. */
 export function recommendationReason(recipe: Pick<DashboardRecommendedRecipe, "pantryIngredientCount" | "expiringIngredientCount">, hasProfile: boolean) {
   if (recipe.expiringIngredientCount) return `Dùng ${recipe.expiringIngredientCount} nguyên liệu sắp hết hạn trong tủ bếp của bạn.`;
@@ -108,6 +143,12 @@ export function dashboardRecipeSearchPath(search: string) {
 }
 
 export const formatNumber = (value: number) => value.toLocaleString("vi-VN");
+
+/** Ngày hôm nay cho tiêu đề mảng "Hôm nay", vd. "Thứ Ba, 11 tháng 11" (giờ máy người dùng). */
+export function todayLabel(now = new Date()) {
+  const text = format(now, "EEEE, d 'tháng' M", { locale: vi });
+  return text.charAt(0).toUpperCase() + text.slice(1);
+}
 
 // Lượng nước: chỉ ghi nhận trong phiên (chưa lưu DB, xem GĐ5). Mỗi ly 250 ml, tối đa 8 ly.
 export const DASHBOARD_MAX_WATER_GLASSES = 8;

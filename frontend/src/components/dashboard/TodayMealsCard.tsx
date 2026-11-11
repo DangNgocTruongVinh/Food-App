@@ -4,7 +4,7 @@ import { dashboardMealLabels, formatNumber, type TodayMeal } from "../../feature
 import { recipeDetailPath } from "../../features/recipes/recipes.logic";
 import type { MealPlanItem } from "../../types";
 import { IMAGE_WIDTHS } from "../../utils/images";
-import { Button, ButtonLink, Card, EmptyState, RecipeImage } from "../ui";
+import { Button, ButtonLink, EmptyState, RecipeImage } from "../ui";
 
 type TodayMealsCardProps = {
   planId: string | null;
@@ -17,13 +17,14 @@ type TodayMealsCardProps = {
   onMarkEaten: (meal: TodayMeal) => void;
 };
 
+/** Nửa phải của mảng "Hôm nay": các bữa theo thứ tự trong ngày (dòng thời gian), bữa tiếp theo nổi bật kèm nút "Đã ăn". */
 export function TodayMealsCard({ planId, meals, nextId, planItems, pendingId, onMarkEaten }: TodayMealsCardProps) {
   const recipeFor = (meal: TodayMeal) => planItems?.find((item) => item.id === meal.id)?.recipe ?? meal.recipe;
 
   return (
-    <Card as="section" className="dash-card" aria-labelledby="dash-meals-title">
-      <header className="dash-card__header">
-        <h2 id="dash-meals-title" className="ui-section-title">Thực đơn hôm nay</h2>
+    <section className="dash-today__part" aria-labelledby="dash-meals-title">
+      <header className="dash-today__head">
+        <h2 id="dash-meals-title" className="dash-today__title">Thực đơn hôm nay</h2>
         {planId && <Link className="ui-link" to={`/meal-plans/${planId}`}>Xem cả tuần</Link>}
       </header>
       {!planId ? (
@@ -62,6 +63,6 @@ export function TodayMealsCard({ planId, meals, nextId, planItems, pendingId, on
           })}
         </ol>
       )}
-    </Card>
+    </section>
   );
 }

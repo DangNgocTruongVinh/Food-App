@@ -138,6 +138,8 @@
   --home-leaf: #6b9a5e;
   /* Chữ phụ trên mảng ngà của hero (6,7:1 trên ivory). */
   --home-forest-muted: #4a5c54;
+  /* Cảnh báo (đồ đã hết hạn) trên nền xanh rừng: cùng màu --login-error (7,6:1 trên forest). */
+  --home-alert: #ffc2b5;
   /* Mockup màn Thực đơn trong hero (giao diện sáng cố định): nền dòng, nền nhãn calo. */
   --home-paper: #ffffff;
   --home-mist: #e6ece4;

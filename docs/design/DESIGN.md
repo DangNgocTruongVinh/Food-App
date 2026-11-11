@@ -220,23 +220,25 @@ Quy tắc:
 ---
 
 ## 13. Khung chung
-**Menu trên** (sticky, nền `--bg`, kẻ dưới 1px):
-- Trái: logo "nouri." (Fraunces nghiêng — chỗ duy nhất dùng chữ nghiêng, dấu chấm `--accent`).
-- Giữa: nhóm liên kết dạng viên (khung `--surface-2`, viền 1px, bo tròn, mục cao 40px; đang chọn: nền `--surface`, chữ `--action-text` 600, viền 1px).
-- Phải: nút chế độ tối (aria-pressed), chuông có chấm `--dot`, nút tài khoản (avatar + tên) mở menu: Hồ sơ, Quản trị (chỉ ADMIN), Đăng xuất.
+**Menu trên** (đồng bộ trang chủ 11/11/2026; sticky, cao 68px, nền `--bg`, kẻ dưới 1px):
+- Trái: logo chiếc bát `NouriWordmark` (components/ui, Fraunces 600, màu `--home-ink`; cùng logo trang chủ). `Logo` cũ chỉ còn ở Admin, Đăng nhập.
+- Chính giữa thanh (lưới `1fr auto 1fr`, cột hai bên tối thiểu bằng nội dung): liên kết chữ phẳng 15px, bo 8px, nền `--home-soft` khi rê chuột; đang chọn: chữ `--action-text` 600 trên nền `--home-soft`. ≤ 1200px thu vào nút menu.
+- Phải (sát mép phải): nút chế độ tối (aria-pressed), chuông có chấm `--dot`, nút tài khoản (avatar + tên) mở menu: Hồ sơ, Quản trị (chỉ ADMIN), Đăng xuất. Nút biểu tượng và nút tài khoản không viền, nền `--home-soft` khi rê chuột/mở.
 
-**Footer** (nền `--surface-2`, kẻ trên): cột thương hiệu (logo, "Ăn ngon hơn. Sống khỏe hơn.", 1 câu mô tả) + nhóm liên kết **chỉ gồm trang có thật**. Dải cuối "© 2026 Nouri · Đồ án tốt nghiệp". Bỏ FooterBotanical. Liên kết chưa có trang (/privacy, /terms, Tin tức, mạng xã hội): làm trang tĩnh ngắn hoặc bỏ.
+**Footer** (đồng bộ footer trang chủ 11/11/2026): nền xanh rừng `--home-forest-deep` (giống nhau ở chế độ sáng/tối), gọn một hàng: cột thương hiệu (logo ngà, "Ăn ngon hơn. Sống khỏe hơn.", 1 câu mô tả, "© 2026 Nouri · Đồ án tốt nghiệp" nhỏ) + nhóm liên kết **chỉ gồm trang có thật**. Bỏ FooterBotanical. Liên kết chưa có trang (/privacy, /terms, Tin tức, mạng xã hội): làm trang tĩnh ngắn hoặc bỏ.
 
 ---
 
 ## 14. Từng trang — cấu trúc và tiêu chí đạt
 
-### Tổng quan (mockup: TongQuan7s)
-- Hero: lời chào theo giờ + H1 "Hôm nay nấu gì?" + món gợi ý (ưu tiên dùng đồ sắp hết hạn, nêu lý do bằng dữ liệu) + 2 nút (Xem công thức / Đổi món khác; chưa có món thì "Tạo thực đơn"); ảnh món tràn phải ~58% khi món có ảnh thật. "Thêm vào thực đơn" làm ở GĐ5.
-- Hàng 2: Dinh dưỡng hôm nay (vòng calo + 3 thanh đạm/tinh bột/béo, số thật) | Thực đơn hôm nay (bữa theo thứ tự, nút "Đã ăn" ở bữa kế tiếp).
-- Hàng 3: Tủ bếp (thống kê, món cần dùng sớm, Thêm thực phẩm; "Quét hóa đơn" thêm ở GĐ3c).
-- Hàng 4: Gợi ý món hợp hồ sơ (3 thẻ theo API gợi ý, thẻ đầu lớn hơn) + ô tìm công thức. Lượng nước là khối phụ, chưa lưu DB (GĐ5).
-- Đạt khi: số calo khớp tổng các bữa đã ăn; không còn hero lá/chanh; mobile: hero ảnh nền, nút "Đã ăn" bấm được bằng ngón cái.
+### Tổng quan (mockup: TongQuan7s; làm lại 11/11/2026 lượt 2: "báo ẩm thực mỗi ngày", không lặp hero trang chủ)
+- Đầu trang kiểu trang bìa: dòng ngày (`todayLabel`, chữ hoa màu chính) + lời chào; H1 Fraunces "Hôm nay nấu gì?"; mục "Món của hôm nay · n/N" kẻ trên mảnh: tên món Fraunces, lý do gợi ý (dữ liệu thật), thời gian, calo, 2 nút (Xem công thức / Đổi món khác; chưa có món thì "Tạo thực đơn"). Bên phải: ảnh lớn **khung hình lá** (hai góc đối bo 200px) với mảng `--home-soft` lệch phía sau. Món có ảnh thật (`Recipe.imageUrl` Cloudinary) thì hiện ảnh món, alt là tên món; chưa có thì ảnh bàn ăn dự phòng (`hero-table`, alt rỗng, chỉ trang trí — ngoại lệ có chủ đích của mục 10). "Đổi món khác": ảnh cũ nằm dưới, ảnh mới hiện dần 250ms; ảnh các món gợi ý được tải trước (`DashboardHeroImage`).
+- Dải số liệu (`todayFigures`): Bữa đã ăn hôm nay (n/m; chưa có thực đơn thì ghi chữ), Thực phẩm trong kho (kho trống: nút "+ Thêm thực phẩm đầu tiên" tới `/pantry` thay cho số 0), Sắp hết hạn trong 7 ngày, Đã hết hạn (màu `--warn` khi > 0); kẻ trên đậm, kẻ dưới và ngăn dọc mảnh, không thẻ; bốn ô cùng padding trong.
+- Khung: dưới 1600px như các trang khác (`--content-max`); ≥ 1600px 1400px, ≥ 1920px 1440px (`--dash-max`); thanh menu và footer của trang này dùng cùng khung (`.ui-shell:has(.dash-page)`) để logo thẳng hàng tiêu đề.
+- Hôm nay (7 : 5): Thực đơn hôm nay (dòng thời gian kẻ mảnh, tên món Fraunces, bữa tiếp theo trên nền `--surface-2` kèm nút "Đã ăn", dải Hoàn tác) | cột phụ nền `--surface-2`: Dinh dưỡng hôm nay (vòng calo + 3 thanh) và Nước hôm nay (chưa lưu DB, GĐ5).
+- Tủ bếp: dải xanh rừng thương hiệu; "Cần dùng sớm" như các cột báo (số ngày còn lại chữ hoa, ≤ 2 ngày màu `--home-gold`; tên Fraunces; mở `/pantry?item=`), cảnh báo đồ đã hết hạn `--home-alert`, Thêm thực phẩm / Quét hóa đơn.
+- Gợi ý cho bạn: thẻ dùng chung đều nhau (không thẻ lớn vì món đầu đã ở đầu trang), không viền, nền dịu + ô tìm công thức.
+- Đạt khi: số calo khớp tổng các bữa đã ăn; không còn hero lá/chanh; mobile: ảnh dưới chữ, số liệu 2 × 2, nút "Đã ăn" bấm được bằng ngón cái.
 
 ### Công thức (mockup: CongThuc7s)
 - Hero + ô tìm kiếm → chip danh mục (tiếng Việt, có số món thật) + Bộ lọc → Dành cho bạn (1 thẻ lớn + 2 thẻ nhỏ: API gợi ý trả 3 món; thẻ lớn có "Có trong kho / Còn thiếu / % mục tiêu calo") → Tất cả công thức (lưới/danh sách, sắp xếp, phân trang).
