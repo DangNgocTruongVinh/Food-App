@@ -322,3 +322,13 @@ body:has(.ad-shell) { background: var(--bg); }
 @media (max-width: 400px) {
   .ad-stat + .ad-stat { border-top: 1px solid var(--line); border-left: 0; }
 }
+
+/*
+ * Đồng bộ trang người dùng (11/11/2026) — Công thức: tiêu đề từng phần của form Fraunces như các phần ở Hồ sơ; dòng nguyên
+ * liệu là ô nền dịu không viền (dòng sai chế độ ăn vẫn viền và nền cảnh báo); khung ảnh và ảnh nhỏ trong bảng bo theo thẻ.
+ */
+.ad-form__title { font-family: var(--font-serif); font-size: var(--fs-h2); font-weight: 500; line-height: var(--lh-h2); }
+.ad-ingredient { border-color: transparent; border-radius: var(--radius-card); background: var(--surface-2); }
+.ad-ingredient.has-diet-error { border-color: var(--warn); background: var(--warn-bg); }
+.ad-image__frame { border-radius: var(--radius-card); }
+.ad-row__image { border-radius: var(--radius-field); }
