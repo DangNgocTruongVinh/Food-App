@@ -99,6 +99,9 @@ body:has(.ui-shell) { background: var(--bg); }
 }
 .site-nav__link:hover { color: var(--ink); background: var(--home-soft); }
 .site-nav__link.is-active { color: var(--action-text); background: var(--home-soft); font-weight: 600; }
+/* Giữ chỗ cho chữ đậm: mỗi mục luôn rộng bằng bản in đậm của nó, nên cụm menu (căn giữa) không xê dịch khi đổi trang. */
+.site-nav .site-nav__link { display: inline-grid; align-content: center; justify-items: center; }
+.site-nav .site-nav__link::after { height: 0; overflow: hidden; font-weight: 600; visibility: hidden; content: attr(data-label); pointer-events: none; user-select: none; }
 
 .site-header__menu-button { display: none; }
 

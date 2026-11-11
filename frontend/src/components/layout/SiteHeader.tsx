@@ -22,7 +22,7 @@ export function SiteHeader({ user, onLogout }: { user: User | null; onLogout: ()
 
         <nav className="site-nav" aria-label="Điều hướng chính">
           <ul className="site-nav__pills">
-            {PRIMARY_NAV.map(({ to, label, end }) => <li key={to}><NavLink to={to} end={end} className={navClass}>{label}</NavLink></li>)}
+            {PRIMARY_NAV.map(({ to, label, end }) => <li key={to}><NavLink to={to} end={end} className={navClass} data-label={label}>{label}</NavLink></li>)}
           </ul>
         </nav>
 
@@ -44,7 +44,7 @@ export function SiteHeader({ user, onLogout }: { user: User | null; onLogout: ()
       <nav id={mobile.panelId} className="site-mobile-nav" aria-label="Điều hướng chính" hidden={!mobile.open}>
         <ul>
           {PRIMARY_NAV.map(({ to, label, end }) => (
-            <li key={to}><NavLink to={to} end={end} className={navClass} onClick={() => mobile.close()}>{label}</NavLink></li>
+            <li key={to}><NavLink to={to} end={end} className={navClass} data-label={label} onClick={() => mobile.close()}>{label}</NavLink></li>
           ))}
         </ul>
       </nav>

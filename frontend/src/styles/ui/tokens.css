@@ -111,7 +111,8 @@
   --control-h: 44px;
   --control-h-lg: 48px;
 
-  /* Bố cục. */
+  /* Bố cục. --content-max: khung chung của mọi trang trong ứng dụng (thanh menu, footer, nội dung), lấy theo trang Tổng quan:
+     1280px, từ 1600px là 1400px, từ 1920px là 1440px (đã gồm lề --gutter hai bên). */
   --content-max: 1280px;
   --gutter: 16px;
 
@@ -178,6 +179,14 @@
 
 @media (min-width: 1024px) {
   :root { --gutter: 32px; }
+}
+
+@media (min-width: 1600px) {
+  :root { --content-max: 1400px; }
+}
+
+@media (min-width: 1920px) {
+  :root { --content-max: 1440px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
