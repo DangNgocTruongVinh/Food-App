@@ -109,3 +109,7 @@
   .hs-section__fields { grid-template-columns: minmax(0, 1fr); }
   .hs-actions__bar .ui-button { flex: 1 1 auto; }
 }
+
+/* Đồng bộ với Tổng quan (11/11/2026): khối "Chỉ tiêu mỗi ngày" là mảng nền dịu không viền, bo 28px; ô đạm/tinh bột/béo nổi lên nền trang. */
+.hs-targets { border-color: transparent; border-radius: 28px; background: var(--surface-2); }
+.hs-targets__macros div { background: var(--surface); }

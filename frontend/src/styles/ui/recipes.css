@@ -235,3 +235,14 @@
   .recipe-nutrition__list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .recipes-feature__body { padding: var(--space-5); }
 }
+
+/*
+ * Đồng bộ với Tổng quan (11/11/2026): thẻ món không viền, nền dịu, bo 24px (như "Gợi ý cho bạn"); thẻ "Dành cho bạn" lớn bo 28px.
+ * Ô món chưa có ảnh dùng nền --home-soft để tách khỏi nền thẻ.
+ */
+.recipe-tile { border-color: transparent; border-radius: 24px; background: var(--surface-2); }
+.recipes-feature { border-color: transparent; border-radius: 28px; background: var(--surface-2); }
+.recipes-for-you__side .rc-card { border-color: transparent; border-radius: 20px; background: var(--surface-2); }
+.recipe-tile .ui-recipe-image--empty,
+.recipes-feature .ui-recipe-image--empty,
+.recipes-for-you__side .ui-recipe-image--empty { background: var(--home-soft); }

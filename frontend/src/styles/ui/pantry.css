@@ -326,3 +326,13 @@
   .kho-scan-row__name,
   .kho-scan-row__half { grid-column: 1 / -1; }
 }
+
+/*
+ * Đồng bộ với Tổng quan (11/11/2026): khối phụ cột phải là mảng nền dịu không viền, bo 28px; khối chính bo 24px.
+ * Sửa lỗi: .kho-soon__list bị gộp chung bộ chọn với .kho-soon__item nên cả danh sách thành một ô hồng có dấu chấm đầu dòng;
+ * danh sách giờ chỉ là lưới các mục, mỗi mục một ô.
+ */
+.kho-soon__list { gap: var(--space-2); min-height: 0; margin: 0; padding: 0; border: 0; border-radius: 0; background: transparent; list-style: none; }
+.kho-side .ui-card { border-color: transparent; border-radius: 28px; background: var(--surface-2); }
+.kho-stats,
+.kho-panel { border-radius: 24px; }
