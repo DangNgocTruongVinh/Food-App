@@ -4,12 +4,13 @@ import { Card, EmptyState, ErrorState, LoadingState, Skeleton } from "../../comp
 import { adminQueries } from "../../features/admin/admin.queries";
 import { hasWeeklyActivity, statsCards } from "../../features/admin/admin-stats.logic";
 
-/** /admin: 4 số tổng có chú thích thật + biểu đồ 12 tuần. */
+/** /admin: 4 số tổng có chú thích thật + biểu đồ 12 tuần (backend không tính tài khoản mẫu minh họa). */
 export default function AdminStatsPage() {
   const stats = useQuery(adminQueries.stats());
   return (
     <section className="ad-section" aria-labelledby="ad-stats-title">
-      <h2 id="ad-stats-title" className="ad-section__title">Thống kê</h2>
+      <h2 id="ad-stats-title" className="ad-section__title">Tổng quan</h2>
+      <p className="ad-section__lead">Số liệu toàn hệ thống, không tính tài khoản mẫu minh họa.</p>
       {stats.isLoading ? (
         <LoadingState label="Đang tải thống kê">
           <div className="ad-stats">{[0, 1, 2, 3].map((index) => <Skeleton key={index} kind="block" height={112} />)}</div>
