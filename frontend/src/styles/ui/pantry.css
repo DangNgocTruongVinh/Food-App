@@ -12,11 +12,15 @@
   padding: var(--space-7) var(--gutter) var(--space-8);
 }
 
-/* Đầu trang: H1 + mô tả bên trái, tìm kiếm + thêm bên phải. */
+/*
+ * Đầu trang: H1 + mô tả bên trái; ô tìm, "Quét hóa đơn", "Thêm thực phẩm" cùng một hàng bên phải (ô tìm co giãn, nút giữ cỡ).
+ * Không đủ chỗ thì cả cụm xuống dưới tiêu đề (vẫn một hàng); ≤ 1024px mới tách dòng (media cuối file).
+ */
 .kho-hero { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: var(--space-5); }
 .kho-hero__text { display: grid; gap: var(--space-3); min-width: 0; }
-.kho-hero__actions { display: flex; flex: 0 1 600px; flex-wrap: wrap; align-items: center; gap: var(--space-3); }
-.kho-search { position: relative; flex: 1 1 260px; min-width: 0; }
+.kho-hero__actions { display: flex; flex: 1 1 auto; flex-wrap: nowrap; align-items: center; justify-content: flex-end; gap: var(--space-3); max-width: 760px; }
+.kho-hero__actions .ui-button { flex: 0 0 auto; }
+.kho-search { position: relative; flex: 1 1 260px; min-width: 200px; }
 .kho-search__icon { position: absolute; top: 50%; left: var(--space-4); width: 20px; height: 20px; color: var(--muted); stroke-width: 1.75; transform: translateY(-50%); pointer-events: none; }
 .kho-search__input.ui-input { padding-left: 48px; border-radius: var(--radius-pill); }
 
@@ -256,7 +260,8 @@
 /* ≤ 760px: mỗi dòng bảng thành một thẻ; nhãn cột hiện trước giá trị. */
 @media (max-width: 760px) {
   .kho-view { gap: var(--space-5); padding-top: var(--space-6); }
-  .kho-hero__actions { flex-basis: 100%; }
+  .kho-hero__actions { flex-basis: 100%; flex-wrap: wrap; }
+  .kho-search { flex-basis: 100%; }
   .kho-hero__actions .ui-button { flex: 1 1 auto; }
   .kho-stat { gap: var(--space-3); min-height: 84px; padding: var(--space-3) var(--space-4); }
   .kho-toolbar { padding: var(--space-3) var(--space-4); }
