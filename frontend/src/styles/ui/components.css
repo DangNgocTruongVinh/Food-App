@@ -56,6 +56,22 @@
 }
 .ui-logo__dot { color: var(--accent); }
 
+/* Logo chữ "nouri." (chữ o là chiếc bát có chồi lá): trang chủ, menu trên và footer của ứng dụng (NouriWordmark). */
+/* Tinh chỉnh theo phong cách editorial: chữ Fraunces (cùng họ với tiêu đề hero). */
+.ui-wordmark {
+  display: inline-flex;
+  align-items: baseline;
+  color: var(--home-ink);
+  font-family: var(--font-serif);
+  font-size: 1.75rem;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: -.02em;
+}
+.ui-wordmark__bowl { width: .7em; height: 1.04em; margin: 0 .035em 0 .045em; overflow: visible; }
+.ui-wordmark__leaf { fill: var(--home-leaf); stroke: var(--home-leaf); }
+.ui-wordmark__bowl path.ui-wordmark__leaf[fill="none"] { fill: none; }
+
 /* Nút: cao 44px (chính 48px), bo tròn; chữ là động từ cụ thể. */
 .ui-button {
   display: inline-flex;

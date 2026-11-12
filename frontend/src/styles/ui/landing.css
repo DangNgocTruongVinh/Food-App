@@ -1,131 +1,433 @@
 /*
- * Landing (/) — UI-11, DESIGN.md mục 14 "Landing". Chỉ dùng token; không blob, lá, kính mờ, gradient, hiệu ứng khi cuộn.
- * Điểm nhấn duy nhất: H1 hero (thêm ảnh món thật khi có). Các phần tách bằng khoảng trắng và đường kẻ mảnh;
- * chỉ việc chính đầu tiên và thẻ món dùng khung card.
+ * Trang chủ công khai (Landing) — làm lại 10/11/2026. Tiền tố lớp: ld-. Chỉ dùng token (--home-* ở tokens.css).
+ * Màu thương hiệu: xanh rừng (hero, dải mời cuối, footer), vàng (nút chính trên nền xanh), ngà (nền trang), sage.
+ * Chữ: chỉ Be Vietnam Pro; logo đậm không nghiêng (DESIGN.md bản 3, giống trang đăng nhập).
+ * Điểm nhấn duy nhất: ảnh món ăn ở hero kèm thẻ một món thật chồng lên góc. Không hiệu ứng khi cuộn; rê chuột chỉ đổi màu.
  */
 
-.ld-page { color: var(--ink); }
-
-/* Liên kết neo ở menu: chừa chỗ cho menu dính đầu trang. */
-.ld-section,
-.ld-hero { scroll-margin-top: 88px; }
-
-.ld-section { padding: var(--space-8) 0; border-top: 1px solid var(--line); }
-.ld-section__inner {
-  display: grid;
-  gap: var(--space-6);
-  max-width: var(--content-max);
-  margin: 0 auto;
-  padding: 0 var(--gutter);
+/*
+ * Khung nội dung chung của Landing (header, hero, section, dải đăng ký, footer): bề rộng nội dung --ld-max (không tính lề),
+ * lề ngang --ld-pad. Màn rộng được khung rộng hơn để bớt khoảng trống hai bên.
+ */
+.ld-root {
+  --ld-max: 1220px;
+  --ld-pad: clamp(20px, 4vw, 48px);
+  --ld-container: calc(var(--ld-max) + 2 * var(--ld-pad));
+  min-height: 100dvh;
+  color: var(--home-ink);
+  background: var(--home-bg);
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  line-height: 1.6;
 }
-/* Tiêu đề cấp 3 dùng Be Vietnam Pro (mục 5). */
-.ld-benefit__title,
-.ld-recipe__title,
-.ld-step__title { font-family: var(--font-sans); letter-spacing: 0; }
-.ld-text { max-width: 62ch; margin: 0; color: var(--ink-2); font-size: var(--fs-body); line-height: var(--lh-body); }
-.ld-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3) var(--space-4); }
+.ld-page:focus { outline: none; }
+@media (min-width: 1600px) {
+  .ld-root { --ld-max: 1400px; }
+}
+@media (min-width: 1920px) { .ld-root { --ld-max: 1520px; } }
+.ld-root a, .ld-root button { touch-action: manipulation; }
+.ld-page { display: block; }
 
-/* ---------- Hero ---------- */
+/* Logo trên trang chủ: Be Vietnam Pro đậm, không nghiêng. */
+.ld-brand { display: inline-flex; align-items: center; min-height: var(--control-h); border-radius: 6px; color: inherit; text-decoration: none; }
+.ld-brand .ui-logo { color: inherit; font-family: var(--font-sans); font-size: 1.5rem; font-style: normal; font-weight: 700; letter-spacing: -.02em; }
+
+/* ---------- Nút ---------- */
+.ld-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: var(--control-h);
+  padding: 0 18px;
+  border: 1.5px solid transparent;
+  border-radius: 10px;
+  font-family: var(--font-sans);
+  font-size: .9375rem;
+  font-weight: 600;
+  line-height: 1.2;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color var(--duration-fast) ease, border-color var(--duration-fast) ease, color var(--duration-fast) ease;
+}
+.ld-btn--lg { min-height: 52px; padding: 0 24px; font-size: 1rem; }
+.ld-btn--gold { color: var(--home-forest); background: var(--home-gold); }
+.ld-btn--gold:hover { background: var(--home-gold-hover); }
+.ld-btn--outline { border-color: var(--home-forest-line); color: var(--home-ivory); background: transparent; }
+.ld-btn--outline:hover { border-color: var(--home-ivory); }
+.ld-btn--solid { color: var(--home-ivory); background: var(--home-forest); }
+.ld-btn--solid:hover { background: var(--home-forest-deep); }
+.ld-btn--quiet { color: var(--home-ink); background: transparent; }
+.ld-btn--quiet:hover { background: var(--home-soft); }
+.ld-btn--outline-ink { border-color: var(--home-ink); color: var(--home-ink); background: transparent; }
+.ld-btn--outline-ink:hover { background: var(--home-soft); }
+[data-theme="dark"] .ld-btn--solid { color: var(--home-forest); background: var(--home-gold); }
+[data-theme="dark"] .ld-btn--solid:hover { background: var(--home-gold-hover); }
+
+.ld-root :focus-visible { outline: 2px solid var(--home-ink); outline-offset: 3px; }
+.ld-signup :focus-visible, .ld-footer :focus-visible { outline-color: var(--home-gold); }
+
+/* ---------- Header ---------- */
+.ld-header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  border-bottom: 1px solid var(--home-line);
+  background: var(--home-bg);
+}
+/* Logo trái, menu đúng tâm thanh trên, cụm nút phải; cùng khung --ld-container với nội dung. */
+.ld-header__inner {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: var(--space-5);
+  width: 100%;
+  max-width: var(--ld-container);
+  min-height: 68px;
+  margin: 0 auto;
+  padding: 0 var(--ld-pad);
+}
+.ld-brand { justify-self: start; }
+.ld-nav ul { display: flex; justify-content: center; gap: var(--space-1); margin: 0; padding: 0; list-style: none; }
+.ld-nav__link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+  padding: 0 14px;
+  border-radius: 8px;
+  color: var(--home-ink-2);
+  font-size: .9375rem;
+  font-weight: 500;
+  text-decoration: none;
+  transition: color var(--duration-fast) ease, background-color var(--duration-fast) ease;
+}
+.ld-nav__link:hover { color: var(--home-ink); background: var(--home-soft); }
+.ld-header__actions { display: flex; align-items: center; justify-self: end; gap: var(--space-2); }
+.ld-header__account { display: flex; align-items: center; gap: var(--space-2); }
+.ld-header__icon, .ld-header__icon[aria-pressed="true"] { border-color: transparent; color: var(--home-ink); background: transparent; }
+.ld-header__icon:hover { background: var(--home-soft); }
+.ld-header__menu {
+  display: none;
+  place-items: center;
+  width: var(--control-h);
+  height: var(--control-h);
+  padding: 0;
+  border: 1px solid var(--home-line);
+  border-radius: 10px;
+  color: var(--home-ink);
+  background: transparent;
+  cursor: pointer;
+}
+.ld-header__menu svg { width: 22px; height: 22px; }
+.ld-mobile-nav { border-top: 1px solid var(--home-line); background: var(--home-bg); }
+.ld-mobile-nav[hidden] { display: none; }
+/* Màn rộng có menu ngang: bảng menu điện thoại luôn ẩn, kể cả khi đang mở lúc đổi cỡ cửa sổ. */
+@media (min-width: 1024px) { .ld-mobile-nav { display: none; } }
+.ld-mobile-nav ul { display: grid; gap: var(--space-1); margin: 0; padding: var(--space-3) var(--ld-pad) 0; list-style: none; }
+.ld-mobile-nav .ld-nav__link { display: flex; min-height: var(--control-h); }
+.ld-mobile-nav__account { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2); padding: var(--space-3) var(--ld-pad) var(--space-4); }
+.ld-mobile-nav__account .ld-btn--quiet { border-color: var(--home-line); }
+
+
+/* ---------- Hero "bàn ăn trong vòm": nền ngà, mảng xanh rừng tràn phải, ảnh thật trong khung vòm, mockup màn Thực đơn ---------- */
+/*
+ * >= 1024px: khung --ld-container như thanh trên (chữ thẳng lề logo), cao vừa một màn hình. Mảng xanh bắt đầu ở giữa cột ảnh và tràn tới mép
+ * phải, nên khung vòm nằm vắt qua ranh giới ngà / xanh; viền sage mảnh đồng tâm quanh vòm. Mockup Thực đơn đè góc dưới trái của vòm, nối
+ * ảnh với cột chữ. Màu thương hiệu cố định ở cả chế độ sáng/tối.
+ */
+.ld-hero {
+  --home-ink: var(--home-forest);
+  --home-ink-2: var(--home-forest-muted);
+  --home-soft: var(--home-mist);
+  --home-line: var(--home-sage);
+  position: relative;
+  overflow: hidden;
+  color: var(--home-forest);
+  background: var(--home-ivory);
+}
 .ld-hero__inner {
   display: grid;
-  gap: var(--space-7);
-  max-width: var(--content-max);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+  column-gap: clamp(32px, 4vw, 72px);
+  width: 100%;
+  max-width: var(--ld-container);
+  min-height: max(600px, calc(100svh - 69px));
   margin: 0 auto;
-  padding: var(--space-9) var(--gutter) var(--space-8);
+  padding: 0 var(--ld-pad);
 }
-.ld-hero__copy { display: grid; align-content: center; gap: var(--space-5); max-width: 760px; }
-.ld-hero__lead { max-width: 58ch; margin: 0; color: var(--ink-2); font-size: 1.1875rem; line-height: var(--lh-body); }
-.ld-hero__figure { display: grid; gap: var(--space-2); margin: 0; }
-.ld-hero__image { width: 100%; aspect-ratio: 4 / 3; border-radius: var(--radius-card); object-fit: cover; }
+.ld-hero__copy { position: relative; z-index: 2; align-self: center; padding: clamp(48px, 7vh, 88px) 0; }
+.ld-hero__title {
+  margin: 0;
+  color: var(--home-forest);
+  font-family: var(--font-serif);
+  font-size: clamp(40px, 4.2vw, 76px);
+  font-weight: 500;
+  line-height: 1.04;
+  letter-spacing: -.02em;
+  text-wrap: balance;
+}
+.ld-hero__lead { max-width: 60ch; margin: var(--space-6) 0 0; color: var(--home-forest-muted); font-size: 1.125rem; line-height: 1.65; }
+.ld-hero__actions { display: flex; flex-wrap: wrap; gap: var(--space-3); margin-top: var(--space-7); }
+[data-theme="dark"] .ld-hero .ld-btn--solid { color: var(--home-ivory); background: var(--home-forest); }
+[data-theme="dark"] .ld-hero .ld-btn--solid:hover { background: var(--home-forest-deep); }
 
-/* ---------- Nouri giúp gì ---------- */
-.ld-benefits { display: grid; gap: var(--space-6); margin: 0; padding: 0; list-style: none; }
-.ld-benefit { display: grid; align-content: start; gap: var(--space-3); padding-top: var(--space-5); border-top: 1px solid var(--line); }
-.ld-benefit__title { margin: 0; color: var(--ink); font-size: var(--fs-h3); font-weight: 600; line-height: var(--lh-h3); }
-.ld-benefit--lead { padding: var(--space-6); border: 1px solid var(--line); border-radius: var(--radius-card); background: var(--surface); }
-.ld-benefit--lead .ld-benefit__title { font-size: 1.5rem; }
-.ld-benefit--lead .ld-text { font-size: 1.0625rem; }
+.ld-hero__visual { --hero-photo-h: clamp(440px, calc(100svh - 69px - 132px), 660px); position: relative; display: grid; place-items: center; }
+/* Màn >= 1600px (khung rộng hơn): vòm cao tối đa 720px, vẫn trừ khoảng thở theo chiều cao màn. */
+@media (min-width: 1600px) { .ld-hero__visual { --hero-photo-h: clamp(440px, calc(100svh - 69px - 132px), 720px); } }
+/* Mảng xanh: từ giữa cột ảnh tràn hết mép phải (hero cắt phần thừa). */
+.ld-hero__visual::before { position: absolute; top: 0; bottom: 0; left: 50%; right: -100vw; background: var(--home-forest-deep); content: ""; }
+.ld-hero__photo {
+  position: relative;
+  display: block;
+  width: auto;
+  max-width: 100%;
+  height: var(--hero-photo-h);
+  aspect-ratio: 2 / 3;
+  object-fit: cover;
+  border-radius: 999px 999px 24px 24px;
+  /* Viền sage mảnh đồng tâm quanh vòm (outline theo bo góc). */
+  outline: 1px solid var(--home-sage);
+  outline-offset: 14px;
+}
+
+/* Mockup điện thoại (HTML/CSS): màn Thực đơn với một ngày mẫu (món, calo thật). Màu cố định (giao diện sáng của app). */
+.ld-phone {
+  position: absolute;
+  z-index: 3;
+  /* Chân mockup thấp hơn chân vòm 24px (bám theo chiều cao ảnh). */
+  bottom: calc((100% - var(--hero-photo-h)) / 2 - 24px);
+  left: -6%;
+  width: clamp(248px, 19vw, 264px);
+  padding: 10px;
+  border-radius: 40px;
+  background: var(--home-forest);
+  box-shadow: 0 0 0 1px var(--home-forest-line), var(--shadow-overlay);
+}
+/* Màn 1024–1499px: cột chữ hẹp, mockup không lấn sang trái để giữ khoảng cách với đoạn mô tả. */
+@media (min-width: 1024px) and (max-width: 1499px) { .ld-phone { left: 0; } }
+.ld-phone__screen { padding: 18px 12px 12px; border-radius: 30px; color: var(--home-forest); background: var(--home-ivory); }
+.ld-phone__bar { display: flex; align-items: center; gap: var(--space-2); padding: 2px 6px 12px; font-size: .9375rem; font-weight: 600; }
+.ld-phone__bar svg { width: 18px; height: 18px; stroke-width: 1.8; }
+.ld-phone__days { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 3px; margin: 0 0 10px; }
+.ld-phone__day { padding: 5px 0; border-radius: 8px; color: var(--home-forest-muted); font-size: .75rem; font-weight: 600; text-align: center; }
+.ld-phone__day--active { color: var(--home-ivory); background: var(--home-forest); }
+.ld-phone__list { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.ld-phone__row { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); padding: 9px 10px; border-radius: 12px; background: var(--home-paper); }
+.ld-phone__name { display: grid; font-size: .875rem; font-weight: 600; line-height: 1.3; }
+.ld-phone__name small { color: var(--home-forest-muted); font-size: .8125rem; font-weight: 400; }
+.ld-phone__chip { flex: none; padding: 3px 8px; border-radius: 6px; color: var(--home-forest); background: var(--home-mist); font-size: .8125rem; font-weight: 600; white-space: nowrap; }
+.ld-phone__suggest { display: flex; gap: var(--space-2); margin-top: 10px; padding: 10px 12px; border-radius: 12px; color: var(--home-ivory); background: var(--home-forest); font-size: .8125rem; line-height: 1.4; }
+.ld-phone__suggest svg { flex: none; width: 18px; height: 18px; margin-top: 1px; color: var(--home-sage); stroke-width: 1.8; }
+.ld-phone__suggest strong { display: block; font-size: .875rem; font-weight: 600; }
+
+/* Thông tin ngắn của món (thời gian, calo) trên thẻ món. */
+.ld-facts { display: flex; flex-wrap: wrap; gap: 4px 14px; margin: 0; padding: 0; color: var(--home-ink-2); font-size: .875rem; list-style: none; }
+.ld-facts li { display: inline-flex; align-items: center; gap: 6px; }
+.ld-facts svg { width: 16px; height: 16px; stroke-width: 1.9; }
+
+/* ---------- Khung các phần ---------- */
+.ld-section { padding: clamp(64px, 8vw, 112px) 0; scroll-margin-top: 68px; }
+.ld-section--surface { background: var(--home-surface); }
+.ld-section--soft { background: var(--home-soft); }
+.ld-section__inner { width: 100%; max-width: var(--ld-container); margin: 0 auto; padding: 0 var(--ld-pad); }
+.ld-section__head { display: grid; gap: var(--space-3); max-width: 640px; margin-bottom: clamp(32px, 4vw, 56px); }
+.ld-section__head--split { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: var(--space-5) var(--space-7); max-width: none; }
+.ld-section__head--split > div:first-child { display: grid; gap: var(--space-3); max-width: 600px; }
+.ld-section__title { margin: 0; color: var(--home-ink); font-size: clamp(1.75rem, 1.3rem + 1.6vw, 2.5rem); font-weight: 600; line-height: 1.15; letter-spacing: -.025em; text-wrap: balance; }
+.ld-section__lead { margin: 0; color: var(--home-ink-2); font-size: 1.0625rem; line-height: 1.6; }
+.ld-text { max-width: 62ch; margin: 0; color: var(--home-ink-2); }
+.ld-muted { margin: 0; color: var(--home-ink-2); font-size: .9375rem; }
+
+/* ---------- Tính năng: một khối lớn (Kho) + bốn khối nhỏ ---------- */
+.ld-features { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-4); margin: 0; padding: 0; list-style: none; }
+.ld-feature {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-5);
+  border: 1px solid var(--home-line);
+  border-radius: 14px;
+  background: var(--home-surface);
+}
+.ld-feature--lead { grid-row: span 2; gap: var(--space-4); padding: var(--space-6); border-color: transparent; background: var(--home-soft); }
+.ld-feature__icon { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 10px; color: var(--home-ink); background: var(--home-soft); }
+.ld-feature--lead .ld-feature__icon { width: 52px; height: 52px; color: var(--home-ivory); background: var(--home-forest); }
+.ld-feature__icon svg { width: 22px; height: 22px; stroke-width: 1.8; }
+.ld-feature__title { margin: var(--space-1) 0 0; color: var(--home-ink); font-size: 1.1875rem; font-weight: 600; line-height: 1.3; letter-spacing: -.01em; }
+.ld-feature--lead .ld-feature__title { font-size: clamp(1.5rem, 1.2rem + .9vw, 1.875rem); letter-spacing: -.02em; }
+.ld-feature__body { margin: 0; color: var(--home-ink-2); font-size: .9375rem; line-height: 1.6; }
+.ld-feature--lead .ld-feature__body { font-size: 1.0625rem; }
+.ld-feature__extra {
+  display: flex;
+  gap: var(--space-3);
+  align-items: flex-start;
+  margin: var(--space-2) 0 0;
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--home-line);
+  color: var(--home-ink);
+  font-size: .9375rem;
+}
+.ld-feature__extra svg { flex: none; width: 20px; height: 20px; margin-top: 2px; stroke-width: 1.8; }
+.ld-feature__link {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  min-height: var(--control-h);
+  margin-top: auto;
+  color: var(--home-ink);
+  font-size: .9375rem;
+  font-weight: 600;
+  text-decoration: underline;
+  text-decoration-color: var(--home-sage);
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 5px;
+}
+.ld-feature__link:hover { text-decoration-color: var(--home-ink); }
 
 /* ---------- Món trong Nouri ---------- */
-.ld-recipes-head { display: grid; gap: var(--space-6); }
-.ld-recipes-head__text { display: grid; gap: var(--space-3); }
-.ld-groups { display: grid; grid-template-columns: repeat(auto-fit, minmax(112px, 1fr)); gap: var(--space-4); margin: 0; }
-.ld-groups__item { display: grid; align-content: start; gap: var(--space-2); padding-top: var(--space-3); border-top: 1px solid var(--line); }
-.ld-groups dt { color: var(--muted); font-size: var(--fs-label); font-weight: 600; line-height: var(--lh-label); }
-.ld-groups__count {
-  margin: 0;
-  color: var(--ink);
-  font-family: var(--font-serif);
-  font-size: var(--fs-stat);
-  font-weight: 500;
-  line-height: 1;
-  font-variant-numeric: tabular-nums;
+.ld-groups { display: flex; flex-wrap: wrap; gap: var(--space-2); margin: 0; }
+.ld-groups__item {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  padding: 8px 14px;
+  border: 1px solid var(--home-line);
+  border-radius: 10px;
+  background: var(--home-bg);
 }
+.ld-groups__item dt { color: var(--home-ink-2); font-size: .875rem; }
+.ld-groups__item dd { margin: 0; color: var(--home-ink); font-size: 1rem; font-weight: 700; font-variant-numeric: tabular-nums; }
 
-.ld-recipes { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: var(--space-4); margin: 0; padding: 0; list-style: none; }
-.ld-recipes > li { display: grid; min-width: 0; }
+.ld-recipes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-5); margin: 0; padding: 0; list-style: none; }
+.ld-recipes > li { display: flex; }
 .ld-recipe {
   position: relative;
-  display: grid;
-  grid-template-rows: auto 1fr;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
   overflow: hidden;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-card);
-  background: var(--surface);
-  transition: border-color 160ms ease-out;
+  border: 1px solid var(--home-line);
+  border-radius: 14px;
+  background: var(--home-bg);
+  transition: border-color var(--duration-fast) ease;
 }
-.ld-recipe:hover { border-color: var(--border-input); }
-.ld-recipe__image { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; }
-.ld-recipe__body { display: grid; align-content: start; gap: var(--space-3); padding: var(--space-5); }
-.ld-recipe__title { margin: 0; font-size: var(--fs-h3); font-weight: 600; line-height: var(--lh-h3); }
-.ld-recipe__link { color: var(--ink); text-decoration: none; }
-.ld-recipe__link:hover { color: var(--action-text); text-decoration: underline; text-underline-offset: 3px; }
-/* Cả thẻ là vùng bấm của liên kết tên món. */
-.ld-recipe__link::after { content: ""; position: absolute; inset: 0; }
-.ld-recipes-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-3) var(--space-5); }
+.ld-recipe:hover { border-color: var(--home-ink-2); }
+.ld-recipe__image { display: block; width: 100%; aspect-ratio: 4 / 3; object-fit: cover; }
+.ld-recipe__body { display: grid; gap: var(--space-2); padding: var(--space-4) var(--space-5) var(--space-5); }
+.ld-recipe--text { background: var(--home-soft); border-color: transparent; }
+.ld-recipe--text .ld-recipe__body { align-content: end; min-height: 100%; padding-top: var(--space-6); }
+.ld-recipe__title { margin: 0; font-size: 1.125rem; font-weight: 600; line-height: 1.35; }
+.ld-recipe__link { color: var(--home-ink); text-decoration: none; }
+.ld-recipe__link::after { content: ""; position: absolute; inset: 0; border-radius: 14px; }
+.ld-recipe__link:hover { text-decoration: underline; text-underline-offset: 3px; }
+.ld-recipe__link:focus-visible { outline: none; }
+.ld-recipe:has(.ld-recipe__link:focus-visible) { outline: 2px solid var(--home-ink); outline-offset: 3px; }
+.ld-tags { display: flex; flex-wrap: wrap; gap: 6px; margin: var(--space-1) 0 0; padding: 0; list-style: none; }
+.ld-tags li { padding: 2px 10px; border-radius: 6px; color: var(--home-ink); background: var(--home-soft); font-size: .8125rem; font-weight: 500; }
+.ld-recipe--text .ld-tags li { background: var(--home-bg); }
+.ld-recipes__foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-4); margin-top: var(--space-6); }
 
-/* ---------- Cách hoạt động ---------- */
-.ld-steps { display: grid; gap: var(--space-6); margin: 0; padding: 0; list-style: none; }
-.ld-step { display: grid; align-content: start; gap: var(--space-3); padding-top: var(--space-4); border-top: 1px solid var(--line); }
+/* ---------- Cách hoạt động (trình tự thật nên đánh số) ---------- */
+.ld-steps { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-5); margin: 0; padding: 0; list-style: none; counter-reset: none; }
+.ld-step { display: grid; align-content: start; gap: var(--space-3); padding-top: var(--space-5); border-top: 2px solid var(--home-ink); }
 .ld-step__number {
-  color: var(--action-text);
-  font-family: var(--font-serif);
-  font-size: var(--fs-stat);
-  font-weight: 500;
-  line-height: 1;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  color: var(--home-ink);
+  background: var(--home-soft);
+  font-size: 1.125rem;
+  font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
-.ld-step__title { margin: 0; color: var(--ink); font-size: var(--fs-h3); font-weight: 600; line-height: var(--lh-h3); }
+.ld-step__title { margin: var(--space-2) 0 0; color: var(--home-ink); font-size: 1.125rem; font-weight: 600; line-height: 1.35; }
+.ld-step__body { margin: 0; color: var(--home-ink-2); font-size: .9375rem; line-height: 1.6; }
 
 /* ---------- Cộng đồng ---------- */
+.ld-split { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: var(--space-6) var(--space-8); align-items: start; }
 .ld-split__body { display: grid; gap: var(--space-4); }
-.ld-split__action { justify-self: start; }
+.ld-split__body .ld-text { color: var(--home-ink); font-size: 1.0625rem; }
+.ld-split__action { justify-self: start; margin-top: var(--space-2); }
 
-/* ---------- Kêu gọi đăng ký ---------- */
-.ld-signup { padding: var(--space-8) 0 var(--space-9); border-top: 1px solid var(--line); }
-.ld-signup__inner { justify-items: start; gap: var(--space-5); }
+/* ---------- Lời mời cuối trang ---------- */
+.ld-signup { color: var(--home-ivory); background: var(--home-forest); }
+.ld-signup__inner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-6);
+  width: 100%;
+  max-width: var(--ld-container);
+  margin: 0 auto;
+  padding: clamp(56px, 7vw, 96px) var(--ld-pad);
+}
+.ld-signup__title { max-width: 18ch; margin: 0; color: var(--home-ivory); font-size: clamp(1.75rem, 1.3rem + 1.6vw, 2.5rem); font-weight: 600; line-height: 1.15; letter-spacing: -.025em; }
+.ld-signup__text { max-width: 54ch; margin: var(--space-3) 0 0; color: var(--home-sage); font-size: 1.0625rem; }
+.ld-signup__actions { display: grid; justify-items: start; gap: var(--space-3); }
+.ld-signup__login { margin: 0; color: var(--home-sage); font-size: .9375rem; }
+.ld-signup__link { color: var(--home-gold); font-weight: 600; text-underline-offset: 3px; }
+.ld-signup__link:hover { color: var(--home-gold-hover); text-decoration-thickness: 2px; }
 
-@media (min-width: 640px) {
-  .ld-steps { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+/* ---------- Footer (gọn: một hàng logo + nhóm liên kết, "© 2026 Nouri" nhỏ ở cuối cột logo) ---------- */
+.ld-footer { color: var(--home-ivory); background: var(--home-forest-deep); }
+.ld-footer__inner {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) repeat(3, minmax(0, 1fr));
+  gap: var(--space-5);
+  width: 100%;
+  max-width: var(--ld-container);
+  margin: 0 auto;
+  padding: 40px var(--ld-pad);
+}
+.ld-footer__brand { display: grid; align-content: start; gap: var(--space-2); max-width: 34ch; }
+.ld-footer .ui-wordmark { color: var(--home-ivory); }
+.ld-footer__tagline { margin: 0; color: var(--home-ivory); font-size: .9375rem; font-weight: 600; }
+.ld-footer__text { margin: 0; color: var(--home-sage); font-size: .875rem; line-height: 1.55; }
+.ld-footer__copy { margin: var(--space-1) 0 0; color: var(--home-sage); font-size: .8125rem; }
+.ld-footer__title { margin: 0 0 var(--space-2); color: var(--home-ivory); font-size: .875rem; font-weight: 600; }
+.ld-footer__group ul { display: grid; margin: 0; padding: 0; list-style: none; }
+.ld-footer__link { display: inline-flex; align-items: center; min-height: 32px; color: var(--home-sage); font-size: .875rem; text-decoration: none; }
+.ld-footer__link:hover { color: var(--home-ivory); text-decoration: underline; text-underline-offset: 3px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .ld-btn, .ld-nav__link, .ld-recipe { transition: none; }
 }
 
-@media (min-width: 1024px) {
-  .ld-hero--photo .ld-hero__inner { grid-template-columns: minmax(0, 760px) minmax(0, 1fr); align-items: center; }
-  .ld-benefits { grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); column-gap: var(--space-7); }
-  .ld-benefit--lead { grid-row: span 2; align-self: start; }
-  .ld-recipes-head { grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); align-items: end; column-gap: var(--space-7); }
-  .ld-recipes { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  /* Thứ bậc: món đầu (có ảnh thật) lớn gấp đôi. */
-  .ld-recipes > li:first-child:has(.ld-recipe--photo) { grid-column: span 2; grid-row: span 2; }
-  .ld-recipes > li:first-child .ld-recipe--photo .ld-recipe__image { aspect-ratio: 16 / 9; }
-  .ld-steps { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-  .ld-split { grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); align-items: start; column-gap: var(--space-7); }
+/* ---------- Responsive ---------- */
+@media (max-width: 1100px) {
+  .ld-features { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .ld-feature--lead { grid-column: 1 / -1; grid-row: auto; }
+  .ld-steps { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-6) var(--space-5); }
 }
 
-@media (max-width: 639px) {
-  .ld-section { padding: var(--space-7) 0; }
-  .ld-hero__inner { gap: var(--space-6); padding-top: var(--space-7); padding-bottom: var(--space-7); }
-  .ld-hero__lead { font-size: 1.0625rem; }
-  .ld-benefit--lead { padding: var(--space-5); }
-  .ld-signup { padding: var(--space-7) 0 var(--space-8); }
+@media (max-width: 1023px) {
+  /* Hero: chữ trên, ảnh vòm giữa, mảng xanh nửa dưới; mockup đè chân vòm lệch trái. */
+  .ld-hero__inner { grid-template-columns: minmax(0, 1fr); min-height: 0; }
+  .ld-hero__copy { padding: clamp(40px, 8vw, 64px) 0 clamp(32px, 6vw, 48px); }
+  .ld-hero__visual { display: flex; flex-direction: column; align-items: center; padding-bottom: clamp(40px, 7vw, 64px); }
+  .ld-hero__visual::before { top: 28%; left: -100vw; }
+  .ld-hero__visual { --hero-photo-h: clamp(420px, 66vw, 560px); }
+  .ld-phone { position: relative; bottom: auto; left: auto; margin: -150px min(220px, 28vw) 0 0; }
+  .ld-nav, .ld-header__account { display: none; }
+  .ld-header__inner { grid-template-columns: 1fr auto; }
+  .ld-header__menu { display: grid; }
+  .ld-recipes { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .ld-split { grid-template-columns: minmax(0, 1fr); }
+  .ld-footer__inner { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .ld-footer__brand { grid-column: 1 / -1; }
+}
+
+@media (max-width: 640px) {
+  .ld-hero__actions .ld-btn { flex: 1 1 100%; }
+  .ld-hero__visual { --hero-photo-h: clamp(380px, 110vw, 440px); }
+  .ld-hero__photo { outline-offset: 10px; }
+  .ld-phone { width: min(264px, 80vw); margin: -120px 0 0; }
+  .ld-features, .ld-recipes, .ld-steps { grid-template-columns: minmax(0, 1fr); }
+  .ld-feature--lead { padding: var(--space-5); }
+  .ld-footer__inner { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .ld-signup__actions, .ld-signup__actions .ld-btn { width: 100%; }
 }

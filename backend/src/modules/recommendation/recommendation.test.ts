@@ -52,7 +52,7 @@ describe("GET /api/recommendations", () => {
     ["?context=other"],
     ["?context=similar"],
     ["?context=also-cooked&recipeId=not-a-cuid"],
-    ["?context=today&limit=13"],
+    ["?context=today&limit=51"],
     ["?context=today&limit=0"],
     [`?context=today&pantryItemId=${pantryItemId}`],
     [`?context=today&userId=${userId}`],

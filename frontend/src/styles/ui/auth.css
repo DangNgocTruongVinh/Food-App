@@ -1,81 +1,238 @@
 /*
- * Đăng nhập / Đăng ký (UI-8) — DESIGN.md mục 14 (chưa có mockup). Chỉ dùng token. Tiền tố lớp: dn-.
- * ≥ 1024px hai cột: trái form, phải khối --surface-2 (chưa có ảnh món ăn thật). Điện thoại: chỉ form.
+ * Đăng nhập / Đăng ký (cùng khung) — bản thiết kế đã duyệt 10/11/2026, chỉnh bố cục 10/11 theo DESIGN.md bản 3:
+ * ≥ 1024px ảnh/form 60/40 (khung form tối thiểu 440px); logo + khối form (rộng tối đa 360px) căn giữa theo chiều dọc, logo căn trái
+ * theo khối form; điều khoản 12px ở cuối khung. Chỉ Be Vietnam Pro (cả logo và slogan), logo đậm không nghiêng.
+ * < 1024px: dải ảnh cao 160px phía trên, form chiếm toàn bộ chiều rộng, lề 16px. Màu riêng --login-* (tokens.css). Tiền tố lớp: dn-.
  */
 
-.dn-page { display: grid; grid-template-rows: auto 1fr; min-height: 100dvh; color: var(--ink); background: var(--bg); font-family: var(--font-sans); }
-.dn-top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-4);
-  width: 100%;
-  max-width: var(--content-max);
-  margin: 0 auto;
-  padding: var(--space-4) var(--gutter);
-}
-.dn-top__logo { display: inline-flex; align-items: center; min-height: var(--control-h); color: inherit; text-decoration: none; }
+/* Nền body cùng màu form: không lộ vạch sáng do làm tròn subpixel, không lộ nền sáng khi kéo quá đà trên điện thoại. */
+body:has(.dn-page) { background: var(--login-forest); }
 
-.dn-layout {
+.dn-page {
+  box-sizing: border-box;
   display: grid;
-  grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
-  gap: var(--space-7);
-  align-items: stretch;
-  width: 100%;
-  max-width: var(--content-max);
-  margin: 0 auto;
-  padding: var(--space-5) var(--gutter) var(--space-8);
+  grid-template-columns: minmax(0, 3fr) minmax(440px, 2fr);
+  min-height: 100dvh;
+  color: var(--login-ivory);
+  background: var(--login-forest);
+  font-family: var(--font-sans);
+  font-size: .9375rem;
+  line-height: 1.5;
 }
-.dn-panel { display: grid; align-content: center; min-width: 0; }
-.dn-form { display: grid; gap: var(--space-4); width: 100%; max-width: 440px; }
-.dn-form__head { display: grid; gap: var(--space-3); margin-bottom: var(--space-2); }
 
-.dn-password { position: relative; display: block; }
-.dn-password .ui-input { padding-right: 56px; }
-.dn-password__toggle {
+/* ---------- Ảnh + slogan ---------- */
+.dn-photo { position: relative; overflow: hidden; background: var(--login-forest); }
+.dn-photo img { position: absolute; inset: 0; display: block; width: 100%; height: 100%; object-fit: cover; object-position: 62% 46%; }
+.dn-scrim { position: absolute; right: 0; bottom: 0; left: 0; height: 46%; background: var(--login-scrim); }
+.dn-slogan {
   position: absolute;
-  top: 50%;
-  right: 2px;
-  display: grid;
-  place-items: center;
-  width: var(--control-h);
-  height: var(--control-h);
-  padding: 0;
+  bottom: clamp(40px, 5vw, 72px);
+  left: clamp(40px, 5vw, 80px);
+  max-width: 11em;
+  margin: 0;
+  color: var(--login-ivory);
+  font-family: var(--font-sans);
+  font-size: clamp(28px, 2.6vw, 40px);
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -.015em;
+  text-wrap: balance;
+}
+
+/* ---------- Khung form ---------- */
+.dn-panel { box-sizing: border-box; display: flex; flex-direction: column; min-width: 0; padding: 32px 40px 24px; }
+.dn-bar, .dn-wrap, .dn-legal { width: 100%; max-width: 360px; margin-right: auto; margin-left: auto; }
+/* Logo và khối form là một cụm, căn giữa theo chiều dọc (margin auto trên logo và dưới form). */
+.dn-bar { margin-top: auto; }
+.dn-wrap { margin-bottom: auto; padding: 28px 0 32px; }
+
+/* Logo theo DESIGN.md bản 3: Be Vietnam Pro đậm, không nghiêng; dấu chấm vàng trên nền tối. */
+.dn-logo { display: inline-flex; align-items: center; min-height: var(--control-h); border-radius: 6px; color: var(--login-ivory); text-decoration: none; }
+.dn-logo .ui-logo { color: var(--login-ivory); font-family: var(--font-sans); font-size: 1.625rem; font-style: normal; font-weight: 700; letter-spacing: -.02em; }
+.dn-logo .ui-logo__dot { color: var(--login-gold); }
+
+.dn-stack { display: flex; flex-direction: column; }
+.dn-title { margin: 0; color: var(--login-ivory); font-family: var(--font-sans); font-size: 2rem; font-weight: 600; line-height: 1.2; letter-spacing: -.015em; }
+.dn-lede { margin: 8px 0 0; color: var(--login-mist); font-size: .9375rem; line-height: 1.5; }
+
+.dn-alert {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  margin: 20px 0 0;
+  padding: 10px 12px;
+  border-radius: var(--login-radius);
+  color: var(--login-error-ink);
+  background: var(--login-error-bg);
+  font-size: .875rem;
+  line-height: 1.45;
+}
+.dn-alert svg { flex: none; width: 18px; height: 18px; margin-top: 1px; stroke-width: 2; }
+
+/* ---------- Form: các ô cách nhau 16px, nhóm ô → nút 20px ---------- */
+.dn-form { display: flex; flex-direction: column; gap: 16px; margin-top: 28px; }
+.dn-field { display: flex; flex-direction: column; gap: 6px; }
+.dn-label { color: var(--login-ivory); font-size: .8125rem; font-weight: 500; }
+.dn-control { position: relative; display: flex; }
+
+.dn-input {
+  box-sizing: border-box;
+  width: 100%;
+  height: var(--login-h-field);
+  padding: 0 14px;
+  border: 2px solid var(--login-ivory);
+  border-radius: var(--login-radius);
+  color: var(--login-forest);
+  background: var(--login-ivory);
+  caret-color: var(--login-forest);
+  font: inherit;
+  font-size: .9375rem;
+  transition: border-color var(--duration-fast) ease;
+}
+.dn-input--toggle { padding-right: 68px; }
+.dn-input--state { padding-right: 42px; }
+.dn-input:hover:not(:disabled) { border-color: var(--login-line); }
+.dn-input:focus { outline: none; }
+.dn-input:focus-visible { border-color: var(--login-ivory); outline: 2px solid var(--login-gold); outline-offset: 2px; }
+.dn-input.is-invalid { border-color: var(--login-error-line); }
+.dn-input.is-invalid:focus-visible { outline-color: var(--login-error-line); }
+.dn-input:disabled { color: var(--login-forest); opacity: .7; cursor: not-allowed; }
+
+/* Autofill: giữ nền ngà và chữ xanh rừng thay nền xanh nhạt/vàng của trình duyệt (Chrome, Edge, Safari / Firefox). */
+.dn-input:-webkit-autofill,
+.dn-input:-webkit-autofill:hover,
+.dn-input:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 100px var(--login-ivory) inset;
+  -webkit-text-fill-color: var(--login-forest);
+  caret-color: var(--login-forest);
+}
+.dn-input:autofill { box-shadow: 0 0 0 100px var(--login-ivory) inset; filter: none; }
+
+.dn-tick { position: absolute; top: 50%; right: 14px; width: 16px; height: 16px; color: var(--login-forest); stroke-width: 2.25; transform: translateY(-50%); pointer-events: none; }
+/* Nút "Hiện" phủ hết chiều cao ô (vùng bấm 44px). */
+.dn-toggle {
+  position: absolute;
+  top: 0;
+  right: 0;
+  min-width: 60px;
+  height: var(--login-h-field);
+  padding: 0 12px;
   border: 0;
-  border-radius: var(--radius-field);
-  color: var(--ink-2);
+  border-radius: 0 var(--login-radius) var(--login-radius) 0;
+  color: var(--login-forest);
   background: transparent;
-  transform: translateY(-50%);
+  font: inherit;
+  font-size: .8125rem;
+  font-weight: 600;
   cursor: pointer;
 }
-.dn-password__toggle:hover { color: var(--ink); background: var(--surface-2); }
-.dn-password__toggle svg { width: 20px; height: 20px; stroke-width: 1.75; }
+.dn-toggle:hover:not(:disabled) { background: var(--login-toggle-hover); }
+.dn-toggle:disabled { cursor: not-allowed; }
 
-.dn-remember { display: inline-flex; align-items: center; gap: var(--space-3); min-height: var(--control-h); color: var(--ink); font-size: var(--fs-small); cursor: pointer; }
-.dn-remember input { width: 20px; height: 20px; margin: 0; accent-color: var(--action); cursor: pointer; }
-.dn-remember input:focus-visible { outline: 2px solid var(--action-text); outline-offset: 3px; }
+.dn-msg { display: flex; gap: 6px; align-items: flex-start; margin: 0; color: var(--login-error); font-size: .8125rem; line-height: 1.45; }
+.dn-msg svg { flex: none; width: 15px; height: 15px; margin-top: 2px; stroke-width: 2; }
+.dn-hint { margin: 0; color: var(--login-mist); font-size: .8125rem; line-height: 1.45; }
 
-.dn-switch { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: var(--space-2); margin: 0; color: var(--ink-2); font-size: var(--fs-small); }
-.dn-switch__button { min-height: var(--control-h); padding: 0 var(--space-1); border: 0; background: transparent; font-family: var(--font-sans); font-size: var(--fs-small); cursor: pointer; }
-.dn-legal { text-align: center; }
-
-.dn-aside {
+.dn-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0 16px; margin: -6px 0 -6px; }
+.dn-check { display: flex; align-items: center; gap: 10px; min-height: 44px; color: var(--login-ivory); font-size: .875rem; cursor: pointer; }
+.dn-check input {
+  appearance: none;
+  box-sizing: border-box;
   display: grid;
-  align-content: end;
-  min-height: 520px;
-  padding: var(--space-7);
-  border-radius: var(--radius-card);
-  background: var(--surface-2);
+  place-content: center;
+  flex: none;
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  border: 1.5px solid var(--login-mist);
+  border-radius: 4px;
+  background: transparent;
+  cursor: pointer;
+  transition: background var(--duration-fast) ease, border-color var(--duration-fast) ease;
 }
-.dn-aside__text { max-width: 22ch; margin: 0; color: var(--ink); font-family: var(--font-serif); font-size: var(--fs-h2); font-weight: 500; line-height: var(--lh-h2); }
+.dn-check input:hover:not(:disabled) { border-color: var(--login-gold); }
+.dn-check input:checked { border-color: var(--login-gold); background: var(--login-gold); }
+.dn-check input:checked::after {
+  content: "";
+  width: 9px;
+  height: 5px;
+  margin-top: -2px;
+  border-bottom: 2px solid var(--login-forest);
+  border-left: 2px solid var(--login-forest);
+  transform: rotate(-45deg);
+}
+.dn-check input:disabled { cursor: not-allowed; opacity: .7; }
 
-@media (max-width: 1024px) {
-  .dn-layout { grid-template-columns: minmax(0, 1fr); gap: 0; }
-  .dn-panel { justify-items: center; }
-  .dn-aside { display: none; }
+/* Nút chính: cách nhóm ô 20px (gap 16 + 4), cao 44px, bo 10px như ô nhập. */
+.dn-cta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: var(--login-h-field);
+  margin-top: 4px;
+  border: 0;
+  border-radius: var(--login-radius);
+  color: var(--login-forest);
+  background: var(--login-gold);
+  font: inherit;
+  font-size: .9375rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--duration-fast) ease;
+}
+.dn-cta:hover:not(:disabled) { background: var(--login-gold-hover); }
+.dn-cta:active:not(:disabled) { background: var(--login-gold-busy); }
+.dn-cta:disabled { background: var(--login-gold-busy); cursor: progress; }
+.dn-spin { width: 16px; height: 16px; animation: dn-spin .8s linear infinite; }
+@keyframes dn-spin { to { transform: rotate(360deg); } }
+
+.dn-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 0 8px; margin: 16px 0 0; color: var(--login-mist); font-size: .875rem; }
+.dn-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  color: var(--login-gold);
+  background: transparent;
+  font: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+  text-decoration-color: var(--login-gold);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 4px;
+  cursor: pointer;
+}
+.dn-link:hover:not(:disabled) { color: var(--login-gold-hover); text-decoration-thickness: 2px; }
+.dn-link:disabled { cursor: not-allowed; opacity: .7; }
+
+/* Điều khoản: 12px, cuối khung form (DESIGN.md cho phép 12px riêng ở chú thích pháp lý của trang này). */
+.dn-legal { margin-top: 0; margin-bottom: 0; padding-top: 16px; border-top: 1px solid var(--login-line-soft); color: var(--login-mist); font-size: .75rem; line-height: 1.6; }
+.dn-legal__link { color: var(--login-ivory); font-weight: 400; text-decoration: underline; text-decoration-color: var(--login-line); text-decoration-thickness: 1px; text-underline-offset: 3px; }
+.dn-legal__link:hover { text-decoration-color: var(--login-ivory); }
+
+/* ---------- Focus bàn phím ---------- */
+.dn-toggle:focus-visible { outline: 2px solid var(--login-forest); outline-offset: -3px; }
+.dn-cta:focus-visible,
+.dn-link:focus-visible,
+.dn-legal__link:focus-visible,
+.dn-logo:focus-visible,
+.dn-check input:focus-visible { outline: 2px solid var(--login-gold); outline-offset: 3px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .dn-input, .dn-cta, .dn-check input { transition: none; }
+  .dn-spin { animation-duration: 2.4s; }
 }
 
-@media (max-width: 640px) {
-  .dn-layout { padding-top: var(--space-4); }
-  .dn-panel { justify-items: stretch; }
+/* < 1024px: ẩn ảnh lớn và slogan, thay bằng dải ảnh 160px phía trên; form chiếm toàn bộ chiều rộng, lề 16px. */
+@media (max-width: 1023px) {
+  .dn-page { grid-template-columns: minmax(0, 1fr); grid-template-rows: 160px auto; }
+  .dn-photo img { object-position: 50% 55%; }
+  .dn-slogan, .dn-scrim { display: none; }
+  .dn-panel { padding: 16px 16px 20px; }
+  .dn-bar, .dn-wrap, .dn-legal { max-width: none; }
+  .dn-bar { margin-top: 0; }
+  .dn-wrap { margin-bottom: 0; padding: 16px 0 28px; }
+  .dn-legal { margin-top: auto; }
 }

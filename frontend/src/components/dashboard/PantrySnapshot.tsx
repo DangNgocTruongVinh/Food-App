@@ -1,18 +1,24 @@
 import { CircleAlert, Package, Plus, ReceiptText } from "lucide-react";
 import { Link } from "react-router-dom";
-import { daysLeft, daysLeftLabel, expiringCountLabel, formatNumber } from "../../features/dashboard/dashboard.logic";
+import { daysLeft, daysLeftLabel } from "../../features/dashboard/dashboard.logic";
 import type { PantryItem } from "../../types";
-import { ButtonLink, Card, EmptyState } from "../ui";
+import { ButtonLink, EmptyState } from "../ui";
 
 type PantrySnapshotProps = { pantryCount: number; expiringItems: PantryItem[]; expiredCount: number };
 
-/** Tủ bếp: số liệu thật từ dashboard API; món cần dùng sớm mở thẳng dòng đó trong Kho (?item=). */
+/**
+ * Tủ bếp: dải xanh rừng thương hiệu (giống nhau ở chế độ sáng/tối). Số đếm của kho nằm ở dải số liệu đầu trang; ở đây là
+ * "Cần dùng sớm" (mỗi món mở thẳng dòng đó trong Kho, ?item=), cảnh báo đồ đã hết hạn và hai nút Thêm thực phẩm / Quét hóa đơn.
+ */
 export function PantrySnapshot({ pantryCount, expiringItems, expiredCount }: PantrySnapshotProps) {
   return (
-    <Card as="section" className="dash-card" aria-labelledby="dash-pantry-title">
-      <header className="dash-card__header">
-        <h2 id="dash-pantry-title" className="ui-section-title">Tủ bếp của bạn</h2>
-        {pantryCount > 0 && <Link className="ui-link" to="/pantry">Mở kho thực phẩm</Link>}
+    <section className="dash-pantry" aria-labelledby="dash-pantry-title">
+      <header className="dash-pantry__head">
+        <div className="dash-pantry__intro">
+          <h2 id="dash-pantry-title" className="dash-pantry__title">Tủ bếp của bạn</h2>
+          {pantryCount > 0 && <p className="dash-pantry__subtitle">Cần dùng sớm, trong 7 ngày tới</p>}
+        </div>
+        {pantryCount > 0 && <Link className="dash-pantry__link" to="/pantry">Mở kho thực phẩm</Link>}
       </header>
       {!pantryCount ? (
         <EmptyState
@@ -26,45 +32,36 @@ export function PantrySnapshot({ pantryCount, expiringItems, expiredCount }: Pan
           )}
         />
       ) : (
-        <div className="dash-pantry">
-          <div className="dash-pantry__summary">
-            <dl className="dash-stats">
-              <div className="dash-stat"><dt>Thực phẩm trong kho</dt><dd className="ui-stat">{formatNumber(pantryCount)}</dd></div>
-              <div className={expiringItems.length ? "dash-stat dash-stat--warn" : "dash-stat"}>
-                <dt>Sắp hết hạn trong 7 ngày</dt><dd className="ui-stat">{expiringCountLabel(expiringItems.length)}</dd>
-              </div>
-            </dl>
-            {expiredCount > 0 && (
+        <>
+          {expiringItems.length ? (
+            <ul className="dash-soon">
+              {expiringItems.map((item) => {
+                const days = daysLeft(item.expiryDate);
+                return (
+                  <li key={item.id}>
+                    <Link className="dash-soon__item" to={`/pantry?item=${encodeURIComponent(item.id)}`}>
+                      <span className={days !== null && days <= 2 ? "dash-soon__days is-urgent" : "dash-soon__days"}>{daysLeftLabel(days)}</span>
+                      <span className="dash-soon__name">{item.name}</span>
+                      <span className="dash-soon__category">{item.category}</span>
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          ) : (
+            <p className="dash-pantry__empty">Không có thực phẩm nào hết hạn trong 7 ngày tới.</p>
+          )}
+          <div className="dash-pantry__foot">
+            {expiredCount > 0 ? (
               <p className="dash-warning"><CircleAlert aria-hidden="true" />{expiredCount} thực phẩm đã hết hạn. Kiểm tra và bỏ khỏi kho.</p>
-            )}
+            ) : <span />}
             <div className="dash-pantry__actions">
               <ButtonLink to="/pantry" icon={<Plus />}>Thêm thực phẩm</ButtonLink>
               <ButtonLink to="/pantry?scan=1" icon={<ReceiptText />}>Quét hóa đơn</ButtonLink>
             </div>
           </div>
-          <div className="dash-pantry__soon">
-            <h3 className="ui-card-title">Cần dùng sớm</h3>
-            {expiringItems.length ? (
-              <ul className="dash-soon">
-                {expiringItems.map((item) => {
-                  const days = daysLeft(item.expiryDate);
-                  return (
-                    <li key={item.id}>
-                      <Link className="dash-soon__item" to={`/pantry?item=${encodeURIComponent(item.id)}`}>
-                        <span className="dash-soon__name">{item.name}</span>
-                        <span className="dash-soon__category">{item.category}</span>
-                        <span className={days !== null && days <= 2 ? "dash-soon__days is-urgent" : "dash-soon__days"}>{daysLeftLabel(days)}</span>
-                      </Link>
-                    </li>
-                  );
-                })}
-              </ul>
-            ) : (
-              <p className="ui-text">Không có thực phẩm nào hết hạn trong 7 ngày tới.</p>
-            )}
-          </div>
-        </div>
+        </>
       )}
-    </Card>
+    </section>
   );
 }

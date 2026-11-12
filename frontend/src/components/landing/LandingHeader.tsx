@@ -1,35 +1,46 @@
 import { Menu, X } from "lucide-react";
 import { Link } from "react-router-dom";
+import { loginPath } from "../../features/auth/auth.logic";
 import { LANDING_SECTIONS } from "../../features/landing/landing.data";
 import { useDisclosure } from "../../features/layout/useDisclosure";
-import { ButtonLink, Logo, ThemeToggle } from "../ui";
+import { NouriWordmark, ThemeToggle } from "../ui";
 
 /**
- * Menu trên của Landing (bản cho khách, cùng khung DESIGN.md mục 13): logo, liên kết neo tới các phần, chế độ tối,
- * nút Đăng nhập (đã đăng nhập: "Về Tổng quan"). ≤ 1200px liên kết neo thu vào nút menu như menu ứng dụng.
+ * Menu trên của trang chủ: logo, liên kết neo tới các phần, chế độ sáng/tối, Đăng nhập + Đăng ký (đã đăng nhập: "Về Tổng quan").
+ * < 1024px: liên kết neo và nút tài khoản thu vào nút menu (bảng thả xuống).
  */
 export function LandingHeader({ signedIn }: { signedIn: boolean }) {
   const mobile = useDisclosure<HTMLElement>();
   const links = (onClick?: () => void) => LANDING_SECTIONS.map(({ id, label }) => (
-    <li key={id}><a href={`#${id}`} className="site-nav__link" onClick={onClick}>{label}</a></li>
+    <li key={id}><a href={`#${id}`} className="ld-nav__link" onClick={onClick}>{label}</a></li>
   ));
+  const account = (onClick?: () => void) => (signedIn ? (
+    <Link className="ld-btn ld-btn--solid" to="/dashboard" onClick={onClick}>Về Tổng quan</Link>
+  ) : (
+    <>
+      <Link className="ld-btn ld-btn--quiet" to="/login" onClick={onClick}>Đăng nhập</Link>
+      <Link className="ld-btn ld-btn--solid" to={loginPath({ mode: "register" })} onClick={onClick}>Đăng ký</Link>
+    </>
+  ));
+
   return (
-    <header className="site-header" ref={mobile.rootRef}>
-      <div className="site-header__inner">
-        <Link to="/" className="site-header__brand" aria-label="Nouri, trang chủ"><Logo /></Link>
-        <nav className="site-nav" aria-label="Các phần của trang">
-          <ul className="site-nav__pills">{links()}</ul>
+    <header className="ld-header" ref={mobile.rootRef}>
+      <div className="ld-header__inner">
+        <Link to="/" className="ld-brand" aria-label="Nouri, trang chủ"><NouriWordmark /></Link>
+        <nav className="ld-nav" aria-label="Các phần của trang">
+          <ul>{links()}</ul>
         </nav>
-        <div className="site-header__actions">
-          <ThemeToggle className="site-header__icon" />
-          <ButtonLink to={signedIn ? "/dashboard" : "/login"}>{signedIn ? "Về Tổng quan" : "Đăng nhập"}</ButtonLink>
-          <button type="button" className="ui-icon-button site-header__menu-button" {...mobile.buttonProps} aria-label="Các phần của trang">
+        <div className="ld-header__actions">
+          <ThemeToggle className="ld-header__icon" />
+          <div className="ld-header__account">{account()}</div>
+          <button type="button" className="ld-header__menu" {...mobile.buttonProps} aria-label="Mở menu trang chủ">
             {mobile.open ? <X aria-hidden="true" /> : <Menu aria-hidden="true" />}
           </button>
         </div>
       </div>
-      <nav id={mobile.panelId} className="site-mobile-nav" aria-label="Các phần của trang" hidden={!mobile.open}>
+      <nav id={mobile.panelId} className="ld-mobile-nav" aria-label="Các phần của trang" hidden={!mobile.open}>
         <ul>{links(() => mobile.close())}</ul>
+        <div className="ld-mobile-nav__account">{account(() => mobile.close())}</div>
       </nav>
     </header>
   );

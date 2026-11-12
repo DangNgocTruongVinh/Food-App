@@ -2,7 +2,8 @@ import { z } from "zod";
 
 const empty = z.object({});
 
-export const RECOMMENDATION_LIMIT_MAX = 12;
+// Đủ lớn để "Đổi món khác" ở Tổng quan duyệt hết món phù hợp (bộ món ~33); bộ gợi ý vốn chấm điểm mọi món rồi mới cắt.
+export const RECOMMENDATION_LIMIT_MAX = 50;
 
 /** GET /api/recommendations: "similar"/"also-cooked" cần recipeId; pantryItemId chỉ dùng với ngữ cảnh "pantry". */
 export const recommendationsSchema = z.object({

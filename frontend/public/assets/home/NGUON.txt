@@ -1,0 +1,7 @@
+Nguồn ảnh của hero trang chủ (public/assets/home/)
+
+Ảnh dưới đây DO NGƯỜI DÙNG CUNG CẤP (thư mục docs/design-references/ảnh, 10/11/2026). Tên tệp gốc cho thấy ảnh lấy từ Unsplash
+(tác giả Monaz Hastam); chưa đối chiếu trang ảnh gốc. Cần xác minh nguồn và giấy phép trước khi phát hành công khai.
+
+  hero-table-560.webp, hero-table-960.webp  (bàn ăn nhìn từ trên: nhiều bữa trên mặt gỗ, nắng chiếu)
+      gốc: docs/design-references/ảnh/monaz-hastam-qk6EjQHVLkY-unsplash.jpg — thu nhỏ theo chiều ngang, xuất WebP

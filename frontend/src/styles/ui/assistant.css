@@ -114,3 +114,6 @@
   .as-msg { max-width: 88%; }
   .as-composer { padding: var(--space-3); }
 }
+
+/* Đồng bộ với Tổng quan (11/11/2026): khối phụ cột phải là mảng nền dịu không viền, bo 28px. */
+.as-side .ui-card { border-color: transparent; border-radius: 28px; background: var(--surface-2); }

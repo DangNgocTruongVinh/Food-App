@@ -1,6 +1,6 @@
 import { UserRound } from "lucide-react";
 import { type buildNutritionSummary, formatNumber } from "../../features/dashboard/dashboard.logic";
-import { ButtonLink, CalorieRing, Card, EmptyState, ErrorState, MACROS, MacroList, Skeleton } from "../ui";
+import { ButtonLink, CalorieRing, EmptyState, ErrorState, MACROS, MacroList, Skeleton } from "../ui";
 
 type Summary = ReturnType<typeof buildNutritionSummary>;
 
@@ -18,10 +18,11 @@ function planNote(summary: Summary) {
   return `Nếu ăn hết các bữa hôm nay: ${formatNumber(summary.plannedCalories)} kcal, ${tail}.`;
 }
 
+/** Nửa trái của mảng "Hôm nay": vòng calo đã ăn + đạm/tinh bột/béo, câu dự tính nếu ăn hết các bữa. */
 export function NutritionTodayCard({ summary, macrosStatus, onRetryMacros }: NutritionTodayCardProps) {
   return (
-    <Card as="section" className="dash-card" aria-labelledby="dash-nutrition-title">
-      <header className="dash-card__header"><h2 id="dash-nutrition-title" className="ui-section-title">Dinh dưỡng hôm nay</h2></header>
+    <section className="dash-today__part" aria-labelledby="dash-nutrition-title">
+      <header className="dash-today__head"><h2 id="dash-nutrition-title" className="dash-today__title">Dinh dưỡng hôm nay</h2></header>
       {!summary ? (
         <EmptyState
           icon={<UserRound />}
@@ -40,9 +41,9 @@ export function NutritionTodayCard({ summary, macrosStatus, onRetryMacros }: Nut
             )}
             {macrosStatus === "error" && <ErrorState message="Chưa tải được đạm, tinh bột và béo." onRetry={onRetryMacros} />}
           </div>
-          <p className="ui-small dash-card__note">{planNote(summary)}</p>
+          <p className="dash-today__note">{planNote(summary)}</p>
         </>
       )}
-    </Card>
+    </section>
   );
 }

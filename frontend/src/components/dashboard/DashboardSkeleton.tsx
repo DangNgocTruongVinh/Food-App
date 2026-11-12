@@ -1,6 +1,6 @@
-import { Card, Skeleton } from "../ui";
+import { Skeleton } from "../ui";
 
-/** Skeleton đúng hình trang Tổng quan: đầu trang có ảnh, hai thẻ dinh dưỡng/thực đơn, tủ bếp. */
+/** Skeleton đúng hình trang Tổng quan: đầu trang (chữ + ảnh), dải số liệu, hai cột Hôm nay, dải Tủ bếp. */
 export function DashboardSkeleton() {
   return (
     <div className="dash-page" role="status" aria-live="polite">
@@ -8,19 +8,22 @@ export function DashboardSkeleton() {
       <div className="dash-hero" aria-hidden="true">
         <div className="dash-hero__inner">
           <div className="dash-hero__copy">
-            <Skeleton width="40%" />
-            <Skeleton kind="block" height={132} width="80%" />
+            <Skeleton width="45%" />
+            <Skeleton kind="block" height={168} width="80%" />
+            <Skeleton kind="title" width="70%" />
             <Skeleton width="90%" />
-            <Skeleton width="60%" />
           </div>
+          <div className="dash-hero__media"><Skeleton kind="block" height={420} /></div>
         </div>
       </div>
       <div className="dash-content" aria-hidden="true">
-        <div className="dash-row">
-          <Card className="dash-card"><Skeleton kind="title" width="50%" /><Skeleton kind="block" height={148} /></Card>
-          <Card className="dash-card"><Skeleton kind="title" width="50%" /><Skeleton kind="block" height={56} /><Skeleton kind="block" height={56} /></Card>
+        <Skeleton kind="block" height={96} />
+        <div className="dash-today">
+          <div className="dash-today__meals">
+            <Skeleton kind="title" width="50%" /><Skeleton kind="block" height={72} /><Skeleton kind="block" height={72} />
+          </div>
+          <div className="dash-today__side"><Skeleton kind="title" width="60%" /><Skeleton kind="block" height={148} /></div>
         </div>
-        <Card className="dash-card"><Skeleton kind="title" width="30%" /><Skeleton kind="block" height={120} /></Card>
       </div>
     </div>
   );

@@ -219,3 +219,8 @@ a.cm-recipe:hover { border-color: var(--action-text); }
   .cm-recipe { grid-template-columns: 56px minmax(0, 1fr) auto; }
   .cm-recipe__image { width: 56px; height: 56px; }
 }
+
+/* Đồng bộ với Tổng quan (11/11/2026): khối hướng dẫn cột phải là mảng nền dịu không viền, bo 28px; bài viết và ô đăng bài bo 24px. */
+.cm-guide { border-color: transparent; border-radius: 28px; }
+.cm-composer,
+.cm-post { border-radius: 24px; }

@@ -1,16 +1,17 @@
 import { Link } from "react-router-dom";
 import { FOOTER_GROUPS } from "../../features/layout/layout.logic";
-import { Logo } from "../ui";
+import { NouriWordmark } from "../ui";
 
-/** Footer chung (DESIGN.md mục 13): thương hiệu + liên kết tới trang có thật. */
+/** Footer chung (DESIGN.md mục 13, đồng bộ footer trang chủ 11/11/2026): nền xanh rừng, gọn một hàng; thương hiệu + liên kết tới trang có thật. */
 export function SiteFooter() {
   return (
     <footer className="site-footer">
       <div className="site-footer__inner">
         <section className="site-footer__brand" aria-label="Giới thiệu Nouri">
-          <Link to="/" className="site-footer__logo" aria-label="Nouri, về trang chủ"><Logo /></Link>
+          <Link to="/" className="site-footer__logo" aria-label="Nouri, về trang chủ"><NouriWordmark /></Link>
           <p className="site-footer__tagline">Ăn ngon hơn. Sống khỏe hơn.</p>
-          <p className="ui-small">Quản lý tủ bếp, lên thực đơn theo mục tiêu dinh dưỡng và nấu từ những gì bạn đang có.</p>
+          <p className="site-footer__text">Quản lý tủ bếp, lên thực đơn theo mục tiêu dinh dưỡng và nấu từ những gì bạn đang có.</p>
+          <p className="site-footer__copy">© 2026 Nouri · Đồ án tốt nghiệp</p>
         </section>
         {FOOTER_GROUPS.map((group) => (
           <nav key={group.title} className="site-footer__group" aria-label={group.title}>
@@ -21,7 +22,6 @@ export function SiteFooter() {
           </nav>
         ))}
       </div>
-      <p className="site-footer__bottom">© 2026 Nouri · Đồ án tốt nghiệp</p>
     </footer>
   );
 }

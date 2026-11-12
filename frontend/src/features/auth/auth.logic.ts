@@ -6,13 +6,19 @@ export type AuthFormErrors = Partial<Record<keyof AuthFormValues, string>>;
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-/** Kiểm tra trước khi gửi, khớp backend (auth.schema.ts): tên 2–80 ký tự, email hợp lệ, mật khẩu 8–72 ký tự. */
+/**
+ * Kiểm tra trước khi gửi, khớp backend (auth.schema.ts): tên 2–80 ký tự, email hợp lệ, mật khẩu 8–72 ký tự.
+ * Chữ báo lỗi theo bản thiết kế đăng nhập đã duyệt (nói rõ thiếu gì, kèm ví dụ).
+ */
 export function validateAuthForm(form: AuthFormValues, mode: AuthMode): AuthFormErrors {
   const errors: AuthFormErrors = {};
   const name = form.name.trim();
   if (mode === "register" && (name.length < 2 || name.length > 80)) errors.name = "Nhập họ tên từ 2 đến 80 ký tự.";
-  if (!EMAIL_PATTERN.test(form.email.trim())) errors.email = "Nhập email đúng dạng, ví dụ ten@gmail.com.";
-  if (form.password.length < 8) errors.password = "Mật khẩu cần ít nhất 8 ký tự.";
+  const email = form.email.trim();
+  if (!email) errors.email = "Nhập email của bạn.";
+  else if (!EMAIL_PATTERN.test(email)) errors.email = "Email thiếu phần @ hoặc tên miền, ví dụ: ten@email.com.";
+  if (!form.password) errors.password = "Nhập mật khẩu của bạn.";
+  else if (form.password.length < 8) errors.password = "Mật khẩu cần ít nhất 8 ký tự.";
   else if (form.password.length > 72) errors.password = "Mật khẩu tối đa 72 ký tự.";
   return errors;
 }

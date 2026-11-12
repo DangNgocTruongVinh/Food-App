@@ -30,6 +30,12 @@
   --dot: #ff8a52;
   --shadow-overlay: 0 12px 32px rgba(21, 72, 60, .12);
   --backdrop: rgba(23, 48, 42, .45);
+  --home-bg: #faf8f2;
+  --home-surface: #ffffff;
+  --home-ink: #173f32;
+  --home-ink-2: #4a5c54;
+  --home-line: #dce3da;
+  --home-soft: #e6ece4;
   color-scheme: light;
 }
 
@@ -55,6 +61,12 @@
   --dot: #ff8a52;
   --shadow-overlay: 0 12px 32px rgba(0, 0, 0, .4);
   --backdrop: rgba(0, 0, 0, .6);
+  --home-bg: #0f2a21;
+  --home-surface: #143629;
+  --home-ink: #faf8f2;
+  --home-ink-2: #b9c8b7;
+  --home-line: #2b4b3f;
+  --home-soft: #1b4234;
   color-scheme: dark;
 }
 
@@ -99,7 +111,8 @@
   --control-h: 44px;
   --control-h-lg: 48px;
 
-  /* Bố cục. */
+  /* Bố cục. --content-max: khung chung của mọi trang trong ứng dụng (thanh menu, footer, nội dung), lấy theo trang Tổng quan:
+     1280px, từ 1600px là 1400px, từ 1920px là 1440px (đã gồm lề --gutter hai bên). */
   --content-max: 1280px;
   --gutter: 16px;
 
@@ -109,12 +122,71 @@
   --duration-dialog: 200ms;
 }
 
+/*
+ * Trang chủ công khai (Landing, làm lại 10/11/2026): --home-* đổi theo chế độ sáng/tối (khai báo ở hai khối trên);
+ * các màu thương hiệu dưới đây giống nhau ở cả hai chế độ (hero, dải mời cuối trang, footer luôn nền xanh rừng).
+ * Tương phản: ivory/forest 11,0:1; sage/forest 5,9:1; forest/gold 8,9:1; ivory/forest-deep 12,8:1.
+ */
+:root {
+  --home-forest: #173f32;
+  --home-forest-deep: #12342a;
+  --home-gold: #f6dfa6;
+  --home-gold-hover: #fbecc6;
+  --home-ivory: #faf8f2;
+  --home-sage: #a8bda5;
+  --home-forest-line: #3f6557;
+  /* Màu lá trong logo (chồi trên chiếc bát); chỉ dùng cho hình, không dùng cho chữ. */
+  --home-leaf: #6b9a5e;
+  /* Chữ phụ trên mảng ngà của hero (6,7:1 trên ivory). */
+  --home-forest-muted: #4a5c54;
+  /* Cảnh báo (đồ đã hết hạn) trên nền xanh rừng: cùng màu --login-error (7,6:1 trên forest). */
+  --home-alert: #ffc2b5;
+  /* Mockup màn Thực đơn trong hero (giao diện sáng cố định): nền dòng, nền nhãn calo. */
+  --home-paper: #ffffff;
+  --home-mist: #e6ece4;
+}
+
+/*
+ * Trang đăng nhập (bản thiết kế đã duyệt 10/11/2026, "nouri-login-handoff"): một bộ màu riêng, giống nhau ở cả chế độ sáng
+ * và tối (form luôn trên nền xanh rừng). Tương phản: ivory/forest 11,0:1; mist/forest 7,9:1; forest/gold 8,9:1;
+ * forest/gold-busy 6,8:1; error/forest 7,6:1; error-ink/error-bg 7,8:1; viền nút phụ line/forest 3,9:1 (≥ 3:1).
+ * --login-scrim là ngoại lệ có chủ đích của luật "không gradient": lớp tối dưới slogan để chữ trên ảnh đạt tương phản,
+ * không phải trang trí (design-rules.test.ts chỉ cho phép đúng token này).
+ */
+:root {
+  --login-forest: #173f32;
+  --login-gold: #f6dfa6;
+  --login-ivory: #faf8f2;
+  --login-gold-hover: #fbecc6;
+  --login-gold-busy: #d8c48f;
+  --login-mist: #cbd8cf;
+  --login-line: #7e9a8e;
+  --login-line-soft: #3f6557;
+  --login-error: #ffc2b5;
+  --login-error-line: #ff9f8c;
+  --login-error-bg: #fdece7;
+  --login-error-ink: #8e1f13;
+  --login-toggle-hover: rgba(23, 63, 50, .08);
+  --login-scrim: linear-gradient(to top, rgba(23, 63, 50, .86), rgba(23, 63, 50, .52) 50%, rgba(23, 63, 50, 0));
+  /* Bo 10px cho ô nhập và nút (không dùng pill); cao 44px (vùng bấm tối thiểu). */
+  --login-radius: 10px;
+  --login-h-field: 44px;
+}
+
 @media (min-width: 640px) {
   :root { --gutter: 24px; }
 }
 
 @media (min-width: 1024px) {
   :root { --gutter: 32px; }
+}
+
+@media (min-width: 1600px) {
+  :root { --content-max: 1400px; }
+}
+
+@media (min-width: 1920px) {
+  :root { --content-max: 1440px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -53,6 +53,10 @@ Lấy tinh thần của các sản phẩm hiện nay (ứng dụng nấu ăn, s�
 ### 3.1 Cấm tuyệt đối
 - [ ] Emoji trong giao diện (kể cả tiêu đề, nút, chip).
 - [ ] Gradient trang trí, kính mờ (`backdrop-filter`), blob, lá/chanh/hoa văn trang trí, icon ✨/sparkle.
+  Ngoại lệ (chốt 10/11/2026): **hero trang chủ** ("bàn ăn trong vòm") được dùng **ảnh trong khung vòm** (bo tròn đỉnh) có viền
+  sage mảnh đồng tâm (`outline-offset`); tiêu đề và logo trang chủ dùng **Fraunces** (không nghiêng).
+  Không có chữ đặt trên ảnh, không gradient. Trang đăng nhập có lớp tối `--login-scrim` dưới slogan. Mọi nơi khác vẫn không gradient,
+  không blob.
 - [ ] Số liệu minh họa không có thật ("2.340 thành viên", "245 món", "tiết kiệm 120.000đ" tự đặt).
 - [ ] Chữ < 13px; chữ xám nhạt không đạt tương phản 4.5:1.
 - [ ] Tiêu đề phụ in hoa giãn chữ (eyebrow) đặt trên **mọi** tiêu đề. Nhãn in hoa chỉ dùng cho nhãn cột bảng hoặc nhãn trường rất ngắn, và không quá 1 lần trong một khối.
@@ -75,6 +79,10 @@ Lấy tinh thần của các sản phẩm hiện nay (ứng dụng nấu ăn, s�
 ---
 
 ## 4. Màu (token CSS, hai chế độ)
+
+> **Hai nhóm trang (chốt 10/11/2026):** trang **công khai** — trang chủ, đăng nhập, đăng ký — dùng bộ màu thương hiệu **xanh rừng / ngà**
+> (`--home-*`, `--login-*`: forest #173F32, ivory #FAF8F2, gold #F6DFA6, sage #A8BDA5). Trang **trong ứng dụng** (sau khi đăng nhập) dùng
+> **bảng màu bản 8** (`docs/design/ke-hoach-ui8.md`); bảng dưới đây là bản 2, sẽ được thay khi làm bản 8.
 Chỉ dùng biến; **không viết mã màu cứng** trong CSS của trang/thành phần.
 
 | Token | Sáng | Tối | Dùng cho |
@@ -212,23 +220,25 @@ Quy tắc:
 ---
 
 ## 13. Khung chung
-**Menu trên** (sticky, nền `--bg`, kẻ dưới 1px):
-- Trái: logo "nouri." (Fraunces nghiêng — chỗ duy nhất dùng chữ nghiêng, dấu chấm `--accent`).
-- Giữa: nhóm liên kết dạng viên (khung `--surface-2`, viền 1px, bo tròn, mục cao 40px; đang chọn: nền `--surface`, chữ `--action-text` 600, viền 1px).
-- Phải: nút chế độ tối (aria-pressed), chuông có chấm `--dot`, nút tài khoản (avatar + tên) mở menu: Hồ sơ, Quản trị (chỉ ADMIN), Đăng xuất.
+**Menu trên** (đồng bộ trang chủ 11/11/2026; sticky, cao 68px, nền `--bg`, kẻ dưới 1px):
+- Trái: logo chiếc bát `NouriWordmark` (components/ui, Fraunces 600, màu `--home-ink`; cùng logo trang chủ). `Logo` cũ chỉ còn ở Đăng nhập (Admin dùng `NouriWordmark` + nhãn "Quản trị").
+- Chính giữa thanh (lưới `1fr auto 1fr`, cột hai bên tối thiểu bằng nội dung): liên kết chữ phẳng 15px, bo 8px, nền `--home-soft` khi rê chuột; đang chọn: chữ `--action-text` 600 trên nền `--home-soft`. ≤ 1200px thu vào nút menu.
+- Phải (sát mép phải): nút chế độ tối (aria-pressed), chuông có chấm `--dot`, nút tài khoản (avatar + tên) mở menu: Hồ sơ, Quản trị (chỉ ADMIN), Đăng xuất. Nút biểu tượng và nút tài khoản không viền, nền `--home-soft` khi rê chuột/mở.
 
-**Footer** (nền `--surface-2`, kẻ trên): cột thương hiệu (logo, "Ăn ngon hơn. Sống khỏe hơn.", 1 câu mô tả) + nhóm liên kết **chỉ gồm trang có thật**. Dải cuối "© 2026 Nouri · Đồ án tốt nghiệp". Bỏ FooterBotanical. Liên kết chưa có trang (/privacy, /terms, Tin tức, mạng xã hội): làm trang tĩnh ngắn hoặc bỏ.
+**Footer** (đồng bộ footer trang chủ 11/11/2026): nền xanh rừng `--home-forest-deep` (giống nhau ở chế độ sáng/tối), gọn một hàng: cột thương hiệu (logo ngà, "Ăn ngon hơn. Sống khỏe hơn.", 1 câu mô tả, "© 2026 Nouri · Đồ án tốt nghiệp" nhỏ) + nhóm liên kết **chỉ gồm trang có thật**. Bỏ FooterBotanical. Liên kết chưa có trang (/privacy, /terms, Tin tức, mạng xã hội): làm trang tĩnh ngắn hoặc bỏ.
 
 ---
 
 ## 14. Từng trang — cấu trúc và tiêu chí đạt
 
-### Tổng quan (mockup: TongQuan7s)
-- Hero: lời chào theo giờ + H1 "Hôm nay nấu gì?" + món gợi ý (ưu tiên dùng đồ sắp hết hạn, nêu lý do bằng dữ liệu) + 2 nút (Xem công thức / Đổi món khác; chưa có món thì "Tạo thực đơn"); ảnh món tràn phải ~58% khi món có ảnh thật. "Thêm vào thực đơn" làm ở GĐ5.
-- Hàng 2: Dinh dưỡng hôm nay (vòng calo + 3 thanh đạm/tinh bột/béo, số thật) | Thực đơn hôm nay (bữa theo thứ tự, nút "Đã ăn" ở bữa kế tiếp).
-- Hàng 3: Tủ bếp (thống kê, món cần dùng sớm, Thêm thực phẩm; "Quét hóa đơn" thêm ở GĐ3c).
-- Hàng 4: Gợi ý món hợp hồ sơ (3 thẻ theo API gợi ý, thẻ đầu lớn hơn) + ô tìm công thức. Lượng nước là khối phụ, chưa lưu DB (GĐ5).
-- Đạt khi: số calo khớp tổng các bữa đã ăn; không còn hero lá/chanh; mobile: hero ảnh nền, nút "Đã ăn" bấm được bằng ngón cái.
+### Tổng quan (mockup: TongQuan7s; làm lại 11/11/2026 lượt 2: "báo ẩm thực mỗi ngày", không lặp hero trang chủ)
+- Đầu trang kiểu trang bìa: dòng ngày (`todayLabel`, chữ hoa màu chính) + lời chào; H1 Fraunces "Hôm nay nấu gì?"; mục "Món của hôm nay · n/N" kẻ trên mảnh: tên món Fraunces, lý do gợi ý (dữ liệu thật), thời gian, calo, 2 nút (Xem công thức / Đổi món khác; chưa có món thì "Tạo thực đơn"). Bên phải: ảnh lớn **khung hình lá** (hai góc đối bo 200px) với mảng `--home-soft` lệch phía sau. Món có ảnh thật (`Recipe.imageUrl` Cloudinary) thì hiện ảnh món, alt là tên món; chưa có thì ảnh bàn ăn dự phòng (`hero-table`, alt rỗng, chỉ trang trí — ngoại lệ có chủ đích của mục 10). "Đổi món khác": ảnh cũ nằm dưới, ảnh mới hiện dần 250ms; ảnh các món gợi ý được tải trước (`DashboardHeroImage`).
+- Dải số liệu (`todayFigures`): Bữa đã ăn hôm nay (n/m; chưa có thực đơn thì ghi chữ), Thực phẩm trong kho (kho trống: nút "+ Thêm thực phẩm đầu tiên" tới `/pantry` thay cho số 0), Sắp hết hạn trong 7 ngày, Đã hết hạn (màu `--warn` khi > 0); kẻ trên đậm, kẻ dưới và ngăn dọc mảnh, không thẻ; bốn ô cùng padding trong.
+- Khung: `--content-max` (tokens.css) là khung chung của mọi trang trong ứng dụng, thanh menu và footer: 1280px, ≥ 1600px 1400px, ≥ 1920px 1440px; lề `--gutter` (16 / 24 từ 640px / 32 từ 1024px). Logo, menu, avatar và lề nội dung trùng vị trí trên mọi trang.
+- Hôm nay (7 : 5): Thực đơn hôm nay (dòng thời gian kẻ mảnh, tên món Fraunces, bữa tiếp theo trên nền `--surface-2` kèm nút "Đã ăn", dải Hoàn tác) | cột phụ nền `--surface-2`: Dinh dưỡng hôm nay (vòng calo + 3 thanh) và Nước hôm nay (chưa lưu DB, GĐ5).
+- Tủ bếp: dải xanh rừng thương hiệu; "Cần dùng sớm" như các cột báo (số ngày còn lại chữ hoa, ≤ 2 ngày màu `--home-gold`; tên Fraunces; mở `/pantry?item=`), cảnh báo đồ đã hết hạn `--home-alert`, Thêm thực phẩm / Quét hóa đơn.
+- Gợi ý cho bạn: thẻ dùng chung đều nhau (không thẻ lớn vì món đầu đã ở đầu trang), không viền, nền dịu + ô tìm công thức.
+- Đạt khi: số calo khớp tổng các bữa đã ăn; không còn hero lá/chanh; mobile: ảnh dưới chữ, số liệu 2 × 2, nút "Đã ăn" bấm được bằng ngón cái.
 
 ### Công thức (mockup: CongThuc7s)
 - Hero + ô tìm kiếm → chip danh mục (tiếng Việt, có số món thật) + Bộ lọc → Dành cho bạn (1 thẻ lớn + 2 thẻ nhỏ: API gợi ý trả 3 món; thẻ lớn có "Có trong kho / Còn thiếu / % mục tiêu calo") → Tất cả công thức (lưới/danh sách, sắp xếp, phân trang).
@@ -272,17 +282,36 @@ Quy tắc:
 - Form chia nhóm có tiêu đề: Thông tin cơ bản, Mục tiêu, Chế độ ăn & dị ứng, Khẩu vị. Kết quả chỉ tiêu dinh dưỡng hiện bên cạnh (≥1024px), cập nhật sau khi lưu.
 - Một nút "Lưu hồ sơ" ở cuối form (không dính khi cuộn, để không che trường), kèm dòng "Có thay đổi chưa lưu"; dị ứng, món không thích, ẩm thực nhập dạng thẻ.
 
-### Đăng nhập / Đăng ký (chưa có mockup)
+### Đăng nhập / Đăng ký (bản thiết kế đã duyệt 10/11/2026: "nouri-login-handoff")
+- Chia đôi: ảnh món ăn trái (11fr ≈ 55%, slogan Fraunces "Hôm nay ăn gì cho khỏe?" trên lớp tối `--login-scrim`), form phải nền
+  `--login-forest`; màu riêng `--login-*` (forest #173F32, gold #F6DFA6, ivory #FAF8F2), giống nhau ở chế độ sáng và tối, không có
+  nút đổi chế độ. Fraunces cho tiêu đề/slogan, Be Vietnam Pro cho nội dung. ≤ 1023px ảnh lên trên 300px, ≤ 640px 176px.
+- Tinh chỉnh 10/11: logo cùng cỡ trang chủ (`ui-logo` 1.75rem, dấu chấm vàng trên nền tối); tiêu đề Fraunces 400; ô nhập và nút cao
+  52px, bo 10px (không pill); focus là outline vàng tách khỏi ô; autofill giữ nền ngà (`:-webkit-autofill`, `:autofill`); lỗi viền 2px +
+  chữ dưới ô; điều khoản ở chân cột form sau đường kẻ mảnh; một cột (≤ 1023px) form nằm ngay dưới logo.
+- Không hiện nút Google/Apple/Microsoft và "Quên mật khẩu?" của bản thiết kế (chưa có luồng). Mã: `pages/LoginPage.tsx`,
+  `components/auth/AuthForm.tsx`, `styles/ui/auth.css`; ảnh `public/assets/login/`.
+- (Bản cũ, trước 10/11, giữ để tra:)
 - Hai cột ≥1024px: trái form, phải khối `--surface-2` với một câu giới thiệu cụ thể về Nouri (thay bằng ảnh món thật khi có). Điện thoại: chỉ form.
 - Checkbox "Nhớ đăng nhập" giữ hành vi hiện có. Lỗi nói rõ ("Email hoặc mật khẩu chưa đúng").
 
-### Admin (chưa có mockup)
-- Trang công cụ: không ảnh, mật độ thông tin cao nhưng gọn. Điều hướng con bằng tab: Thống kê, Công thức, Người dùng, Kiểm duyệt, Nhật ký.
-- Thống kê: 4 số tổng (có chú thích: "trong đó 1 bị khóa") + biểu đồ 12 tuần (Recharts, màu token, có nhãn trục, đọc được ở chế độ tối).
+### Admin (tách khu riêng 11/11/2026)
+- Điều hướng: ADMIN đăng nhập xong vào thẳng `/admin` (giữ `next` nếu là trang Admin hoặc `/recipes/:id`); ADMIN mở trang người dùng → `/admin`, trừ xem trước công thức `/recipes/:id` (dải "Về trang quản trị" dưới menu). USER mở `/admin` → Tổng quan. Hàm thuần `postLoginPath`, `adminRedirect` (`features/layout/layout.logic.ts`, có test).
+- Khung riêng `AdminLayout` (không menu trên/footer của người dùng): ≥ 1024px menu trái 264px — logo chiếc bát + nhãn "Quản trị", Tổng quan / Công thức / Người dùng / Kiểm duyệt / Nhật ký (`ADMIN_NAV`, liên kết kiểu `.site-nav__link`), cuối menu: chế độ tối, tài khoản admin, Đăng xuất. < 1024px: thanh trên (logo + nút menu) mở menu dạng ngăn kéo. Không có chuông thông báo.
+- Kiểu trang theo trang người dùng: tiêu đề lớn Fraunces, khung bảng/biểu đồ/bài viết bo 24px, ô lọc dạng viên. Trang công cụ: không ảnh, mật độ thông tin cao nhưng gọn.
+- Tổng quan: 4 số tổng (có chú thích: "trong đó 1 bị khóa") thành dải ngăn bằng đường mảnh, ghi "không tính tài khoản mẫu minh họa" + biểu đồ 12 tuần (Recharts, màu token, có nhãn trục, đọc được ở chế độ tối).
 - Bảng có tìm kiếm, lọc, phân trang. Công thức: form tạo/sửa có upload ảnh (xem trước), báo lỗi nhãn chay theo từng nguyên liệu. Người dùng: Khóa/Mở khóa. Kiểm duyệt: xem bài + xóa. Nhật ký: thời gian, người thực hiện, hành động, đối tượng.
-- Mọi thao tác xóa/khóa dùng ConfirmDialog.
+- Mọi thao tác xóa/khóa dùng ConfirmDialog. Test kiểm kê `features/admin/admin-controls.test.ts`: mọi nút/hộp thoại Admin phải còn.
 
 ### Landing
+- **Làm lại 10/11/2026** (thay các ý dưới): màu thương hiệu `--home-*` (forest #173F32, gold #F6DFA6, ivory #FAF8F2, sage #A8BDA5; có bản
+  tối), chỉ Be Vietnam Pro, logo đậm không nghiêng. Header riêng (neo + Đăng nhập/Đăng ký), hero nền xanh với ảnh món (cùng ảnh trang
+  đăng nhập) và thẻ một món thật từ `/featured` chồng lên góc [thay 10/11: hero "bàn ăn trong vòm" — nền ngà, mảng xanh rừng từ giữa cột ảnh tràn mép phải; một ảnh bàn
+  ăn thật (nhiều bữa) trong khung vòm vắt qua ranh giới hai màu; mockup màn Thực đơn (HTML/CSS, dải 7 ngày + 3 bữa có thật trong bộ 33 món + tổng calo,
+  `HeroMealPlanMockup`) đè chân vòm nối với cột chữ; không dãy số liệu, không ảnh trang trí; nút phụ "Xem cách hoạt động"; cao vừa một
+  màn hình, chữ thẳng lề logo; ≤ 1023px: chữ trên, vòm giữa, mảng xanh nửa dưới; ảnh do người dùng cung cấp, xem
+  `public/assets/home/NGUON.txt`]; 5 chức năng (Kho là khối lớn, kèm quét hóa đơn); món thật + số theo nhóm
+  từ `/stats`; 4 bước; Cộng đồng; dải mời cuối; footer riêng nền xanh. Khách bấm trang cần đăng nhập → `/login?next=…` (`landingLink`).
 - Menu bản cho khách (logo, liên kết neo tới các phần, chế độ tối, Đăng nhập) + footer chung.
 - Hero: một câu nói rõ Nouri làm gì + "Đăng ký miễn phí" / "Đăng nhập"; ảnh món thật nếu có (`GET /api/recipes/featured`), chưa có thì chỉ chữ.
 - Các phần, mỗi phần một ý: Nouri giúp gì (3 việc, không icon) → Món trong Nouri (số thật từ `/api/recipes/stats`, 6 món từ `/featured`; khách bấm món thì sang đăng nhập rồi mở đúng món) → Cách hoạt động (4 bước đánh số: kho → hồ sơ → thực đơn → đi chợ) → Cộng đồng (chỉ mô tả) → lời kêu gọi đăng ký.
@@ -313,6 +342,6 @@ Các điểm đã ghi vào mục 3–14 ở trên; tóm tắt để tra nhanh. V
 | Thực đơn | Nhóm đi chợ đoán theo tên (tới GĐ3b) | Backend chưa điền `category` |
 | Cộng đồng | Không Lưu bài/Theo dõi/thành viên nổi bật (GĐ5) | Trước đây chỉ là state giả |
 | Hồ sơ | Nút lưu không dính | Thanh dính che trường cuối trên điện thoại |
-| Đăng nhập | Cột phải là khối chữ, chưa có ảnh | Chưa có ảnh món thật |
+| Đăng nhập | ~~Cột phải là khối chữ, chưa có ảnh~~ → làm theo bản thiết kế đã duyệt 10/11 (mục 14); ẩn nút OAuth và "Quên mật khẩu?"; giữ dòng điều khoản; gradient duy nhất `--login-scrim` (lớp tối để slogan đọc được) | Chưa có OAuth/quên mật khẩu; lớp tối là chức năng, không trang trí |
 | Admin | Bảng thành thẻ từ ≤ 1023px (không phải 760px) | Bảng Công thức 8 cột tràn khung ở 768px |
 | Landing | Hero 4:3; ≤ 1024px ảnh xếp dưới chữ; thẻ chưa có ảnh chỉ có chữ | Cân với cột chữ; không phủ lớp mờ lên ảnh; tránh lưới ô xám |
