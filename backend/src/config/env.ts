@@ -12,6 +12,8 @@ export const envSchema = z.object({
   JWT_SECRET: z.string().min(32),
   OPENAI_API_KEY: z.string().optional(),
   OPENAI_MODEL: z.string().default("gpt-5-mini"),
+  // Quét hóa đơn bằng AI (GĐ3c phần 2): model phải đọc được ảnh.
+  OPENAI_VISION_MODEL: z.preprocess((value) => (value === "" ? undefined : value), z.string().default("gpt-5-mini")),
   // Upload ảnh (tùy chọn): đủ cả ba hoặc không có biến nào; không có thì API upload trả 503, phần còn lại vẫn chạy.
   CLOUDINARY_CLOUD_NAME: optionalText,
   CLOUDINARY_API_KEY: optionalText,

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { ReceiptDraftLine } from "../../types";
 import {
-  commitMessage, isExpiryEstimated, providerNotice, receiptFileError, restoreSkippedLine, reviewErrors, scaledSize, scanStageText, scanStepOf,
+  commitMessage, isExpiryEstimated, providerNotice, receiptFileError, scanModeOptions, restoreSkippedLine, reviewErrors, scaledSize, scanStageText, scanStepOf,
   targetText, toCommitLines, toEditableLines, undoMessage, uploadErrorMessage,
 } from "./receipt-scan.logic";
 
@@ -34,6 +34,24 @@ describe("receipt-scan.logic", () => {
 
   it("ghi rõ chế độ đọc dự phòng", () => {
     expect(providerNotice("tesseract")).toBe("Đọc bằng chế độ dự phòng, vui lòng kiểm tra kỹ từng dòng trước khi lưu.");
+  });
+
+  it("Tự động chuyển dự phòng: màn duyệt nói rõ lý do OpenAI lỗi", () => {
+    expect(providerNotice("tesseract", "OPENAI_TIMEOUT")).toContain("Đọc bằng AI quá thời gian nên Nouri đã tự đọc lại bằng chế độ dự phòng");
+    expect(providerNotice("tesseract", "OPENAI_INVALID_OUTPUT")).toContain("trả kết quả không hợp lệ");
+    expect(providerNotice("tesseract", "OPENAI_FAILED")).toContain("Đọc bằng AI không thành công");
+    expect(providerNotice("openai")).toContain("Đọc bằng AI (OpenAI)");
+  });
+
+  it("chọn chế độ đọc chỉ hiện khi có cả OpenAI và Tesseract", () => {
+    const status = (openai: boolean, tesseract = true) => ({
+      providers: [{ id: "tesseract" as const, available: tesseract, reason: null }, { id: "openai" as const, available: openai, reason: null }],
+      defaultProvider: null, dailyLimit: 10, usedToday: 0, remainingToday: 10,
+    });
+    expect(scanModeOptions(status(true))?.map(([mode]) => mode)).toEqual(["auto", "openai", "tesseract"]);
+    expect(scanModeOptions(status(false))).toBeNull();
+    expect(scanModeOptions(status(true, false))).toBeNull();
+    expect(scanModeOptions(undefined)).toBeNull();
   });
 
   it("hạn ước tính chỉ còn khi chưa sửa ngày", () => {

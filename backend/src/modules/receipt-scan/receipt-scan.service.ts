@@ -1,11 +1,14 @@
 import type { ReceiptOcrProvider as ProviderEnum, ReceiptScanStatus } from "@prisma/client";
 import { env } from "../../config/env.js";
 import { prisma } from "../../lib/prisma.js";
-import { defaultReceiptProvider, receiptProvider, receiptProviderOptions, type SelectableProvider } from "../../services/receipt/ocr-providers.js";
+import {
+  defaultReceiptProvider, receiptProvider, receiptProviderOptions, scanPlan, type ScanMode, type SelectableProvider,
+} from "../../services/receipt/ocr-providers.js";
+import { VisionReadError } from "../../services/receipt/providers/openai-vision-provider.js";
 import { prepareReceiptImage } from "../../services/receipt/receipt-image.js";
 import { normalizeReceiptItems, type NormalizeContext } from "../../services/receipt/receipt-normalize.js";
 import { parseOcrOutput } from "../../services/receipt/receipt-parser.js";
-import type { ReceiptOcrProvider } from "../../services/receipt/receipt-types.js";
+import type { OcrOutput, ReceiptOcrProvider } from "../../services/receipt/receipt-types.js";
 import { HttpError } from "../../utils/http-error.js";
 import { vietnamToday } from "../../utils/vietnam-date.js";
 import {
@@ -65,13 +68,14 @@ async function loadNormalizeContext(userId: string): Promise<NormalizeContext> {
  * POST /api/pantry/receipt-scans: kiểm chế độ đọc, giới hạn lượt/ngày, hàng đợi; xử lý ảnh (xóa EXIF, thu nhỏ); tạo lần quét
  * rồi đọc nền. Trả ngay { id, phase: "queued" }; tiến trình xem ở GET /:id. Không ghi kho.
  */
-export async function startReceiptScan(userId: string, image: Buffer, requested?: SelectableProvider, now = new Date()) {
-  const providerId = requested ?? defaultReceiptProvider();
+export async function startReceiptScan(userId: string, image: Buffer, mode: ScanMode = "auto", now = new Date()) {
+  const [providerId, backupId] = scanPlan(mode, receiptProviderOptions());
   const provider = providerId ? receiptProvider(providerId) : null;
   if (!providerId || !provider) {
     const reason = receiptProviderOptions().find((option) => option.id === providerId)?.reason;
     throw new HttpError(503, reason ?? "Chưa có chế độ đọc hóa đơn nào dùng được.");
   }
+  const backup = backupId ? receiptProvider(backupId) : null;
   if (receiptJobs.hasActive(userId)) throw new HttpError(409, "Đang có một lần quét chưa xong, vui lòng chờ.");
   const limit = env.RECEIPT_SCAN_DAILY_LIMIT;
   if (await countScansToday(userId, now) >= limit) {
@@ -80,33 +84,65 @@ export async function startReceiptScan(userId: string, image: Buffer, requested?
   if (!provider.canAccept()) throw new HttpError(503, "Máy chủ đang bận đọc hóa đơn khác, vui lòng thử lại sau ít phút.");
   const prepared = await prepareReceiptImage(image, providerId === "openai" ? "vision" : "ocr");
   const scan = await prisma.receiptScan.create({ data: { userId, provider: PROVIDER_ENUM[providerId] }, select: { id: true } });
-  receiptJobs.create(scan.id, userId);
-  const finished = runScan(scan.id, userId, provider, prepared);
+  receiptJobs.create(scan.id, userId, providerId);
+  // Ảnh gốc chỉ giữ trong bộ nhớ tới khi đọc xong, để chế độ "Tự động" đọc lại bằng Tesseract khi OpenAI lỗi.
+  const finished = runScan(scan.id, userId, provider, prepared, backup ? { provider: backup, original: image } : null);
   return { scan: { id: scan.id, provider: providerId, phase: "queued" as const }, finished };
 }
 
-async function runScan(scanId: string, userId: string, provider: ReceiptOcrProvider, image: Buffer) {
+type Backup = { provider: ReceiptOcrProvider; original: Buffer };
+type Usage = { inputTokens: number; outputTokens: number } | null;
+
+/** Mã lỗi lưu DB + câu báo cho người dùng. */
+export function failureOf(error: unknown) {
+  if (error instanceof VisionReadError) {
+    const message = error.code === "OPENAI_TIMEOUT" ? "Đọc bằng AI quá thời gian." : "Đọc bằng AI không thành công.";
+    return { code: error.code, message: `${message} Hãy thử lại hoặc chọn "Chế độ dự phòng".` };
+  }
+  if (error instanceof Error && error.message === "TESSERACT_TIMEOUT") {
+    return { code: "TIMEOUT", message: "Đọc ảnh quá lâu. Hãy chụp gần hơn, đủ sáng rồi thử lại." };
+  }
+  return { code: "READ_FAILED", message: "Không đọc được ảnh này. Hãy chụp lại rõ hơn." };
+}
+
+async function runScan(scanId: string, userId: string, provider: ReceiptOcrProvider, image: Buffer, backup: Backup | null) {
   const startedAt = Date.now();
+  const onProgress = (progress: number) => receiptJobs.update(scanId, { phase: "reading", progress });
+  // Token OpenAI ghi cả khi kết quả hỏng (vẫn mất phí); Tesseract không có.
+  let usage: Usage = null;
+  let fallbackCode: string | null = null;
   try {
-    const output = await provider.read(image, (progress) => receiptJobs.update(scanId, { phase: "reading", progress }));
+    let output: OcrOutput;
+    try {
+      output = await provider.read(image, onProgress);
+    } catch (error) {
+      if (error instanceof VisionReadError) usage = error.usage;
+      if (!backup || receiptJobs.get(scanId, userId)?.cancelled) throw error;
+      fallbackCode = failureOf(error).code;
+      console.warn("Quét hóa đơn: OpenAI lỗi, chuyển Tesseract:", fallbackCode);
+      receiptJobs.update(scanId, { phase: "reading", progress: 0, provider: "tesseract", fallbackCode });
+      output = await backup.provider.read(await prepareReceiptImage(backup.original, "ocr"), onProgress);
+    }
+    if (output.kind === "items" && output.usage) usage = output.usage;
     receiptJobs.update(scanId, { phase: "parsing", progress: 1 });
     if (receiptJobs.get(scanId, userId)?.cancelled) return;
     const parsed = parseOcrOutput(output);
     const items = normalizeReceiptItems(parsed.items, await loadNormalizeContext(userId));
     await prisma.receiptScan.updateMany({
-      where: { id: scanId, status: "PROCESSING" }, data: { status: "READY", lineCount: items.length, durationMs: Date.now() - startedAt },
+      where: { id: scanId, status: "PROCESSING" },
+      data: {
+        status: "READY", lineCount: items.length, durationMs: Date.now() - startedAt, ...usage, fallbackCode,
+        ...(fallbackCode ? { provider: "TESSERACT" as const } : {}),
+      },
     });
     receiptJobs.update(scanId, { phase: "ready", draft: { items, skipped: parsed.skipped } });
   } catch (error) {
-    const timeout = error instanceof Error && error.message === "TESSERACT_TIMEOUT";
+    const failure = failureOf(error);
     console.error("Quét hóa đơn lỗi:", error instanceof Error ? error.message : error);
-    receiptJobs.update(scanId, {
-      phase: "failed",
-      error: timeout ? "Đọc ảnh quá lâu. Hãy chụp gần hơn, đủ sáng rồi thử lại." : "Không đọc được ảnh này. Hãy chụp lại rõ hơn.",
-    });
+    receiptJobs.update(scanId, { phase: "failed", error: failure.message });
     await prisma.receiptScan.updateMany({
       where: { id: scanId, status: "PROCESSING" },
-      data: { status: "FAILED", errorCode: timeout ? "TIMEOUT" : "READ_FAILED", durationMs: Date.now() - startedAt },
+      data: { status: "FAILED", errorCode: failure.code, durationMs: Date.now() - startedAt, ...usage, fallbackCode },
     }).catch(() => undefined);
   }
 }
@@ -132,11 +168,13 @@ export async function getReceiptScan(userId: string, id: string) {
     where: { id, userId }, select: { id: true, provider: true, status: true, lineCount: true, createdAt: true, committedAt: true, reversedAt: true },
   });
   if (!scan) throw notFound();
-  const base = { ...scan, provider: scan.provider.toLowerCase() };
+  const base = { ...scan, provider: scan.provider.toLowerCase(), fallbackCode: null as string | null };
   const done = DONE_PHASE[scan.status];
   if (done) return { ...base, phase: done, progress: null, draft: null, error: null };
   const job = receiptJobs.get(id, userId);
-  if (job) return { ...base, phase: job.phase, progress: job.progress, draft: job.draft, error: job.error };
+  if (job) {
+    return { ...base, provider: job.provider, fallbackCode: job.fallbackCode, phase: job.phase, progress: job.progress, draft: job.draft, error: job.error };
+  }
   if (scan.status === "PROCESSING") {
     // Server khởi động lại giữa chừng: lần quét không còn chạy nữa.
     await prisma.receiptScan.updateMany({ where: { id, status: "PROCESSING" }, data: { status: "FAILED", errorCode: "INTERRUPTED" } });

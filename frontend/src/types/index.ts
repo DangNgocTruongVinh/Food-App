@@ -108,6 +108,8 @@ export interface PantryTransaction {
 }
 // Quét hóa đơn (GĐ3c). Dòng nháp do backend đọc và chuẩn hóa; người dùng duyệt rồi mới lưu.
 export type ReceiptProviderId = "tesseract" | "openai";
+/** "auto": OpenAI nếu có, lỗi thì tự chuyển Tesseract. */
+export type ReceiptScanMode = "auto" | ReceiptProviderId;
 export type ReceiptScanPhase = "queued" | "reading" | "parsing" | "ready" | "failed" | "expired" | "committed" | "reversed";
 export type ReceiptSkipReason = "HEADER" | "TOTAL" | "TAX" | "DISCOUNT" | "PAYMENT" | "BAG" | "FEE" | "POINTS" | "LABEL_INFO" | "NOISE";
 export type ReceiptLineFlag = "LOW_CONFIDENCE" | "QUANTITY_GUESSED" | "UNIT_GUESSED" | "NAME_UNMATCHED" | "PRICE_MISMATCH";
@@ -125,6 +127,8 @@ export interface ReceiptScanStatus {
 }
 export interface ReceiptScan {
   id: string; provider: ReceiptProviderId; phase: ReceiptScanPhase; progress: number | null; error: string | null;
+  /** Chế độ "Tự động" đã chuyển sang Tesseract vì OpenAI lỗi: OPENAI_TIMEOUT | OPENAI_INVALID_OUTPUT | OPENAI_FAILED. */
+  fallbackCode: string | null;
   draft: { items: ReceiptDraftLine[]; skipped: Array<{ rawText: string; reason: ReceiptSkipReason }> } | null;
 }
 export interface ReceiptCommitLine {

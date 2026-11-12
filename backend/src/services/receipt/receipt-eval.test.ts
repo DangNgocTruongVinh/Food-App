@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { matchItems, nameSimilarity, scoreReceipt, summarizeScores } from "./receipt-eval.js";
+import { matchItems, nameSimilarity, scoreReceipt, summarizeScores, scanCost } from "./receipt-eval.js";
 
 describe("receipt-eval", () => {
   it("độ giống tên bỏ dấu, chịu lỗi OCR vài ký tự", () => {
@@ -29,5 +29,13 @@ describe("receipt-eval", () => {
     );
     expect(score).toEqual({ expected: 3, predicted: 4, matched: 3, nameExact: 3, unitOk: 2, quantityOk: 1 });
     expect(summarizeScores([score])).toMatchObject({ precision: 0.75, recall: 1, nameRate: 1, quantityRate: 1 / 3 });
+  });
+});
+
+describe("scanCost", () => {
+  it("USD theo giá mỗi triệu token vào/ra, VNĐ theo tỉ giá", () => {
+    expect(scanCost({ inputTokens: 2_000_000, outputTokens: 500_000 }, { inputPerMillion: 0.25, outputPerMillion: 2, vndPerUsd: 25_000 }))
+      .toEqual({ usd: 1.5, vnd: 37_500 });
+    expect(scanCost({ inputTokens: 0, outputTokens: 0 })).toEqual({ usd: 0, vnd: 0 });
   });
 });

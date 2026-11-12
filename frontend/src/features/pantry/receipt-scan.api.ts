@@ -1,5 +1,7 @@
 import { api } from "../../api/client";
-import type { ReceiptCommitLine, ReceiptCommitResult, ReceiptProviderId, ReceiptScan, ReceiptScanStatus, ReceiptUndoResult } from "../../types";
+import type {
+  ReceiptCommitLine, ReceiptCommitResult, ReceiptProviderId, ReceiptScan, ReceiptScanMode, ReceiptScanStatus, ReceiptUndoResult,
+} from "../../types";
 
 // Quét hóa đơn (GĐ3c): /api/pantry/receipt-scans. Ảnh gửi multipart, đọc ở nền; GET /:id để theo dõi tiến trình.
 
@@ -8,11 +10,11 @@ export async function getReceiptScanStatus() {
 }
 
 export async function uploadReceipt(
-  image: Blob, provider: ReceiptProviderId | null, options: { signal?: AbortSignal; onProgress?: (fraction: number) => void } = {},
+  image: Blob, mode: ReceiptScanMode, options: { signal?: AbortSignal; onProgress?: (fraction: number) => void } = {},
 ) {
   const form = new FormData();
   form.append("image", image, "receipt.jpg");
-  if (provider) form.append("provider", provider);
+  form.append("provider", mode);
   const response = await api.post<{ id: string; provider: ReceiptProviderId; phase: "queued" }>("/pantry/receipt-scans", form, {
     signal: options.signal,
     onUploadProgress: (event) => {

@@ -18,6 +18,10 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock("../../config/env.js", () => ({ env: { JWT_SECRET: mocks.secret } }));
+vi.mock("../../services/receipt/ocr-providers.js", () => ({
+  receiptProviderOptions: () => [{ id: "tesseract", available: true, reason: null }, { id: "openai", available: false, reason: "Cần key" }],
+  defaultReceiptProvider: () => "tesseract",
+}));
 vi.mock("../../lib/prisma.js", () => ({
   prisma: {
     chatMessage: { findMany: mocks.listHistory, createMany: mocks.createMessages },
@@ -149,7 +153,9 @@ describe("AI chat HTTP contract (no database or OpenAI request)", () => {
 describe("AI status", () => {
   it.each([true, false])("reports only whether OpenAI is configured (%s), never the key", async (available) => {
     mocks.isAIConfigured.mockReturnValue(available);
-    expect(await request(app, "/api/ai/status", { token: token() })).toEqual({ status: 200, body: { available } });
+    expect(await request(app, "/api/ai/status", { token: token() })).toEqual({
+      status: 200, body: { available, receiptScan: { auto: "tesseract", openai: false, tesseract: true } },
+    });
   });
 });
 

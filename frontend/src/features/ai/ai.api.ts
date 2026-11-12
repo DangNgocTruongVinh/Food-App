@@ -3,7 +3,11 @@ import type { ChatMessage, DashboardData } from "../../types";
 
 export interface ChatResponse { answer: string }
 /** Backend chỉ cho biết đã cấu hình OpenAI hay chưa. */
-export interface AIStatus { available: boolean }
+export interface AIStatus {
+  available: boolean;
+  /** auto: nhà cung cấp đọc trước ở chế độ "Tự động" (null = không quét được). */
+  receiptScan?: { auto: "openai" | "tesseract" | null; openai: boolean; tesseract: boolean };
+}
 
 export async function getAIStatus() {
   return (await api.get<AIStatus>("/ai/status")).data;

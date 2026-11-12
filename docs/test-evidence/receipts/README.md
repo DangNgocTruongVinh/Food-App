@@ -1,6 +1,6 @@
 # Bộ hóa đơn đánh giá quét hóa đơn (GĐ3c)
 
-Khoảng 10 hóa đơn/nhãn thật để đo tỉ lệ đọc đúng của từng chế độ (Tesseract, sau này OpenAI).
+Khoảng 10 hóa đơn/nhãn thật để đo tỉ lệ đọc đúng của từng chế độ (Tesseract và OpenAI).
 
 ## Tệp trong thư mục
 
@@ -9,7 +9,7 @@ Khoảng 10 hóa đơn/nhãn thật để đo tỉ lệ đọc đúng của từ
 | `rNN.jpg` (hoặc `.png`, `.webp`) | Ảnh đã che thông tin cá nhân (`r01`, `r02`, …) |
 | `rNN.json` | Đáp án: các dòng hàng thật trên hóa đơn, theo mẫu `_mau-dap-an.json` |
 | `rNN.txt` (tùy chọn) | Chữ trên hóa đơn gõ lại từng dòng, để đo riêng bộ phân tích (`--parser-only`), mẫu `_mau-dap-an.txt` |
-| `ket-qua-<chế độ>.md` | Kết quả do script ghi ra |
+| `ket-qua.md` | Kết quả do script ghi ra (mọi chế độ đã chạy: tỉ lệ đúng, thời gian, token và chi phí OpenAI) |
 
 Tệp bắt đầu bằng `_` là mẫu, script bỏ qua.
 

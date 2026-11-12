@@ -1,6 +1,6 @@
 import type {
   FoodUnit, ReceiptCommitLine, ReceiptCommitResult, ReceiptDraftLine, ReceiptLineFlag, ReceiptLineTarget, ReceiptProviderId,
-  ReceiptScanPhase, ReceiptSkipReason, ReceiptUndoResult, StorageLocation,
+  ReceiptScanMode, ReceiptScanPhase, ReceiptScanStatus, ReceiptSkipReason, ReceiptUndoResult, StorageLocation,
 } from "../../types";
 import { formatPantryQuantity } from "./pantry.logic";
 
@@ -49,14 +49,33 @@ export function scanStageText(stage: ScanStage, fraction: number | null) {
 
 export const PROVIDER_LABELS: Record<ReceiptProviderId, string> = {
   tesseract: "Chế độ dự phòng (Tesseract, đọc trên máy chủ)",
-  openai: "OpenAI",
+  openai: "Đọc bằng AI (OpenAI)",
 };
 
-/** Dòng nhắc ở đầu màn duyệt: chế độ đọc đang dùng. */
-export function providerNotice(provider: ReceiptProviderId) {
+const SCAN_MODE_OPTIONS: ReadonlyArray<readonly [ReceiptScanMode, string]> = [
+  ["auto", "Tự động"], ["openai", "Đọc bằng AI"], ["tesseract", "Chế độ dự phòng"],
+];
+
+/** Lựa chọn chế độ đọc: chỉ hiện khi cả OpenAI và Tesseract đều dùng được (thiếu một thì "Tự động" là chế độ duy nhất). */
+export function scanModeOptions(status: ReceiptScanStatus | undefined) {
+  const available = (id: ReceiptProviderId) => status?.providers.some((option) => option.id === id && option.available) ?? false;
+  return available("openai") && available("tesseract") ? SCAN_MODE_OPTIONS : null;
+}
+
+const FALLBACK_REASONS: Record<string, string> = {
+  OPENAI_TIMEOUT: "quá thời gian",
+  OPENAI_INVALID_OUTPUT: "trả kết quả không hợp lệ",
+};
+
+/** Dòng nhắc ở đầu màn duyệt: chế độ đọc đã dùng, và lý do nếu "Tự động" phải chuyển sang chế độ dự phòng. */
+export function providerNotice(provider: ReceiptProviderId, fallbackCode: string | null = null) {
+  if (fallbackCode) {
+    const reason = FALLBACK_REASONS[fallbackCode] ?? "không thành công";
+    return `Đọc bằng AI ${reason} nên Nouri đã tự đọc lại bằng chế độ dự phòng. Vui lòng kiểm tra kỹ từng dòng trước khi lưu.`;
+  }
   return provider === "tesseract"
     ? "Đọc bằng chế độ dự phòng, vui lòng kiểm tra kỹ từng dòng trước khi lưu."
-    : "Đọc bằng OpenAI. Vẫn nên kiểm tra lại từng dòng trước khi lưu.";
+    : "Đọc bằng AI (OpenAI). Vẫn nên kiểm tra lại từng dòng trước khi lưu.";
 }
 
 export const SKIP_REASON_LABELS: Record<ReceiptSkipReason, string> = {

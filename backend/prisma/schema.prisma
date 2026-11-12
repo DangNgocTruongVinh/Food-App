@@ -359,6 +359,11 @@ model ReceiptScan {
   lineCount    Int                 @default(0)
   durationMs   Int?
   errorCode    String?
+  /// Token OpenAI vào/ra của lần quét (tính chi phí); null với Tesseract.
+  inputTokens  Int?
+  outputTokens Int?
+  /// Chế độ "Tự động": lý do OpenAI lỗi rồi chuyển Tesseract (OPENAI_TIMEOUT | OPENAI_INVALID_OUTPUT | OPENAI_FAILED).
+  fallbackCode String?
   committedAt  DateTime?
   reversedAt   DateTime?
   transactions PantryTransaction[]

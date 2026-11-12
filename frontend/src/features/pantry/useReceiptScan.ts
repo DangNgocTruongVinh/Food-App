@@ -3,7 +3,7 @@ import axios from "axios";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { getApiError } from "../../api/client";
 import { queryKeys } from "../../api/query-keys";
-import type { ReceiptProviderId, ReceiptScan } from "../../types";
+import type { ReceiptScan, ReceiptScanMode } from "../../types";
 import { shrinkReceiptImage } from "./receipt-image";
 import { cancelReceiptScan, getReceiptScan, uploadReceipt } from "./receipt-scan.api";
 import { receiptFileError, uploadErrorMessage } from "./receipt-scan.logic";
@@ -47,7 +47,7 @@ export function useReceiptScan() {
     if (processingId && poll.isError) setState({ kind: "error", message: `Mất kết nối khi đọc hóa đơn: ${getApiError(poll.error)}`, quota: false });
   }, [poll.error, poll.isError, processingId]);
 
-  const start = useCallback(async (file: File, provider: ReceiptProviderId | null) => {
+  const start = useCallback(async (file: File, mode: ReceiptScanMode) => {
     setState({ kind: "uploading", fraction: null });
     let image: Blob;
     try {
@@ -64,7 +64,7 @@ export function useReceiptScan() {
     const controller = new AbortController();
     abortRef.current = controller;
     try {
-      const created = await uploadReceipt(image, provider, {
+      const created = await uploadReceipt(image, mode, {
         signal: controller.signal,
         onProgress: (fraction) => setState({ kind: "uploading", fraction }),
       });
