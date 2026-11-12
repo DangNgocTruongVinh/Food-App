@@ -10,7 +10,7 @@ import { AdminIngredientsEditor, AdminStepsEditor } from "../../components/admin
 import { Button, ButtonLink, ErrorState, LoadingState, Skeleton } from "../../components/ui";
 import type { AdminRecipeDetail } from "../../features/admin/admin.api";
 import {
-  emptyRecipeForm, hasRecipeErrors, recipeFormFromMemberRecipe, toRecipeForm, toRecipeInput, validateRecipeForm, violationsByRow,
+  applyRecipeEstimate, emptyRecipeForm, hasRecipeErrors, recipeFormFromMemberRecipe, toRecipeForm, toRecipeInput, validateRecipeForm, violationsByRow,
   type DietViolation, type RecipeFormErrors, type RecipeFormValues,
 } from "../../features/admin/admin-recipes.logic";
 import { adminMutations, adminQueries, invalidateAdminQueries, invalidateAdminRecipeQueries } from "../../features/admin/admin.queries";
@@ -55,14 +55,17 @@ export default function AdminRecipeEditorPage() {
     setForm(toRecipeForm(detail.data));
   }, [detail.data]);
 
-  // Điền sẵn một lần từ công thức tự viết của bài (Admin bổ sung dinh dưỡng, bữa, nhãn rồi lưu).
+  // Điền sẵn một lần từ công thức tự viết của bài, rồi AI ước tính dinh dưỡng + chuẩn hóa tên nguyên liệu (Admin kiểm tra rồi lưu).
   const prefilledFrom = useRef<string | null>(null);
+  const estimate = useMutation(adminMutations.estimateRecipe());
+  const runEstimate = estimate.mutate;
   useEffect(() => {
     const post = sourcePost.data;
-    if (!post?.memberRecipe || prefilledFrom.current === post.id) return;
+    if (!post?.memberRecipe || post.promotedRecipe || prefilledFrom.current === post.id) return;
     prefilledFrom.current = post.id;
     setForm(recipeFormFromMemberRecipe(post.memberRecipe, post.content));
-  }, [sourcePost.data]);
+    runEstimate(post.id, { onSuccess: (result) => setForm((current) => applyRecipeEstimate(current, result)) });
+  }, [sourcePost.data, runEstimate]);
   const sourceProblem = !fromPostId || sourcePost.isLoading ? ""
     : sourcePost.isError ? `Chưa tải được bài viết: ${getApiError(sourcePost.error)}`
       : !sourcePost.data?.memberRecipe ? "Bài viết này không có công thức tự viết để chuyển."
@@ -172,6 +175,16 @@ export default function AdminRecipeEditorPage() {
           Điền sẵn từ công thức của {sourcePost.data.author.name}. Kiểm tra số lượng, đơn vị nguyên liệu (dòng để trống số lượng cần
           điền), bổ sung dinh dưỡng, bữa và nhãn rồi bấm "Tạo món". Bài viết sẽ hiện "Đã được thêm vào thư viện".
         </p>
+      )}
+      {sourceId && estimate.isPending && <p className="ui-notice" role="status">AI đang ước tính dinh dưỡng và chuẩn hóa tên nguyên liệu…</p>}
+      {sourceId && estimate.isSuccess && (
+        <p className="ui-notice" role="status">
+          AI ước tính, vui lòng kiểm tra: calo, đạm, tinh bột, béo cho một khẩu phần và tên nguyên liệu theo thư viện
+          ({estimate.data.ingredients.filter((item) => item.matched).length}/{estimate.data.ingredients.length} dòng khớp). Chỉ lưu khi bạn bấm "Tạo món".
+        </p>
+      )}
+      {sourceId && estimate.isError && (
+        <p className="ui-notice ui-notice--error" role="status">AI chưa ước tính được: {getApiError(estimate.error)} Vui lòng tự điền dinh dưỡng.</p>
       )}
       {fromPostId && sourcePost.isLoading && <LoadingState label="Đang tải công thức của thành viên"><Skeleton kind="block" height={48} /></LoadingState>}
       {sourceProblem && <ErrorState message={sourceProblem} />}

@@ -95,3 +95,20 @@ export function scrollChatToBottom(chatWindow: { scrollHeight: number; scrollTo:
 export function isSubmitEnter(event: { key: string; shiftKey: boolean; isComposing: boolean; keyCode?: number }) {
   return event.key === "Enter" && !event.shiftKey && !event.isComposing && event.keyCode !== 229;
 }
+
+/** Cảnh báo trên tin của trợ lý khi câu trả lời nhắc tới thành phần người dùng đã khai báo dị ứng. */
+export function allergyWarningText(terms: string[] | undefined) {
+  if (!terms?.length) return null;
+  return `Câu trả lời có nhắc tới ${terms.join(", ")} — bạn đã khai báo dị ứng. Đừng dùng gợi ý này nếu chưa kiểm tra kỹ.`;
+}
+
+export type ChatErrorKind = "unavailable" | "limit" | "other";
+
+/** Phân loại lỗi gửi câu hỏi theo mã HTTP/code từ backend: 503 (chưa có key, OpenAI lỗi) → gợi ý tính năng không cần AI. */
+export function chatErrorKind(status: number | undefined, code: unknown): ChatErrorKind {
+  if (status === 503 || code === "AI_NOT_CONFIGURED" || code === "AI_UNAVAILABLE") return "unavailable";
+  if (status === 429) return "limit";
+  return "other";
+}
+
+export const AI_NOT_CONFIGURED_TEXT = "Trợ lý AI chưa được bật trên máy chủ nên chưa trả lời được câu hỏi.";

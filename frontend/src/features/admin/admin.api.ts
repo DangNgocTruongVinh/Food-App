@@ -86,13 +86,17 @@ export type ModerationPost = {
   memberRecipe: MemberRecipe | null;
   /** Admin đã ẩn bài. */
   hidden: boolean;
+  /** AI đánh dấu, đang chờ Admin duyệt. */
+  pendingReview: boolean;
+  /** Lý do AI đánh dấu (giữ lại sau khi duyệt). */
+  aiReviewReason: string | null;
   /** Món trong thư viện đã tạo từ công thức tự viết ("Chuyển thành công thức"). */
   promotedRecipe: { id: string; name: string } | null;
 };
 
 export const AUDIT_ACTIONS = [
   "RECIPE_CREATE", "RECIPE_UPDATE", "RECIPE_HIDE", "RECIPE_SHOW", "RECIPE_DELETE", "RECIPE_IMAGE_REPLACE",
-  "USER_LOCK", "USER_UNLOCK", "POST_DELETE", "COMMENT_DELETE", "POST_HIDE", "POST_SHOW", "POST_PROMOTE",
+  "USER_LOCK", "USER_UNLOCK", "POST_DELETE", "COMMENT_DELETE", "POST_HIDE", "POST_SHOW", "POST_PROMOTE", "POST_APPROVE",
 ] as const;
 export type AuditAction = (typeof AUDIT_ACTIONS)[number];
 export type AuditTargetType = "RECIPE" | "USER" | "COMMUNITY_POST" | "COMMUNITY_COMMENT";
@@ -110,7 +114,10 @@ export async function setAdminUserLock({ id, locked }: { id: string; locked: boo
   return (await api.patch<{ id: string; lockedAt: string | null; locked: boolean }>(`/admin/users/${id}/lock`, { locked })).data;
 }
 
-export async function listModerationPosts(query: { page: number; pageSize: number }) {
+export type ModerationFilter = "all" | "ai";
+export type ModerationQuery = { page: number; pageSize: number; filter: ModerationFilter };
+
+export async function listModerationPosts(query: ModerationQuery) {
   return (await api.get<AdminPage<ModerationPost>>("/admin/community/posts", { params: query })).data;
 }
 
@@ -121,6 +128,21 @@ export async function getModerationPost(postId: string) {
 /** Ẩn/hiện bài vi phạm (không xóa); backend ghi nhật ký Admin. */
 export async function setModerationPostVisibility({ postId, hidden }: { postId: string; hidden: boolean }) {
   return (await api.patch<ModerationPost>(`/admin/community/posts/${postId}/visibility`, { hidden })).data;
+}
+
+/** Bài AI đánh dấu: "approve" cho hiện với mọi người, "hide" ẩn bài; backend ghi nhật ký Admin. */
+export async function reviewModerationPost({ postId, decision }: { postId: string; decision: "approve" | "hide" }) {
+  return (await api.patch<ModerationPost>(`/admin/community/posts/${postId}/review`, { decision })).data;
+}
+
+/** AI ước tính một khẩu phần + tên nguyên liệu chuẩn hóa (theo thứ tự công thức tự viết) cho form "Chuyển thành công thức". */
+export type RecipeEstimate = {
+  calories: number; proteinG: number; carbsG: number; fatG: number;
+  ingredients: Array<{ original: string; name: string; matched: boolean }>;
+};
+
+export async function estimatePostRecipe(postId: string) {
+  return (await api.post<RecipeEstimate>(`/admin/community/posts/${postId}/recipe-estimate`)).data;
 }
 
 export async function moderateDeletePost(postId: string) {

@@ -7,6 +7,9 @@ import {
 } from "./ai.prompts.js";
 import { generatedPlanSchema, type GeneratedPlan } from "./ai.schema.js";
 
+export type ChatTurn = { role: "user" | "assistant"; content: string };
+const CHAT_TIMEOUT_MS = 45_000;
+
 export function createOpenAIService(client: OpenAI | null, model: string) {
   return {
     async generatePlan(context: unknown): Promise<GeneratedPlan | null> {
@@ -22,15 +25,17 @@ export function createOpenAIService(client: OpenAI | null, model: string) {
       return response.output_parsed;
     },
 
-    async answerNutritionQuestion(context: unknown, question: string) {
+    /** history: vài tin gần nhất (đã cắt ngắn) để AI hiểu câu hỏi nối tiếp; câu hỏi hiện tại đi kèm ngữ cảnh. */
+    async answerNutritionQuestion(context: unknown, question: string, history: ChatTurn[] = []) {
       if (!client) return missingAIChatResponse;
       const response = await client.responses.create({
         model,
         input: [
           { role: "system", content: nutritionChatSystemPrompt },
+          ...history,
           { role: "user", content: nutritionChatUserPrompt(context, question) },
         ],
-      });
+      }, { timeout: CHAT_TIMEOUT_MS, maxRetries: 1 });
       return response.output_text;
     },
   };
@@ -44,5 +49,5 @@ const openAIService = createOpenAIService(client, env.OPENAI_MODEL);
 /** Chỉ cho biết đã cấu hình OpenAI hay chưa; không bao giờ trả về key. */
 export const isAIConfigured = () => client !== null;
 export const requestMealPlan = (context: unknown) => openAIService.generatePlan(context);
-export const requestNutritionAnswer = (context: unknown, question: string) =>
-  openAIService.answerNutritionQuestion(context, question);
+export const requestNutritionAnswer = (context: unknown, question: string, history: ChatTurn[] = []) =>
+  openAIService.answerNutritionQuestion(context, question, history);

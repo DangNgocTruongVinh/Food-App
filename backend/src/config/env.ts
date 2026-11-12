@@ -24,6 +24,8 @@ export const envSchema = z.object({
   COOKIE_SECURE: z.preprocess((value) => (value === "" || value === undefined ? undefined : value === "true" || value === true), z.boolean().optional()),
   // Số proxy tin cậy phía trước backend (nginx của frontend = 1) để rate limit đọc đúng IP người dùng; 0 = kết nối trực tiếp.
   TRUST_PROXY: z.preprocess((value) => (value === "" ? undefined : value), z.coerce.number().int().min(0).max(5).default(0)),
+  // Hỏi Nouri: số câu hỏi tối đa mỗi người mỗi ngày (giờ Việt Nam).
+  AI_CHAT_DAILY_LIMIT: z.preprocess((value) => (value === "" ? undefined : value), z.coerce.number().int().min(1).max(1000).default(30)),
   RECEIPT_SCAN_DAILY_LIMIT: z.preprocess((value) => (value === "" ? undefined : value), z.coerce.number().int().min(1).max(1000).default(10)),
 }).refine(
   (value) => {

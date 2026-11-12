@@ -155,7 +155,7 @@ describe("Community HTTP contract (mock Prisma, no database)", () => {
     expect(response.body[0]).not.toHaveProperty("likes");
     expect(response.body[0]).not.toHaveProperty("_count");
     expect(mocks.findPosts).toHaveBeenCalledWith({
-      where: { OR: [{ hiddenAt: null }, { authorId: userId }] },
+      where: { OR: [{ hiddenAt: null, pendingReviewAt: null }, { authorId: userId }] },
       orderBy: { createdAt: "desc" },
       take: 30,
       include: {

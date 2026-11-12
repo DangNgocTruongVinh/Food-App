@@ -6,6 +6,7 @@ import { deleteImageQuietly, IMAGE_FOLDERS, type UploadedImage, uploadImage } fr
 import { HIDDEN_RECIPE_MESSAGE, isRecipeHidden } from "../../services/recipe-visibility.js";
 import { HttpError } from "../../utils/http-error.js";
 import { recordAdminAction } from "../admin/admin-audit.service.js";
+import { reviewCommunityPost, reviewData, reviewTextOf } from "./community-ai-review.js";
 import { memberRecipeAllergens, readMemberRecipe } from "./community-member-recipe.js";
 import type { CreateCommunityPostBody } from "./community.schema.js";
 
@@ -29,13 +30,21 @@ export async function viewerAllergies(userId: string) {
 
 /**
  * Phần chung của bài trả cho bảng tin: công thức tự viết đã đọc lại, cảnh báo dị ứng theo hồ sơ người xem, cờ "bị ẩn"
- * (chỉ tác giả còn thấy bài bị ẩn). Bỏ hiddenAt khỏi dữ liệu trả về.
+ * (chỉ tác giả còn thấy bài bị ẩn), cờ "chờ duyệt" (AI đánh dấu). Bỏ hiddenAt, pendingReviewAt, aiReviewReason khỏi dữ liệu trả về.
  */
-export function withMemberRecipe<T extends { memberRecipe: unknown; hiddenAt: Date | null }>(post: T, allergies: string[]) {
-  const { hiddenAt, ...rest } = post;
+export function withMemberRecipe<T extends { memberRecipe: unknown; hiddenAt: Date | null; pendingReviewAt?: Date | null; aiReviewReason?: string | null }>(
+  post: T, allergies: string[],
+) {
+  const { hiddenAt, pendingReviewAt, aiReviewReason: _reason, ...rest } = post;
   const memberRecipe = readMemberRecipe(post.memberRecipe);
-  return { ...rest, memberRecipe, memberRecipeAllergens: memberRecipeAllergens(memberRecipe, allergies), hidden: Boolean(hiddenAt) };
+  return {
+    ...rest, memberRecipe, memberRecipeAllergens: memberRecipeAllergens(memberRecipe, allergies),
+    hidden: Boolean(hiddenAt), pendingReview: Boolean(pendingReviewAt),
+  };
 }
+
+/** Bài người khác thấy được: chưa bị Admin ẩn và không chờ duyệt; tác giả luôn thấy bài của mình. */
+export const visiblePostWhere = (userId: string) => ({ OR: [{ hiddenAt: null, pendingReviewAt: null }, { authorId: userId }] });
 
 type CommunityRecipeRow = { hiddenAt: Date | null } & Record<string, unknown>;
 
@@ -80,8 +89,8 @@ export function toFeedPost({ likes, _count, recipe, ...post }: FeedRow, allergie
 
 export async function listCommunityPosts(userId: string) {
   const [posts, allergies] = await Promise.all([prisma.communityPost.findMany({
-    // Bài Admin đã ẩn: chỉ tác giả còn thấy (kèm ghi chú), người khác không thấy.
-    where: { OR: [{ hiddenAt: null }, { authorId: userId }] },
+    // Bài Admin đã ẩn hoặc AI đánh dấu chờ duyệt: chỉ tác giả còn thấy (kèm ghi chú), người khác không thấy.
+    where: visiblePostWhere(userId),
     orderBy: { createdAt: "desc" },
     take: COMMUNITY_FEED_LIMIT,
     include: feedInclude(userId),
@@ -116,9 +125,11 @@ export async function createCommunityPost(authorId: string, { content, recipeId,
   if (recipeId) await assertAttachableRecipe(recipeId);
   const images = await uploadPostImages(files);
   try {
+    // AI kiểm duyệt (ảnh đã lên Cloudinary nên gửi URL): nghi vấn → chờ duyệt; không có key/lỗi → null, đăng như thường.
+    const review = await reviewCommunityPost({ text: reviewTextOf(content, memberRecipe), imageUrls: images.map((image) => image.url) });
     const [post, allergies] = await Promise.all([prisma.communityPost.create({
       data: {
-        authorId, content, recipeId: recipeId ?? null, ...(memberRecipe ? { memberRecipe } : {}),
+        authorId, content, recipeId: recipeId ?? null, ...(memberRecipe ? { memberRecipe } : {}), ...(review?.flagged ? reviewData(review) : {}),
         ...(images.length ? { images: { create: images.map((image, position) => ({ ...image, position })) } } : {}),
       },
       include: { author: { select: authorSelect }, recipe: { select: communityRecipeSelect }, ...promotedRecipeInclude, ...postImagesInclude },
@@ -269,16 +280,22 @@ type ModerationRow = Prisma.CommunityPostGetPayload<{ include: typeof moderation
 
 /** Bài cho Admin: kèm công thức tự viết (không cảnh báo dị ứng), cờ "đã ẩn", món đã chuyển vào thư viện. */
 export function toModerationPost({ _count, recipe, ...post }: ModerationRow) {
-  return { ...withMemberRecipe(post, []), recipe: toRecipeSummary(recipe), likeCount: _count.likes, commentCount: _count.comments };
+  return {
+    ...withMemberRecipe(post, []), aiReviewReason: post.aiReviewReason, recipe: toRecipeSummary(recipe),
+    likeCount: _count.likes, commentCount: _count.comments,
+  };
 }
 
 export const moderationPostInclude = { author: { select: { id: true, name: true, email: true } }, ...moderationInclude } as const;
 
 /** Danh sách bài cho Admin kiểm duyệt: mới nhất trước, kèm tác giả (có email), bình luận và số lượt thích. */
-export async function listCommunityPostsForModeration(page: number, pageSize: number) {
+export async function listCommunityPostsForModeration(page: number, pageSize: number, filter: "all" | "ai" = "all") {
+  // "ai": bài AI đánh dấu đang chờ duyệt.
+  const where = filter === "ai" ? { pendingReviewAt: { not: null } } : {};
   const [total, posts] = await Promise.all([
-    prisma.communityPost.count(),
+    prisma.communityPost.count({ where }),
     prisma.communityPost.findMany({
+      where,
       orderBy: { createdAt: "desc" },
       skip: (page - 1) * pageSize,
       take: pageSize,

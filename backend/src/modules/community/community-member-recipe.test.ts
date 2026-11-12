@@ -11,19 +11,24 @@ import communityRoutes from "./community.routes.js";
 const mocks = vi.hoisted(() => ({
   secret: "nouri-test-only-secret-at-least-32-characters",
   findPosts: vi.fn(), findPost: vi.fn(), createPost: vi.fn(), updatePost: vi.fn(), updatePosts: vi.fn(),
+  review: vi.fn(), countPosts: vi.fn(),
   findProfile: vi.fn(), findRecipes: vi.fn(), createRecipe: vi.fn(), auditCreate: vi.fn(), transaction: vi.fn(),
 }));
 
 vi.mock("../../config/env.js", () => ({ env: { JWT_SECRET: mocks.secret } }));
 vi.mock("../../lib/prisma.js", () => ({ prisma: {
   communityPost: {
-    findMany: mocks.findPosts, findUnique: mocks.findPost, create: mocks.createPost, update: mocks.updatePost, updateMany: mocks.updatePosts,
+    findMany: mocks.findPosts, count: mocks.countPosts, findUnique: mocks.findPost, create: mocks.createPost, update: mocks.updatePost, updateMany: mocks.updatePosts,
   },
   nutritionProfile: { findUnique: mocks.findProfile },
   recipe: { findMany: mocks.findRecipes, create: mocks.createRecipe },
   adminAuditLog: { create: mocks.auditCreate },
   $transaction: mocks.transaction,
 } }));
+// AI kiểm duyệt giả lập: mặc định null (không có key / API lỗi → đăng như thường).
+vi.mock("./community-ai-review.js", async (importOriginal) => ({
+  ...await importOriginal<typeof import("./community-ai-review.js")>(), reviewCommunityPost: mocks.review,
+}));
 
 const community = testApp("/api/community", communityRoutes);
 const admin = testApp("/api/admin", adminRoutes);
@@ -59,6 +64,8 @@ beforeEach(() => {
   mocks.findRecipes.mockResolvedValue([]);
   mocks.auditCreate.mockResolvedValue({ id: "log" });
   mocks.transaction.mockImplementation(tx.run);
+  mocks.review.mockResolvedValue(null);
+  mocks.countPosts.mockResolvedValue(0);
 });
 
 describe("member recipe validation (Zod)", () => {
@@ -111,11 +118,11 @@ describe("posting and editing a member recipe", () => {
     mocks.findPosts.mockResolvedValue([feedRow()]);
     const response = await request(community, "/api/community", { token: token() });
     expect(response.body[0].memberRecipeAllergens).toContain("tôm");
-    expect(mocks.findPosts.mock.calls[0][0].where).toEqual({ OR: [{ hiddenAt: null }, { authorId: userId }] });
+    expect(mocks.findPosts.mock.calls[0][0].where).toEqual({ OR: [{ hiddenAt: null, pendingReviewAt: null }, { authorId: userId }] });
   });
 
   it("lets only the author edit; others and missing posts get the same 404", async () => {
-    mocks.findPost.mockResolvedValue({ authorId: otherId, recipeId: null, _count: { images: 0 } });
+    mocks.findPost.mockResolvedValue({ authorId: otherId, recipeId: null, images: [], _count: { images: 0 } });
     const body = { content: "Sửa", memberRecipe };
     expect(await request(community, `/api/community/${postId}`, { method: "PATCH", token: token(), body }))
       .toEqual({ status: 404, body: { message: "Không tìm thấy bài viết." } });
@@ -125,13 +132,13 @@ describe("posting and editing a member recipe", () => {
   });
 
   it("edits the author's post, removes the recipe with null, and keeps the post non-empty", async () => {
-    mocks.findPost.mockResolvedValue({ authorId: userId, recipeId: null, _count: { images: 0 } });
+    mocks.findPost.mockResolvedValue({ authorId: userId, recipeId: null, images: [], _count: { images: 0 } });
     const ok = await request(community, `/api/community/${postId}`, { method: "PATCH", token: token(), body: { content: "Mới", memberRecipe } });
     expect(ok.status).toBe(200);
     expect(mocks.updatePost.mock.calls[0][0].data).toEqual({ content: "Mới", memberRecipe });
     const empty = await request(community, `/api/community/${postId}`, { method: "PATCH", token: token(), body: { content: "", memberRecipe: null } });
     expect(empty.status).toBe(422);
-    mocks.findPost.mockResolvedValue({ authorId: userId, recipeId, _count: { images: 0 } });
+    mocks.findPost.mockResolvedValue({ authorId: userId, recipeId, images: [], _count: { images: 0 } });
     const mixed = await request(community, `/api/community/${postId}`, { method: "PATCH", token: token(), body: { content: "x", memberRecipe } });
     expect(mixed.status).toBe(422);
     expect(mocks.updatePost).toHaveBeenCalledTimes(1);
@@ -192,5 +199,76 @@ describe("Admin: hide a post, turn a member recipe into a library recipe", () =>
     mocks.updatePosts.mockResolvedValue({ count: 0 });
     const response = await request(admin, "/api/admin/recipes", { method: "POST", token: token(), body: { ...libraryRecipe, sourcePostId: postId } });
     expect(response.status).toBe(409);
+  });
+});
+
+describe("AI kiểm duyệt bài (phản hồi giả lập)", () => {
+  const asAdmin = () => vi.mocked(getAccountStatus).mockResolvedValue({ role: "ADMIN", lockedAt: null });
+  const flagged = { flagged: true, reason: "Có thể không liên quan ăn uống: Quảng cáo." };
+
+  it("bài nghi vấn → lưu chờ duyệt kèm lý do AI; tác giả thấy pendingReview, không thấy lý do", async () => {
+    mocks.review.mockResolvedValue(flagged);
+    mocks.createPost.mockResolvedValue(feedRow({ pendingReviewAt: new Date(), aiReviewReason: flagged.reason }));
+    const response = await request(community, "/api/community", { method: "POST", token: token(), body: { content: "Bán điện thoại" } });
+    expect(response.status).toBe(201);
+    expect(mocks.review).toHaveBeenCalledWith({ text: "Bán điện thoại", imageUrls: [] });
+    const data = mocks.createPost.mock.calls[0][0].data;
+    expect(data.pendingReviewAt).toBeInstanceOf(Date);
+    expect(data.aiReviewReason).toBe(flagged.reason);
+    expect(response.body).toMatchObject({ pendingReview: true, hidden: false });
+    expect(response.body).not.toHaveProperty("aiReviewReason");
+    expect(response.body).not.toHaveProperty("pendingReviewAt");
+  });
+
+  it("bài sạch hoặc AI không kiểm được → đăng ngay, không có trường chờ duyệt", async () => {
+    for (const review of [{ flagged: false, reason: null }, null]) {
+      mocks.createPost.mockClear();
+      mocks.review.mockResolvedValue(review);
+      await request(community, "/api/community", { method: "POST", token: token(), body: { content: "Canh chua" } });
+      expect(mocks.createPost.mock.calls[0][0].data).toEqual({ authorId: userId, content: "Canh chua", recipeId: null });
+    }
+  });
+
+  it("sửa bài thành nội dung nghi vấn → chờ duyệt lại (kiểm cả ảnh đang có)", async () => {
+    mocks.review.mockResolvedValue(flagged);
+    mocks.findPost.mockResolvedValue({ authorId: userId, recipeId: null, images: [{ url: "https://img/a.jpg" }], _count: { images: 1 } });
+    await request(community, `/api/community/${postId}`, { method: "PATCH", token: token(), body: { content: "Mới", memberRecipe: null } });
+    expect(mocks.review).toHaveBeenCalledWith({ text: "Mới", imageUrls: ["https://img/a.jpg"] });
+    expect(mocks.updatePost.mock.calls[0][0].data).toMatchObject({ pendingReviewAt: expect.any(Date), aiReviewReason: flagged.reason });
+  });
+
+  it("Admin lọc 'AI đánh dấu': chỉ bài đang chờ duyệt, kèm lý do AI", async () => {
+    asAdmin();
+    mocks.countPosts.mockResolvedValue(1);
+    mocks.findPosts.mockResolvedValue([{ ...feedRow({ pendingReviewAt: new Date(), aiReviewReason: flagged.reason }), author: { id: otherId, name: "Linh", email: "l@n.vn" } }]);
+    const response = await request(admin, "/api/admin/community/posts?filter=ai", { token: token() });
+    expect(response.status).toBe(200);
+    expect(mocks.findPosts.mock.calls[0][0].where).toEqual({ pendingReviewAt: { not: null } });
+    expect(response.body.items[0]).toMatchObject({ pendingReview: true, aiReviewReason: flagged.reason });
+  });
+
+  it.each([
+    ["approve", "POST_APPROVE", undefined],
+    ["hide", "POST_HIDE", expect.any(Date)],
+  ] as const)("Admin %s: bỏ chờ duyệt, ghi nhật ký %s trong cùng transaction; không xóa bài", async (decision, action, hiddenAt) => {
+    asAdmin();
+    mocks.findPost.mockResolvedValueOnce({ authorId: otherId, pendingReviewAt: new Date(), author: { email: "linh@nouri.vn" } })
+      .mockResolvedValueOnce({ ...feedRow({ authorId: otherId }), author: { id: otherId, name: "Linh", email: "linh@nouri.vn" } });
+    const response = await request(admin, `/api/admin/community/posts/${postId}/review`, { method: "PATCH", token: token(), body: { decision } });
+    expect(response.status).toBe(200);
+    const data = mocks.updatePost.mock.calls[0][0].data;
+    expect(data.pendingReviewAt).toBeNull();
+    expect(data.hiddenAt).toEqual(hiddenAt);
+    expect(mocks.auditCreate.mock.calls[0][0].data).toMatchObject({ action, targetType: "COMMUNITY_POST", targetId: postId });
+    expect(tx.wasCalledInTransaction(mocks.transaction, mocks.auditCreate)).toBe(true);
+  });
+
+  it("bài không còn chờ duyệt → 409; USER → 403", async () => {
+    mocks.findPost.mockResolvedValue({ authorId: otherId, pendingReviewAt: null, author: { email: "linh@nouri.vn" } });
+    const body = { decision: "approve" };
+    expect((await request(admin, `/api/admin/community/posts/${postId}/review`, { method: "PATCH", token: token(), body })).status).toBe(403);
+    asAdmin();
+    expect((await request(admin, `/api/admin/community/posts/${postId}/review`, { method: "PATCH", token: token(), body })).status).toBe(409);
+    expect(mocks.updatePost).not.toHaveBeenCalled();
   });
 });

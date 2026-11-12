@@ -1,13 +1,13 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { BookPlus, Eye, EyeOff, Trash2 } from "lucide-react";
+import { BookPlus, Eye, EyeOff, ShieldCheck, Trash2 } from "lucide-react";
 import { useCallback, useState } from "react";
 import { getApiError } from "../../api/client";
 import { AdminPager } from "../../components/admin/AdminListParts";
 import MemberRecipeCard from "../../components/community/MemberRecipeCard";
 import PostImages from "../../components/community/PostImages";
 import RecipeAttachmentCard from "../../components/community/RecipeAttachmentCard";
-import { Button, ButtonLink, Card, EmptyState, ErrorState, LoadingState, Skeleton, Tag, Toast, useConfirm } from "../../components/ui";
-import type { ModerationPost } from "../../features/admin/admin.api";
+import { Button, ButtonLink, Card, ChoiceGroup, EmptyState, ErrorState, LoadingState, Skeleton, Tag, Toast, useConfirm } from "../../components/ui";
+import type { ModerationFilter, ModerationPost } from "../../features/admin/admin.api";
 import { deleteCommentConfirmText, deletePostConfirmText, postVisibilityConfirmText, vietnamTime } from "../../features/admin/admin-people.logic";
 import { adminMutations, adminQueries, invalidateAdminQueries } from "../../features/admin/admin.queries";
 import { communityRelativeTime } from "../../features/community/community.logic";
@@ -21,15 +21,19 @@ function Time({ value }: { value: string }) {
 /**
  * /admin/moderation: bài mới nhất (tác giả, thời gian thật, nội dung, ảnh, công thức, lượt thích, bình luận); ẩn/hiện hoặc xóa bài,
  * xóa bình luận; bài có công thức tự viết: "Chuyển thành công thức" (mở form tạo món điền sẵn).
+ * Lọc "AI đánh dấu": bài AI cho là nghi vấn đang chờ duyệt, kèm lý do; "Duyệt bài" hoặc "Ẩn bài" (ghi nhật ký). AI không xóa bài.
  */
+const FILTER_OPTIONS: ReadonlyArray<readonly [ModerationFilter, string]> = [["all", "Tất cả bài"], ["ai", "AI đánh dấu"]];
 export default function AdminModerationPage() {
   const queryClient = useQueryClient();
   const confirm = useConfirm();
   const [page, setPage] = useState(1);
+  const [filter, setFilter] = useState<ModerationFilter>("all");
   const [toast, setToast] = useState("");
   const [actionError, setActionError] = useState("");
   const clearToast = useCallback(() => setToast(""), []);
-  const list = useQuery(adminQueries.moderation({ page, pageSize: PAGE_SIZE }));
+  const list = useQuery(adminQueries.moderation({ page, pageSize: PAGE_SIZE, filter }));
+  const review = useMutation({ ...adminMutations.reviewPost(), onSuccess: () => invalidateAdminQueries(queryClient) });
   const removePost = useMutation({ ...adminMutations.deletePost(), onSuccess: () => invalidateAdminQueries(queryClient) });
   const removeComment = useMutation({ ...adminMutations.deleteComment(), onSuccess: () => invalidateAdminQueries(queryClient) });
   const visibility = useMutation({ ...adminMutations.setPostVisibility(), onSuccess: () => invalidateAdminQueries(queryClient) });
@@ -40,6 +44,16 @@ export default function AdminModerationPage() {
     visibility.mutate({ postId: post.id, hidden: !post.hidden }, {
       onSuccess: () => setToast(post.hidden ? `Đã hiện lại bài của ${post.author.name}.` : `Đã ẩn bài của ${post.author.name}.`),
       onError: (error) => setActionError(`Chưa đổi được trạng thái bài: ${getApiError(error)}`),
+    });
+  };
+
+  /** Bài AI đánh dấu: Duyệt (không cần xác nhận, chỉ cho hiện bài) hoặc Ẩn (xác nhận như "Ẩn bài"). */
+  const reviewPost = async (post: ModerationPost, decision: "approve" | "hide") => {
+    setActionError("");
+    if (decision === "hide" && !(await confirm({ ...postVisibilityConfirmText(post), tone: "danger" }))) return;
+    review.mutate({ postId: post.id, decision }, {
+      onSuccess: () => setToast(decision === "approve" ? `Đã duyệt bài của ${post.author.name}.` : `Đã ẩn bài của ${post.author.name}.`),
+      onError: (error) => setActionError(`Chưa xử lý được bài: ${getApiError(error)}`),
     });
   };
 
@@ -64,13 +78,17 @@ export default function AdminModerationPage() {
   return (
     <section className="ad-section" aria-labelledby="ad-moderation-title">
       <h2 id="ad-moderation-title" className="ad-section__title">Kiểm duyệt cộng đồng</h2>
+      <ChoiceGroup
+        legend="Hiển thị" name="moderation-filter" options={FILTER_OPTIONS} value={filter}
+        onChange={(value) => { setFilter(value as ModerationFilter); setPage(1); }}
+      />
       {actionError && <ErrorState message={actionError} />}
       {list.isLoading ? (
         <LoadingState label="Đang tải bài viết">{[0, 1].map((index) => <Skeleton key={index} kind="block" height={220} />)}</LoadingState>
       ) : list.isError || !data ? (
         <ErrorState message="Chưa tải được bài viết." onRetry={() => void list.refetch()} retrying={list.isFetching} />
       ) : !data.items.length ? (
-        <Card><EmptyState message="Cộng đồng chưa có bài viết nào để kiểm duyệt." /></Card>
+        <Card><EmptyState message={filter === "ai" ? "Không có bài nào AI đánh dấu đang chờ duyệt." : "Cộng đồng chưa có bài viết nào để kiểm duyệt."} /></Card>
       ) : (
         <>
           <ol className="ad-posts">
@@ -87,14 +105,28 @@ export default function AdminModerationPage() {
                       {post.memberRecipe && !post.promotedRecipe && (
                         <ButtonLink icon={<BookPlus />} to={`/admin/recipes/new?fromPost=${encodeURIComponent(post.id)}`}>Chuyển thành công thức</ButtonLink>
                       )}
-                      <Button
-                        icon={post.hidden ? <Eye /> : <EyeOff />}
-                        busy={visibility.isPending && visibility.variables?.postId === post.id}
-                        aria-label={`${post.hidden ? "Hiện lại" : "Ẩn"} bài của ${post.author.name}`}
-                        onClick={() => void toggleHidden(post)}
-                      >
-                        {post.hidden ? "Hiện lại bài" : "Ẩn bài"}
-                      </Button>
+                      {post.pendingReview ? (
+                        <>
+                          <Button
+                            variant="primary" icon={<ShieldCheck />} busy={review.isPending && review.variables?.postId === post.id}
+                            aria-label={`Duyệt bài của ${post.author.name}`} onClick={() => void reviewPost(post, "approve")}
+                          >
+                            Duyệt bài
+                          </Button>
+                          <Button icon={<EyeOff />} aria-label={`Ẩn bài AI đánh dấu của ${post.author.name}`} onClick={() => void reviewPost(post, "hide")}>
+                            Ẩn bài
+                          </Button>
+                        </>
+                      ) : (
+                        <Button
+                          icon={post.hidden ? <Eye /> : <EyeOff />}
+                          busy={visibility.isPending && visibility.variables?.postId === post.id}
+                          aria-label={`${post.hidden ? "Hiện lại" : "Ẩn"} bài của ${post.author.name}`}
+                          onClick={() => void toggleHidden(post)}
+                        >
+                          {post.hidden ? "Hiện lại bài" : "Ẩn bài"}
+                        </Button>
+                      )}
                       <Button
                         variant="danger"
                         icon={<Trash2 />}
@@ -107,6 +139,9 @@ export default function AdminModerationPage() {
                     </div>
                   </header>
                   {post.hidden && <p className="ad-sub"><Tag>Đã ẩn</Tag> Người khác không thấy bài này trên bảng tin.</p>}
+                  {post.pendingReview ? (
+                    <p className="ad-sub"><Tag>AI đánh dấu</Tag> Chờ duyệt: {post.aiReviewReason ?? "không rõ lý do"}. Người khác chưa thấy bài này.</p>
+                  ) : post.aiReviewReason && <p className="ad-sub">AI từng đánh dấu: {post.aiReviewReason}</p>}
                   {post.content ? <p className="ad-post__content">{post.content}</p> : <p className="ad-sub">Bài không có chữ.</p>}
                   <PostImages images={post.images} authorName={post.author.name} />
                   {post.recipe && <RecipeAttachmentCard recipe={post.recipe} />}

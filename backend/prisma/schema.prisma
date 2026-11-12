@@ -139,6 +139,7 @@ enum AdminAuditAction {
   POST_HIDE
   POST_SHOW
   POST_PROMOTE
+  POST_APPROVE
 }
 
 enum AdminAuditTargetType {
@@ -182,6 +183,10 @@ model CommunityPost {
   memberRecipe Json?
   // Khác null: Admin ẩn bài (không hiện ở bảng tin của người khác; tác giả vẫn thấy kèm ghi chú).
   hiddenAt  DateTime?
+  // AI kiểm duyệt (Moderation API + kiểm tra "có liên quan ăn uống"): nghi vấn → khác null, bài chờ Admin duyệt, chỉ tác giả thấy.
+  // AI không bao giờ tự xóa bài; không có key/API lỗi thì đăng như thường. aiReviewReason: lý do AI (giữ lại sau khi duyệt).
+  pendingReviewAt DateTime?
+  aiReviewReason  String?
   // Admin "Chuyển thành công thức": món mới tạo từ công thức tự viết. SetNull: xóa món thì bài chỉ mất liên kết.
   promotedRecipeId String?
   promotedRecipe   Recipe?         @relation("CommunityPostPromotedRecipe", fields: [promotedRecipeId], references: [id], onDelete: SetNull)

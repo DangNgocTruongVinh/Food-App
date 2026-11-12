@@ -1,11 +1,13 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import axios from "axios";
 import { type FormEvent, useEffect, useRef, useState } from "react";
 import { getApiError } from "../api/client";
 import { ASSISTANT_INPUT_ID, AssistantChat } from "../components/assistant/AssistantChat";
 import { AssistantContextCard, AssistantHistoryCard, AssistantSuggestionsCard } from "../components/assistant/AssistantSide";
 import { ErrorState, LoadingState, Skeleton } from "../components/ui";
 import {
-  assistantPromptSuggestions, isNearChatBottom, normalizeChatMessage, RECENT_HISTORY_LIMIT, recentUserHistory, scrollChatToBottom,
+  AI_NOT_CONFIGURED_TEXT, assistantPromptSuggestions, chatErrorKind, isNearChatBottom, normalizeChatMessage, RECENT_HISTORY_LIMIT,
+  recentUserHistory, scrollChatToBottom,
 } from "../features/ai/ai.logic";
 import { aiMutations, aiQueries, invalidateAIHistory } from "../features/ai/ai.queries";
 import { profileQueries } from "../features/profile/profile.queries";
@@ -14,6 +16,8 @@ export default function AiAssistantPage() {
   const queryClient = useQueryClient();
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  // OpenAI lỗi khi gửi (503): báo trong khung chat kèm liên kết "Gợi ý cho bạn" / "Nấu gì từ kho?".
+  const [serviceError, setServiceError] = useState("");
   const [showAllHistory, setShowAllHistory] = useState(false);
   const windowRef = useRef<HTMLDivElement>(null);
   // Người dùng đang ở gần cuối khung tin nhắn: tin mới tới thì tự cuộn theo; đã cuộn lên đọc tin cũ thì để yên.
@@ -43,10 +47,14 @@ export default function AiAssistantPage() {
     // Xóa ô nhập ngay; tin hiện trong khung kèm "Nouri đang trả lời…". Gửi lỗi thì trả lại nội dung (nếu ô vẫn trống).
     setMessage("");
     setError("");
+    setServiceError("");
     chat.mutate(content, {
       onError: (err) => {
         setMessage((current) => current || content);
-        setError(`Chưa gửi được câu hỏi: ${getApiError(err)}`);
+        const response = axios.isAxiosError(err) ? err.response : undefined;
+        const kind = chatErrorKind(response?.status, (response?.data as { details?: { code?: unknown } } | undefined)?.details?.code);
+        if (kind === "unavailable") setServiceError(getApiError(err));
+        else setError(kind === "limit" ? getApiError(err) : `Chưa gửi được câu hỏi: ${getApiError(err)}`);
       },
     });
   };
@@ -65,12 +73,6 @@ export default function AiAssistantPage() {
         <h1 className="ui-title">Hỏi Nouri</h1>
         <p className="ui-text">Hỏi về bữa ăn, dinh dưỡng hoặc cách dùng thực phẩm trong kho của bạn.</p>
       </header>
-      {aiStatus && !aiStatus.available && (
-        <p className="ui-notice" role="status">
-          Chưa cấu hình OpenAI: trợ lý đang dùng câu trả lời mẫu (cùng một câu cho mọi câu hỏi),
-          chưa đọc câu hỏi, hồ sơ, kho hay thực đơn.
-        </p>
-      )}
 
       <div className="as-layout">
         {history.isLoading ? (
@@ -83,6 +85,8 @@ export default function AiAssistantPage() {
             pending={chat.isPending}
             pendingQuestion={chat.isPending ? chat.variables ?? null : null}
             error={error}
+            unavailable={aiStatus && !aiStatus.available ? { message: AI_NOT_CONFIGURED_TEXT, blocking: true }
+              : serviceError ? { message: serviceError, blocking: false } : null}
             value={message}
             onChange={setMessage}
             onSubmit={submit}

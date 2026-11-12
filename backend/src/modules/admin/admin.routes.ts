@@ -23,11 +23,13 @@ import {
 } from "./admin-recipes.schema.js";
 import {
   adminStatsController,
+  estimatePostRecipeController,
   getModerationPostController,
   listAdminUsersController,
   listModerationPostsController,
   moderateDeleteCommentController,
   moderateDeletePostController,
+  reviewPostController,
   setPostVisibilityController,
   setUserLockController,
 } from "./admin-users.controller.js";
@@ -37,6 +39,7 @@ import {
   listModerationPostsSchema,
   moderateCommentSchema,
   moderatePostSchema,
+  reviewPostSchema,
   setPostVisibilitySchema,
   setUserLockSchema,
 } from "./admin-users.schema.js";
@@ -59,6 +62,8 @@ router.patch("/users/:id/lock", validate(setUserLockSchema), asyncHandler(setUse
 router.get("/community/posts", validate(listModerationPostsSchema), asyncHandler(listModerationPostsController));
 router.get("/community/posts/:postId", validate(moderatePostSchema), asyncHandler(getModerationPostController));
 router.patch("/community/posts/:postId/visibility", validate(setPostVisibilitySchema), asyncHandler(setPostVisibilityController));
+router.patch("/community/posts/:postId/review", validate(reviewPostSchema), asyncHandler(reviewPostController));
+router.post("/community/posts/:postId/recipe-estimate", validate(moderatePostSchema), asyncHandler(estimatePostRecipeController));
 router.delete("/community/posts/:postId", validate(moderatePostSchema), asyncHandler(moderateDeletePostController));
 router.delete("/community/comments/:commentId", validate(moderateCommentSchema), asyncHandler(moderateDeleteCommentController));
 

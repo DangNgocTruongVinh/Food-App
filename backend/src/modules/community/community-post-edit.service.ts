@@ -4,6 +4,7 @@ import { HttpError } from "../../utils/http-error.js";
 import { recordAdminAction } from "../admin/admin-audit.service.js";
 import { readMemberRecipe } from "./community-member-recipe.js";
 import type { UpdateCommunityPostBody } from "./community.schema.js";
+import { reviewCommunityPost, reviewData, reviewTextOf } from "./community-ai-review.js";
 import {
   EMPTY_POST_MESSAGE, feedInclude, moderationPostInclude, toFeedPost, toModerationPost, viewerAllergies,
 } from "./community.service.js";
@@ -16,14 +17,16 @@ const POST_NOT_FOUND = "Không tìm thấy bài viết.";
  */
 export async function updateCommunityPost(authorId: string, postId: string, { content, memberRecipe }: UpdateCommunityPostBody) {
   const post = await prisma.communityPost.findUnique({
-    where: { id: postId }, select: { authorId: true, recipeId: true, _count: { select: { images: true } } },
+    where: { id: postId }, select: { authorId: true, recipeId: true, images: { select: { url: true } }, _count: { select: { images: true } } },
   });
   if (!post || post.authorId !== authorId) throw new HttpError(404, POST_NOT_FOUND);
   if (memberRecipe && post.recipeId) throw new HttpError(422, "Bài đã đính kèm món có sẵn nên không thêm công thức tự viết được.");
   if (!content && !memberRecipe && !post.recipeId && !post._count.images) throw new HttpError(422, EMPTY_POST_MESSAGE);
+  // Sửa bài cũng qua AI kiểm duyệt: nghi vấn → chờ duyệt lại; sạch → bỏ chờ duyệt; không kiểm được → giữ nguyên trạng thái.
+  const review = await reviewCommunityPost({ text: reviewTextOf(content, memberRecipe), imageUrls: post.images.map((image) => image.url) });
   const [updated, allergies] = await Promise.all([prisma.communityPost.update({
     where: { id: postId },
-    data: { content, memberRecipe: memberRecipe ?? Prisma.DbNull },
+    data: { content, memberRecipe: memberRecipe ?? Prisma.DbNull, ...reviewData(review) },
     include: feedInclude(authorId),
   }), viewerAllergies(authorId)]);
   return toFeedPost(updated, allergies);
@@ -44,6 +47,29 @@ export async function setCommunityPostHidden(actorId: string, postId: string, hi
       }),
     ]);
   }
+  return getCommunityPostForModeration(postId);
+}
+
+/**
+ * Admin xử lý bài AI đánh dấu: "approve" bỏ chờ duyệt (người khác thấy bài), "hide" ẩn bài (như "Ẩn bài"). Ghi nhật ký Admin
+ * trong cùng transaction; lý do AI giữ lại. Bài không còn chờ duyệt → 409. Không xóa bài.
+ */
+export async function reviewFlaggedPost(actorId: string, postId: string, decision: "approve" | "hide") {
+  const post = await prisma.communityPost.findUnique({
+    where: { id: postId }, select: { authorId: true, pendingReviewAt: true, author: { select: { email: true } } },
+  });
+  if (!post) throw new HttpError(404, POST_NOT_FOUND);
+  if (!post.pendingReviewAt) throw new HttpError(409, "Bài này không còn chờ duyệt.");
+  const now = new Date();
+  await prisma.$transaction([
+    prisma.communityPost.update({
+      where: { id: postId }, data: { pendingReviewAt: null, ...(decision === "hide" ? { hiddenAt: now } : {}) },
+    }),
+    recordAdminAction(prisma, {
+      actorId, action: decision === "approve" ? "POST_APPROVE" : "POST_HIDE", targetType: "COMMUNITY_POST", targetId: postId,
+      targetLabel: post.author.email, details: { authorId: post.authorId },
+    }),
+  ]);
   return getCommunityPostForModeration(postId);
 }
 
