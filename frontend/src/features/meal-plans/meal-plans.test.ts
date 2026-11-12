@@ -10,7 +10,7 @@ import {
 } from "./meal-plans.api";
 import { addablePlans, addableRecipes, defaultMealType, mealTypeOptions, planDayOptions, portionOptions } from "./add-meal.logic";
 import {
-  alternativeMeals, dayNutrition, generateMealPlanLabel, generateSourceLabel, groupShoppingItems, initialDayIndex, latestMealPlanId,
+  alternativeMeals, dayNutrition, generateMealPlanLabel, groupShoppingItems, aiJobMessage, aiJobProgress, aiJobElapsedSeconds, initialDayIndex, latestMealPlanId,
   mealPlanDeleteConfirm, mealPlanPath, mealViolation, mealPlanSourceLabel, nextMealPlanIdAfterDelete, orderDayMeals, planDayLabels,
   planTargets, planTitleParts, selectMealPlanDay, summarizeMealPlan, todayDayIndex,
 } from "./meal-plans.logic";
@@ -362,10 +362,21 @@ describe("Honest meal plan labels", () => {
     expect(mealPlanSourceLabel(true)).toBe("Tạo bởi AI");
     expect(mealPlanSourceLabel(false)).toBe("Thuật toán gợi ý");
   });
-  it.each([[true, "Tạo bởi AI"], [false, "Thuật toán gợi ý"], [undefined, "Thuật toán gợi ý"]] as const)(
-    "mentions AI only when the backend reports it is configured (available=%s)",
-    (available, label) => expect(generateSourceLabel(available)).toBe(label),
-  );
+  it("Tạo bằng AI chạy nền: thời gian đã chạy, tiến trình ước tính, kết quả và lý do dùng thuật toán", () => {
+    const startedAt = "2026-11-12T10:00:00.000Z";
+    const base = { id: "j", startDate: "2026-11-12", startedAt, finishedAt: null, planId: null, fallbackReason: null, error: null };
+    const at = (seconds: number) => Date.parse(startedAt) + seconds * 1000;
+    expect(aiJobMessage({ ...base, status: "RUNNING" }, at(75))).toBe(
+      "Đang tạo thực đơn bằng AI (đã chạy 1:15, thường 1–2 phút). Bạn có thể rời trang, Nouri sẽ gửi thông báo khi xong.",
+    );
+    expect(aiJobElapsedSeconds(base, at(-5))).toBe(0);
+    expect(aiJobProgress(base, at(60))).toBe(50);
+    expect(aiJobProgress(base, at(500))).toBe(95);
+    expect(aiJobMessage({ ...base, status: "DONE", planId: "p" }, at(80))).toBe("Thực đơn AI đã sẵn sàng.");
+    expect(aiJobMessage({ ...base, status: "DONE", planId: "p", fallbackReason: "AI_TIMEOUT" }, at(130)))
+      .toBe("Không dùng được AI (AI quá 2 phút chưa trả lời) nên Nouri đã tạo thực đơn bằng thuật toán.");
+    expect(aiJobMessage({ ...base, status: "FAILED", error: "Chưa tạo được thực đơn. Hãy thử lại." }, at(10))).toBe("Chưa tạo được thực đơn. Hãy thử lại.");
+  });
   it("keeps one action name for the generate button", () => {
     expect(generateMealPlanLabel(false)).toBe("Tạo thực đơn");
     expect(generateMealPlanLabel(true)).toBe("Đang tạo thực đơn...");

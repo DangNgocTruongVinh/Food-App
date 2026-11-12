@@ -72,6 +72,12 @@ Nguồn: `docs/thuat-toan-goi-y.md` mục 9.
 Không: kết quả OpenAI luôn qua `reconcileAIPlan` (chỉ món trong danh sách đã lọc an toàn, đúng bữa, không lặp trong ngày; bữa vi phạm bị
 thay; hỏng quá nửa số bữa → dùng cả thực đơn của `scoredPlan`). Nguồn: `meal-plan-generator.ts`.
 
+**14a. Vì sao mặc định tạo thực đơn bằng thuật toán, không phải AI?**
+Đo thật: OpenAI cần 80–120 giây cho thực đơn 7 ngày (lần đầu còn bị nginx cắt ở 60 giây), còn `scoredPlan` xong trong vài giây và đã được
+đánh giá trên 500 thực đơn mô phỏng (mục 13); kết quả AI cũng phải qua lọc an toàn như thuật toán. Vì vậy mặc định là thuật toán (nhanh,
+kiểm chứng được, không tốn phí, chạy cả khi không có mạng tới OpenAI). AI là lựa chọn phụ "Tạo bằng AI (1–2 phút)": chạy nền, người dùng
+được rời trang, xong có thông báo; AI lỗi/quá 120 giây thì vẫn có thực đơn bằng thuật toán kèm lý do. Nguồn: `meal-plan-jobs.ts`.
+
 ## D. Kho, "đã ăn", quét hóa đơn
 
 **15. "Đã ăn" trừ kho thế nào?**

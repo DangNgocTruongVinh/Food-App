@@ -6,6 +6,7 @@ import { seedRecipesAsRecords } from "../../test/seed-recipes.js";
 import mealPlanRoutes from "./meal-plans.routes.js";
 import { filterRecipesForProfile } from "../../services/dietary.service.js";
 import { fallbackPlan } from "./meal-plan-generator.js";
+import { currentMealPlanJob, settleMealPlanJobsForTest } from "./meal-plan-jobs.js";
 
 const mocks = vi.hoisted(() => ({
   secret: "nouri-test-only-secret-at-least-32-characters",
@@ -30,6 +31,8 @@ const mocks = vi.hoisted(() => ({
   createPlan: vi.fn(),
   transaction: vi.fn(),
   generatePlanWithAI: vi.fn(),
+  aiAvailable: vi.fn(),
+  createNotification: vi.fn(),
   findProfile: vi.fn(),
   updateShopping: vi.fn(),
   deleteShopping: vi.fn(),
@@ -40,6 +43,7 @@ const mocks = vi.hoisted(() => ({
 vi.mock("../../config/env.js", () => ({ env: { JWT_SECRET: mocks.secret } }));
 vi.mock("../ai/ai.service.js", () => ({
   generatePlanWithAI: mocks.generatePlanWithAI,
+  getAIStatus: () => ({ available: mocks.aiAvailable() }),
 }));
 vi.mock("../notifications/notifications.service.js", () => ({ syncPantryNotifications: mocks.syncNotifications }));
 const client = () => ({
@@ -58,6 +62,7 @@ const client = () => ({
   pantryTransaction: { create: mocks.createHistory, findMany: mocks.listHistory, updateMany: mocks.updateHistory, count: mocks.countHistory },
   recipe: { findMany: mocks.listRecipes },
   nutritionProfile: { findUnique: mocks.findProfile },
+  notification: { create: mocks.createNotification },
   shoppingItem: { updateMany: mocks.updateShopping, deleteMany: mocks.deleteShopping, create: mocks.createShopping },
 });
 const tx = fakeTransaction(client);
@@ -134,6 +139,8 @@ beforeEach(() => {
   mocks.queryRaw.mockResolvedValue([]);
   mocks.listRecipes.mockResolvedValue([recipe]);
   mocks.generatePlanWithAI.mockResolvedValue(null);
+  mocks.aiAvailable.mockReturnValue(true);
+  mocks.createNotification.mockResolvedValue({});
   mocks.createPlan.mockResolvedValue(plan);
   mocks.findFirstMealItem.mockResolvedValue({ ...mealItem, completed: false });
   mocks.updatePantry.mockResolvedValue({ count: 1 });
@@ -149,7 +156,19 @@ beforeEach(() => {
   mocks.createShopping.mockResolvedValue({});
 });
 
-afterEach(() => vi.restoreAllMocks());
+afterEach(async () => {
+  await settleMealPlanJobsForTest({ clear: true });
+  vi.restoreAllMocks();
+});
+
+const settleAndKeep = () => settleMealPlanJobsForTest();
+/** "Tạo bằng AI": gửi yêu cầu (202) rồi chờ việc nền xong. */
+async function generateWithAI() {
+  const response = await request(app, "/api/meal-plans/generate", { method: "POST", token: token(), body: { startDate: "2026-10-01", mode: "ai" } });
+  await settleAndKeep();
+  return response;
+}
+const lastJob = () => currentMealPlanJob(userId);
 
 describe("Meal Plan and Shopping HTTP contract (no database)", () => {
   it("lists only the authenticated user's plans with the existing include and order", async () => {
@@ -178,17 +197,14 @@ describe("Meal Plan and Shopping HTTP contract (no database)", () => {
     });
   });
 
-  it("generates the same seven-day fallback plan and shopping shortage", async () => {
+  it("mặc định tạo ngay bằng bộ tạo thuật toán (không gọi OpenAI): bảy ngày và phần đi chợ còn thiếu", async () => {
     const response = await request(app, "/api/meal-plans/generate", {
       method: "POST", token: token(), body: { startDate: "2026-10-01" },
     });
-    expect(response).toEqual({ status: 201, body: JSON.parse(JSON.stringify(planRead)) });
-    expect(mocks.generatePlanWithAI).toHaveBeenCalledWith(expect.objectContaining({
-      mealsPerDay: 3,
-      dietType: "BALANCED",
-      pantry: [{ name: "Ức gà", quantity: 50, unit: "G", expiryDate: null }],
-      recipes: [expect.objectContaining({ id: recipe.id, name: recipe.name })],
-    }));
+    expect(response).toEqual({
+      status: 201, body: JSON.parse(JSON.stringify({ ...planRead, generation: { mode: "algorithm", fallbackReason: null } })),
+    });
+    expect(mocks.generatePlanWithAI).not.toHaveBeenCalled();
     const data = mocks.createPlan.mock.calls[0][0].data;
     expect(data).toMatchObject({
       userId,
@@ -203,14 +219,55 @@ describe("Meal Plan and Shopping HTTP contract (no database)", () => {
     expect(data.days.create.every((day: { items: { create: unknown[] } }) => day.items.create.length === 3)).toBe(true);
   });
 
-  it("OpenAI lỗi hoặc hết giờ → vẫn tạo thực đơn bằng bộ tạo dự phòng (201, không 500)", async () => {
-    mocks.generatePlanWithAI.mockRejectedValue(new Error("Request timed out."));
+  it("Tạo bằng AI: trả ngay 202, chạy nền; GET /generate/current báo đang chạy rồi xong, có thông báo", async () => {
+    expect((await request(app, "/api/meal-plans/generate/current", { token: token() })).body).toBeNull();
+    let finish!: (value: null) => void;
+    mocks.generatePlanWithAI.mockReturnValue(new Promise((resolve) => { finish = resolve; }));
+    const started = await request(app, "/api/meal-plans/generate", { method: "POST", token: token(), body: { startDate: "2026-10-01", mode: "ai" } });
+    expect(started.status).toBe(202);
+    expect(started.body).toMatchObject({ status: "RUNNING", startDate: "2026-10-01", planId: null });
+    expect(started.body).not.toHaveProperty("done");
+    expect(mocks.generatePlanWithAI).toHaveBeenCalledWith(expect.objectContaining({
+      mealsPerDay: 3, dietType: "BALANCED",
+      pantry: [{ name: "Ức gà", quantity: 50, unit: "G", expiryDate: null }],
+      recipes: [expect.objectContaining({ id: recipe.id, name: recipe.name })],
+    }));
+    // Đang chạy thì không cho bắt đầu việc thứ hai.
+    expect((await request(app, "/api/meal-plans/generate", { method: "POST", token: token(), body: { startDate: "2026-10-01", mode: "ai" } })).status).toBe(409);
+    expect((await request(app, "/api/meal-plans/generate/current", { token: token() })).body).toMatchObject({ status: "RUNNING" });
+    finish(null); // AI trả rỗng → kết quả không hợp lệ → thuật toán
+    await settleAndKeep();
+    const current = (await request(app, "/api/meal-plans/generate/current", { token: token() })).body;
+    expect(current).toMatchObject({ status: "DONE", planId: plan.id, fallbackReason: "AI_INVALID" });
+    expect(mocks.createNotification.mock.calls[0][0].data).toMatchObject({
+      userId, type: "MEAL_PLAN_CREATED", actionUrl: `/meal-plans/${plan.id}`, title: "Thực đơn đã tạo bằng thuật toán",
+    });
+  });
+
+  it.each([
+    ["hết giờ", new Error("Request timed out."), "AI_TIMEOUT"],
+    ["lỗi khác", new Error("500 Internal error"), "AI_ERROR"],
+  ])("Tạo bằng AI, OpenAI %s → vẫn tạo bằng thuật toán, báo lý do", async (_label, error, reason) => {
+    mocks.generatePlanWithAI.mockRejectedValue(error);
     const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
-    const response = await request(app, "/api/meal-plans/generate", { method: "POST", token: token(), body: { startDate: "2026-10-01" } });
-    expect(response.status).toBe(201);
+    await generateWithAI();
     expect(mocks.createPlan.mock.calls[0][0].data).toMatchObject({ aiGenerated: false });
-    expect(warn).toHaveBeenCalled();
+    expect(lastJob()).toMatchObject({ status: "DONE", fallbackReason: reason });
     warn.mockRestore();
+  });
+
+  it("Tạo bằng AI khi chưa cấu hình OpenAI → không gọi AI, dùng thuật toán (AI_NOT_CONFIGURED)", async () => {
+    mocks.aiAvailable.mockReturnValue(false);
+    await generateWithAI();
+    expect(mocks.generatePlanWithAI).not.toHaveBeenCalled();
+    expect(lastJob()).toMatchObject({ status: "DONE", fallbackReason: "AI_NOT_CONFIGURED" });
+  });
+
+  it("việc nền lỗi khi lưu → FAILED kèm thông báo dễ hiểu; việc của người này không lộ sang người khác", async () => {
+    mocks.createPlan.mockRejectedValue(new Error("db down"));
+    await generateWithAI();
+    expect(lastJob()).toMatchObject({ status: "FAILED", error: "Chưa tạo được thực đơn. Hãy thử lại." });
+    expect(currentMealPlanJob("user-khac")).toBeNull();
   });
 
   it("divides by recipe.servings in the shopping list: a 2-serving recipe needs half per 1-serving meal", async () => {
@@ -234,8 +291,8 @@ describe("Meal Plan and Shopping HTTP contract (no database)", () => {
     aiPlan.days[1].meals[2] = { ...aiPlan.days[1].meals[2], recipeId: "ca-kho-to" };
     mocks.generatePlanWithAI.mockResolvedValue(aiPlan);
 
-    const response = await request(app, "/api/meal-plans/generate", { method: "POST", token: token(), body: { startDate: "2026-10-01" } });
-    expect(response.status).toBe(201);
+    expect((await generateWithAI()).status).toBe(202);
+    expect(lastJob()).toMatchObject({ status: "DONE", fallbackReason: null });
     const sentRecipeIds = mocks.generatePlanWithAI.mock.calls[0][0].recipes.map((item: { id: string }) => item.id);
     expect(sentRecipeIds).not.toContain("ca-kho-to");
     const data = mocks.createPlan.mock.calls[0][0].data;
@@ -264,8 +321,7 @@ describe("Meal Plan and Shopping HTTP contract (no database)", () => {
     aiPlan.days[0].meals[0] = { ...aiPlan.days[0].meals[0], recipeId: hidden.id };
     mocks.generatePlanWithAI.mockResolvedValue(aiPlan);
 
-    const response = await request(app, "/api/meal-plans/generate", { method: "POST", token: token(), body: { startDate: "2026-10-01" } });
-    expect(response.status).toBe(201);
+    expect((await generateWithAI()).status).toBe(202);
     expect(mocks.listRecipes).toHaveBeenCalledWith({ where: { hiddenAt: null, deletedAt: null }, include: { ingredients: true } });
     expect(mocks.generatePlanWithAI.mock.calls[0][0].recipes.map((item: { id: string }) => item.id)).not.toContain(hidden.id);
     const data = mocks.createPlan.mock.calls[0][0].data;

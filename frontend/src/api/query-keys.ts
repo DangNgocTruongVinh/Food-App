@@ -34,6 +34,7 @@ export const queryKeys = {
     all: ["meal-plans"] as const,
     list: () => ["meal-plans", "list"] as const,
     detail: (id: string) => ["meal-plans", "detail", id] as const,
+    aiJob: ["meal-plans", "ai-job"] as const,
     consumptionPreview: (itemId: string) => ["meal-plans", "consumption-preview", itemId] as const,
   },
   ai: {

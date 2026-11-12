@@ -7,7 +7,8 @@ const mealType = z.enum(["BREAKFAST", "LUNCH", "DINNER", "SNACK"]);
 export const listMealPlansSchema = z.object({ body: empty, params: empty, query: empty });
 export const getMealPlanSchema = z.object({ body: empty, params: idParams, query: empty });
 export const generateMealPlanSchema = z.object({
-  body: z.object({ startDate: z.string().date() }),
+  // mode "ai": chạy nền (202, hỏi trạng thái ở GET /generate/current); mặc định "algorithm": tạo ngay bằng bộ tạo thuật toán.
+  body: z.object({ startDate: z.string().date(), mode: z.enum(["algorithm", "ai"]).default("algorithm") }),
   params: empty,
   query: empty,
 });
