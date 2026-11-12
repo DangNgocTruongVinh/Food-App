@@ -28,14 +28,14 @@ export default function RecipePicker({ recipes, isLoading, isError, query, onQue
           className="ui-input cm-picker__input"
           value={query}
           onChange={(event) => onQueryChange(event.target.value)}
-          placeholder="Tìm công thức theo tên"
-          aria-label="Tìm công thức theo tên"
+          placeholder="Tìm món hoặc nguyên liệu"
+          aria-label="Tìm công thức theo tên hoặc nguyên liệu"
         />
         <IconButton label="Đóng chọn công thức" icon={<X />} quiet onClick={onClose} />
       </div>
       {isLoading && <p className="cm-picker__note">Đang tải công thức...</p>}
       {isError && <p className="cm-picker__note">Chưa tải được danh sách công thức.</p>}
-      {recipes && !results.length && <p className="cm-picker__note">Không có công thức nào có tên như vậy.</p>}
+      {recipes && !results.length && <p className="cm-picker__note">Không tìm thấy món phù hợp. Thử từ ngắn hơn hoặc tên nguyên liệu.</p>}
       {results.length > 0 && (
         <ul className="cm-picker__list">
           {results.map((recipe) => (

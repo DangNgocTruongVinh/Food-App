@@ -1,3 +1,4 @@
+import { foldSearchText } from "../recipes/recipe-search";
 import type { QueryClient } from "@tanstack/react-query";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { api } from "../../api/client";
@@ -21,7 +22,6 @@ import {
   communityShareText,
   COMMUNITY_RECIPE_PICKER_LIMIT,
   filterAttachableRecipes,
-  normalizeSearchText,
   SHARE_RECIPE_PARAM,
   addCommunityImages,
   COMMUNITY_MAX_IMAGES,
@@ -274,8 +274,8 @@ describe("Attaching a recipe to a post", () => {
   });
 
   it("searches recipe names ignoring case and Vietnamese accents", () => {
-    expect(normalizeSearchText("  Cá   KHO Tộ ")).toBe("ca kho to");
-    expect(normalizeSearchText("Đậu hũ")).toBe("dau hu");
+    expect(foldSearchText("  Cá   KHO Tộ ")).toBe("ca kho to");
+    expect(foldSearchText("Đậu hũ")).toBe("dau hu");
     const recipes = [{ name: "Cá kho tộ (kèm cơm)" }, { name: "Đậu hũ sốt cà chua" }, { name: "Canh chua cá lóc" }];
     expect(filterAttachableRecipes(recipes, "ca kho").map((recipe) => recipe.name)).toEqual(["Cá kho tộ (kèm cơm)"]);
     expect(filterAttachableRecipes(recipes, "dau").map((recipe) => recipe.name)).toEqual(["Đậu hũ sốt cà chua"]);

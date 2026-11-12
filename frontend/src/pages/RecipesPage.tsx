@@ -8,7 +8,7 @@ import { RecipesHero } from "../components/recipes/RecipesHero";
 import { RecipesSkeleton } from "../components/recipes/RecipesSkeleton";
 import { ErrorState } from "../components/ui";
 import {
-  filterAndSortRecipes, paginateRecipes, recipeCategoryCounts, recipesForProfile, type RecipeCategory, type RecipeSort,
+  filterAndSortRecipes, paginateRecipes, recipeSearchView, recipeTotalText, type RecipeCategory, type RecipeSort,
 } from "../features/recipes/recipes.logic";
 import { recipeQueries } from "../features/recipes/recipes.queries";
 import { recommendationQueries } from "../features/recommendations/recommendations.api";
@@ -34,10 +34,9 @@ export default function RecipesPage() {
   const featuredFit = useQuery({ ...recipeQueries.forYou(featuredId), enabled: Boolean(featuredId) });
 
   const data = list.data ?? [];
-  // Món vi phạm dị ứng/chế độ ăn ẩn mặc định; số đếm danh mục tính trên danh sách đang hiện.
-  const profileView = useMemo(() => recipesForProfile(data, showAll), [data, showAll]);
+  // Món vi phạm dị ứng/chế độ ăn ẩn mặc định; số trên ô lọc tính trên kết quả tìm của danh sách đang hiện.
+  const { profileView, counts, hiddenMatches } = useMemo(() => recipeSearchView(data, search, showAll), [data, search, showAll]);
   const recipes = useMemo(() => filterAndSortRecipes(profileView.recipes, { search, category, sort }), [category, profileView, search, sort]);
-  const counts = useMemo(() => recipeCategoryCounts(profileView.recipes), [profileView]);
   const recipesById = useMemo(() => new Map(data.map((recipe) => [recipe.id, recipe])), [data]);
 
   if (list.isLoading) return <RecipesSkeleton />;
@@ -58,7 +57,7 @@ export default function RecipesPage() {
 
   return (
     <div className="recipes-view">
-      <RecipesHero total={data.length} search={search} onSearchChange={updateSearch} />
+      <RecipesHero totalText={recipeTotalText(data.length, profileView.hiddenCount, showAll)} search={search} onSearchChange={updateSearch} />
       <div className="recipes-content">
         <RecipeCategoryChips
           category={category}
@@ -88,6 +87,7 @@ export default function RecipesPage() {
           onPageChange={(page) => setPageIndex(Math.min(totalPages, Math.max(1, page)))}
           onClearFilters={clearFilters}
           hiddenCount={profileView.hiddenCount}
+          hiddenMatches={hiddenMatches}
           showAll={showAll}
           onShowAllChange={(next) => { setShowAll(next); setPageIndex(1); }}
         />

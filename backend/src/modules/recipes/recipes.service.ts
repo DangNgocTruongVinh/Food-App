@@ -2,6 +2,7 @@ import type { Prisma } from "@prisma/client";
 import { prisma } from "../../lib/prisma.js";
 import { calorieShare, matchRecipeToPantry, recipeWarnings } from "../../services/recipe-fit.service.js";
 import { HIDDEN_RECIPE_MESSAGE, isRecipeHidden, visibleRecipeWhere } from "../../services/recipe-visibility.js";
+import { searchRecipes } from "../../services/recipe-search.js";
 import { HttpError } from "../../utils/http-error.js";
 import { recipeFit } from "../recommendation/safety.js";
 import { featuredRecipeSelect, pickFeaturedRecipes } from "./featured-recipes.js";
@@ -74,7 +75,6 @@ export async function getFeaturedRecipes(limit: number) {
 export async function listRecipes(userId: string, query: RecipeListQuery) {
   const where: Prisma.RecipeWhereInput = {
     ...visibleRecipeWhere,
-    ...(query.search ? { name: { contains: query.search, mode: "insensitive" } } : {}),
     ...(query.cuisine ? { cuisine: query.cuisine } : {}),
   };
 
@@ -83,7 +83,9 @@ export async function listRecipes(userId: string, query: RecipeListQuery) {
     prisma.nutritionProfile.findUnique({ where: { userId } }),
     favoriteRecipeIds(userId),
   ]);
-  return recipes.map((recipe) => ({ ...recipe, fit: recipeFit(recipe, profile), favorite: favorites.has(recipe.id) }));
+  // Từ khóa: cùng hàm searchRecipes với mọi ô tìm món (bỏ dấu, đủ các từ, đồng nghĩa; khớp tên xếp trước).
+  return searchRecipes(recipes, query.search ?? "")
+    .map((recipe) => ({ ...recipe, fit: recipeFit(recipe, profile), favorite: favorites.has(recipe.id) }));
 }
 
 export async function getRecipe(id: string, userId?: string) {

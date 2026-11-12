@@ -1,6 +1,7 @@
 import type { FoodUnit, Ingredient, Recipe } from "../../types";
 import { IMAGE_WIDTHS, isUploadedImageUrl, optimizedImageUrl } from "../../utils/images";
 import { foodUnitLabel } from "../../utils/units";
+import { searchRecipes } from "./recipe-search";
 
 export type RecipeCategory = "all" | "vietnamese" | "international" | "breakfast" | "healthy" | "low-carb" | "vegetarian";
 export type RecipeSort = "newest" | "quickest" | "calories" | "protein";
@@ -34,21 +35,19 @@ export function matchesRecipeCategory(recipe: Recipe, category: RecipeCategory) 
   return copy.includes("sáng") || copy.includes("yến mạch") || copy.includes("trứng") || copy.includes("sữa chua");
 }
 
+/** Tìm (searchRecipes dùng chung: bỏ dấu, đủ từ, đồng nghĩa) + danh mục + sắp xếp. "Mới nhất" khi có từ khóa giữ thứ tự liên quan. */
 export function filterAndSortRecipes(
   data: Recipe[],
   options: { search: string; category: RecipeCategory; sort: RecipeSort },
 ) {
-  const query = options.search.trim().toLowerCase();
-  const filtered = data.filter((recipe) => {
-    const searchCopy = `${recipe.name} ${recipe.cuisine} ${recipe.ingredients.map((ingredient) => ingredient.name).join(" ")}`.toLowerCase();
-    return (!query || searchCopy.includes(query)) && matchesRecipeCategory(recipe, options.category);
-  });
+  const searched = searchRecipes(data, options.search);
+  const filtered = searched.filter((recipe) => matchesRecipeCategory(recipe, options.category));
 
   return [...filtered].sort((a, b) => {
     if (options.sort === "quickest") return (a.prepMinutes + a.cookMinutes) - (b.prepMinutes + b.cookMinutes);
     if (options.sort === "calories") return a.calories - b.calories;
     if (options.sort === "protein") return b.proteinG - a.proteinG;
-    return data.indexOf(a) - data.indexOf(b);
+    return searched.indexOf(a) - searched.indexOf(b);
   });
 }
 
@@ -63,6 +62,25 @@ export function violatesProfile(recipe: Pick<Recipe, "fit">) {
 export function recipesForProfile<T extends Pick<Recipe, "fit">>(recipes: T[], showAll: boolean) {
   const hiddenCount = recipes.filter(violatesProfile).length;
   return { hiddenCount, recipes: showAll ? recipes : recipes.filter((recipe) => !violatesProfile(recipe)) };
+}
+
+/**
+ * Số liệu đầu trang và khi không có kết quả: danh sách hiển thị sau khi ẩn theo hồ sơ, số món khớp từ khóa nhưng đang bị ẩn
+ * (dị ứng/chế độ ăn), số trên các ô lọc tính trên kết quả tìm.
+ */
+export function recipeSearchView<T extends Recipe>(data: T[], search: string, showAll: boolean) {
+  const profileView = recipesForProfile(data, showAll);
+  const matchedAll = searchRecipes(data, search);
+  return {
+    profileView,
+    counts: recipeCategoryCounts(searchRecipes(profileView.recipes, search)),
+    hiddenMatches: showAll ? 0 : matchedAll.filter(violatesProfile).length,
+  };
+}
+
+/** Dòng đầu trang Công thức: "33 công thức" hoặc "30 món hợp với bạn (3 món ẩn theo hồ sơ)". */
+export function recipeTotalText(total: number, hiddenCount: number, showAll: boolean) {
+  return hiddenCount > 0 && !showAll ? `${total - hiddenCount} món hợp với bạn (${hiddenCount} món ẩn theo hồ sơ)` : `${total} công thức`;
 }
 
 export function paginateRecipes(recipes: Recipe[], pageIndex: number, pageSize: number) {

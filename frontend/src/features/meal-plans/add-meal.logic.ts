@@ -1,4 +1,5 @@
 import type { MealPlan, MealType, Recipe } from "../../types";
+import { searchRecipes } from "../recipes/recipe-search";
 import { MEAL_ORDER, mealLabels, planDayLabels } from "./meal-plans.logic";
 
 export const portionOptions = [0.5, 1, 1.5, 2, 3, 4] as const;
@@ -8,15 +9,10 @@ export const mealTypeOptions = MEAL_ORDER.map((value) => ({ value, label: mealLa
 
 /** Công thức đang hiện, hợp bữa và không vi phạm hồ sơ hiện tại (API đã tính fit bằng backend). */
 export function addableRecipes(recipes: Recipe[], mealType: MealType, search: string) {
-  const query = search.trim().toLocaleLowerCase("vi");
-  return recipes
+  const usable = recipes
     .filter((recipe) => recipe.fit?.safe !== false)
-    .filter((recipe) => !recipe.mealTypes?.length || recipe.mealTypes.includes(mealType))
-    .filter((recipe) => {
-      if (!query) return true;
-      const text = `${recipe.name} ${recipe.cuisine} ${recipe.ingredients.map((item) => item.name).join(" ")}`.toLocaleLowerCase("vi");
-      return text.includes(query);
-    });
+    .filter((recipe) => !recipe.mealTypes?.length || recipe.mealTypes.includes(mealType));
+  return searchRecipes(usable, search);
 }
 
 /** Bữa gợi ý sẵn khi mở hộp thêm món: bữa đầu tiên trong ngày chưa có món, ngày đủ bữa thì bữa phụ. */
