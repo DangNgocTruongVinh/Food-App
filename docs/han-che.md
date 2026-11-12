@@ -1,6 +1,6 @@
 # Hạn chế, rủi ro đã biết và hướng phát triển
 
-Tài liệu cho báo cáo đồ án, đối chiếu với mã trên `main` (13/11/2026). Mục 1: rủi ro bảo mật và vận hành; mục 2: hạn chế về dữ liệu,
+Tài liệu cho báo cáo đồ án, đối chiếu với mã trên `main` (12/11/2026). Mục 1: rủi ro bảo mật và vận hành; mục 2: hạn chế về dữ liệu,
 thuật toán, chức năng; mục 3: hướng phát triển. Số liệu đánh giá: `docs/bao-cao/so-lieu.md`.
 
 ## 1. Rủi ro đã biết

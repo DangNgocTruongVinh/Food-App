@@ -1,6 +1,6 @@
 # Đối chiếu Use Case với mã nguồn
 
-Đối chiếu UC01–UC26 (mục 12 `REPORT_NOURI.md`, khảo sát mã ban đầu) với mã hiện tại trên `main` (13/11/2026), rồi bổ sung các use case
+Đối chiếu UC01–UC26 (mục 12 `REPORT_NOURI.md`, khảo sát mã ban đầu) với mã hiện tại trên `main` (12/11/2026), rồi bổ sung các use case
 mới phát sinh ngoài khảo sát. Trạng thái: **Đã làm** (đúng như mô tả), **Làm khác** (có, nhưng khác/mở rộng — ghi rõ khác gì),
 **Chưa làm**. Đường dẫn file tính từ thư mục gốc repo. Danh sách API đầy đủ: `docs/bao-cao/api.md`.
 

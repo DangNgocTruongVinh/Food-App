@@ -1,6 +1,6 @@
 # Kiến trúc hệ thống
 
-Mô tả theo mã trên `main` (13/11/2026). Phiên bản lấy từ `frontend/package.json`, `backend/package.json`, `docker-compose.yml`,
+Mô tả theo mã trên `main` (12/11/2026). Phiên bản lấy từ `frontend/package.json`, `backend/package.json`, `docker-compose.yml`,
 các `Dockerfile`. Danh sách API: `docs/bao-cao/api.md`; dữ liệu: `docs/bao-cao/erd.md`.
 
 ## 1. Sơ đồ tổng thể
