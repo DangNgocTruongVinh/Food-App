@@ -76,6 +76,8 @@ describe("resetDemoAccount", () => {
     pantryTransaction: { deleteMany: vi.fn() },
     receiptScan: { deleteMany: vi.fn() },
     expiryEmailLog: { deleteMany: vi.fn() },
+    favoriteRecipe: { deleteMany: vi.fn() },
+    savedPost: { deleteMany: vi.fn() },
     mealPlan: { deleteMany: vi.fn() },
     communityLike: { deleteMany: vi.fn() },
     communityComment: { deleteMany: vi.fn() },
@@ -103,6 +105,7 @@ describe("resetDemoAccount", () => {
       [tx.chatMessage, { userId: "demo-id" }], [tx.pantryTransaction, { userId: "demo-id" }], [tx.mealPlan, { userId: "demo-id" }],
       [tx.communityLike, { userId: "demo-id" }], [tx.communityComment, { authorId: "demo-id" }], [tx.communityPost, { authorId: "demo-id" }],
       [tx.pantryItem, { userId: "demo-id" }], [tx.receiptScan, { userId: "demo-id" }], [tx.expiryEmailLog, { userId: "demo-id" }],
+      [tx.favoriteRecipe, { userId: "demo-id" }], [tx.savedPost, { userId: "demo-id" }],
     ] as const) expect(model.deleteMany).toHaveBeenCalledWith({ where });
     expect(result.imagePublicIds).toEqual(["nouri/posts/a"]);
   });

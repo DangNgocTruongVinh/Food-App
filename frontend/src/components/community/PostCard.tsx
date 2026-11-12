@@ -1,4 +1,4 @@
-import { Clock3, EyeOff, Heart, MessageCircle, MoreHorizontal, Pencil, Share2, Trash2 } from "lucide-react";
+import { Bookmark, Clock3, EyeOff, Heart, MessageCircle, MoreHorizontal, Pencil, Share2, Trash2 } from "lucide-react";
 import type { FormEvent } from "react";
 import {
   communityCommentInputId, communityExactTime, communityInitials, communityPostElementId, communityRelativeTime, shareCommunityPost,
@@ -19,10 +19,13 @@ type PostCardProps = {
   isOwn: boolean;
   isFocused: boolean;
   isLikePending: boolean;
+  isSavePending?: boolean;
   isCommentPending: boolean;
   isDeleting: boolean;
   commentDraft: string;
   onToggleLike: () => void;
+  /** UC25: lưu / bỏ lưu bài. */
+  onToggleSave?: () => void;
   onDelete: () => void;
   onEdit: () => void;
   onCommentDraftChange: (value: string) => void;
@@ -98,6 +101,11 @@ export default function PostCard(props: PostCardProps) {
         <button type="button" className="cm-action" onClick={focusCommentInput}>
           <MessageCircle aria-hidden="true" /><span>Bình luận</span>
         </button>
+        {props.onToggleSave && (
+          <button type="button" className="cm-action" aria-pressed={Boolean(post.savedByMe)} disabled={props.isSavePending} onClick={props.onToggleSave}>
+            <Bookmark aria-hidden="true" /><span>{post.savedByMe ? "Đã lưu" : "Lưu"}</span>
+          </button>
+        )}
         <button type="button" className="cm-action" onClick={() => void shareCommunityPost(post)}>
           <Share2 aria-hidden="true" /><span>Chia sẻ</span>
         </button>

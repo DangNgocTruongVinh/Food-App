@@ -356,3 +356,46 @@ describe("Images in a post (checked before sending)", () => {
     expect(JSON.parse(adapter.mock.calls[1][0].data)).toEqual({ content: "Bữa tối" });
   });
 });
+
+describe("UC24 / UC25: yêu thích công thức, lưu bài", async () => {
+  const { setCommunityPostSaved, listSavedCommunityPosts } = await import("./community.api");
+  const { updateCommunitySaved, appendCommunityComment: appendComment } = await import("./community.queries");
+  const { setRecipeFavorite, listFavoriteRecipes } = await import("../recipes/recipes.api");
+  const ok = (data: unknown) => vi.fn(async (config) => ({ config, data, status: 200, statusText: "OK", headers: {} }));
+
+  it("gọi đúng endpoint: PUT/DELETE để bật/tắt, GET danh sách", async () => {
+    const adapter = ok({});
+    api.defaults.adapter = adapter;
+    await setRecipeFavorite({ id: "recipe-a", favorite: true });
+    await setRecipeFavorite({ id: "recipe-a", favorite: false });
+    await listFavoriteRecipes();
+    await setCommunityPostSaved({ postId: post.id, saved: true });
+    await setCommunityPostSaved({ postId: post.id, saved: false });
+    await listSavedCommunityPosts();
+    expect(adapter.mock.calls.map(([config]) => [config.method, config.url])).toEqual([
+      ["put", "/recipes/recipe-a/favorite"], ["delete", "/recipes/recipe-a/favorite"], ["get", "/recipes/favorites"],
+      ["put", `/community/${post.id}/save`], ["delete", `/community/${post.id}/save`], ["get", "/community/saved"],
+    ]);
+  });
+
+  it("bỏ lưu: cờ ở bảng tin tắt, bài rời \"Bài đã lưu\"; lưu: cờ bật, danh sách lưu được tải lại", async () => {
+    client.setQueryData(queryKeys.community.feed(), [{ ...post, savedByMe: true }]);
+    client.setQueryData(queryKeys.community.saved(), [{ ...post, savedByMe: true }]);
+    updateCommunitySaved(client, post.id, false);
+    expect(client.getQueryData<CommunityPost[]>(queryKeys.community.feed())?.[0].savedByMe).toBe(false);
+    expect(client.getQueryData<CommunityPost[]>(queryKeys.community.saved())).toEqual([]);
+
+    updateCommunitySaved(client, post.id, true);
+    expect(client.getQueryData<CommunityPost[]>(queryKeys.community.feed())?.[0].savedByMe).toBe(true);
+    expect(client.getQueryState(queryKeys.community.saved())?.isInvalidated).toBe(true);
+  });
+
+  it("bình luận mới cập nhật cả bảng tin lẫn \"Bài đã lưu\"", () => {
+    client.setQueryData(queryKeys.community.feed(), [post]);
+    client.setQueryData(queryKeys.community.saved(), [post]);
+    appendComment(client, post.id, comment);
+    for (const key of [queryKeys.community.feed(), queryKeys.community.saved()]) {
+      expect(client.getQueryData<CommunityPost[]>(key)?.[0].commentCount).toBe(post.commentCount + 1);
+    }
+  });
+});

@@ -1,6 +1,6 @@
 # Đối chiếu Use Case với mã nguồn
 
-Đối chiếu UC01–UC26 (mục 12 `REPORT_NOURI.md`, khảo sát mã ban đầu) với mã hiện tại trên `main` (12/11/2026), rồi bổ sung các use case
+Đối chiếu UC01–UC26 (mục 12 `REPORT_NOURI.md`, khảo sát mã ban đầu) với mã hiện tại (12/11/2026, gồm nhánh `uc24-uc25`), rồi bổ sung các use case
 mới phát sinh ngoài khảo sát. Trạng thái: **Đã làm** (đúng như mô tả), **Làm khác** (có, nhưng khác/mở rộng — ghi rõ khác gì),
 **Chưa làm**. Đường dẫn file tính từ thư mục gốc repo. Danh sách API đầy đủ: `docs/bao-cao/api.md`.
 
@@ -34,11 +34,11 @@ Tác nhân: **Khách** (chưa đăng nhập), **Người dùng** (đã đăng nh
 | UC21 | Thích / bỏ thích | DONE | Đã làm | — | `community.service.ts` (`toggleCommunityLike`) |
 | UC22 | Bình luận | DONE | Đã làm | — | `community.service.ts` (`addCommunityComment`) |
 | UC23 | Xem, đánh dấu thông báo | DONE | Đã làm | — | `backend/src/modules/notifications/notifications.service.ts` |
-| UC24 | Yêu thích công thức (UI) | UI ONLY | Chưa làm | Nút giả (chỉ state cục bộ) đã gỡ khi làm lại giao diện; model `FavoriteRecipe` + API chưa làm (GĐ5) | Không còn trong `frontend/src` |
-| UC25 | Lưu bài / theo dõi thành viên (UI) | UI ONLY | Chưa làm | Nút giả đã gỡ (UI-7); `SavedPost`, `Follow` chưa làm (GĐ5) | Không còn trong `frontend/src` |
+| UC24 | Yêu thích công thức | UI ONLY | Đã làm | Bảng `FavoriteRecipe` + API; trái tim ở thẻ món và chi tiết món; trang "Món yêu thích" (`/recipes/favorites`, từ Công thức hoặc menu tài khoản). Yêu thích cũng là tín hiệu "thích" cho bộ gợi ý (cùng loại `LIKED`, không đổi trọng số) | `backend/src/modules/recipes/recipes.service.ts` (`setRecipeFavorite`, `listFavoriteRecipes`), `modules/recommendation/interaction-loader.ts`, `frontend/src/components/recipes/FavoriteButton.tsx`, `pages/FavoriteRecipesPage.tsx` |
+| UC25 | Lưu bài / theo dõi thành viên | UI ONLY | Làm khác | Có lưu bài: bảng `SavedPost` + API, nút "Lưu" trên bài, chế độ xem "Bài đã lưu"; bài bị ẩn/chờ duyệt/xóa tự biến mất. **Không làm** theo dõi thành viên (ngoài trọng tâm đề tài, `docs/han-che.md`) | `backend/src/modules/community/community.service.ts` (`setPostSaved`, `listSavedPosts`), `frontend/src/pages/CommunityPage.tsx`, `components/community/PostCard.tsx` |
 | UC26 | Chia sẻ bài viết qua trình duyệt | UI ONLY | Đã làm | Giữ nguyên theo quyết định: Web Share API, không có thì sao chép | `frontend/src/features/community/community.logic.ts` (`shareCommunityPost`) |
 
-Tổng: Đã làm 14, Làm khác 10, Chưa làm 2 (UC24, UC25).
+Tổng: Đã làm 15, Làm khác 11, Chưa làm 0 (phần "theo dõi thành viên" của UC25 không làm, có ghi lý do).
 
 ## 2. Use case mới ngoài khảo sát
 

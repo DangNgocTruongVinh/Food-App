@@ -111,7 +111,9 @@ describe("Loading interactions from existing tables", () => {
     expect(sql).toContain('mi."completed" = true');
     expect(sql).toContain('p."recipeId" IS NOT NULL');
     expect(sql).toContain('l."userId" <> p."authorId"');
-    expect(sql.match(/GROUP BY/g)).toHaveLength(3);
+    // UC24: yêu thích công thức là tương tác "LIKED" (cùng loại, cùng trọng số với thích bài gắn món).
+    expect(sql).toContain('FROM "FavoriteRecipe" f');
+    expect(sql.match(/GROUP BY/g)).toHaveLength(4);
     expect(sql).not.toContain("PLANNED");
   });
 
@@ -122,7 +124,7 @@ describe("Loading interactions from existing tables", () => {
     expect(query.sql).toContain("PLANNED");
     expect(query.sql).toContain(`mp."status" <> 'DRAFT'`);
     expect(query.values.every((value: unknown) => value === "user-a")).toBe(true);
-    expect(query.values).toHaveLength(4);
+    expect(query.values).toHaveLength(5);
   });
 });
 

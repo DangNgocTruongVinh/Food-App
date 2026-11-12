@@ -246,3 +246,30 @@
 .recipe-tile .ui-recipe-image--empty,
 .recipes-feature .ui-recipe-image--empty,
 .recipes-for-you__side .ui-recipe-image--empty { background: var(--home-soft); }
+
+/* UC24 Yêu thích: trái tim tròn trên ảnh thẻ món, nút có chữ ở trang chi tiết; đã yêu thích thì tô đặc. */
+.recipe-tile__media { position: relative; }
+.recipe-fav {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: var(--control-h);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--ink);
+  background: var(--surface);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+.recipe-fav svg { width: 20px; height: 20px; stroke-width: 1.75; }
+.recipe-fav.is-on { color: var(--warn); }
+.recipe-fav.is-on svg { fill: currentColor; }
+.recipe-fav:hover { border-color: var(--action-text); }
+.recipe-fav:focus-visible { outline: 2px solid var(--action-text); outline-offset: 2px; }
+.recipe-fav:disabled { cursor: progress; }
+.recipe-fav--icon { position: absolute; top: var(--space-3); right: var(--space-3); width: 44px; height: 44px; padding: 0; box-shadow: var(--shadow-overlay); }
+.recipe-fav--labeled { padding: 0 var(--space-4); }
+.recipes-favorites__head { display: grid; gap: var(--space-3); }
+.recipes-favorites__head .ui-text { max-width: 64ch; }

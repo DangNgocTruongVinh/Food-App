@@ -5,6 +5,7 @@ import { recipeDietLabel, recipeTotalMinutes } from "../../features/recipes/reci
 import type { Recipe } from "../../types";
 import { IMAGE_WIDTHS } from "../../utils/images";
 import { RecipeImage, Tag } from "../ui";
+import { FavoriteButton } from "./FavoriteButton";
 
 type RecipeDetailHeroProps = {
   recipe: Recipe;
@@ -22,6 +23,7 @@ export function RecipeDetailHero({ recipe, alerts }: RecipeDetailHeroProps) {
           {recipe.dietTags.map((tag) => <Tag key={tag}>{recipeDietLabel(tag)}</Tag>)}
         </div>
         <h1 className="ui-title">{recipe.name}</h1>
+        <div><FavoriteButton recipe={recipe} variant="labeled" /></div>
         <p className="ui-text">{recipe.description}</p>
         {recipe.hidden && (
           <p className="recipe-hidden-note" role="status">

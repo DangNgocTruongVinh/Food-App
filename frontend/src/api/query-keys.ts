@@ -28,6 +28,7 @@ export const queryKeys = {
     featured: (limit: number) => ["recipes", "featured", limit] as const,
     forYouAll: ["recipes", "for-you"] as const,
     forYou: (id: string) => ["recipes", "for-you", id] as const,
+    favorites: ["recipes", "favorites"] as const,
   },
   mealPlans: {
     all: ["meal-plans"] as const,
@@ -43,6 +44,7 @@ export const queryKeys = {
   community: {
     all: ["community"] as const,
     feed: () => ["community", "feed"] as const,
+    saved: () => ["community", "saved"] as const,
   },
   admin: {
     all: ["admin"] as const,

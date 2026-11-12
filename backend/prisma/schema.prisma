@@ -119,6 +119,8 @@ model User {
   refreshTokens     RefreshToken[]
   passwordResetTokens PasswordResetToken[]
   expiryEmailLogs   ExpiryEmailLog[]
+  favoriteRecipes   FavoriteRecipe[]
+  savedPosts        SavedPost[]
   profile           NutritionProfile?
   pantryItems       PantryItem[]
   pantryTransactions PantryTransaction[]
@@ -202,6 +204,7 @@ model CommunityPost {
   images    CommunityPostImage[]
   likes     CommunityLike[]
   comments  CommunityComment[]
+  savedBy   SavedPost[]
   createdAt DateTime           @default(now())
   updatedAt DateTime           @updatedAt
 
@@ -428,6 +431,7 @@ model Recipe {
 
   @@index([cuisine])
   @@index([hiddenAt])
+  favoritedBy  FavoriteRecipe[]
 }
 
 model RecipeIngredient {
@@ -559,4 +563,33 @@ model ExpiryEmailLog {
 
   @@unique([userId, dayKey, slot])
   @@index([userId, createdAt])
+}
+
+// UC24 Yêu thích công thức: một người một món một lần. Cũng là tín hiệu "LIKED" cho bộ gợi ý (interaction-loader.ts, cùng trọng số
+// với thích bài gắn món). Xóa người dùng / món → xóa theo.
+model FavoriteRecipe {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  recipeId  String
+  recipe    Recipe   @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, recipeId])
+  @@index([userId, createdAt])
+  @@index([recipeId])
+}
+
+// UC25 Lưu bài viết (chỉ chủ tài khoản thấy). Bài bị xóa → dòng lưu xóa theo; bài bị ẩn / chờ duyệt → không hiện trong "Bài đã lưu".
+model SavedPost {
+  id        String        @id @default(cuid())
+  userId    String
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  postId    String
+  post      CommunityPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  createdAt DateTime      @default(now())
+
+  @@unique([userId, postId])
+  @@index([userId, createdAt])
+  @@index([postId])
 }

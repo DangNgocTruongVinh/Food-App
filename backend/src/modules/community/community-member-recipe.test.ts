@@ -11,18 +11,19 @@ import communityRoutes from "./community.routes.js";
 const mocks = vi.hoisted(() => ({
   secret: "nouri-test-only-secret-at-least-32-characters",
   findPosts: vi.fn(), findPost: vi.fn(), createPost: vi.fn(), updatePost: vi.fn(), updatePosts: vi.fn(),
-  review: vi.fn(), countPosts: vi.fn(),
+  review: vi.fn(), countPosts: vi.fn(), findFirstPost: vi.fn(), findSaved: vi.fn(), createSaved: vi.fn(), deleteSaved: vi.fn(),
   findProfile: vi.fn(), findRecipes: vi.fn(), createRecipe: vi.fn(), auditCreate: vi.fn(), transaction: vi.fn(),
 }));
 
 vi.mock("../../config/env.js", () => ({ env: { JWT_SECRET: mocks.secret } }));
 vi.mock("../../lib/prisma.js", () => ({ prisma: {
   communityPost: {
-    findMany: mocks.findPosts, count: mocks.countPosts, findUnique: mocks.findPost, create: mocks.createPost, update: mocks.updatePost, updateMany: mocks.updatePosts,
+    findMany: mocks.findPosts, count: mocks.countPosts, findUnique: mocks.findPost, findFirst: mocks.findFirstPost, create: mocks.createPost, update: mocks.updatePost, updateMany: mocks.updatePosts,
   },
   nutritionProfile: { findUnique: mocks.findProfile },
   recipe: { findMany: mocks.findRecipes, create: mocks.createRecipe },
   adminAuditLog: { create: mocks.auditCreate },
+  savedPost: { findMany: mocks.findSaved, createMany: mocks.createSaved, deleteMany: mocks.deleteSaved },
   $transaction: mocks.transaction,
 } }));
 // AI kiểm duyệt giả lập: mặc định null (không có key / API lỗi → đăng như thường).
@@ -50,7 +51,7 @@ const createdAt = new Date("2026-11-12T08:00:00.000Z");
 const feedRow = (extra: object = {}) => ({
   id: postId, authorId: userId, content: "Món tối nay", recipeId: null, recipe: null, memberRecipe, hiddenAt: null, promotedRecipeId: null,
   promotedRecipe: null, images: [], createdAt, updatedAt: createdAt, author: { id: userId, name: "Minh An", isSample: false },
-  likes: [], comments: [], _count: { likes: 0, comments: 0 }, ...extra,
+  likes: [], savedBy: [], comments: [], _count: { likes: 0, comments: 0 }, ...extra,
 });
 
 beforeEach(() => {
@@ -270,5 +271,46 @@ describe("AI kiểm duyệt bài (phản hồi giả lập)", () => {
     asAdmin();
     expect((await request(admin, `/api/admin/community/posts/${postId}/review`, { method: "PATCH", token: token(), body })).status).toBe(409);
     expect(mocks.updatePost).not.toHaveBeenCalled();
+  });
+});
+
+describe("UC25 Lưu bài viết", () => {
+  const visible = { OR: [{ hiddenAt: null, pendingReviewAt: null }, { authorId: userId }] };
+
+  it("lưu bài người dùng thấy được: ghi cho đúng người trong JWT, không trùng", async () => {
+    mocks.findFirstPost.mockResolvedValue({ id: postId });
+    mocks.createSaved.mockResolvedValue({ count: 1 });
+    const response = await request(community, `/api/community/${postId}/save`, { method: "PUT", token: token() });
+    expect(response).toEqual({ status: 200, body: { postId, saved: true } });
+    expect(mocks.findFirstPost.mock.calls[0][0].where).toEqual({ id: postId, ...visible });
+    expect(mocks.createSaved).toHaveBeenCalledWith({ data: [{ userId, postId }], skipDuplicates: true });
+  });
+
+  it("bài bị ẩn / chờ duyệt / không tồn tại → 404, không lưu", async () => {
+    mocks.findFirstPost.mockResolvedValue(null);
+    expect((await request(community, `/api/community/${postId}/save`, { method: "PUT", token: token() })).status).toBe(404);
+    expect(mocks.createSaved).not.toHaveBeenCalled();
+  });
+
+  it("bỏ lưu chỉ xóa của chính người dùng", async () => {
+    mocks.deleteSaved.mockResolvedValue({ count: 1 });
+    const response = await request(community, `/api/community/${postId}/save`, { method: "DELETE", token: token() });
+    expect(response.body).toEqual({ postId, saved: false });
+    expect(mocks.deleteSaved).toHaveBeenCalledWith({ where: { userId, postId } });
+  });
+
+  it("\"Bài đã lưu\": chỉ của người trong JWT, bài bị ẩn/chờ duyệt tự biến mất (cùng điều kiện bảng tin), mới lưu trước", async () => {
+    mocks.findSaved.mockResolvedValue([{ post: feedRow({ authorId: otherId, savedBy: [{ userId }] }) }]);
+    const response = await request(community, "/api/community/saved", { token: token() });
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual([expect.objectContaining({ id: postId, savedByMe: true })]);
+    const query = mocks.findSaved.mock.calls[0][0];
+    expect(query.where).toEqual({ userId, post: visible });
+    expect(query.orderBy).toEqual({ createdAt: "desc" });
+    expect(query.select.post.include.savedBy).toEqual({ where: { userId }, select: { userId: true } });
+  });
+
+  it("cần đăng nhập", async () => {
+    expect((await request(community, "/api/community/saved")).status).toBe(401);
   });
 });

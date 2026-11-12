@@ -1,7 +1,7 @@
 # Sơ đồ dữ liệu (ERD)
 
 Sinh tự động từ `backend/prisma/schema.prisma` bằng `node scripts/docs/gen-erd.mjs` (2026-11-12).
-21 bảng, 16 kiểu enum, 29 quan hệ khóa ngoại. CSDL: PostgreSQL qua Prisma; mọi thay đổi schema có migration
+23 bảng, 16 kiểu enum, 33 quan hệ khóa ngoại. CSDL: PostgreSQL qua Prisma; mọi thay đổi schema có migration
 riêng trong `backend/prisma/migrations/`.
 
 Ký hiệu: `||--o{` một – nhiều, `||--o|` một – một (khóa ngoại duy nhất), `|o--o{` khóa ngoại có thể rỗng. Nhãn trên đường là tên quan hệ
@@ -40,6 +40,10 @@ erDiagram
   User ||--o{ RefreshToken : "user"
   User ||--o{ PasswordResetToken : "user"
   User ||--o{ ExpiryEmailLog : "user"
+  User ||--o{ FavoriteRecipe : "user"
+  Recipe ||--o{ FavoriteRecipe : "recipe"
+  User ||--o{ SavedPost : "user"
+  CommunityPost ||--o{ SavedPost : "post"
   User {
     String id PK
     String email UK
@@ -287,15 +291,27 @@ erDiagram
     String_list itemKeys
     DateTime createdAt
   }
+  FavoriteRecipe {
+    String id PK
+    String userId FK
+    String recipeId FK
+    DateTime createdAt
+  }
+  SavedPost {
+    String id PK
+    String userId FK
+    String postId FK
+    DateTime createdAt
+  }
 ```
 
 ## Tóm tắt các bảng
 
 | Bảng | Ý nghĩa | Khóa chính | Khóa ngoại (xóa khi cha bị xóa) / duy nhất | Được tham chiếu bởi |
 |---|---|---|---|---|
-| User | Tài khoản: email (duy nhất), mật khẩu băm bcrypt, vai trò USER/ADMIN, khóa tài khoản (lockedAt), tài khoản mẫu (isSample). | id | duy nhất: email | AdminAuditLog.actorId, CommunityPost.authorId, CommunityLike.userId, CommunityComment.authorId, Notification.userId, NutritionProfile.userId, PantryItem.userId, PantryTransaction.userId, ReceiptScan.userId, MealPlan.userId, ChatMessage.userId, RefreshToken.userId, PasswordResetToken.userId, ExpiryEmailLog.userId |
+| User | Tài khoản: email (duy nhất), mật khẩu băm bcrypt, vai trò USER/ADMIN, khóa tài khoản (lockedAt), tài khoản mẫu (isSample). | id | duy nhất: email | AdminAuditLog.actorId, CommunityPost.authorId, CommunityLike.userId, CommunityComment.authorId, Notification.userId, NutritionProfile.userId, PantryItem.userId, PantryTransaction.userId, ReceiptScan.userId, MealPlan.userId, ChatMessage.userId, RefreshToken.userId, PasswordResetToken.userId, ExpiryEmailLog.userId, FavoriteRecipe.userId, SavedPost.userId |
 | AdminAuditLog | Nhật ký thao tác Admin, ghi trong cùng transaction với thao tác. Không lưu mật khẩu, token, nội dung bài/bình luận. | id | actorId → User (xóa: Restrict) | — |
-| CommunityPost | Bài viết cộng đồng: chữ, ảnh, gắn món có sẵn hoặc công thức tự viết (JSON); Admin ẩn; AI đánh dấu chờ duyệt. | id | authorId → User (xóa: Cascade); recipeId → Recipe (xóa: Restrict); promotedRecipeId → Recipe (xóa: SetNull) | CommunityPostImage.postId, CommunityLike.postId, CommunityComment.postId |
+| CommunityPost | Bài viết cộng đồng: chữ, ảnh, gắn món có sẵn hoặc công thức tự viết (JSON); Admin ẩn; AI đánh dấu chờ duyệt. | id | authorId → User (xóa: Cascade); recipeId → Recipe (xóa: Restrict); promotedRecipeId → Recipe (xóa: SetNull) | CommunityPostImage.postId, CommunityLike.postId, CommunityComment.postId, SavedPost.postId |
 | CommunityPostImage | Ảnh trong bài viết (tối đa 4, lưu trên Cloudinary thư mục nouri/posts, đã xóa EXIF/GPS trước khi tải lên). | id | postId → CommunityPost (xóa: Cascade) | — |
 | CommunityLike | Lượt thích bài viết; mỗi người thích một bài một lần. |  | postId → CommunityPost (xóa: Cascade); userId → User (xóa: Cascade) | — |
 | CommunityComment | Bình luận bài viết. | id | postId → CommunityPost (xóa: Cascade); authorId → User (xóa: Cascade) | — |
@@ -304,7 +320,7 @@ erDiagram
 | PantryItem | Thực phẩm trong kho của người dùng: số lượng, đơn vị, hạn, nơi bảo quản, mức tối thiểu, đơn giá (tùy chọn). | id | userId → User (xóa: Cascade) | PantryTransaction.pantryItemId |
 | PantryTransaction | Lịch sử xuất/nhập kho. Ghi cùng transaction với thay đổi kho. Chụp lại tên và đơn vị lúc ghi để lịch sử còn đọc được sau khi thực phẩm bị sửa/xóa (pantryItemId về null khi xóa). delta: + nhập, − xuất, theo `unit`; quantityAfter: số lượng sau thay đổi. Dòng hoàn lại (bỏ "đã ăn"/"đã mua") trỏ về dòng gốc qua reversalOfId; dòng gốc có reversedAt. | id | userId → User (xóa: Cascade); pantryItemId → PantryItem (xóa: SetNull); mealPlanItemId → MealPlanItem (xóa: SetNull); shoppingItemId → ShoppingItem (xóa: SetNull); reversalOfId → PantryTransaction (xóa: SetNull); receiptScanId → ReceiptScan (xóa: SetNull) | PantryTransaction.reversalOfId |
 | ReceiptScan | Một lần quét hóa đơn (GĐ3c). Không lưu ảnh, không lưu văn bản đọc được; dòng nháp chỉ giữ trong bộ nhớ server. Dùng để đếm số lần quét mỗi ngày (kể cả lần lỗi) và gom các dòng lịch sử kho của một lần lưu để hoàn tác cả lô. | id | userId → User (xóa: Cascade) | PantryTransaction.receiptScanId |
-| Recipe | Công thức trong thư viện (seed 33 món, Admin thêm/sửa): dinh dưỡng một khẩu phần, nhãn chế độ ăn, bữa phù hợp; hiddenAt = ngừng dùng. | id | duy nhất: slug | CommunityPost.recipeId, CommunityPost.promotedRecipeId, RecipeIngredient.recipeId, MealPlanItem.recipeId |
+| Recipe | Công thức trong thư viện (seed 33 món, Admin thêm/sửa): dinh dưỡng một khẩu phần, nhãn chế độ ăn, bữa phù hợp; hiddenAt = ngừng dùng. | id | duy nhất: slug | CommunityPost.recipeId, CommunityPost.promotedRecipeId, RecipeIngredient.recipeId, MealPlanItem.recipeId, FavoriteRecipe.recipeId |
 | RecipeIngredient | Nguyên liệu của công thức (tên, số lượng, đơn vị, tùy chọn). | id | recipeId → Recipe (xóa: Cascade) | — |
 | MealPlan | Thực đơn 7 ngày (OpenAI hoặc thuật toán chấm điểm), trạng thái DRAFT/ACTIVE/COMPLETED. | id | userId → User (xóa: Cascade) | MealPlanDay.mealPlanId, ShoppingItem.mealPlanId |
 | MealPlanDay | Một ngày của thực đơn (duy nhất theo thực đơn + ngày). | id | mealPlanId → MealPlan (xóa: Cascade); duy nhất: (mealPlanId, date) | MealPlanItem.dayId |
@@ -314,6 +330,8 @@ erDiagram
 | RefreshToken | Refresh token (GĐ4): chỉ lưu SHA-256 của token (token gốc nằm trong cookie httpOnly). Mỗi lần làm mới, token cũ được đánh dấu usedAt và phát token mới cùng familyId (xoay vòng). Dùng lại token đã xoay → thu hồi cả chuỗi (familyId). | id | userId → User (xóa: Cascade); duy nhất: tokenHash | — |
 | PasswordResetToken | Quên mật khẩu (giai-doan-email): token ngẫu nhiên 32 byte gửi qua email, DB chỉ lưu SHA-256; hết hạn 30 phút, dùng một lần (usedAt). Yêu cầu mới xóa các token cũ của người đó. | id | userId → User (xóa: Cascade); duy nhất: tokenHash | — |
 | ExpiryEmailLog | Email nhắc đồ sắp hết hạn đã gửi. Dòng được tạo TRƯỚC khi gửi và làm khóa: unique (userId, dayKey, slot) → chạy lịch nhiều lần hay nhiều tiến trình cũng chỉ một email/ngày ("daily"); "test-1..3" là các lần "Gửi thử ngay". itemKeys: "pantryItemId:yyyy-MM-dd" (id + hạn) của món đã nhắc, để không nhắc lại cùng món trừ khi hạn còn 1 ngày. | id | userId → User (xóa: Cascade); duy nhất: (userId, dayKey, slot) | — |
+| FavoriteRecipe | UC24 Yêu thích công thức: một người một món một lần. Cũng là tín hiệu "LIKED" cho bộ gợi ý (interaction-loader.ts, cùng trọng số với thích bài gắn món). Xóa người dùng / món → xóa theo. | id | userId → User (xóa: Cascade); recipeId → Recipe (xóa: Cascade); duy nhất: (userId, recipeId) | — |
+| SavedPost | UC25 Lưu bài viết (chỉ chủ tài khoản thấy). Bài bị xóa → dòng lưu xóa theo; bài bị ẩn / chờ duyệt → không hiện trong "Bài đã lưu". | id | userId → User (xóa: Cascade); postId → CommunityPost (xóa: Cascade); duy nhất: (userId, postId) | — |
 
 ## Kiểu enum
 
@@ -727,3 +745,29 @@ Email nhắc đồ sắp hết hạn đã gửi. Dòng được tạo TRƯỚC k
 | createdAt | DateTime | có | — | — |
 
 Chỉ mục / ràng buộc: `@@unique([userId, dayKey, slot])`, `@@index([userId, createdAt])`.
+
+### FavoriteRecipe
+
+UC24 Yêu thích công thức: một người một món một lần. Cũng là tín hiệu "LIKED" cho bộ gợi ý (interaction-loader.ts, cùng trọng số với thích bài gắn món). Xóa người dùng / món → xóa theo.
+
+| Cột | Kiểu | Bắt buộc | Khóa | Ghi chú |
+|---|---|---|---|---|
+| id | String | có | PK | — |
+| userId | String | có | FK | — |
+| recipeId | String | có | FK | — |
+| createdAt | DateTime | có | — | — |
+
+Chỉ mục / ràng buộc: `@@unique([userId, recipeId])`, `@@index([userId, createdAt])`, `@@index([recipeId])`.
+
+### SavedPost
+
+UC25 Lưu bài viết (chỉ chủ tài khoản thấy). Bài bị xóa → dòng lưu xóa theo; bài bị ẩn / chờ duyệt → không hiện trong "Bài đã lưu".
+
+| Cột | Kiểu | Bắt buộc | Khóa | Ghi chú |
+|---|---|---|---|---|
+| id | String | có | PK | — |
+| userId | String | có | FK | — |
+| postId | String | có | FK | — |
+| createdAt | DateTime | có | — | — |
+
+Chỉ mục / ràng buộc: `@@unique([userId, postId])`, `@@index([userId, createdAt])`, `@@index([postId])`.

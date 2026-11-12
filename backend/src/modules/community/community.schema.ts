@@ -34,6 +34,8 @@ export const updateCommunityPostSchema = z.object({
   query: empty,
 });
 
+export const savePostSchema = z.object({ body: empty, params: postIdParams, query: empty });
+
 export const toggleCommunityLikeSchema = z.object({
   body: empty,
   params: postIdParams,

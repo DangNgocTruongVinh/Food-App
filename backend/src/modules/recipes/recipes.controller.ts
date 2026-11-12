@@ -1,7 +1,9 @@
 import type { Request, Response } from "express";
 import type { AuthenticatedRequest, ValidatedRequest } from "../../types/http.js";
 import { featuredRecipesSchema, type RecipeIdParams, type RecipeListQuery } from "./recipes.schema.js";
-import { getFeaturedRecipes, getRecipe, getRecipeForYou, getRecipeStats, listRecipes } from "./recipes.service.js";
+import {
+  getFeaturedRecipes, getRecipe, getRecipeForYou, getRecipeStats, listFavoriteRecipes, listRecipes, setRecipeFavorite,
+} from "./recipes.service.js";
 
 const authenticatedUserId = (req: Request) => (req as AuthenticatedRequest).userId;
 
@@ -25,7 +27,7 @@ export async function getRecipeController(
   req: ValidatedRequest<unknown, RecipeIdParams>,
   res: Response,
 ) {
-  res.json(await getRecipe(req.params.id));
+  res.json(await getRecipe(req.params.id, authenticatedUserId(req)));
 }
 
 export async function getRecipeForYouController(
@@ -33,4 +35,16 @@ export async function getRecipeForYouController(
   res: Response,
 ) {
   res.json(await getRecipeForYou(authenticatedUserId(req), req.params.id));
+}
+
+export async function listFavoriteRecipesController(req: Request, res: Response) {
+  res.json(await listFavoriteRecipes(authenticatedUserId(req)));
+}
+
+export async function addFavoriteRecipeController(req: ValidatedRequest<unknown, RecipeIdParams>, res: Response) {
+  res.json(await setRecipeFavorite(authenticatedUserId(req), req.params.id, true));
+}
+
+export async function removeFavoriteRecipeController(req: ValidatedRequest<unknown, RecipeIdParams>, res: Response) {
+  res.json(await setRecipeFavorite(authenticatedUserId(req), req.params.id, false));
 }

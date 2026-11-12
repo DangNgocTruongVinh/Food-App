@@ -26,6 +26,17 @@ export async function getRecipe(id: string) {
   return (await api.get<Recipe>(`/recipes/${id}`)).data;
 }
 
+/** UC24: món yêu thích của chính người dùng (mới thêm trước, bỏ món đã ngừng sử dụng). */
+export async function listFavoriteRecipes() {
+  return (await api.get<Recipe[]>("/recipes/favorites")).data;
+}
+
+/** Bật (PUT) / tắt (DELETE) yêu thích; gọi lại nhiều lần vẫn cùng kết quả. */
+export async function setRecipeFavorite({ id, favorite }: { id: string; favorite: boolean }) {
+  const response = favorite ? await api.put(`/recipes/${id}/favorite`) : await api.delete(`/recipes/${id}/favorite`);
+  return response.data as { recipeId: string; favorite: boolean };
+}
+
 /** Công khai (không cần đăng nhập): chỉ số đếm theo nhóm, dùng cho Landing. */
 export async function getRecipeStats() {
   return (await api.get<RecipeStats>("/recipes/stats")).data;

@@ -9,7 +9,7 @@ import MemberRecipeFields from "../components/community/MemberRecipeFields";
 import PostCard from "../components/community/PostCard";
 import PostComposer, { COMMUNITY_POST_INPUT_ID } from "../components/community/PostComposer";
 import RecipePicker from "../components/community/RecipePicker";
-import { Button, EmptyState, ErrorState, LoadingState, Skeleton, Toast, useConfirm } from "../components/ui";
+import { Button, ChoiceGroup, EmptyState, ErrorState, LoadingState, Skeleton, Toast, useConfirm } from "../components/ui";
 import { useAuth } from "../contexts/AuthContext";
 import {
   addCommunityImages, communityPostElementId, deletePostConfirm, isOwnPost, normalizeCommunityContent, SHARE_RECIPE_PARAM, shareRecipeError,
@@ -17,11 +17,13 @@ import {
 } from "../features/community/community.logic";
 import {
   appendCommunityComment, communityMutations, communityQueries, prependCommunityPost, removeCommunityPost, replaceCommunityPost,
-  updateCommunityLike,
+  updateCommunityLike, updateCommunitySaved,
 } from "../features/community/community.queries";
 import { emptyMemberRecipeDraft, toMemberRecipe, type MemberRecipeDraft } from "../features/community/member-recipe.logic";
 import { recipeQueries } from "../features/recipes/recipes.queries";
 import type { CommunityPost, CommunityRecipeSummary } from "../types";
+
+const VIEW_OPTIONS = [["feed", "Bảng tin"], ["saved", "Bài đã lưu"]] as const;
 
 // "Lưu bài", "Theo dõi" thành viên, chủ đề/thành viên nổi bật: chưa có dữ liệu thật, làm ở GĐ5.
 export default function CommunityPage() {
@@ -48,6 +50,10 @@ export default function CommunityPage() {
   const clearToast = useCallback(() => setToast(""), []);
 
   const feed = useQuery(communityQueries.feed());
+  // UC25: "Bảng tin" hoặc "Bài đã lưu" (chỉ bài của chính mình đã lưu; bài bị ẩn/xóa tự biến mất).
+  const [view, setView] = useState<"feed" | "saved">("feed");
+  const saved = useQuery({ ...communityQueries.saved(), enabled: view === "saved" });
+  const list = view === "saved" ? saved : feed;
   const recipes = useQuery({ ...recipeQueries.list(), enabled: isPickerOpen });
   const sharedRecipe = useQuery({ ...recipeQueries.detail(shareRecipeId ?? ""), enabled: Boolean(shareRecipeId) });
 
@@ -112,6 +118,12 @@ export default function CommunityPage() {
     ...communityMutations.remove(),
     onSuccess: (_result, postId) => { removeCommunityPost(queryClient, postId); setToast("Đã xóa bài viết."); },
     onError: (removeError) => setError(getApiError(removeError)),
+  });
+
+  const save = useMutation({
+    ...communityMutations.save(),
+    onSuccess: (result) => { updateCommunitySaved(queryClient, result.postId, result.saved); setToast(result.saved ? "Đã lưu bài." : "Đã bỏ lưu bài."); },
+    onError: (saveError) => setError(getApiError(saveError)),
   });
 
   const update = useMutation({
@@ -199,26 +211,32 @@ export default function CommunityPage() {
             error={error ? <ErrorState message={error} /> : null}
           />
 
-          <section className="cm-feed" aria-label="Bảng tin">
-            {feed.isLoading && (
+          <ChoiceGroup
+            legend="Hiển thị" name="community-view" className="cm-view-switch" options={VIEW_OPTIONS} value={view}
+            onChange={(value) => setView(value === "saved" ? "saved" : "feed")}
+          />
+          <section className="cm-feed" aria-label={view === "saved" ? "Bài đã lưu" : "Bảng tin"}>
+            {list.isLoading && (
               <LoadingState label="Đang tải bài viết">
                 {[0, 1].map((index) => <Skeleton key={index} kind="block" height={220} />)}
               </LoadingState>
             )}
-            {feed.isError && (
+            {list.isError && (
               <ErrorState
-                message={`Chưa tải được bảng tin. ${getApiError(feed.error)}`}
-                onRetry={() => void feed.refetch()}
-                retrying={feed.isFetching}
+                message={`Chưa tải được ${view === "saved" ? "bài đã lưu" : "bảng tin"}. ${getApiError(list.error)}`}
+                onRetry={() => void list.refetch()}
+                retrying={list.isFetching}
               />
             )}
-            {feed.data?.length === 0 && (
+            {list.data?.length === 0 && (view === "saved" ? (
+              <EmptyState message="Bạn chưa lưu bài nào. Bấm “Lưu” dưới một bài để đọc lại sau." />
+            ) : (
               <EmptyState
                 message="Chưa có bài viết nào. Hãy đăng món đầu tiên bạn nấu."
                 action={<Button onClick={() => document.getElementById(COMMUNITY_POST_INPUT_ID)?.focus()}>Viết bài</Button>}
               />
-            )}
-            {feed.data?.map((post) => (
+            ))}
+            {list.data?.map((post) => (
               <PostCard
                 key={post.id}
                 post={post}
@@ -230,6 +248,8 @@ export default function CommunityPage() {
                 isDeleting={remove.isPending && remove.variables === post.id}
                 commentDraft={commentDrafts[post.id] ?? ""}
                 onToggleLike={() => toggleLike.mutate(post.id)}
+                isSavePending={save.isPending && save.variables?.postId === post.id}
+                onToggleSave={() => save.mutate({ postId: post.id, saved: !post.savedByMe })}
                 onDelete={() => void confirmDelete(post)}
                 onEdit={() => { setEditError(""); setEditingPost(post); }}
                 onCommentDraftChange={(value) => setCommentDrafts((drafts) => ({ ...drafts, [post.id]: value }))}

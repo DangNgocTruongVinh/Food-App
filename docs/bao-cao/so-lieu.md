@@ -6,13 +6,13 @@ Các bảng mục 2–3 được chép nguyên văn từ `docs/thuat-toan-goi-y.
 
 ## 1. Kiểm thử tự động — đo thật
 
-Chạy `npx vitest run` trong `backend/` và `frontend/` ngày 12/11/2026 trên nhánh `tai-lieu` (cùng mã chức năng với `main`):
+Chạy `npx vitest run` trong `backend/` và `frontend/` ngày 12/11/2026 trên nhánh `uc24-uc25`:
 
 | Phần | File test | Test | Kết quả |
 |---|---|---|---|
-| Backend | 65 | 1.221 | tất cả đạt |
-| Frontend | 32 | 500 | tất cả đạt |
-| **Tổng** | **97** | **1.721** | **tất cả đạt** |
+| Backend | 66 | 1.234 | tất cả đạt |
+| Frontend | 32 | 503 | tất cả đạt |
+| **Tổng** | **98** | **1.737** | **tất cả đạt** |
 
 Test không cần CSDL hay mạng: Prisma được giả lập (có transaction giả `backend/src/test/fake-transaction.ts`), OpenAI/Cloudinary/SMTP
 dùng phản hồi giả lập, đồng hồ giả cho lịch nhắc hạn. Một số bộ test đáng chú ý:
@@ -157,11 +157,11 @@ Hiện chỉ có test với dữ liệu giả lập (`backend/src/services/recei
 
 | Mục | Số lượng | Nguồn |
 |---|---|---|
-| Endpoint API | 74 (công khai 10, đăng nhập 46, Admin 18) | `docs/bao-cao/api.md` (sinh từ routes) |
-| Bảng CSDL / enum / quan hệ khóa ngoại | 21 / 16 / 29 | `docs/bao-cao/erd.md` (sinh từ `schema.prisma`) |
-| Migration | 21 | `backend/prisma/migrations/` |
+| Endpoint API | 80 (công khai 10, đăng nhập 52, Admin 18) | `docs/bao-cao/api.md` (sinh từ routes) |
+| Bảng CSDL / enum / quan hệ khóa ngoại | 23 / 16 / 33 | `docs/bao-cao/erd.md` (sinh từ `schema.prisma`) |
+| Migration | 22 | `backend/prisma/migrations/` |
 | Món trong bộ seed | 33 | `backend/prisma/seed-data.ts` |
-| Use case | 26 khảo sát (14 đã làm, 10 làm khác, 2 chưa làm) + 13 mới | `docs/bao-cao/use-case.md` |
+| Use case | 26 khảo sát (15 đã làm, 11 làm khác; không làm phần "theo dõi thành viên") + 13 mới | `docs/bao-cao/use-case.md` |
 
 ## 7. Dữ liệu mẫu cho demo — dữ liệu mẫu, không phải hoạt động thật
 

@@ -5,7 +5,9 @@ import {
   addCommunityComment,
   deleteCommunityPost,
   listCommunityPosts,
+  listSavedCommunityPosts,
   publishCommunityPost,
+  setCommunityPostSaved,
   toggleCommunityLike,
   updateCommunityPost,
   type CommunityLikeResult,
@@ -13,6 +15,7 @@ import {
 
 export const communityQueries = {
   feed: () => queryOptions({ queryKey: queryKeys.community.feed(), queryFn: listCommunityPosts }),
+  saved: () => queryOptions({ queryKey: queryKeys.community.saved(), queryFn: listSavedCommunityPosts }),
 };
 
 export const communityMutations = {
@@ -21,15 +24,30 @@ export const communityMutations = {
   addComment: () => mutationOptions({ mutationFn: addCommunityComment }),
   remove: () => mutationOptions({ mutationFn: deleteCommunityPost }),
   update: () => mutationOptions({ mutationFn: updateCommunityPost }),
+  save: () => mutationOptions({ mutationFn: setCommunityPostSaved }),
 };
 
+/** Áp cùng một thay đổi cho bảng tin và "Bài đã lưu" (cùng dạng bài viết). */
+function updatePostLists(queryClient: QueryClient, change: (posts: CommunityPost[]) => CommunityPost[]) {
+  for (const key of [queryKeys.community.feed(), queryKeys.community.saved()]) {
+    queryClient.setQueryData<CommunityPost[]>(key, (posts) => (posts ? change(posts) : posts));
+  }
+}
+
+/** UC25: bật/tắt lưu — cập nhật cờ ở bảng tin; bỏ lưu thì bài rời "Bài đã lưu", lưu mới thì tải lại danh sách đó. */
+export function updateCommunitySaved(queryClient: QueryClient, postId: string, saved: boolean) {
+  updatePostLists(queryClient, (posts) => posts.map((post) => (post.id === postId ? { ...post, savedByMe: saved } : post)));
+  if (saved) void queryClient.invalidateQueries({ queryKey: queryKeys.community.saved() });
+  else queryClient.setQueryData<CommunityPost[]>(queryKeys.community.saved(), (posts) => posts?.filter((post) => post.id !== postId));
+}
+
 export function removeCommunityPost(queryClient: QueryClient, postId: string) {
-  queryClient.setQueryData<CommunityPost[]>(queryKeys.community.feed(), (posts = []) => posts.filter((post) => post.id !== postId));
+  updatePostLists(queryClient, (posts) => posts.filter((post) => post.id !== postId));
 }
 
 /** Bài vừa sửa thay đúng chỗ trong bảng tin (giữ bình luận, lượt thích từ phản hồi của backend). */
 export function replaceCommunityPost(queryClient: QueryClient, post: CommunityPost) {
-  queryClient.setQueryData<CommunityPost[]>(queryKeys.community.feed(), (posts = []) => posts.map((item) => (item.id === post.id ? post : item)));
+  updatePostLists(queryClient, (posts) => posts.map((item) => (item.id === post.id ? post : item)));
 }
 
 export function prependCommunityPost(queryClient: QueryClient, post: CommunityPost) {
@@ -41,7 +59,7 @@ export function updateCommunityLike(
   postId: string,
   result: CommunityLikeResult,
 ) {
-  queryClient.setQueryData<CommunityPost[]>(queryKeys.community.feed(), (posts = []) => posts.map((post) => (
+  updatePostLists(queryClient, (posts) => posts.map((post) => (
     post.id === postId ? { ...post, likedByMe: result.liked, likeCount: result.likeCount } : post
   )));
 }
@@ -51,7 +69,7 @@ export function appendCommunityComment(
   postId: string,
   comment: CommunityComment,
 ) {
-  queryClient.setQueryData<CommunityPost[]>(queryKeys.community.feed(), (posts = []) => posts.map((post) => (
+  updatePostLists(queryClient, (posts) => posts.map((post) => (
     post.id === postId
       ? { ...post, comments: [...post.comments, comment], commentCount: post.commentCount + 1 }
       : post

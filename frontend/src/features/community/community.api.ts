@@ -50,6 +50,17 @@ export async function deleteCommunityPost(postId: string) {
   await api.delete(`/community/${postId}`);
 }
 
+/** UC25: bài đã lưu của chính người dùng (bài bị ẩn / chờ duyệt / đã xóa không còn trong danh sách). */
+export async function listSavedCommunityPosts() {
+  return (await api.get<CommunityPost[]>("/community/saved")).data;
+}
+
+/** Lưu (PUT) / bỏ lưu (DELETE) bài; gọi lại vẫn cùng kết quả. */
+export async function setCommunityPostSaved({ postId, saved }: { postId: string; saved: boolean }) {
+  const response = saved ? await api.put(`/community/${postId}/save`) : await api.delete(`/community/${postId}/save`);
+  return response.data as { postId: string; saved: boolean };
+}
+
 export async function addCommunityComment({ postId, content }: AddCommunityCommentInput) {
   return (await api.post<CommunityComment>(`/community/${postId}/comments`, { content })).data;
 }

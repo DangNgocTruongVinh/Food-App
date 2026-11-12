@@ -64,7 +64,7 @@ const recipeRow = { ...recipeSummary, hiddenAt: null };
 const imagesSelect = { select: { url: true, position: true }, orderBy: { position: "asc" } };
 const recipeResponse = { ...recipeSummary, hidden: false };
 const promotedSelect = { select: { id: true, name: true } };
-const basePost = { id: postId, authorId: ownerId, content: "Bữa trưa", recipeId: null, recipe: null, createdAt, updatedAt: createdAt, author };
+const basePost = { id: postId, authorId: ownerId, content: "Bữa trưa", recipeId: null, recipe: null, createdAt, updatedAt: createdAt, author, savedBy: [] };
 const createdComment = {
   id: commentId,
   postId,
@@ -153,6 +153,8 @@ describe("Community HTTP contract (mock Prisma, no database)", () => {
       comments: [expect.objectContaining({ id: commentId })],
     });
     expect(response.body[0]).not.toHaveProperty("likes");
+    expect(response.body[0]).not.toHaveProperty("savedBy");
+    expect(response.body[0].savedByMe).toBe(false);
     expect(response.body[0]).not.toHaveProperty("_count");
     expect(mocks.findPosts).toHaveBeenCalledWith({
       where: { OR: [{ hiddenAt: null, pendingReviewAt: null }, { authorId: userId }] },
@@ -164,6 +166,7 @@ describe("Community HTTP contract (mock Prisma, no database)", () => {
         promotedRecipe: promotedSelect,
         images: imagesSelect,
         likes: { where: { userId }, select: { userId: true } },
+        savedBy: { where: { userId }, select: { userId: true } },
         comments: {
           orderBy: { createdAt: "asc" },
           include: { author: { select: { id: true, name: true, isSample: true } } },

@@ -70,6 +70,7 @@ export function feedInclude(userId: string) {
     ...promotedRecipeInclude,
     ...postImagesInclude,
     likes: { where: { userId }, select: { userId: true } },
+    savedBy: { where: { userId }, select: { userId: true } },
     comments: { orderBy: { createdAt: "asc" }, include: { author: { select: authorSelect } } },
     _count: { select: { likes: true, comments: true } },
   } as const;
@@ -77,10 +78,11 @@ export function feedInclude(userId: string) {
 
 type FeedRow = Prisma.CommunityPostGetPayload<{ include: ReturnType<typeof feedInclude> }>;
 
-export function toFeedPost({ likes, _count, recipe, ...post }: FeedRow, allergies: string[]) {
+export function toFeedPost({ likes, savedBy, _count, recipe, ...post }: FeedRow, allergies: string[]) {
   return {
     ...withMemberRecipe(post, allergies),
     recipe: toRecipeSummary(recipe),
+    savedByMe: savedBy.length > 0,
     likedByMe: likes.length > 0,
     likeCount: _count.likes,
     commentCount: _count.comments,
@@ -307,4 +309,31 @@ export async function listCommunityPostsForModeration(page: number, pageSize: nu
   ]);
   const items = posts.map(toModerationPost);
   return { items, total, page, pageSize };
+}
+
+/**
+ * GET /api/community/saved (UC25): bài đã lưu của chính người dùng, mới lưu trước. Bài bị xóa đã tự mất (xóa theo); bài bị Admin ẩn
+ * hoặc AI đánh dấu chờ duyệt không hiện (cùng điều kiện với bảng tin), hiện lại khi được hiện/duyệt.
+ */
+export async function listSavedPosts(userId: string) {
+  const [saved, allergies] = await Promise.all([
+    prisma.savedPost.findMany({
+      where: { userId, post: visiblePostWhere(userId) }, orderBy: { createdAt: "desc" }, take: COMMUNITY_FEED_LIMIT,
+      select: { post: { include: feedInclude(userId) } },
+    }),
+    viewerAllergies(userId),
+  ]);
+  return saved.map(({ post }) => toFeedPost(post, allergies));
+}
+
+/** PUT/DELETE /api/community/:postId/save: lưu / bỏ lưu (gọi lại vẫn cùng kết quả). Bài không thấy được (không có, bị ẩn) → 404. */
+export async function setPostSaved(userId: string, postId: string, saved: boolean) {
+  if (!saved) {
+    await prisma.savedPost.deleteMany({ where: { userId, postId } });
+    return { postId, saved: false };
+  }
+  const post = await prisma.communityPost.findFirst({ where: { id: postId, ...visiblePostWhere(userId) }, select: { id: true } });
+  if (!post) throw new HttpError(404, "Không tìm thấy bài viết.");
+  await prisma.savedPost.createMany({ data: [{ userId, postId }], skipDuplicates: true });
+  return { postId, saved: true };
 }
