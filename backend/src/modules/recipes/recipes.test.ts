@@ -83,23 +83,21 @@ describe("Recipes HTTP contract (no database)", () => {
     });
   });
 
-  it("maps search and cuisine query parameters to the existing Prisma filters", async () => {
+  it("cuisine lọc bằng Prisma; từ khóa lọc bằng searchRecipes (không dấu, đủ từ, cả nguyên liệu)", async () => {
     const response = await request(
       app,
-      `/api/recipes?search=${encodeURIComponent("Ức gà")}&cuisine=${encodeURIComponent("Việt Nam")}`,
+      `/api/recipes?search=${encodeURIComponent("uc ga")}&cuisine=${encodeURIComponent("Việt Nam")}`,
       { token: token() },
     );
     expect(response.status).toBe(200);
     expect(mocks.findMany).toHaveBeenCalledWith({
-      where: {
-        hiddenAt: null,
-        deletedAt: null,
-        name: { contains: "Ức gà", mode: "insensitive" },
-        cuisine: "Việt Nam",
-      },
+      where: { hiddenAt: null, deletedAt: null, cuisine: "Việt Nam" },
       include: { ingredients: true },
       orderBy: { name: "asc" },
     });
+    mocks.findMany.mockResolvedValueOnce([{ ...recipe, name: "Cháo gừng", ingredients: [{ ...recipe.ingredients[0], name: "Ức gà" }] }, { ...recipe, name: "Phở", ingredients: [] }]);
+    const searched = await request(app, `/api/recipes?search=${encodeURIComponent("uc ga")}`, { token: token() });
+    expect(searched.body.map((item: { name: string }) => item.name)).toEqual(["Cháo gừng"]);
   });
 
   it("preserves empty search and cuisine parameters as no filters", async () => {

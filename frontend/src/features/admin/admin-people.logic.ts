@@ -63,7 +63,7 @@ export function deleteCommentConfirmText(comment: Pick<ModerationPost["comments"
 // ---------- Nhật ký ----------
 
 export const AUDIT_ACTION_LABELS: Record<AuditAction, string> = {
-  RECIPE_CREATE: "Tạo món", RECIPE_UPDATE: "Sửa món", RECIPE_HIDE: "Ẩn món", RECIPE_SHOW: "Hiện lại món", RECIPE_DELETE: "Xóa món",
+  RECIPE_CREATE: "Tạo món", RECIPE_UPDATE: "Sửa món", RECIPE_HIDE: "Ẩn món", RECIPE_SHOW: "Hiện lại món", RECIPE_DELETE: "Xóa món", RECIPE_RESTORE: "Khôi phục món",
   RECIPE_IMAGE_REPLACE: "Đổi ảnh món", USER_LOCK: "Khóa tài khoản", USER_UNLOCK: "Mở khóa tài khoản", POST_DELETE: "Xóa bài viết",
   COMMENT_DELETE: "Xóa bình luận", POST_HIDE: "Ẩn bài viết", POST_SHOW: "Hiện lại bài viết", POST_PROMOTE: "Chuyển thành công thức",
   POST_APPROVE: "Duyệt bài AI đánh dấu",
@@ -93,6 +93,7 @@ export function auditDetails(log: Pick<AuditLog, "action" | "details">) {
       return fields.length ? `Đổi ${fields.map((field) => RECIPE_FIELD_LABELS[field] ?? field).join(", ")}` : "Không đổi trường nào";
     }
     case "RECIPE_CREATE":
+    case "RECIPE_RESTORE":
       return details.slug ? `Đường dẫn: ${String(details.slug)}` : "";
     case "RECIPE_DELETE": {
       const mode = details.soft === true ? "Xóa mềm (món đang được dùng)" : details.soft === false ? "Xóa hẳn" : "";

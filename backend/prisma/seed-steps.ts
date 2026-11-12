@@ -8,6 +8,7 @@ type SeedRecipe = (typeof SeedRecipeList)[number];
 /**
  * Món gốc của seed: mặc định chỉ tạo món còn thiếu, không sửa và không xóa món đã có (Admin có thể đã sửa/thêm món).
  * updateExisting (SEED_UPDATE_RECIPES=true) cố ý ghi đè các món gốc theo seed-data.ts; món do Admin tạo không bị đụng tới.
+ * Món gốc Admin đã xóa mềm (deletedAt) vẫn còn dòng theo slug nên không bị tạo lại/trùng; ghi đè cũng không bỏ deletedAt.
  */
 export async function seedRecipeCatalog(client: SeedClient, recipes: readonly SeedRecipe[], updateExisting: boolean) {
   const result = { created: 0, updated: 0, skipped: 0 };

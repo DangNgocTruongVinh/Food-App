@@ -24,6 +24,14 @@ describe("seedRecipeCatalog", () => {
     expect(client.recipe.upsert).not.toHaveBeenCalled();
   });
 
+  it("món gốc đã bị Admin xóa mềm: không tạo lại, không tạo trùng, kể cả khi ghi đè vẫn giữ deletedAt", async () => {
+    client.recipe.findUnique.mockResolvedValue({ id: "existing" }); // findUnique theo slug thấy cả món đã xóa mềm
+    expect(await seedRecipeCatalog(seedClient, [first], false)).toEqual({ created: 0, updated: 0, skipped: 1 });
+    expect(client.recipe.create).not.toHaveBeenCalled();
+    await seedRecipeCatalog(seedClient, [first], true);
+    expect(client.recipe.update.mock.calls[0][0].data).not.toHaveProperty("deletedAt");
+  });
+
   it("updates existing seed recipes only when SEED_UPDATE_RECIPES is on", async () => {
     client.recipe.findUnique.mockResolvedValue({ id: "existing" });
     const result = await seedRecipeCatalog(seedClient, [first], true);

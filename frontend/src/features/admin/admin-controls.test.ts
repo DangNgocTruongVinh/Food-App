@@ -23,7 +23,8 @@ const CONTROLS: Record<string, string[]> = {
   "điều hướng Admin": ["/admin/recipes", "/admin/users", "/admin/moderation", "/admin/audit-logs", "Công thức", "Người dùng", "Kiểm duyệt", "Nhật ký"],
   "Tổng quan (thống kê)": ["Đang tải thống kê", "AdminWeeklyChart"],
   "Công thức — danh sách": [
-    "Tạo món", "Tìm món theo tên", "Lọc theo trạng thái", "`Sửa ${recipe.name}`", "`Hiện lại ${recipe.name}`", "`Ẩn ${recipe.name}`",
+    // ra-soat-cuoi: ô tìm theo tên mở rộng thành tìm cả nguyên liệu/ẩm thực (searchRecipes dùng chung); thêm "Đã xóa" + "Khôi phục".
+    "Tạo món", "Tìm món, nguyên liệu, ẩm thực", "Lọc theo trạng thái", "Đã xóa", "`Khôi phục ${recipe.name}`", "`Sửa ${recipe.name}`", "`Hiện lại ${recipe.name}`", "`Ẩn ${recipe.name}`",
     "`Xóa ${recipe.name}`", "\"Ẩn món\"", "\"Xóa món\"", "Phân trang công thức",
   ],
   "Công thức — thêm/sửa": [

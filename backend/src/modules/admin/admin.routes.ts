@@ -7,7 +7,7 @@ import { listAdminAuditLogsController } from "./admin-audit.controller.js";
 import { listAdminAuditLogsSchema } from "./admin-audit.schema.js";
 import {
   createAdminRecipeController,
-  deleteAdminRecipeController,
+  deleteAdminRecipeController, restoreAdminRecipeController,
   getAdminRecipeController,
   listAdminRecipesController,
   replaceAdminRecipeImageController,
@@ -55,6 +55,7 @@ router.put("/recipes/:id", validate(updateAdminRecipeSchema), asyncHandler(updat
 router.patch("/recipes/:id/visibility", validate(setRecipeVisibilitySchema), asyncHandler(setAdminRecipeVisibilityController));
 router.put("/recipes/:id/image", validate(adminRecipeIdSchema), singleImageUpload, asyncHandler(replaceAdminRecipeImageController));
 router.delete("/recipes/:id", validate(adminRecipeIdSchema), asyncHandler(deleteAdminRecipeController));
+router.post("/recipes/:id/restore", validate(adminRecipeIdSchema), asyncHandler(restoreAdminRecipeController));
 
 router.get("/users", validate(listAdminUsersSchema), asyncHandler(listAdminUsersController));
 router.patch("/users/:id/lock", validate(setUserLockSchema), asyncHandler(setUserLockController));

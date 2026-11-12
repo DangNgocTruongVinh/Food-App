@@ -1,23 +1,26 @@
-import { Eye, EyeOff, Pencil, Trash2 } from "lucide-react";
+import { Eye, EyeOff, Pencil, RotateCcw, Trash2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import type { AdminRecipeSummary } from "../../features/admin/admin.api";
 import { isRecipeUsed, MEAL_TYPE_OPTIONS, usageText } from "../../features/admin/admin-recipes.logic";
 import { formatNumber } from "../../features/dashboard/dashboard.logic";
 import { recipeDietLabel } from "../../features/recipes/recipes.logic";
 import { IMAGE_WIDTHS } from "../../utils/images";
-import { IconButton, RecipeImage, Tag } from "../ui";
+import { Button, IconButton, RecipeImage, Tag } from "../ui";
 
 type AdminRecipeTableProps = {
   recipes: AdminRecipeSummary[];
   pendingId: string | null;
   onToggleHidden: (recipe: AdminRecipeSummary) => void;
   onDelete: (recipe: AdminRecipeSummary) => void;
+  onRestore: (recipe: AdminRecipeSummary) => void;
 };
 
 const mealLabel = (type: string) => MEAL_TYPE_OPTIONS.find(([value]) => value === type)?.[1].replace("Bữa ", "") ?? type;
 
-/** Bảng công thức (≤ 760px mỗi dòng thành thẻ). Xóa chỉ bật khi món chưa được dùng; đã dùng thì giải thích và gợi ý ẩn. */
-export function AdminRecipeTable({ recipes, pendingId, onToggleHidden, onDelete }: AdminRecipeTableProps) {
+const statusText = (recipe: AdminRecipeSummary) => (recipe.deletedAt ? "Đã xóa" : recipe.hidden ? "Đã ẩn" : "Đang hiện");
+
+/** Bảng công thức (≤ 760px mỗi dòng thành thẻ). Món đã xóa mềm (bộ lọc "Đã xóa") chỉ có nút "Khôi phục", không sửa được. */
+export function AdminRecipeTable({ recipes, pendingId, onToggleHidden, onDelete, onRestore }: AdminRecipeTableProps) {
   return (
     <table className="ad-table">
       <thead>
@@ -40,7 +43,9 @@ export function AdminRecipeTable({ recipes, pendingId, onToggleHidden, onDelete 
               <td className="ad-row__name">
                 <RecipeImage className="ad-row__image" recipe={recipe} width={IMAGE_WIDTHS.thumb} alt="" />
                 <span className="ad-row__title">
-                  <Link className="ad-row__link" to={`/admin/recipes/${recipe.id}/edit`}>{recipe.name}</Link>
+                  {recipe.deletedAt
+                    ? <span className="ad-row__link">{recipe.name}</span>
+                    : <Link className="ad-row__link" to={`/admin/recipes/${recipe.id}/edit`}>{recipe.name}</Link>}
                   <span className="ad-sub">{recipe.slug}</span>
                 </span>
               </td>
@@ -50,29 +55,37 @@ export function AdminRecipeTable({ recipes, pendingId, onToggleHidden, onDelete 
               <td data-label="Calo" className="ad-num">{formatNumber(recipe.calories)}</td>
               <td data-label="Được dùng" className={isRecipeUsed(recipe.usage) ? undefined : "ad-muted"}>{usageText(recipe.usage)}</td>
               <td data-label="Trạng thái">
-                <span className={recipe.hidden ? "ad-status ad-status--hidden" : "ad-status"}>{recipe.hidden ? "Đã ẩn" : "Đang hiện"}</span>
+                <span className={recipe.hidden || recipe.deletedAt ? "ad-status ad-status--hidden" : "ad-status"}>{statusText(recipe)}</span>
               </td>
               <td className="ad-row__actions">
                 <div className="ad-actions">
-                  <Link className="ui-icon-button ui-icon-button--quiet" to={`/admin/recipes/${recipe.id}/edit`} aria-label={`Sửa ${recipe.name}`}>
-                    <Pencil aria-hidden="true" />
-                  </Link>
-                  <IconButton
-                    quiet
-                    label={recipe.hidden ? `Hiện lại ${recipe.name}` : `Ẩn ${recipe.name}`}
-                    icon={recipe.hidden ? <Eye /> : <EyeOff />}
-                    disabled={busy}
-                    onClick={() => onToggleHidden(recipe)}
-                  />
-                  <IconButton
-                    quiet
-                    className="ad-actions__delete"
-                    label={`Xóa ${recipe.name}`}
-                    icon={<Trash2 />}
-                    disabled={busy}
-                    title={isRecipeUsed(recipe.usage) ? "Đang được dùng: xóa mềm (dữ liệu cũ vẫn giữ tên món)" : "Chưa được dùng: xóa hẳn"}
-                    onClick={() => onDelete(recipe)}
-                  />
+                  {recipe.deletedAt ? (
+                    <Button icon={<RotateCcw />} disabled={busy} onClick={() => onRestore(recipe)} aria-label={`Khôi phục ${recipe.name}`}>
+                      Khôi phục
+                    </Button>
+                  ) : (
+                    <>
+                    <Link className="ui-icon-button ui-icon-button--quiet" to={`/admin/recipes/${recipe.id}/edit`} aria-label={`Sửa ${recipe.name}`}>
+                      <Pencil aria-hidden="true" />
+                    </Link>
+                    <IconButton
+                      quiet
+                      label={recipe.hidden ? `Hiện lại ${recipe.name}` : `Ẩn ${recipe.name}`}
+                      icon={recipe.hidden ? <Eye /> : <EyeOff />}
+                      disabled={busy}
+                      onClick={() => onToggleHidden(recipe)}
+                    />
+                    <IconButton
+                      quiet
+                      className="ad-actions__delete"
+                      label={`Xóa ${recipe.name}`}
+                      icon={<Trash2 />}
+                      disabled={busy}
+                      title={isRecipeUsed(recipe.usage) ? "Đang được dùng: xóa mềm (dữ liệu cũ vẫn giữ tên món)" : "Chưa được dùng: xóa hẳn"}
+                      onClick={() => onDelete(recipe)}
+                    />
+                    </>
+                  )}
                 </div>
               </td>
             </tr>

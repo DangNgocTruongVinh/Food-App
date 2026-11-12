@@ -1,7 +1,7 @@
 # Danh sách API
 
 Sinh tự động từ `backend/src/app.ts` và các file `*.routes.ts` bằng `node scripts/docs/gen-api.mjs` (2026-11-12).
-Tổng 80 endpoint: Công khai 10, Đăng nhập 52, Admin 18.
+Tổng 81 endpoint: Công khai 10, Đăng nhập 52, Admin 19.
 
 Quy ước: "Đăng nhập" = `requireAuth` (JWT 15 phút, `userId` lấy từ token, đọc `role`/`lockedAt` từ DB mỗi request); "Admin" = thêm
 `requireAdmin`, mọi thao tác ghi `AdminAuditLog` trong cùng transaction. Dữ liệu vào được kiểm bằng Zod (`validate`); sai → 422.
@@ -78,14 +78,15 @@ Dữ liệu của người khác hoặc không tồn tại → 404 (không lộ 
 | 67 | PATCH | `/api/admin/recipes/:id/visibility` | Admin | Ẩn / hiện món (món đã dùng chỉ ẩn, không xóa) | hidden | món |
 | 68 | PUT | `/api/admin/recipes/:id/image` | Admin; multipart: 1 ảnh | Thay ảnh món (Cloudinary, xóa ảnh cũ sau khi lưu DB) | image | món |
 | 69 | DELETE | `/api/admin/recipes/:id` | Admin | Xóa món: chưa được dùng → xóa hẳn (kèm ảnh), đã có trong thực đơn/bài viết → xóa mềm (deletedAt); ghi nhật ký | — | { id, mode: hard \| soft } |
-| 70 | GET | `/api/admin/users` | Admin | Danh sách người dùng | search, page, pageSize | items, total |
-| 71 | PATCH | `/api/admin/users/:id/lock` | Admin | Khóa / mở khóa (không khóa chính mình/Admin khác; khóa thu hồi refresh token) | locked | id, locked |
-| 72 | GET | `/api/admin/community/posts` | Admin | Bài cho kiểm duyệt; lọc "AI đánh dấu" | page, pageSize, filter = all \| ai | items, total |
-| 73 | GET | `/api/admin/community/posts/:postId` | Admin | Một bài (form "Chuyển thành công thức") | — | bài |
-| 74 | PATCH | `/api/admin/community/posts/:postId/visibility` | Admin | Ẩn / hiện bài; ghi nhật ký | hidden | bài |
-| 75 | PATCH | `/api/admin/community/posts/:postId/review` | Admin | Bài AI đánh dấu: Duyệt (POST_APPROVE) / Ẩn (POST_HIDE) | decision = approve \| hide | bài |
-| 76 | POST | `/api/admin/community/posts/:postId/recipe-estimate` | Admin | AI ước tính dinh dưỡng 1 khẩu phần + chuẩn hóa tên nguyên liệu (không lưu) | — | calories, proteinG, carbsG, fatG, ingredients[] |
-| 77 | DELETE | `/api/admin/community/posts/:postId` | Admin | Xóa bài vi phạm (service xóa dùng chung) | — | 204 |
-| 78 | DELETE | `/api/admin/community/comments/:commentId` | Admin | Xóa bình luận vi phạm | — | 204 |
-| 79 | GET | `/api/admin/stats` | Admin | Thống kê: tổng số và 12 tuần gần nhất (không tính tài khoản mẫu) | — | totals, weekly[] |
-| 80 | GET | `/api/admin/audit-logs` | Admin | Nhật ký thao tác Admin | action, targetType, targetId, actorId, page, pageSize | items, total |
+| 70 | POST | `/api/admin/recipes/:id/restore` | Admin | Khôi phục món đã xóa mềm (bộ lọc Đã xóa); ghi nhật ký RECIPE_RESTORE | — | { id, restored } |
+| 71 | GET | `/api/admin/users` | Admin | Danh sách người dùng | search, page, pageSize | items, total |
+| 72 | PATCH | `/api/admin/users/:id/lock` | Admin | Khóa / mở khóa (không khóa chính mình/Admin khác; khóa thu hồi refresh token) | locked | id, locked |
+| 73 | GET | `/api/admin/community/posts` | Admin | Bài cho kiểm duyệt; lọc "AI đánh dấu" | page, pageSize, filter = all \| ai | items, total |
+| 74 | GET | `/api/admin/community/posts/:postId` | Admin | Một bài (form "Chuyển thành công thức") | — | bài |
+| 75 | PATCH | `/api/admin/community/posts/:postId/visibility` | Admin | Ẩn / hiện bài; ghi nhật ký | hidden | bài |
+| 76 | PATCH | `/api/admin/community/posts/:postId/review` | Admin | Bài AI đánh dấu: Duyệt (POST_APPROVE) / Ẩn (POST_HIDE) | decision = approve \| hide | bài |
+| 77 | POST | `/api/admin/community/posts/:postId/recipe-estimate` | Admin | AI ước tính dinh dưỡng 1 khẩu phần + chuẩn hóa tên nguyên liệu (không lưu) | — | calories, proteinG, carbsG, fatG, ingredients[] |
+| 78 | DELETE | `/api/admin/community/posts/:postId` | Admin | Xóa bài vi phạm (service xóa dùng chung) | — | 204 |
+| 79 | DELETE | `/api/admin/community/comments/:commentId` | Admin | Xóa bình luận vi phạm | — | 204 |
+| 80 | GET | `/api/admin/stats` | Admin | Thống kê: tổng số và 12 tuần gần nhất (không tính tài khoản mẫu) | — | totals, weekly[] |
+| 81 | GET | `/api/admin/audit-logs` | Admin | Nhật ký thao tác Admin | action, targetType, targetId, actorId, page, pageSize | items, total |

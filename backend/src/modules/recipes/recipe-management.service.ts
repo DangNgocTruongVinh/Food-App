@@ -2,6 +2,7 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "../../lib/prisma.js";
 import { findDietViolations, normalizeDietTags } from "../../services/dietary.service.js";
 import { deleteImageQuietly, IMAGE_FOLDERS, uploadImage } from "../../services/image-upload.service.js";
+import { searchRecipes } from "../../services/recipe-search.js";
 import { HttpError } from "../../utils/http-error.js";
 import { nextAvailableSlug, slugifyVietnamese } from "../../utils/slug.js";
 import { recordAdminAction } from "../admin/admin-audit.service.js";
@@ -53,24 +54,34 @@ function prepareRecipeData(input: RecipeInput) {
   };
 }
 
+const adminListSelect = {
+  id: true, slug: true, name: true, imageUrl: true, calories: true, cuisine: true, dietTags: true, mealTypes: true,
+  hiddenAt: true, deletedAt: true, createdAt: true, updatedAt: true, ...usageCount,
+} as const;
+
+const adminStatusWhere = (status: AdminRecipeListQuery["status"]): Prisma.RecipeWhereInput => {
+  if (status === "deleted") return { deletedAt: { not: null } };
+  if (status === "visible") return { deletedAt: null, hiddenAt: null };
+  if (status === "hidden") return { deletedAt: null, hiddenAt: { not: null } };
+  return { deletedAt: null };
+};
+
+/** "Tất cả" = mọi món chưa xóa mềm; "Đã xóa" chỉ món xóa mềm (để khôi phục). Từ khóa dùng chung searchRecipes với ô tìm của người dùng. */
 export async function listRecipesForAdmin(query: AdminRecipeListQuery) {
-  const where: Prisma.RecipeWhereInput = {
-    ...(query.search ? { name: { contains: query.search, mode: "insensitive" } } : {}),
-    deletedAt: null,
-    ...(query.status === "visible" ? { hiddenAt: null } : query.status === "hidden" ? { hiddenAt: { not: null } } : {}),
-  };
+  const where = adminStatusWhere(query.status);
+  const skip = (query.page - 1) * query.pageSize;
+  if (query.search) {
+    // shortcut: lọc ở ứng dụng trên toàn bộ món (thư viện vài chục món); khi lên hàng nghìn món thì chuyển sang tìm bằng SQL.
+    const rows = await prisma.recipe.findMany({
+      where, orderBy: { name: "asc" }, select: { ...adminListSelect, ingredients: { select: { name: true } } },
+    });
+    const matched = searchRecipes(rows, query.search);
+    const items = matched.slice(skip, skip + query.pageSize).map(({ ingredients: _ingredients, ...recipe }) => withUsage(recipe));
+    return { items, total: matched.length, page: query.page, pageSize: query.pageSize };
+  }
   const [total, recipes] = await Promise.all([
     prisma.recipe.count({ where }),
-    prisma.recipe.findMany({
-      where,
-      orderBy: { name: "asc" },
-      skip: (query.page - 1) * query.pageSize,
-      take: query.pageSize,
-      select: {
-        id: true, slug: true, name: true, imageUrl: true, calories: true, cuisine: true, dietTags: true, mealTypes: true,
-        hiddenAt: true, createdAt: true, updatedAt: true, ...usageCount,
-      },
-    }),
+    prisma.recipe.findMany({ where, orderBy: { name: "asc" }, skip, take: query.pageSize, select: adminListSelect }),
   ]);
   return { items: recipes.map(withUsage), total, page: query.page, pageSize: query.pageSize };
 }
@@ -186,6 +197,19 @@ export async function setRecipeVisibility(actorId: string, id: string, hidden: b
     return result;
   });
   return { ...updated, hidden: updated.hiddenAt !== null };
+}
+
+/** Khôi phục món đã xóa mềm: quay lại danh sách như trước khi xóa (giữ trạng thái ẩn/hiện cũ); ghi RECIPE_RESTORE. */
+export async function restoreRecipe(actorId: string, id: string) {
+  const recipe = await prisma.recipe.findUnique({ where: { id }, select: { id: true, name: true, slug: true, deletedAt: true } });
+  if (!recipe?.deletedAt) throw new HttpError(404, "Không tìm thấy món đã xóa.");
+  await prisma.$transaction([
+    prisma.recipe.update({ where: { id }, data: { deletedAt: null } }),
+    recordAdminAction(prisma, {
+      actorId, action: "RECIPE_RESTORE", targetType: "RECIPE", targetId: id, targetLabel: recipe.name, details: { slug: recipe.slug },
+    }),
+  ]);
+  return { id, restored: true };
 }
 
 /** Xóa mềm: món đã được tham chiếu (thực đơn, bài viết) — giữ dòng để dữ liệu cũ còn tên, ẩn khỏi mọi nơi chọn mới; giữ ảnh. */

@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { Outlet } from "react-router-dom";
 import { PublicHeader } from "../components/layout/PublicHeader";
 import { SiteFooter } from "../components/layout/SiteFooter";
@@ -8,7 +9,7 @@ export default function PublicLayout() {
     <div className="ui-shell">
       <a className="ui-skip-link" href="#noi-dung-chinh">Bỏ qua menu, tới nội dung</a>
       <PublicHeader />
-      <main id="noi-dung-chinh" tabIndex={-1} className="ui-shell__main"><Outlet /></main>
+      <main id="noi-dung-chinh" tabIndex={-1} className="ui-shell__main"><Suspense fallback={null}><Outlet /></Suspense></main>
       <SiteFooter />
     </div>
   );

@@ -45,7 +45,11 @@ export async function generateWeeklyPlan(userId: string, startDateInput: string)
   };
 
   const startDate = new Date(`${startDateInput}T00:00:00.000Z`);
-  const aiPlan = await generatePlanWithAI(aiContext);
+  // OpenAI lỗi hoặc quá 120 giây: không báo lỗi cho người dùng, chuyển sang bộ tạo dự phòng như khi chưa có key.
+  const aiPlan = await generatePlanWithAI(aiContext).catch((error: unknown) => {
+    console.warn("Tạo thực đơn bằng OpenAI lỗi, dùng bộ tạo dự phòng:", error instanceof Error ? error.message : error);
+    return null;
+  });
   // Kết quả OpenAI luôn qua reconcileAIPlan (đúng danh sách đã lọc, đúng bữa); không có key, hoặc AI hỏng quá nửa số bữa → bộ
   // tạo chấm điểm (thuật toán 3 + 0,3·thuật toán 1, kho ảo, không lặp trong 3 ngày).
   const reconciled = aiPlan ? reconcileAIPlan(aiPlan, recipes, pantryNames, mealsPerDay, dietType) : null;

@@ -94,6 +94,9 @@ Nouri là ứng dụng quản lý thực phẩm trong gia đình và lập kế 
 
 Biến môi trường mới phải thêm vào `backend/src/config/env.ts` (Zod) và `.env.example` (chỉ tên, không giá trị). Biến chỉ seed dùng khai báo trong `backend/src/config/seed-env.ts`.
 
+> **ĐÓNG BĂNG CODE (từ 12/11/2026, sau nhánh `ra-soat-cuoi`): chỉ sửa lỗi, trừ đánh giá OCR (`eval:receipt` với ảnh hóa đơn thật) và tải ảnh món (`upload:recipe-photos`).**
+> Không thêm chức năng, không đổi giao diện/nghiệp vụ; mỗi sửa lỗi vẫn theo quy tắc nhánh + test + typecheck + build + kiểm tra thực tế.
+
 ## Kế hoạch thực hiện (theo thứ tự)
 
 ### Đã xong (chi tiết, số liệu kiểm thử, commit: `docs/lich-su-giai-doan.md`)
@@ -126,6 +129,13 @@ Kiến trúc, công thức và quyết định: `docs/thuat-toan-goi-y.md` và `
 - [x] R8 — Thực đơn không có OpenAI dùng `scoredPlan` (`meal-plan-scorer.ts`): thuật toán 3 + 0,3 × thuật toán 1, kho ảo (đồ sắp hết hạn không dùng quá lượng có, chỉ các ngày trước hạn), không lặp trong 3 ngày, calo ±35% mục tiêu bữa; đánh giá `npm run eval:mealplan -w backend` (mục 9 `docs/thuat-toan-goi-y.md`). Đã kiểm thử, gộp `main` 09/11/2026.
 - [ ] R9 — Cộng đồng: tab "Dành cho bạn" (backend + frontend) (trung bình). Làm dưới tên C4.
 - [ ] R10 — `docs/han-che.md`, `docs/cau-hoi-bao-ve.md`, cập nhật CLAUDE.md (dễ).
+
+### Rà soát cuối (nhánh `ra-soat-cuoi`, 12/11/2026)
+- [x] Tìm món dùng chung `searchRecipes` (bản gốc `backend/src/services/recipe-search.ts`, bản chép `frontend/src/features/recipes/recipe-search.ts`, test so hai file giống hệt): bỏ dấu khi gõ không dấu, giữ dấu khi gõ có dấu ("bò" ≠ "bó"), đủ từ theo thứ tự bất kỳ, tên/nguyên liệu/ẩm thực/bữa/chế độ ăn, đồng nghĩa nhỏ, khớp tên xếp trước. Dùng ở Công thức, "Thêm món", chọn món khi đăng bài, Admin (backend). Trang Công thức: số ô lọc theo kết quả, "Có N món phù hợp đang bị ẩn theo hồ sơ" + "Hiện tất cả", dòng "30 món hợp với bạn (3 món ẩn theo hồ sơ)".
+- [x] Admin: bộ lọc "Đã xóa" + "Khôi phục" (`POST /api/admin/recipes/:id/restore`, `RECIPE_RESTORE`, migration enum). Seed/demo:reset bỏ qua món xóa mềm (README).
+- [x] Sửa lỗi tạo thực đơn OpenAI > 60 giây bị nginx 504: OpenAI tối đa 120 giây (`MEAL_PLAN_TIMEOUT_MS`), lỗi → bộ tạo dự phòng; nginx `proxy_read_timeout 180s`.
+- [x] Tách gói theo route (gói chính 673,8 → 457,8 kB); Suspense quanh `<Outlet>` của các layout.
+- [x] e2e: `demo-flow` (luồng demo chính), `landing-header-check`, `screenshots` (ảnh quyển `docs/bao-cao/anh-man-hinh/`); script lượt cũ đánh dấu lỗi thời trong `run.cjs`. README viết lại (cài đặt từ đầu). Xóa nhánh đã gộp (giữ `backup/ui-local-…` chưa gộp).
 
 ### Giai đoạn 3c — Quét hóa đơn (OCR)
 Kế hoạch chi tiết: `docs/ke-hoach-gd3c.md`. Phần 1 (Tesseract trên server, parser, chuẩn hóa, màn duyệt, hoàn tác lô, đánh giá) làm trước; phần 2 (OpenAI Vision) làm khi có key.

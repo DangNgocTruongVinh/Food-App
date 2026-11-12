@@ -4,23 +4,26 @@ import { AdminRoute } from "./components/layout/AdminRoute";
 import ScrollToTop from "./components/ScrollToTop";
 import AppLayout from "./layouts/AppLayout";
 import PublicLayout from "./layouts/PublicLayout";
-import AiAssistantPage from "./pages/AiAssistantPage";
-import CommunityPage from "./pages/CommunityPage";
-import DashboardPage from "./pages/DashboardPage";
 import LandingPage from "./pages/LandingPage";
-import ForgotPasswordPage from "./pages/ForgotPasswordPage";
-import FavoriteRecipesPage from "./pages/FavoriteRecipesPage";
 import LoginPage from "./pages/LoginPage";
-import ResetPasswordPage from "./pages/ResetPasswordPage";
-import UnsubscribeExpiryPage from "./pages/UnsubscribeExpiryPage";
-import MealPlansPage from "./pages/MealPlansPage";
-import PantryPage from "./pages/PantryPage";
-import ProfilePage from "./pages/ProfilePage";
-import RecipeDetailPage from "./pages/RecipeDetailPage";
-import RecipesPage from "./pages/RecipesPage";
-import PrivacyPage from "./pages/info/PrivacyPage";
-import TermsPage from "./pages/info/TermsPage";
 import { getAuthToken } from "./features/auth/auth.storage";
+
+// Tách gói theo route (ra-soat-cuoi): chỉ Trang chủ và Đăng nhập nằm trong gói chính (trang vào đầu tiên, không nháy);
+// mọi trang khác tải khi mở. Suspense đặt quanh <Routes> (fallback rỗng như các trang lazy trước đây).
+const AiAssistantPage = lazy(() => import("./pages/AiAssistantPage"));
+const CommunityPage = lazy(() => import("./pages/CommunityPage"));
+const DashboardPage = lazy(() => import("./pages/DashboardPage"));
+const ForgotPasswordPage = lazy(() => import("./pages/ForgotPasswordPage"));
+const FavoriteRecipesPage = lazy(() => import("./pages/FavoriteRecipesPage"));
+const ResetPasswordPage = lazy(() => import("./pages/ResetPasswordPage"));
+const UnsubscribeExpiryPage = lazy(() => import("./pages/UnsubscribeExpiryPage"));
+const MealPlansPage = lazy(() => import("./pages/MealPlansPage"));
+const PantryPage = lazy(() => import("./pages/PantryPage"));
+const ProfilePage = lazy(() => import("./pages/ProfilePage"));
+const RecipeDetailPage = lazy(() => import("./pages/RecipeDetailPage"));
+const RecipesPage = lazy(() => import("./pages/RecipesPage"));
+const PrivacyPage = lazy(() => import("./pages/info/PrivacyPage"));
+const TermsPage = lazy(() => import("./pages/info/TermsPage"));
 
 // Trang mẫu thành phần giao diện: chỉ có ở môi trường dev (bản build production loại bỏ cả route lẫn mã của trang).
 // Trang Quản trị (kèm Recharts) chỉ Admin dùng: tải riêng để không làm nặng gói của người dùng thường.
@@ -42,6 +45,7 @@ function ProtectedRoute() {
 export default function App() {
   return <>
     <ScrollToTop />
+    <Suspense fallback={null}>
     <Routes>
       <Route index element={<LandingPage />} />
       <Route path="/login" element={<LoginPage />} />
@@ -64,23 +68,24 @@ export default function App() {
           <Route path="community" element={<CommunityPage />} />
           <Route path="assistant" element={<AiAssistantPage />} />
           <Route path="profile" element={<ProfilePage />} />
-          <Route path="reports" element={<Suspense fallback={null}><ReportsPage /></Suspense>} />
+          <Route path="reports" element={<ReportsPage />} />
         </Route>
         {/* Khu Quản trị tách riêng khung (AdminLayout), không dùng menu/footer của người dùng; USER vào /admin → Tổng quan. */}
         <Route element={<AdminRoute />}>
-          <Route path="admin" element={<Suspense fallback={null}><AdminLayout /></Suspense>}>
-            <Route index element={<Suspense fallback={null}><AdminStatsPage /></Suspense>} />
-            <Route path="recipes" element={<Suspense fallback={null}><AdminRecipesPage /></Suspense>} />
-            <Route path="recipes/new" element={<Suspense fallback={null}><AdminRecipeEditorPage /></Suspense>} />
-            <Route path="recipes/:id/edit" element={<Suspense fallback={null}><AdminRecipeEditorPage /></Suspense>} />
-            <Route path="users" element={<Suspense fallback={null}><AdminUsersPage /></Suspense>} />
-            <Route path="moderation" element={<Suspense fallback={null}><AdminModerationPage /></Suspense>} />
-            <Route path="audit-logs" element={<Suspense fallback={null}><AdminAuditLogsPage /></Suspense>} />
+          <Route path="admin" element={<AdminLayout />}>
+            <Route index element={<AdminStatsPage />} />
+            <Route path="recipes" element={<AdminRecipesPage />} />
+            <Route path="recipes/new" element={<AdminRecipeEditorPage />} />
+            <Route path="recipes/:id/edit" element={<AdminRecipeEditorPage />} />
+            <Route path="users" element={<AdminUsersPage />} />
+            <Route path="moderation" element={<AdminModerationPage />} />
+            <Route path="audit-logs" element={<AdminAuditLogsPage />} />
           </Route>
         </Route>
       </Route>
-      {DevUiPage && <Route path="/dev/ui" element={<Suspense fallback={null}><DevUiPage /></Suspense>} />}
+      {DevUiPage && <Route path="/dev/ui" element={<DevUiPage />} />}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
+    </Suspense>
   </>;
 }

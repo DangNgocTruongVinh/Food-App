@@ -34,3 +34,6 @@ docs/test-evidence/receipts/*.webp
 
 # Bộ tài liệu thiết kế trang đăng nhập (chỉ dùng để tham khảo, không commit)
 nouri-login-handoff/
+
+# Ảnh tham khảo thiết kế tải về (tài liệu riêng, có thể có bản quyền, không commit)
+docs/design-references/

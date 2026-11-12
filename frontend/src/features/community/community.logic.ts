@@ -1,3 +1,4 @@
+import { searchRecipes, type SearchableRecipe } from "../recipes/recipe-search";
 import { format, formatDistanceToNow } from "date-fns";
 import { vi } from "date-fns/locale";
 import type { CommunityPost, CommunityRecipeSummary, MemberRecipe, Recipe } from "../../types";
@@ -90,15 +91,9 @@ export function addCommunityImages<T extends ImageCandidate>(current: T[], incom
 
 export const COMMUNITY_RECIPE_PICKER_LIMIT = 8;
 
-/** Chuẩn hóa để tìm theo tên không phân biệt hoa thường/dấu: "Cá kho" và "ca kho" đều khớp. */
-export function normalizeSearchText(value: string) {
-  return value.normalize("NFD").replace(/\p{Diacritic}/gu, "").replace(/[đĐ]/g, "d").toLowerCase().replace(/\s+/g, " ").trim();
-}
-
-/** Lọc công thức cho ô chọn ở form đăng bài (lọc ở frontend; xem "Việc làm sau" trong CLAUDE.md). */
-export function filterAttachableRecipes<T extends Pick<Recipe, "name">>(recipes: T[], query: string, limit = COMMUNITY_RECIPE_PICKER_LIMIT) {
-  const normalized = normalizeSearchText(query);
-  return recipes.filter((recipe) => !normalized || normalizeSearchText(recipe.name).includes(normalized)).slice(0, limit);
+/** Lọc công thức cho ô chọn ở form đăng bài: cùng searchRecipes với mọi ô tìm món (lọc ở frontend; "Việc làm sau" trong CLAUDE.md). */
+export function filterAttachableRecipes<T extends SearchableRecipe>(recipes: T[], query: string, limit = COMMUNITY_RECIPE_PICKER_LIMIT) {
+  return searchRecipes(recipes, query).slice(0, limit);
 }
 
 export function toCommunityRecipeSummary(recipe: Pick<Recipe, "id" | "name" | "imageUrl" | "calories" | "prepMinutes" | "cookMinutes">) {

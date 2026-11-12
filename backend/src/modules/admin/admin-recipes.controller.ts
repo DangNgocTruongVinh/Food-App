@@ -1,7 +1,7 @@
 import type { Request, Response } from "express";
 import type { AuthenticatedRequest, ValidatedRequest } from "../../types/http.js";
 import {
-  createRecipe, deleteRecipe, getRecipeForAdmin, listRecipesForAdmin, replaceRecipeImage, setRecipeVisibility, updateRecipe,
+  createRecipe, deleteRecipe, getRecipeForAdmin, listRecipesForAdmin, replaceRecipeImage, restoreRecipe, setRecipeVisibility, updateRecipe,
 } from "../recipes/recipe-management.service.js";
 import { type AdminRecipeIdParams, type CreateRecipeInput, listAdminRecipesSchema, type RecipeInput } from "./admin-recipes.schema.js";
 
@@ -39,4 +39,8 @@ export async function replaceAdminRecipeImageController(req: ValidatedRequest<un
 export async function deleteAdminRecipeController(req: ValidatedRequest<unknown, AdminRecipeIdParams>, res: Response) {
   // mode: "hard" (xóa hẳn) | "soft" (xóa mềm vì món đã được tham chiếu).
   res.json(await deleteRecipe(adminId(req), req.params.id));
+}
+
+export async function restoreAdminRecipeController(req: ValidatedRequest<unknown, AdminRecipeIdParams>, res: Response) {
+  res.json(await restoreRecipe(adminId(req), req.params.id));
 }

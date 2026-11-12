@@ -11,7 +11,7 @@ import { adminMutations, adminQueries, invalidateAdminRecipeQueries } from "../.
 import { deleteRecipeConfirmText } from "../../features/admin/admin-recipes.logic";
 
 const PAGE_SIZE = 20;
-const STATUS_OPTIONS: Array<[AdminRecipeStatus, string]> = [["all", "Tất cả"], ["visible", "Đang hiện"], ["hidden", "Đã ẩn"]];
+const STATUS_OPTIONS: Array<[AdminRecipeStatus, string]> = [["all", "Tất cả"], ["visible", "Đang hiện"], ["hidden", "Đã ẩn"], ["deleted", "Đã xóa"]];
 type LocationState = { toast?: string } | null;
 
 /** /admin/recipes: tìm, lọc trạng thái, phân trang; Sửa / Ẩn–Hiện / Xóa (Ẩn, Xóa qua ConfirmDialog). */
@@ -41,6 +41,7 @@ export default function AdminRecipesPage() {
   const list = useQuery(adminQueries.recipes({ search: query, status, page, pageSize: PAGE_SIZE }));
   const visibility = useMutation({ ...adminMutations.setVisibility(), onSuccess: () => invalidateAdminRecipeQueries(queryClient) });
   const remove = useMutation({ ...adminMutations.deleteRecipe(), onSuccess: () => invalidateAdminRecipeQueries(queryClient) });
+  const restore = useMutation({ ...adminMutations.restoreRecipe(), onSuccess: () => invalidateAdminRecipeQueries(queryClient) });
 
   const toggleHidden = async (recipe: AdminRecipeSummary) => {
     setActionError("");
@@ -68,8 +69,18 @@ export default function AdminRecipesPage() {
     });
   };
 
+  // Khôi phục không cần hộp xác nhận: món quay lại như trước khi xóa, xóa lại được.
+  const restoreRecipe = (recipe: AdminRecipeSummary) => {
+    setActionError("");
+    restore.mutate(recipe.id, {
+      onSuccess: () => setToast(`Đã khôi phục “${recipe.name}”.`),
+      onError: (error) => setActionError(getApiError(error)),
+    });
+  };
+
   const data = list.data;
-  const pendingId = visibility.isPending ? visibility.variables?.id ?? null : remove.isPending ? remove.variables ?? null : null;
+  const pendingId = visibility.isPending ? visibility.variables?.id ?? null
+    : remove.isPending ? remove.variables ?? null : restore.isPending ? restore.variables ?? null : null;
 
   return (
     <section className="ad-section" aria-labelledby="ad-recipes-title">
@@ -78,14 +89,16 @@ export default function AdminRecipesPage() {
         <ButtonLink variant="primary" icon={<Plus />} to="/admin/recipes/new">Tạo món</ButtonLink>
       </div>
       <div className="ad-toolbar">
-        <AdminSearch id="ad-recipe-search" label="Tìm món theo tên" value={search} onChange={setSearch} />
+        <AdminSearch id="ad-recipe-search" label="Tìm món, nguyên liệu, ẩm thực" value={search} onChange={setSearch} />
         <div className="ad-filter" role="group" aria-label="Lọc theo trạng thái">
           {STATUS_OPTIONS.map(([value, label]) => (
             <Chip key={value} selected={status === value} onClick={() => { setStatus(value); setPage(1); }}>{label}</Chip>
           ))}
         </div>
       </div>
-      <p className="ui-small">Món đã dùng trong thực đơn hoặc bài viết chỉ ẩn được, không xóa được.</p>
+      <p className="ui-small">
+        Món chưa được dùng thì xóa hẳn. Món đã có trong thực đơn hoặc bài viết thì xóa mềm, khôi phục được ở bộ lọc “Đã xóa”.
+      </p>
       {actionError && <ErrorState message={actionError} />}
       <Card variant="flush" className="ad-panel">
         {list.isLoading ? (
@@ -101,6 +114,7 @@ export default function AdminRecipesPage() {
               pendingId={pendingId}
               onToggleHidden={(recipe) => void toggleHidden(recipe)}
               onDelete={(recipe) => void deleteRecipe(recipe)}
+              onRestore={restoreRecipe}
             />
             <AdminPager label="Phân trang công thức" summary={`${data.total} món`} page={page} total={data.total} pageSize={PAGE_SIZE} onPageChange={setPage} />
           </>

@@ -72,6 +72,7 @@
 .recipes-results__sort.ui-input { width: auto; min-height: var(--control-h); margin-left: var(--space-2); padding-right: var(--space-6); }
 .recipes-results__profile { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-2) var(--space-4); }
 .recipes-results__profile .ui-small { margin: 0; }
+.recipes-results__empty-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--space-2); }
 .recipes-results__list { display: grid; gap: var(--space-5); margin: 0; padding: 0; list-style: none; }
 .recipes-results__list--grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 .recipes-results__list--list { grid-template-columns: minmax(0, 1fr); gap: var(--space-3); }

@@ -118,17 +118,45 @@ describe("Admin recipe API permission matrix", () => {
 });
 
 describe("Admin recipe management", () => {
-  it("lists with search, status filter, pagination and usage counts", async () => {
+  it("lists with status filter, pagination and usage counts", async () => {
     mocks.count.mockResolvedValue(41);
     mocks.findMany.mockResolvedValue([{ ...stored, hiddenAt: new Date("2026-10-31T00:00:00.000Z"), _count: { mealItems: 3, communityPosts: 1 } }]);
-    const response = await request(app, `/api/admin/recipes?search=${encodeURIComponent("đậu")}&status=hidden&page=3&pageSize=20`, { token: token() });
+    const response = await request(app, "/api/admin/recipes?status=hidden&page=3&pageSize=20", { token: token() });
     expect(response.status).toBe(200);
     expect(response.body).toMatchObject({ total: 41, page: 3, pageSize: 20 });
     expect(response.body.items[0]).toMatchObject({ id: recipeId, hidden: true, usage: { mealPlanItems: 3, posts: 1 } });
     expect(response.body.items[0]).not.toHaveProperty("_count");
-    const where = { name: { contains: "đậu", mode: "insensitive" }, deletedAt: null, hiddenAt: { not: null } };
+    const where = { deletedAt: null, hiddenAt: { not: null } };
     expect(mocks.count).toHaveBeenCalledWith({ where });
     expect(mocks.findMany).toHaveBeenCalledWith(expect.objectContaining({ where, skip: 40, take: 20, orderBy: { name: "asc" } }));
+  });
+
+  it("từ khóa dùng chung searchRecipes (không dấu, nguyên liệu), đếm và phân trang trên kết quả", async () => {
+    const row = (name: string, ingredient: string) => ({ ...stored, id: name, name, ingredients: [{ name: ingredient }], ...unused });
+    mocks.findMany.mockResolvedValue([row("Bánh mì chay", "Đậu hũ"), row("Canh đậu hũ", "Đậu hũ"), row("Phở bò", "Thịt bò")]);
+    const response = await request(app, "/api/admin/recipes?search=dau%20hu&pageSize=1", { token: token() });
+    expect(response.body).toMatchObject({ total: 2, page: 1, pageSize: 1 });
+    expect(response.body.items.map((item: { name: string }) => item.name)).toEqual(["Canh đậu hũ"]); // khớp tên trước
+    expect(response.body.items[0]).not.toHaveProperty("ingredients");
+    expect(mocks.count).not.toHaveBeenCalled();
+  });
+
+  it("bộ lọc Đã xóa chỉ lấy món xóa mềm; Khôi phục bỏ deletedAt và ghi RECIPE_RESTORE cùng transaction", async () => {
+    await request(app, "/api/admin/recipes?status=deleted", { token: token() });
+    expect(mocks.findMany).toHaveBeenCalledWith(expect.objectContaining({ where: { deletedAt: { not: null } } }));
+    mocks.findUnique.mockResolvedValue({ id: recipeId, name: input.name, slug: "dau-hu-sot-nam", deletedAt: new Date() });
+    const response = await request(app, `/api/admin/recipes/${recipeId}/restore`, { method: "POST", token: token() });
+    expect(response).toEqual({ status: 200, body: { id: recipeId, restored: true } });
+    expect(mocks.update).toHaveBeenCalledWith({ where: { id: recipeId }, data: { deletedAt: null } });
+    expect(mocks.auditCreate.mock.calls.at(-1)?.[0].data).toMatchObject({ action: "RECIPE_RESTORE", targetId: recipeId, details: { slug: "dau-hu-sot-nam" } });
+    expect(mocks.transaction).toHaveBeenCalled();
+  });
+
+  it("khôi phục món chưa bị xóa → 404, không ghi gì", async () => {
+    mocks.findUnique.mockResolvedValue({ id: recipeId, name: input.name, slug: "x", deletedAt: null });
+    expect((await request(app, `/api/admin/recipes/${recipeId}/restore`, { method: "POST", token: token() })).status).toBe(404);
+    expect(mocks.update).not.toHaveBeenCalled();
+    expect(mocks.auditCreate).not.toHaveBeenCalled();
   });
 
   it("uses defaults (all recipes, page 1, 20 per page) and rejects a page size over 50", async () => {

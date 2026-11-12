@@ -17,6 +17,8 @@ type RecipeResultsProps = {
   onClearFilters: () => void;
   /** Số món vi phạm dị ứng/chế độ ăn của người dùng (ẩn mặc định); 0 thì không hiện công tắc. */
   hiddenCount: number;
+  /** Số món khớp từ khóa nhưng đang bị ẩn theo hồ sơ (không có kết quả thì nhắc + "Hiện tất cả"). */
+  hiddenMatches: number;
   showAll: boolean;
   onShowAllChange: (showAll: boolean) => void;
 };
@@ -58,7 +60,22 @@ export function RecipeResults(props: RecipeResultsProps) {
           {recipes.map((recipe) => <li key={recipe.id}><RecipeCard recipe={recipe} layout={view} /></li>)}
         </ul>
       ) : (
-        <EmptyState message="Không có công thức nào khớp với từ khóa và danh mục đang chọn." action={<Button onClick={props.onClearFilters}>Xóa bộ lọc</Button>} />
+        <EmptyState
+          message={(
+            <>
+              <strong>Không tìm thấy món phù hợp.</strong>{" "}
+              {props.hiddenMatches > 0
+                ? `Có ${props.hiddenMatches} món phù hợp đang bị ẩn theo hồ sơ của bạn.`
+                : "Thử từ ngắn hơn, tên nguyên liệu (vd. đậu hũ, ức gà), nền ẩm thực (vd. Hàn Quốc) hoặc chọn danh mục Tất cả."}
+            </>
+          )}
+          action={(
+            <span className="recipes-results__empty-actions">
+              {props.hiddenMatches > 0 && <Button variant="primary" onClick={() => props.onShowAllChange(true)}>Hiện tất cả</Button>}
+              <Button onClick={props.onClearFilters}>Xóa bộ lọc</Button>
+            </span>
+          )}
+        />
       )}
 
       {totalPages > 1 && (

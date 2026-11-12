@@ -30,7 +30,7 @@ export function AddMealDialog({ initialMealType, busy, error, onClose, onSubmit 
     const value = Number(servings);
     if (selected && Number.isFinite(value) && value > 0) onSubmit({ recipeId: selected.id, mealType, servings: value });
   };
-  const emptyMessage = search ? "Không có công thức nào khớp với tìm kiếm cho bữa này." : "Chưa có công thức phù hợp cho bữa này.";
+  const emptyMessage = search ? "Không tìm thấy món phù hợp cho bữa này. Thử từ ngắn hơn hoặc tên nguyên liệu." : "Chưa có công thức phù hợp cho bữa này.";
 
   return (
     <Dialog

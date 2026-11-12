@@ -9,6 +9,9 @@ import { generatedPlanSchema, type GeneratedPlan } from "./ai.schema.js";
 
 export type ChatTurn = { role: "user" | "assistant"; content: string };
 const CHAT_TIMEOUT_MS = 45_000;
+// Tạo thực đơn 7 ngày: tối đa 120 giây (đo thực tế 80–90+ giây), không thử lại (nginx chờ 180 giây); quá hạn/lỗi thì dùng bộ tạo dự phòng.
+// Trước đây không đặt: SDK chờ tới 10 phút và thử lại 2 lần, nginx trả 504 sau 60 giây dù thực đơn vẫn được tạo sau đó.
+export const MEAL_PLAN_TIMEOUT_MS = 120_000;
 
 export function createOpenAIService(client: OpenAI | null, model: string) {
   return {
@@ -21,7 +24,7 @@ export function createOpenAIService(client: OpenAI | null, model: string) {
           { role: "user", content: mealPlanUserPrompt(context) },
         ],
         text: { format: zodTextFormat(generatedPlanSchema, "weekly_meal_plan") },
-      });
+      }, { timeout: MEAL_PLAN_TIMEOUT_MS, maxRetries: 0 });
       return response.output_parsed;
     },
 

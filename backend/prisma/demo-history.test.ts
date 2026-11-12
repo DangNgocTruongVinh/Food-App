@@ -51,4 +51,18 @@ describe("Demo sample history (about 2 weeks, relative to the run date)", () => 
     expect(client.communityPost.findMany.mock.calls[0][0].where).toMatchObject({ author: { isSample: true }, recipe: { slug: { in: DEMO_LIKED_RECIPES } } });
     expect(client.communityLike.createMany.mock.calls[0][0].data.map((like: { postId: string }) => like.postId)).toEqual(["p-fish", "p-teri", "p-ga"]);
   });
+
+  it("demo:reset khi có món đã xóa mềm: chỉ lấy món còn dùng, bữa của món đã xóa thì bỏ qua (không lỗi)", async () => {
+    const [deleted, ...kept] = [...new Set(DEMO_HISTORY_MEALS.map((meal) => meal.slug))];
+    const client = {
+      recipe: { findMany: vi.fn(async (_args: { where: object }) => recipes.filter((recipe) => recipe.slug !== deleted).map(({ id, slug, calories }) => ({ id, slug, calories }))) },
+      mealPlan: { create: vi.fn(async (_args: { data: any }) => ({})) },
+      communityPost: { findMany: vi.fn(async () => []) },
+      communityLike: { createMany: vi.fn(async () => ({ count: 0 })) },
+    };
+    const result = await createDemoHistory(client as never, "demo-id", now);
+    expect(client.recipe.findMany.mock.calls[0][0].where).toMatchObject({ hiddenAt: null, deletedAt: null });
+    expect(result.meals).toBe(DEMO_HISTORY_MEALS.filter((meal) => meal.slug !== deleted).length);
+    expect(kept.length).toBeGreaterThan(0);
+  });
 });
