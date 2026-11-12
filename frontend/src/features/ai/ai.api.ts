@@ -1,7 +1,7 @@
 import { api } from "../../api/client";
 import type { ChatMessage, DashboardData } from "../../types";
 
-export interface ChatResponse { answer: string }
+export interface ChatResponse { answer: string; allergyWarnings: string[] }
 /** Backend chỉ cho biết đã cấu hình OpenAI hay chưa. */
 export interface AIStatus {
   available: boolean;

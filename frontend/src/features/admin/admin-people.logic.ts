@@ -66,6 +66,7 @@ export const AUDIT_ACTION_LABELS: Record<AuditAction, string> = {
   RECIPE_CREATE: "Tạo món", RECIPE_UPDATE: "Sửa món", RECIPE_HIDE: "Ẩn món", RECIPE_SHOW: "Hiện lại món", RECIPE_DELETE: "Xóa món",
   RECIPE_IMAGE_REPLACE: "Đổi ảnh món", USER_LOCK: "Khóa tài khoản", USER_UNLOCK: "Mở khóa tài khoản", POST_DELETE: "Xóa bài viết",
   COMMENT_DELETE: "Xóa bình luận", POST_HIDE: "Ẩn bài viết", POST_SHOW: "Hiện lại bài viết", POST_PROMOTE: "Chuyển thành công thức",
+  POST_APPROVE: "Duyệt bài AI đánh dấu",
 };
 
 const RECIPE_FIELD_LABELS: Record<string, string> = {

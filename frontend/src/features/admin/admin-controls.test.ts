@@ -34,6 +34,8 @@ const CONTROLS: Record<string, string[]> = {
   "Kiểm duyệt": [
     "Xóa bài", "`Xóa bài của ${post.author.name}`", "`Xóa bình luận của ${comment.author.name}`", "\"Xóa bình luận\"", "Phân trang bài viết",
     "Chuyển thành công thức", "\"Ẩn bài\"", "\"Hiện lại bài\"", "fromPost",
+    // AI kiểm duyệt (giai-doan-ai): lọc bài AI đánh dấu, lý do, Duyệt/Ẩn.
+    "AI đánh dấu", "Duyệt bài", "`Duyệt bài của ${post.author.name}`", "`Ẩn bài AI đánh dấu của ${post.author.name}`", "aiReviewReason",
   ],
   "Nhật ký": ["Nhật ký thao tác", "Phân trang nhật ký", "Chưa có thao tác quản trị nào."],
   "phân trang chung": ["Trang trước", "Trang sau"],

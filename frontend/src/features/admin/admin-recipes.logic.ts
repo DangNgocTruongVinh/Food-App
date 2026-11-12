@@ -1,6 +1,6 @@
 import type { DietTag, FoodUnit, MealType, MemberRecipe } from "../../types";
 import { COMMUNITY_IMAGE_MAX_BYTES, COMMUNITY_IMAGE_TYPES } from "../community/community.logic";
-import type { AdminRecipeDetail, AdminRecipeInput, RecipeUsage } from "./admin.api";
+import type { AdminRecipeDetail, AdminRecipeInput, RecipeEstimate, RecipeUsage } from "./admin.api";
 
 // Kiểm tra phía client giống Zod backend (admin-recipes.schema.ts) để báo lỗi ngay tại trường/dòng.
 export const RECIPE_LIMITS = {
@@ -94,6 +94,25 @@ export function recipeFormFromMemberRecipe(recipe: MemberRecipe, postContent: st
       return { key: newRowKey(), name: item.name, quantity: knownUnit ? guessQuantity(item.quantity) : "", unit: unit ?? "G", optional: false };
     }),
     steps: recipe.steps.slice(0, RECIPE_LIMITS.steps[1]).map((text) => ({ key: newRowKey(), text })),
+  };
+}
+
+/**
+ * Áp kết quả AI ước tính lên form "Chuyển thành công thức": chỉ điền ô dinh dưỡng còn trống và đổi tên nguyên liệu ở dòng
+ * Admin chưa sửa (tên vẫn là tên gốc của thành viên), để AI trả về chậm không ghi đè phần Admin đang gõ.
+ */
+export function applyRecipeEstimate(form: RecipeFormValues, estimate: RecipeEstimate): RecipeFormValues {
+  const fill = (value: string, next: number) => (value.trim() ? value : String(next));
+  return {
+    ...form,
+    calories: fill(form.calories, estimate.calories),
+    proteinG: fill(form.proteinG, estimate.proteinG),
+    carbsG: fill(form.carbsG, estimate.carbsG),
+    fatG: fill(form.fatG, estimate.fatG),
+    ingredients: form.ingredients.map((row, index) => {
+      const suggestion = estimate.ingredients[index];
+      return suggestion && row.name === suggestion.original ? { ...row, name: suggestion.name } : row;
+    }),
   };
 }
 

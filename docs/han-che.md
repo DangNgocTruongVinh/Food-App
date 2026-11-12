@@ -26,6 +26,14 @@ Chi tiết cách kiểm: `docs/test-evidence/bao-mat.md`. Hướng xử lý: nâ
   `HttpOnly` nên không bị lộ theo cách này.
 - Đăng xuất thu hồi refresh token; access token đã phát còn dùng được tối đa 15 phút (khóa tài khoản và đổi mật khẩu thì bị chặn ngay).
 
+### 1.3. Trợ lý AI và kiểm duyệt bằng AI
+
+- Cảnh báo dị ứng dưới câu trả lời của Hỏi Nouri so khớp từ khóa (nhóm dị ứng mở rộng) trên toàn bộ nội dung trả lời. AI được dặn không
+  gọi tên thành phần dị ứng, nhưng nếu vẫn nhắc tới để khuyên tránh (vd. "không dùng tôm") thì cảnh báo vẫn hiện: **báo thừa**. Chọn
+  như vậy có chủ đích, ưu tiên không bỏ sót hơn là không báo nhầm.
+- Kiểm duyệt bài cộng đồng gọi Moderation API và kiểm tra "liên quan ăn uống" song song, hạn chung 8 giây; quá giờ hoặc lỗi thì bài
+  được đăng như thường (không chặn người dùng), nên bài vi phạm lúc dịch vụ AI gặp sự cố chỉ được phát hiện khi Admin xem.
+
 ## 2. Hướng phát triển
 
 - **Quên/đặt lại mật khẩu qua email** (Nodemailer + SMTP, token đặt lại có hạn và dùng một lần). Hiện người dùng chỉ đổi được mật khẩu khi

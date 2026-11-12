@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { recipeFormFromMemberRecipe, guessFoodUnit, guessQuantity } from "../admin/admin-recipes.logic";
+import { applyRecipeEstimate, recipeFormFromMemberRecipe, guessFoodUnit, guessQuantity } from "../admin/admin-recipes.logic";
 import {
   draftFromMemberRecipe, emptyMemberRecipeDraft, MEMBER_RECIPE_LIMITS, memberIngredientLabel, toMemberRecipe, type MemberRecipeDraft,
 } from "./member-recipe.logic";
@@ -69,5 +69,30 @@ describe("Admin: prefill a library recipe from a member recipe", () => {
     expect(form).toMatchObject({ name: "Canh chua tôm", description: "Món chua ngọt mùa hè", servings: "12", cookMinutes: "40", calories: "" });
     expect(form.ingredients.map(({ name, quantity, unit }) => [name, quantity, unit])).toEqual([["Tôm", "300", "G"], ["Nước mắm", "", "G"]]);
     expect(form.steps.map((step) => step.text)).toEqual(["Nấu nước dùng", "Cho tôm vào"]);
+  });
+});
+
+describe("Admin: AI estimate applied to the prefilled form", () => {
+  const recipe = {
+    name: "Canh chua tôm", servings: 2, minutes: 30, steps: ["Nấu"],
+    ingredients: [{ name: "tom su", quantity: "300", unit: "g" }, { name: "Me chua", quantity: "1", unit: "muỗng" }],
+  };
+  const estimate = {
+    calories: 250, proteinG: 22, carbsG: 18, fatG: 6,
+    ingredients: [{ original: "tom su", name: "Tôm sú", matched: true }, { original: "Me chua", name: "Me chua", matched: false }],
+  };
+
+  it("fills empty nutrition and renames untouched ingredient rows", () => {
+    const form = applyRecipeEstimate(recipeFormFromMemberRecipe(recipe, ""), estimate);
+    expect([form.calories, form.proteinG, form.carbsG, form.fatG]).toEqual(["250", "22", "18", "6"]);
+    expect(form.ingredients.map((row) => row.name)).toEqual(["Tôm sú", "Me chua"]);
+  });
+
+  it("never overwrites what the Admin already typed while AI was answering", () => {
+    const typed = { ...recipeFormFromMemberRecipe(recipe, ""), calories: "300" };
+    typed.ingredients = [{ ...typed.ingredients[0], name: "Tôm thẻ" }, typed.ingredients[1]];
+    const form = applyRecipeEstimate(typed, estimate);
+    expect(form.calories).toBe("300");
+    expect(form.ingredients[0].name).toBe("Tôm thẻ");
   });
 });

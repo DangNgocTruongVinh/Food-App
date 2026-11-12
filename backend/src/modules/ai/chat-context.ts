@@ -1,5 +1,5 @@
 import type { MealType } from "@prisma/client";
-import { expandRestrictedTerms } from "../../services/dietary.service.js";
+import { expandRestrictedTerms, findRestrictedTerms } from "../../services/dietary.service.js";
 
 // Ngữ cảnh gửi cho trợ lý AI: chỉ những trường cần cho câu trả lời, không có id, email, mật khẩu hay token.
 
@@ -82,4 +82,44 @@ export function chatMealPlanContext(plan: PlanInput | null, calorieTarget: numbe
       target: calorieTarget ?? null,
     },
   };
+}
+
+/** Số tin gần nhất gửi kèm làm ngữ cảnh (3 lượt hỏi–đáp) và độ dài tối đa mỗi tin: đủ cho câu hỏi nối tiếp, giữ chi phí thấp. */
+export const CHAT_HISTORY_TURNS = 6;
+export const CHAT_HISTORY_MAX_CHARS = 600;
+/** Kho gửi kèm tối đa bao nhiêu thực phẩm (ưu tiên hạn gần nhất) và ngưỡng "sắp hết hạn". */
+export const CHAT_PANTRY_LIMIT = 40;
+export const EXPIRING_SOON_DAYS = 3;
+
+type PantryInput = { name: string; quantity: number; unit: string; expiryDate: Date | null };
+
+/**
+ * Kho rút gọn: tối đa CHAT_PANTRY_LIMIT thực phẩm, hạn gần trước; expiringSoon tách riêng đồ còn ≤ 3 ngày (theo ngày lịch
+ * giờ Việt Nam, đã quá hạn thì daysLeft âm) để AI ưu tiên dùng trước.
+ */
+export function chatPantryContext(pantry: PantryInput[], now = new Date()) {
+  const today = Date.parse(`${vietnamDateKey(now)}T00:00:00.000Z`);
+  const daysLeft = (date: Date | null) => (date ? Math.round((Date.parse(date.toISOString().slice(0, 10)) - today) / 86_400_000) : null);
+  const sorted = [...pantry].sort((a, b) => (a.expiryDate?.getTime() ?? Infinity) - (b.expiryDate?.getTime() ?? Infinity));
+  const items = sorted.slice(0, CHAT_PANTRY_LIMIT).map((item) => ({
+    name: item.name, quantity: item.quantity, unit: item.unit, daysLeft: daysLeft(item.expiryDate),
+  }));
+  return {
+    items,
+    expiringSoon: items.filter((item) => item.daysLeft !== null && item.daysLeft <= EXPIRING_SOON_DAYS)
+      .map(({ name, daysLeft }) => ({ name, daysLeft })),
+  };
+}
+
+/** N tin gần nhất (cũ → mới), mỗi tin cắt ở CHAT_HISTORY_MAX_CHARS ký tự. */
+export function chatHistoryTurns(messages: Array<{ role: string; content: string }>) {
+  return messages.slice(-CHAT_HISTORY_TURNS).map((message) => ({
+    role: message.role === "assistant" ? "assistant" as const : "user" as const,
+    content: message.content.length > CHAT_HISTORY_MAX_CHARS ? `${message.content.slice(0, CHAT_HISTORY_MAX_CHARS)}…` : message.content,
+  }));
+}
+
+/** Kiểm câu trả lời sau khi nhận: các thành phần dị ứng (đã mở rộng theo nhóm) có xuất hiện trong nội dung không. */
+export function answerAllergyWarnings(answer: string, allergies: string[]) {
+  return findRestrictedTerms({ name: answer, ingredients: [] }, expandRestrictedTerms(allergies));
 }

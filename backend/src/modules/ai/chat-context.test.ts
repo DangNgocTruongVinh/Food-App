@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { chatMealPlanContext, chatProfileContext, chatSafetyContext, vietnamDateKey } from "./chat-context.js";
+import {
+  answerAllergyWarnings, CHAT_HISTORY_MAX_CHARS, CHAT_HISTORY_TURNS, CHAT_PANTRY_LIMIT, chatHistoryTurns, chatMealPlanContext, chatPantryContext,
+  chatProfileContext, chatSafetyContext, vietnamDateKey,
+} from "./chat-context.js";
 
 const day = (date: string, items: Array<[string, string, number, boolean]>) => ({
   date: new Date(`${date}T00:00:00.000Z`),
@@ -76,5 +79,35 @@ describe("AI chat safety context (GĐ3b-R1)", () => {
     expect(chatSafetyContext({ dietType: "VEGAN" }).requiredDiet).toBe("thuần chay");
     expect(chatSafetyContext({ dietType: "LOW_CARB" }).requiredDiet).toBeNull();
     expect(chatSafetyContext(null)).toEqual({ avoidForAllergy: [], avoidDisliked: [], requiredDiet: null });
+  });
+});
+
+describe("chatHistoryTurns, chatPantryContext", () => {
+  it("chỉ gửi CHAT_HISTORY_TURNS tin gần nhất, cắt tin quá dài", () => {
+    const messages = Array.from({ length: 10 }, (_, index) => ({ role: index % 2 ? "assistant" : "user", content: `tin ${index}` }));
+    const turns = chatHistoryTurns([...messages, { role: "user", content: "x".repeat(CHAT_HISTORY_MAX_CHARS + 50) }]);
+    expect(turns).toHaveLength(CHAT_HISTORY_TURNS);
+    expect(turns.at(-1)?.content).toHaveLength(CHAT_HISTORY_MAX_CHARS + 1);
+    expect(turns[0]).toEqual({ role: "assistant", content: "tin 5" });
+  });
+
+  it("sắp hết hạn: còn ≤ 3 ngày theo ngày lịch Việt Nam (kể cả đã quá hạn); giới hạn số thực phẩm, hạn gần trước", () => {
+    const now = new Date("2026-11-12T20:00:00.000Z"); // 03:00 ngày 13/11 giờ Việt Nam
+    const day = (iso: string) => new Date(`${iso}T00:00:00.000Z`);
+    const context = chatPantryContext([
+      { name: "Gạo", quantity: 1, unit: "KG", expiryDate: day("2027-01-01") },
+      { name: "Sữa", quantity: 1, unit: "L", expiryDate: day("2026-11-12") },
+      { name: "Trứng", quantity: 10, unit: "ITEM", expiryDate: day("2026-11-16") },
+      { name: "Muối", quantity: 1, unit: "PACKAGE", expiryDate: null },
+    ], now);
+    expect(context.items.map((item) => item.name)).toEqual(["Sữa", "Trứng", "Gạo", "Muối"]);
+    expect(context.expiringSoon).toEqual([{ name: "Sữa", daysLeft: -1 }, { name: "Trứng", daysLeft: 3 }]);
+    const many = Array.from({ length: CHAT_PANTRY_LIMIT + 5 }, (_, index) => ({ name: `M${index}`, quantity: 1, unit: "G", expiryDate: null }));
+    expect(chatPantryContext(many, now).items).toHaveLength(CHAT_PANTRY_LIMIT);
+  });
+
+  it("answerAllergyWarnings: khớp nguyên từ theo nhóm dị ứng ('cá' không khớp 'các')", () => {
+    expect(answerAllergyWarnings("Các món: canh cá lóc, gỏi tôm.", ["Hải sản"])).toEqual(["tôm", "cá"]);
+    expect(answerAllergyWarnings("Các món rau luộc.", ["Hải sản"])).toEqual([]);
   });
 });

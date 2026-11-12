@@ -1,8 +1,9 @@
 import { Send } from "lucide-react";
 import { type FormEvent, type RefObject } from "react";
-import { chatMessageTime, isSubmitEnter } from "../../features/ai/ai.logic";
+import { allergyWarningText, chatMessageTime, isSubmitEnter } from "../../features/ai/ai.logic";
 import type { ChatMessage } from "../../types";
 import { Button, ErrorState } from "../ui";
+import { AssistantUnavailable } from "./AssistantUnavailable";
 
 export const ASSISTANT_INPUT_ID = "assistant-question";
 
@@ -12,6 +13,8 @@ type AssistantChatProps = {
   /** Câu hỏi đang gửi (hiện ngay trong khung chat khi chờ trả lời). */
   pendingQuestion: string | null;
   error: string;
+  /** Trợ lý không dùng được (chưa có key / OpenAI lỗi): báo trong khung chat kèm liên kết, khóa nút gửi khi chưa có key. */
+  unavailable: { message: string; blocking: boolean } | null;
   value: string;
   onChange: (value: string) => void;
   onSubmit: (event: FormEvent) => void;
@@ -23,11 +26,13 @@ type AssistantChatProps = {
   onScroll: () => void;
 };
 
-function Message({ role, content, createdAt }: Pick<ChatMessage, "role" | "content"> & { createdAt?: string }) {
+function Message({ role, content, createdAt, allergyWarnings }: Pick<ChatMessage, "role" | "content" | "allergyWarnings"> & { createdAt?: string }) {
   const mine = role === "user";
+  const warning = mine ? null : allergyWarningText(allergyWarnings);
   return (
     <li className={mine ? "as-msg as-msg--user" : "as-msg as-msg--assistant"}>
       <p className="as-msg__bubble"><span className="ui-visually-hidden">{mine ? "Bạn: " : "Nouri: "}</span>{content}</p>
+      {warning && <p className="ui-notice ui-notice--error as-msg__warning" role="note"><span>{warning}</span></p>}
       {createdAt && <time className="as-msg__time" dateTime={createdAt}>{chatMessageTime(createdAt)}</time>}
     </li>
   );
@@ -52,7 +57,9 @@ export function AssistantChat(props: AssistantChatProps) {
           </div>
         ) : (
           <ol className="as-chat__list" aria-label="Tin nhắn">
-            {messages.map((item) => <Message key={item.id} role={item.role} content={item.content} createdAt={item.createdAt} />)}
+            {messages.map((item) => (
+              <Message key={item.id} role={item.role} content={item.content} createdAt={item.createdAt} allergyWarnings={item.allergyWarnings} />
+            ))}
             {pending && pendingQuestion && <Message role="user" content={pendingQuestion} />}
             {pending && (
               <li className="as-msg as-msg--assistant" role="status">
@@ -62,6 +69,7 @@ export function AssistantChat(props: AssistantChatProps) {
           </ol>
         )}
       </div>
+      {props.unavailable && <div className="as-chat__error"><AssistantUnavailable message={props.unavailable.message} /></div>}
       {props.error && <div className="as-chat__error"><ErrorState message={props.error} /></div>}
       <form className="as-composer" onSubmit={onSubmit}>
         <label className="ui-visually-hidden" htmlFor={ASSISTANT_INPUT_ID}>Câu hỏi cho trợ lý</label>
@@ -79,7 +87,7 @@ export function AssistantChat(props: AssistantChatProps) {
             if (!pending) event.currentTarget.form?.requestSubmit();
           }}
         />
-        <Button type="submit" variant="primary" icon={<Send />} disabled={!value.trim()} busy={pending}>Gửi</Button>
+        <Button type="submit" variant="primary" icon={<Send />} disabled={!value.trim() || props.unavailable?.blocking} busy={pending}>Gửi</Button>
         <p id="as-composer-hint" className="as-composer__hint">
           Enter để gửi, Shift + Enter để xuống dòng. Trợ lý có thể sai, không thay thế tư vấn của bác sĩ.
         </p>

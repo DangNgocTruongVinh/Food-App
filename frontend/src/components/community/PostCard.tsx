@@ -1,4 +1,4 @@
-import { EyeOff, Heart, MessageCircle, MoreHorizontal, Pencil, Share2, Trash2 } from "lucide-react";
+import { Clock3, EyeOff, Heart, MessageCircle, MoreHorizontal, Pencil, Share2, Trash2 } from "lucide-react";
 import type { FormEvent } from "react";
 import {
   communityCommentInputId, communityExactTime, communityInitials, communityPostElementId, communityRelativeTime, shareCommunityPost,
@@ -78,6 +78,9 @@ export default function PostCard(props: PostCardProps) {
 
       {post.hidden && (
         <p className="cm-post__hidden" role="note"><EyeOff aria-hidden="true" />Quản trị viên đã ẩn bài này; chỉ bạn còn thấy.</p>
+      )}
+      {post.pendingReview && !post.hidden && (
+        <p className="cm-post__hidden" role="note"><Clock3 aria-hidden="true" />Bài đang chờ duyệt; chỉ bạn thấy cho tới khi quản trị viên duyệt.</p>
       )}
       {post.content && <p className="cm-post__content">{post.content}</p>}
       <PostImages images={post.images ?? []} authorName={post.author.name} />

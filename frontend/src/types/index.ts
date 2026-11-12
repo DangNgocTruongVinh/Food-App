@@ -35,6 +35,8 @@ export interface CommunityPost {
   memberRecipeAllergens: string[];
   /** Admin đã ẩn bài (chỉ tác giả còn thấy). */
   hidden: boolean;
+  /** AI đánh dấu, bài chờ Admin duyệt (chỉ tác giả còn thấy). */
+  pendingReview?: boolean;
   /** Món trong thư viện Admin tạo từ công thức tự viết của bài. */
   promotedRecipe: { id: string; name: string } | null;
   /** Ảnh trong bài (tối đa 4), URL Cloudinary gốc; hiển thị qua optimizedImageUrl. */
@@ -273,4 +275,8 @@ export interface DashboardData {
   }>;
 }
 
-export interface ChatMessage { id: string; role: "user" | "assistant"; content: string; createdAt: string }
+export interface ChatMessage {
+  id: string; role: "user" | "assistant"; content: string; createdAt: string;
+  /** Tin của trợ lý: thành phần dị ứng (theo hồ sơ) xuất hiện trong câu trả lời. */
+  allergyWarnings?: string[];
+}

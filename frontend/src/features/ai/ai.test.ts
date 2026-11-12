@@ -200,3 +200,23 @@ describe("Chat scrolling and Enter key", () => {
     expect(isSubmitEnter({ key: "a", shiftKey: false, isComposing: false })).toBe(false);
   });
 });
+
+describe("Hỏi Nouri: cảnh báo dị ứng và phân loại lỗi", async () => {
+  const { allergyWarningText, chatErrorKind } = await import("./ai.logic");
+
+  it("cảnh báo nêu đúng thành phần; không có thì không cảnh báo", () => {
+    expect(allergyWarningText(["tôm", "cá"])).toBe(
+      "Câu trả lời có nhắc tới tôm, cá — bạn đã khai báo dị ứng. Đừng dùng gợi ý này nếu chưa kiểm tra kỹ.",
+    );
+    expect(allergyWarningText([])).toBeNull();
+    expect(allergyWarningText(undefined)).toBeNull();
+  });
+
+  it("503 / chưa có key → gợi ý tính năng không cần AI; 429 → hết lượt; còn lại → lỗi thường", () => {
+    expect(chatErrorKind(503, "AI_UNAVAILABLE")).toBe("unavailable");
+    expect(chatErrorKind(503, undefined)).toBe("unavailable");
+    expect(chatErrorKind(429, "AI_CHAT_LIMIT")).toBe("limit");
+    expect(chatErrorKind(500, undefined)).toBe("other");
+    expect(chatErrorKind(undefined, undefined)).toBe("other");
+  });
+});

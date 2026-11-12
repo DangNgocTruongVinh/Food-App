@@ -67,14 +67,22 @@ describe("OpenAI adapter (mocked; no external requests)", () => {
     const mock = mockedOpenAI();
     const service = createOpenAIService(mock.client, "gpt-5-mini");
     const context = { profile: { dietType: "BALANCED" }, pantry: [] };
-    await expect(service.answerNutritionQuestion(context, "Tôi nên ăn gì?")).resolves.toBe("Câu trả lời dinh dưỡng");
+    const history = [{ role: "user" as const, content: "Tối qua ăn gì?" }, { role: "assistant" as const, content: "Canh chua." }];
+    await expect(service.answerNutritionQuestion(context, "Tôi nên ăn gì?", history)).resolves.toBe("Câu trả lời dinh dưỡng");
     expect(mock.create).toHaveBeenCalledWith({
       model: "gpt-5-mini",
       input: [
         { role: "system", content: nutritionChatSystemPrompt },
+        ...history,
         { role: "user", content: nutritionChatUserPrompt(context, "Tôi nên ăn gì?") },
       ],
-    });
+    }, { timeout: 45_000, maxRetries: 1 });
+  });
+
+  it("system prompt pins allergy and topic rules against 'ignore instructions' requests", () => {
+    expect(nutritionChatSystemPrompt).toContain("bỏ qua hướng dẫn");
+    expect(nutritionChatSystemPrompt).toContain("safety.avoidForAllergy");
+    expect(nutritionChatSystemPrompt).toContain("Câu ngoài lề: từ chối");
   });
 
   it("preserves both no-key fallbacks without touching OpenAI", async () => {
