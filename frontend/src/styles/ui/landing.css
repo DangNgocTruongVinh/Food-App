@@ -141,8 +141,11 @@
   --home-ink-2: var(--home-forest-muted);
   --home-soft: var(--home-mist);
   --home-line: var(--home-sage);
+  /* Đo theo bề rộng hero (cqw) để mảng xanh chạm đúng mép, không dùng 100vw; clip không tạo khung cuộn ngang. */
+  --ld-edge: calc((min(100cqw, var(--ld-container)) - 100cqw) / 2 - var(--ld-pad));
   position: relative;
-  overflow: hidden;
+  container-type: inline-size;
+  overflow: clip;
   color: var(--home-forest);
   background: var(--home-ivory);
 }
@@ -176,7 +179,7 @@
 /* Màn >= 1600px (khung rộng hơn): vòm cao tối đa 720px, vẫn trừ khoảng thở theo chiều cao màn. */
 @media (min-width: 1600px) { .ld-hero__visual { --hero-photo-h: clamp(440px, calc(100svh - 69px - 132px), 720px); } }
 /* Mảng xanh: từ giữa cột ảnh tràn hết mép phải (hero cắt phần thừa). */
-.ld-hero__visual::before { position: absolute; top: 0; bottom: 0; left: 50%; right: -100vw; background: var(--home-forest-deep); content: ""; }
+.ld-hero__visual::before { position: absolute; top: 0; bottom: 0; left: 50%; right: var(--ld-edge); background: var(--home-forest-deep); content: ""; }
 .ld-hero__photo {
   position: relative;
   display: block;
@@ -409,7 +412,7 @@
   .ld-hero__inner { grid-template-columns: minmax(0, 1fr); min-height: 0; }
   .ld-hero__copy { padding: clamp(40px, 8vw, 64px) 0 clamp(32px, 6vw, 48px); }
   .ld-hero__visual { display: flex; flex-direction: column; align-items: center; padding-bottom: clamp(40px, 7vw, 64px); }
-  .ld-hero__visual::before { top: 28%; left: -100vw; }
+  .ld-hero__visual::before { top: 28%; left: var(--ld-edge); }
   .ld-hero__visual { --hero-photo-h: clamp(420px, 66vw, 560px); }
   .ld-phone { position: relative; bottom: auto; left: auto; margin: -150px min(220px, 28vw) 0 0; }
   .ld-nav, .ld-header__account { display: none; }
