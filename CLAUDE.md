@@ -141,11 +141,11 @@ Kế hoạch chi tiết: `docs/ke-hoach-gd3c.md`. Phần 1 (Tesseract trên serv
 - [x] "Chuyển thành công thức": `POST /api/admin/community/posts/:postId/recipe-estimate` (AI ước tính 1 khẩu phần, tên nguyên liệu chỉ nhận tên có trong thư viện), form tự điền ô còn trống, ghi "AI ước tính, vui lòng kiểm tra"; Admin bấm "Tạo món" mới lưu.
 - [x] Người dùng đã thử với `OPENAI_API_KEY` thật.
 
-### Nhắc đồ sắp hết hạn qua email (nhánh `giai-doan-nhac-han`, chưa merge)
+### Nhắc đồ sắp hết hạn qua email (nhánh `giai-doan-nhac-han`, gộp `main` 13/11/2026)
 - [x] Hồ sơ: công tắc "Nhắc đồ sắp hết hạn qua email" (`NutritionProfile.expiryEmailEnabled`, mặc định tắt; demo bật sẵn), báo trước 1/2/3 ngày (`expiryEmailDays`, mặc định 2), "Gửi thử ngay" (3 lần/ngày, `POST /api/expiry-email/test`).
 - [x] Lịch: `node-cron` mỗi ngày lúc `EXPIRY_EMAIL_TIME` (mặc định 07:00, Asia/Ho_Chi_Minh), khởi động trong `server.ts`. Khóa chống gửi trùng = dòng `ExpiryEmailLog` unique (userId, ngày, slot) tạo trước khi gửi (gửi lỗi thì xóa khóa); 1 email/người/ngày; không có món thì không gửi; không nhắc lại cùng món (id + hạn) trừ khi còn đúng 1 ngày; tài khoản khóa / chưa có SMTP → bỏ qua, ghi log.
 - [x] Nội dung: món sắp hết hạn (tên, số lượng, còn mấy ngày) + 3 món từ `getRecommendations(context: "pantry")` kèm lý do và liên kết, nút "Mở kho", "Tắt nhắc" một chạm (`/tat-nhac-han`, token HMAC riêng, tắt bằng JS khi trang mở để trình quét liên kết không tự tắt).
-- [ ] Người dùng thử với Gmail thật rồi mới merge.
+- [x] `DEMO_EMAIL_INBOX`: thư gửi demo@nouri.vn chuyển tới hộp thư thật (tiêu đề ghi "[Demo …]"), chỉ tài khoản demo. Gộp `main` 13/11/2026.
 
 ### Giai đoạn 4 — Bảo mật tài khoản
 - [x] Access token 15 phút + refresh token (cookie httpOnly, `SameSite=Strict`, `Path=/api/auth`; DB lưu SHA-256, bảng `RefreshToken`), xoay vòng, dùng lại token cũ → thu hồi cả chuỗi (trừ 10 giây cho hai tab, `REFRESH_RACE`); thu hồi khi đăng xuất, Admin khóa, đổi mật khẩu (`POST /api/auth/change-password`, `passwordChangedAt` chặn access token cũ); frontend tự làm mới một lần khi 401. Kèm C3: rate limit 20/phút/IP cho login/register, body JSON ≤ 100 KB, lỗi JSON 400/413. Chi tiết, việc còn lại: `docs/test-evidence/bao-mat.md`.

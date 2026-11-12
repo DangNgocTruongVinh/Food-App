@@ -1,4 +1,5 @@
 import nodemailer, { type Transporter } from "nodemailer";
+import { DEMO_EMAIL } from "../config/demo.js";
 import { env } from "../config/env.js";
 
 // Dịch vụ gửi email dùng chung (quên mật khẩu, báo đổi mật khẩu). Cấu hình SMTP từ .env; chưa cấu hình thì chỉ ghi email ra
@@ -24,8 +25,15 @@ function createTransport(): MailTransport | null {
   });
 }
 
-export function createMailer(transport: MailTransport | null, from: string | undefined) {
-  return async function sendMail(message: MailMessage) {
+/** DEMO_EMAIL_INBOX: thư gửi tài khoản demo đi tới hộp thư thật (tiêu đề ghi rõ), các tài khoản khác giữ nguyên người nhận. */
+export function redirectDemoMail(message: MailMessage, demoInbox: string | undefined): MailMessage {
+  if (!demoInbox || message.to.trim().toLowerCase() !== DEMO_EMAIL) return message;
+  return { ...message, to: demoInbox, subject: `[Demo ${DEMO_EMAIL}] ${message.subject}` };
+}
+
+export function createMailer(transport: MailTransport | null, from: string | undefined, demoInbox?: string) {
+  return async function sendMail(original: MailMessage) {
+    const message = redirectDemoMail(original, demoInbox);
     if (!transport || !from) {
       // shortcut: chưa có SMTP thì ghi cả nội dung (kể cả liên kết đặt lại mật khẩu) ra log để thử ở máy dev; production phải cấu hình SMTP.
       console.info(`[email chưa cấu hình] Tới: ${message.to} | Tiêu đề: ${message.subject}\n${message.text}`);
@@ -35,7 +43,7 @@ export function createMailer(transport: MailTransport | null, from: string | und
   };
 }
 
-export const sendMail = createMailer(createTransport(), env.MAIL_FROM);
+export const sendMail = createMailer(createTransport(), env.MAIL_FROM, env.DEMO_EMAIL_INBOX);
 
 /** Gửi nền, không chờ: thời gian phản hồi API không tiết lộ email có tồn tại hay không; lỗi gửi chỉ ghi log. */
 export function sendMailInBackground(message: MailMessage, send = sendMail) {

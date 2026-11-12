@@ -8,7 +8,9 @@ import { rebuildSampleAccounts, samplePasswordHashes } from "./sample-accounts.j
 // Tài khoản demo (demo@nouri.vn): hồ sơ và kho mẫu. Hạn sử dụng TƯƠNG ĐỐI theo ngày chạy (giờ Việt Nam) để dữ liệu demo
 // không "già": luôn có đồ sắp hết hạn, đồ còn hạn dài và một món dưới mức tối thiểu. Chỉ tác động tài khoản demo.
 
-export const DEMO_EMAIL = "demo@nouri.vn";
+import { DEMO_EMAIL } from "../src/config/demo.js";
+
+export { DEMO_EMAIL };
 export const DEMO_PASSWORD = "Demo@123";
 export const DEMO_NAME = "Minh Anh";
 
