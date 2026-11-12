@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { createPostReviewer, reviewData, reviewTextOf } from "./community-ai-review.js";
+import { createPostReviewer, REVIEW_TIMEOUT_MS, reviewData, reviewTextOf } from "./community-ai-review.js";
 
 vi.mock("../../config/env.js", () => ({ env: { OPENAI_MODEL: "gpt-5-mini" } }));
 
@@ -20,13 +20,15 @@ function fakeClient({ flagged = false, categories = {}, foodRelated = true, mode
 const post = { text: "Hôm nay mình nấu canh chua cá lóc.", imageUrls: ["https://res.cloudinary.com/demo/a.jpg"] };
 
 describe("createPostReviewer", () => {
-  it("bài sạch, liên quan ăn uống → không đánh dấu; gửi cả chữ và ảnh, có timeout, không thử lại", async () => {
+  it("bài sạch, liên quan ăn uống → không đánh dấu; hai bước gọi song song, chung tín hiệu hủy, không thử lại", async () => {
     const fake = fakeClient();
     await expect(createPostReviewer(fake.client, "gpt-5-mini")(post)).resolves.toEqual({ flagged: false, reason: null });
     const [body, options] = fake.moderations.create.mock.calls[0] as unknown as [{ model: string; input: unknown[] }, object];
     expect(body.model).toBe("omni-moderation-latest");
     expect(body.input).toEqual([{ type: "text", text: post.text }, { type: "image_url", image_url: { url: post.imageUrls[0] } }]);
-    expect(options).toEqual({ timeout: 15_000, maxRetries: 0 });
+    expect(options).toEqual({ signal: expect.any(AbortSignal), maxRetries: 0 });
+    const [, topicOptions] = fake.responses.create.mock.calls[0] as unknown as [object, object];
+    expect(topicOptions).toBe(options); // cùng một hạn 8 giây
   });
 
   it("Moderation API đánh dấu → lý do nêu nhóm vi phạm bằng tiếng Việt", async () => {
@@ -44,7 +46,21 @@ describe("createPostReviewer", () => {
     vi.spyOn(console, "warn").mockImplementation(() => undefined);
     const fake = fakeClient({ moderationError: new Error("timeout") });
     await expect(createPostReviewer(fake.client, "m")(post)).resolves.toBeNull();
-    expect(fake.responses.create).not.toHaveBeenCalled();
+  });
+
+  it("quá 8 giây → hủy cả hai lần gọi, trả null (đăng như dự phòng)", async () => {
+    vi.useFakeTimers();
+    vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const hang = vi.fn((_body: unknown, options: { signal: AbortSignal }) => new Promise((_resolve, reject) => {
+      options.signal.addEventListener("abort", () => reject(new Error("aborted")));
+    }));
+    const client = { moderations: { create: hang }, responses: { create: hang } } as never;
+    const pending = createPostReviewer(client, "m")(post);
+    await vi.advanceTimersByTimeAsync(REVIEW_TIMEOUT_MS - 1);
+    expect(hang).toHaveBeenCalledTimes(2);
+    await vi.advanceTimersByTimeAsync(1);
+    await expect(pending).resolves.toBeNull();
+    vi.useRealTimers();
   });
 
   it("bước kiểm chủ đề lỗi → chỉ dùng kết quả Moderation", async () => {
