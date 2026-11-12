@@ -5,7 +5,8 @@ import { deleteImageQuietly, IMAGE_FOLDERS, uploadImage } from "../../services/i
 import { HttpError } from "../../utils/http-error.js";
 import { nextAvailableSlug, slugifyVietnamese } from "../../utils/slug.js";
 import { recordAdminAction } from "../admin/admin-audit.service.js";
-import type { AdminRecipeListQuery, RecipeInput } from "../admin/admin-recipes.schema.js";
+import type { AdminRecipeListQuery, CreateRecipeInput, RecipeInput } from "../admin/admin-recipes.schema.js";
+import { linkPromotedPost } from "../community/community-post-edit.service.js";
 
 // Quản lý công thức (Admin): tạo/sửa/ẩn/xóa. Món đã được dùng (thực đơn hoặc bài viết) chỉ ẩn, không xóa hẳn.
 // Mỗi thao tác ghi nhật ký Admin trong cùng transaction (actorId là Admin lấy từ JWT).
@@ -79,8 +80,11 @@ export async function getRecipeForAdmin(id: string) {
   return withUsage(recipe);
 }
 
-/** Slug sinh từ tên tiếng Việt, thêm hậu tố nếu trùng. Hai yêu cầu tạo cùng lúc trùng slug → 409, gửi lại là được. */
-export async function createRecipe(actorId: string, input: RecipeInput) {
+/**
+ * Slug sinh từ tên tiếng Việt, thêm hậu tố nếu trùng. Hai yêu cầu tạo cùng lúc trùng slug → 409, gửi lại là được.
+ * sourcePostId ("Chuyển thành công thức"): gắn bài cộng đồng với món mới + nhật ký trong cùng transaction.
+ */
+export async function createRecipe(actorId: string, { sourcePostId, ...input }: CreateRecipeInput) {
   const { data, ingredients } = prepareRecipeData(input);
   const base = slugifyVietnamese(data.name);
   const taken = await prisma.recipe.findMany({ where: { slug: { startsWith: base } }, select: { slug: true } });
@@ -93,6 +97,7 @@ export async function createRecipe(actorId: string, input: RecipeInput) {
       await recordAdminAction(tx, {
         actorId, action: "RECIPE_CREATE", targetType: "RECIPE", targetId: recipe.id, targetLabel: recipe.name, details: { slug: recipe.slug },
       });
+      if (sourcePostId) await linkPromotedPost(tx, actorId, sourcePostId, recipe);
       return recipe;
     });
   } catch (error) {

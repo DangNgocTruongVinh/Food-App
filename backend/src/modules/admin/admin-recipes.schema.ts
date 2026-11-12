@@ -49,10 +49,16 @@ export const listAdminRecipesSchema = z.object({
 });
 
 export const adminRecipeIdSchema = z.object({ body: empty, params: idParams, query: empty });
-export const createAdminRecipeSchema = z.object({ body: recipeInputSchema, params: empty, query: empty });
+// sourcePostId: "Chuyển thành công thức" từ công thức tự viết của một bài cộng đồng (gắn bài với món mới, ghi nhật ký).
+export const createAdminRecipeSchema = z.object({
+  body: recipeInputSchema.extend({ sourcePostId: z.string().cuid().optional() }),
+  params: empty,
+  query: empty,
+});
 export const updateAdminRecipeSchema = z.object({ body: recipeInputSchema, params: idParams, query: empty });
 export const setRecipeVisibilitySchema = z.object({ body: z.object({ hidden: z.boolean() }), params: idParams, query: empty });
 
 export type RecipeInput = z.infer<typeof recipeInputSchema>;
+export type CreateRecipeInput = z.infer<typeof createAdminRecipeSchema>["body"];
 export type AdminRecipeListQuery = z.infer<typeof listAdminRecipesSchema>["query"];
 export type AdminRecipeIdParams = z.infer<typeof idParams>;

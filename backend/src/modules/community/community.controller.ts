@@ -4,7 +4,9 @@ import type {
   AddCommunityCommentBody,
   CommunityPostIdParams,
   CreateCommunityPostBody,
+  UpdateCommunityPostBody,
 } from "./community.schema.js";
+import { updateCommunityPost } from "./community-post-edit.service.js";
 import {
   addCommunityComment,
   createCommunityPost,
@@ -34,6 +36,14 @@ export async function deleteOwnCommunityPostController(
 ) {
   await deleteCommunityPost(req.params.postId, { userId: authenticatedUserId(req), isAdmin: false });
   res.status(204).end();
+}
+
+/** Sửa bài của tôi (nội dung, công thức tự viết): chỉ tác giả; bài người khác hoặc không tồn tại → 404. */
+export async function updateOwnCommunityPostController(
+  req: ValidatedRequest<UpdateCommunityPostBody, CommunityPostIdParams>,
+  res: Response,
+) {
+  res.json(await updateCommunityPost(authenticatedUserId(req), req.params.postId, req.body));
 }
 
 export async function toggleCommunityLikeController(

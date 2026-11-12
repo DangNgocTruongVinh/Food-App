@@ -1,5 +1,5 @@
 import { api } from "../../api/client";
-import type { DietTag, FoodUnit, MealType } from "../../types";
+import type { DietTag, FoodUnit, MealType, MemberRecipe } from "../../types";
 
 export type AdminStats = {
   totals: { users: number; lockedUsers: number; mealPlans: number; posts: number; recipes: number; hiddenRecipes: number };
@@ -41,7 +41,8 @@ export async function getAdminRecipe(id: string) {
   return (await api.get<AdminRecipeDetail>(`/admin/recipes/${id}`)).data;
 }
 
-export async function createAdminRecipe(input: AdminRecipeInput) {
+/** sourcePostId: "Chuyển thành công thức" từ công thức tự viết của một bài cộng đồng (backend gắn bài với món mới). */
+export async function createAdminRecipe(input: AdminRecipeInput & { sourcePostId?: string }) {
   return (await api.post<AdminRecipeDetail>("/admin/recipes", input)).data;
 }
 
@@ -81,11 +82,17 @@ export type ModerationPost = {
   images: Array<{ url: string; position: number }>;
   comments: Array<{ id: string; content: string; createdAt: string; author: ModerationPerson }>;
   likeCount: number; commentCount: number;
+  /** Công thức tự viết của thành viên (không phải món trong thư viện). */
+  memberRecipe: MemberRecipe | null;
+  /** Admin đã ẩn bài. */
+  hidden: boolean;
+  /** Món trong thư viện đã tạo từ công thức tự viết ("Chuyển thành công thức"). */
+  promotedRecipe: { id: string; name: string } | null;
 };
 
 export const AUDIT_ACTIONS = [
   "RECIPE_CREATE", "RECIPE_UPDATE", "RECIPE_HIDE", "RECIPE_SHOW", "RECIPE_DELETE", "RECIPE_IMAGE_REPLACE",
-  "USER_LOCK", "USER_UNLOCK", "POST_DELETE", "COMMENT_DELETE",
+  "USER_LOCK", "USER_UNLOCK", "POST_DELETE", "COMMENT_DELETE", "POST_HIDE", "POST_SHOW", "POST_PROMOTE",
 ] as const;
 export type AuditAction = (typeof AUDIT_ACTIONS)[number];
 export type AuditTargetType = "RECIPE" | "USER" | "COMMUNITY_POST" | "COMMUNITY_COMMENT";
@@ -105,6 +112,15 @@ export async function setAdminUserLock({ id, locked }: { id: string; locked: boo
 
 export async function listModerationPosts(query: { page: number; pageSize: number }) {
   return (await api.get<AdminPage<ModerationPost>>("/admin/community/posts", { params: query })).data;
+}
+
+export async function getModerationPost(postId: string) {
+  return (await api.get<ModerationPost>(`/admin/community/posts/${postId}`)).data;
+}
+
+/** Ẩn/hiện bài vi phạm (không xóa); backend ghi nhật ký Admin. */
+export async function setModerationPostVisibility({ postId, hidden }: { postId: string; hidden: boolean }) {
+  return (await api.patch<ModerationPost>(`/admin/community/posts/${postId}/visibility`, { hidden })).data;
 }
 
 export async function moderateDeletePost(postId: string) {

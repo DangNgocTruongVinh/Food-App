@@ -3,7 +3,7 @@ import type { AuthenticatedRequest, ValidatedRequest } from "../../types/http.js
 import {
   createRecipe, deleteRecipe, getRecipeForAdmin, listRecipesForAdmin, replaceRecipeImage, setRecipeVisibility, updateRecipe,
 } from "../recipes/recipe-management.service.js";
-import { type AdminRecipeIdParams, listAdminRecipesSchema, type RecipeInput } from "./admin-recipes.schema.js";
+import { type AdminRecipeIdParams, type CreateRecipeInput, listAdminRecipesSchema, type RecipeInput } from "./admin-recipes.schema.js";
 
 // validate() không ghi đè req.query (Express 5 chỉ cho đọc) nên đọc lại query đã kiểm tra để có giá trị mặc định.
 // userId của Admin (từ JWT) truyền vào service để ghi nhật ký thao tác.
@@ -16,7 +16,7 @@ export async function getAdminRecipeController(req: ValidatedRequest<unknown, Ad
   res.json(await getRecipeForAdmin(req.params.id));
 }
 
-export async function createAdminRecipeController(req: ValidatedRequest<RecipeInput>, res: Response) {
+export async function createAdminRecipeController(req: ValidatedRequest<CreateRecipeInput>, res: Response) {
   res.status(201).json(await createRecipe(adminId(req), req.body));
 }
 

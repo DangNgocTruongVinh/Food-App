@@ -45,7 +45,7 @@ Nouri là ứng dụng quản lý thực phẩm trong gia đình và lập kế 
 | 12 | `?item=` trỏ tới item không tồn tại | Hiện dòng nhắc "Thực phẩm này không còn trong kho". Xử lý xong `?item=` (tìm thấy hay không) thì xóa tham số khỏi URL bằng `replace` |
 | 13 | Thẻ lịch sử AI | Dùng `createdAt` thật thay thời gian giả; nút "Xem tất cả" mở rộng hiện toàn bộ lịch sử đã tải (GĐ1) |
 | 14 | Nút "Ảnh", "Công thức" ở form đăng bài | Ẩn tạm từ GĐ1; mỗi nút hiện lại khi chức năng tương ứng làm xong ("Công thức" ở GĐ2b, "Ảnh" ở GĐ3) |
-| 16 | Phạm vi chia sẻ món ăn ở Community | Đăng bài kèm ảnh và gắn **công thức có sẵn** trong hệ thống. Người dùng tự tạo công thức riêng → hướng phát triển |
+| 16 | Phạm vi chia sẻ món ăn ở Community | Đăng bài kèm ảnh và **chọn một**: gắn công thức có sẵn, hoặc **tự viết công thức** (nhánh `giai-doan-cong-dong`, 12/11/2026): lưu JSON trong bài (`CommunityPost.memberRecipe`), **không tạo Recipe**, không vào thực đơn/gợi ý/kho; nhãn "Công thức của thành viên", cảnh báo dị ứng theo hồ sơ người xem (hàm so khớp của bộ gợi ý), "chưa được kiểm duyệt dinh dưỡng". Chỉ tác giả sửa/xóa; Admin ẩn/hiện bài và "Chuyển thành công thức" (tạo món trong thư viện, `promotedRecipeId`, nhật ký `POST_PROMOTE`) |
 | 17 | Ô nhập ngày | Component dùng chung `DateInput` (dd/mm/yyyy, không phụ thuộc locale); gửi API `yyyy-MM-dd`. Trường không bắt buộc: ô trống = `null` (cho lưu), nhập sai = chặn lưu |
 | 15 | Xóa bài cộng đồng | User xóa bài của mình (GĐ5) và Admin xóa bài vi phạm (GĐ3) **dùng chung service xóa**, chỉ khác điều kiện quyền |
 
@@ -177,7 +177,7 @@ Kế hoạch chi tiết: `docs/ke-hoach-gd3c.md`. Phần 1 (Tesseract trên serv
 - [ ] Ghi các chức năng đã gỡ vào "Hướng phát triển".
 - [ ] Sửa lỗi định dạng bảng mục 6.2, 6.8, 6.10 (tiêu đề 9 cột nhưng dòng phân cách chỉ 8 cột).
 - [ ] Mục 3: bổ sung route `*` (redirect về `/`) vào danh sách route.
-- [ ] Hướng phát triển: người dùng tự tạo công thức riêng để chia sẻ.
+- [x] ~~Hướng phát triển: người dùng tự tạo công thức riêng để chia sẻ~~: đã làm dạng công thức tự viết trong bài cộng đồng (quyết định #16); hạn chế: cảnh báo dị ứng chỉ theo tên nguyên liệu, công thức tự viết chưa kiểm duyệt dinh dưỡng.
 - [ ] Hạn chế: dinh dưỡng của bộ món seed là **số liệu ước tính**, tham khảo *Bảng thành phần thực phẩm Việt Nam* (Viện Dinh dưỡng, NXB Y học, 2007).
 - [ ] Hạn chế: so khớp dị ứng dựa trên tên nguyên liệu và bảng nhóm dị ứng cố định; nguyên liệu có thành phần ẩn (vd. nước tương có lúa mì) có thể không bị phát hiện.
 - [ ] Hạn chế: ngày từ server (hạn sử dụng, ngày thực đơn) hiển thị theo múi giờ máy người dùng; ở múi giờ âm (vd. châu Mỹ) có thể lệch về ngày hôm trước.

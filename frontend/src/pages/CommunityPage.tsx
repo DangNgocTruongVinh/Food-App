@@ -4,6 +4,8 @@ import { useSearchParams } from "react-router-dom";
 import { getApiError } from "../api/client";
 import CommunityGuide from "../components/community/CommunityGuide";
 import CommunityHero from "../components/community/CommunityHero";
+import EditPostDialog from "../components/community/EditPostDialog";
+import MemberRecipeFields from "../components/community/MemberRecipeFields";
 import PostCard from "../components/community/PostCard";
 import PostComposer, { COMMUNITY_POST_INPUT_ID } from "../components/community/PostComposer";
 import RecipePicker from "../components/community/RecipePicker";
@@ -14,8 +16,10 @@ import {
   toCommunityPublishInput, toCommunityRecipeSummary,
 } from "../features/community/community.logic";
 import {
-  appendCommunityComment, communityMutations, communityQueries, prependCommunityPost, removeCommunityPost, updateCommunityLike,
+  appendCommunityComment, communityMutations, communityQueries, prependCommunityPost, removeCommunityPost, replaceCommunityPost,
+  updateCommunityLike,
 } from "../features/community/community.queries";
+import { emptyMemberRecipeDraft, toMemberRecipe, type MemberRecipeDraft } from "../features/community/member-recipe.logic";
 import { recipeQueries } from "../features/recipes/recipes.queries";
 import type { CommunityPost, CommunityRecipeSummary } from "../types";
 
@@ -32,6 +36,11 @@ export default function CommunityPage() {
   const [attachedImages, setAttachedImages] = useState<File[]>([]);
   const [imageError, setImageError] = useState<string | null>(null);
   const [isPickerOpen, setPickerOpen] = useState(false);
+  // Công thức tự viết (null: không viết); loại trừ với món có sẵn.
+  const [memberDraft, setMemberDraft] = useState<MemberRecipeDraft | null>(null);
+  const [memberError, setMemberError] = useState<string | null>(null);
+  const [editingPost, setEditingPost] = useState<CommunityPost | null>(null);
+  const [editError, setEditError] = useState("");
   const [recipeQuery, setRecipeQuery] = useState("");
   const [commentDrafts, setCommentDrafts] = useState<Record<string, string>>({});
   const [error, setError] = useState("");
@@ -78,6 +87,8 @@ export default function CommunityPage() {
       setImageError(null);
       setPickerOpen(false);
       setRecipeQuery("");
+      setMemberDraft(null);
+      setMemberError(null);
       setError("");
       setToast("Đã đăng bài.");
     },
@@ -103,9 +114,18 @@ export default function CommunityPage() {
     onError: (removeError) => setError(getApiError(removeError)),
   });
 
+  const update = useMutation({
+    ...communityMutations.update(),
+    onSuccess: (post) => { replaceCommunityPost(queryClient, post); setEditingPost(null); setEditError(""); setToast("Đã lưu bài viết."); },
+    onError: (updateError) => setEditError(getApiError(updateError)),
+  });
+
   const submitPost = (event: FormEvent) => {
     event.preventDefault();
-    const input = toCommunityPublishInput(postContent, attachedRecipe, attachedImages);
+    const member = memberDraft ? toMemberRecipe(memberDraft) : null;
+    if (member && "error" in member) return setMemberError(member.error);
+    setMemberError(null);
+    const input = toCommunityPublishInput(postContent, attachedRecipe, attachedImages, member?.recipe ?? null);
     if (input) publish.mutate(input);
   };
   const submitComment = (event: FormEvent, postId: string) => {
@@ -128,7 +148,7 @@ export default function CommunityPage() {
             onChange={setPostContent}
             onSubmit={submitPost}
             isPending={publish.isPending}
-            canPublish={toCommunityPublishInput(postContent, attachedRecipe, attachedImages) !== null}
+            canPublish={Boolean(memberDraft) || toCommunityPublishInput(postContent, attachedRecipe, attachedImages) !== null}
             images={attachedImages}
             imageError={imageError}
             onAddImages={(files) => {
@@ -143,7 +163,23 @@ export default function CommunityPage() {
             attachedRecipe={attachedRecipe}
             onRemoveRecipe={() => setAttachedRecipe(null)}
             isPickerOpen={isPickerOpen}
-            onTogglePicker={() => setPickerOpen((open) => !open)}
+            onTogglePicker={() => { setPickerOpen((open) => !open); setMemberDraft(null); setMemberError(null); }}
+            isWriting={Boolean(memberDraft)}
+            onToggleWriting={() => {
+              setMemberDraft((current) => (current ? null : emptyMemberRecipeDraft()));
+              setMemberError(null);
+              setAttachedRecipe(null);
+              setPickerOpen(false);
+            }}
+            memberFields={memberDraft && (
+              <MemberRecipeFields
+                idPrefix="new-post"
+                draft={memberDraft}
+                onChange={setMemberDraft}
+                onRemove={() => { setMemberDraft(null); setMemberError(null); }}
+                error={memberError}
+              />
+            )}
             picker={(
               <RecipePicker
                 recipes={recipes.data}
@@ -154,6 +190,7 @@ export default function CommunityPage() {
                 onClose={() => setPickerOpen(false)}
                 onSelect={(recipe) => {
                   setAttachedRecipe(toCommunityRecipeSummary(recipe));
+                  setMemberDraft(null);
                   setPickerOpen(false);
                   setRecipeQuery("");
                 }}
@@ -194,6 +231,7 @@ export default function CommunityPage() {
                 commentDraft={commentDrafts[post.id] ?? ""}
                 onToggleLike={() => toggleLike.mutate(post.id)}
                 onDelete={() => void confirmDelete(post)}
+                onEdit={() => { setEditError(""); setEditingPost(post); }}
                 onCommentDraftChange={(value) => setCommentDrafts((drafts) => ({ ...drafts, [post.id]: value }))}
                 onSubmitComment={(event) => submitComment(event, post.id)}
               />
@@ -202,6 +240,15 @@ export default function CommunityPage() {
         </div>
         <CommunityGuide />
       </div>
+      {editingPost && (
+        <EditPostDialog
+          post={editingPost}
+          busy={update.isPending}
+          error={editError}
+          onClose={() => setEditingPost(null)}
+          onSave={(input) => update.mutate({ postId: editingPost.id, ...input })}
+        />
+      )}
       <Toast message={toast} onDone={clearToast} />
     </div>
   );

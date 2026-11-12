@@ -41,6 +41,17 @@ export function deletePostConfirmText(post: Pick<ModerationPost, "author" | "ima
   };
 }
 
+/** Hộp xác nhận ẩn/hiện bài (ẩn: người khác không thấy nữa, tác giả vẫn thấy kèm ghi chú). */
+export function postVisibilityConfirmText(post: Pick<ModerationPost, "author" | "hidden">) {
+  return post.hidden
+    ? { title: `Hiện lại bài của ${post.author.name}?`, description: "Bài sẽ hiện lại trên bảng tin cộng đồng.", confirmLabel: "Hiện lại bài" }
+    : {
+      title: `Ẩn bài của ${post.author.name}?`,
+      description: "Người khác sẽ không thấy bài trên bảng tin; tác giả vẫn thấy kèm ghi chú. Có thể hiện lại sau.",
+      confirmLabel: "Ẩn bài",
+    };
+}
+
 export function deleteCommentConfirmText(comment: Pick<ModerationPost["comments"][number], "author">) {
   return {
     title: `Xóa bình luận của ${comment.author.name}?`,
@@ -54,7 +65,7 @@ export function deleteCommentConfirmText(comment: Pick<ModerationPost["comments"
 export const AUDIT_ACTION_LABELS: Record<AuditAction, string> = {
   RECIPE_CREATE: "Tạo món", RECIPE_UPDATE: "Sửa món", RECIPE_HIDE: "Ẩn món", RECIPE_SHOW: "Hiện lại món", RECIPE_DELETE: "Xóa món",
   RECIPE_IMAGE_REPLACE: "Đổi ảnh món", USER_LOCK: "Khóa tài khoản", USER_UNLOCK: "Mở khóa tài khoản", POST_DELETE: "Xóa bài viết",
-  COMMENT_DELETE: "Xóa bình luận",
+  COMMENT_DELETE: "Xóa bình luận", POST_HIDE: "Ẩn bài viết", POST_SHOW: "Hiện lại bài viết", POST_PROMOTE: "Chuyển thành công thức",
 };
 
 const RECIPE_FIELD_LABELS: Record<string, string> = {
@@ -89,6 +100,8 @@ export function auditDetails(log: Pick<AuditLog, "action" | "details">) {
       return `${count("imageCount")} ảnh, ${count("commentCount")} bình luận, ${count("likeCount")} lượt thích${details.hasRecipe ? ", có công thức đính kèm" : ""}`;
     case "COMMENT_DELETE":
       return "Xóa một bình luận trong bài";
+    case "POST_PROMOTE":
+      return details.recipeName ? `Thêm vào thư viện: ${String(details.recipeName)}` : "Thêm công thức tự viết vào thư viện";
     default:
       return "";
   }

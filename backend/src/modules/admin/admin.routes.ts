@@ -23,10 +23,12 @@ import {
 } from "./admin-recipes.schema.js";
 import {
   adminStatsController,
+  getModerationPostController,
   listAdminUsersController,
   listModerationPostsController,
   moderateDeleteCommentController,
   moderateDeletePostController,
+  setPostVisibilityController,
   setUserLockController,
 } from "./admin-users.controller.js";
 import {
@@ -35,6 +37,7 @@ import {
   listModerationPostsSchema,
   moderateCommentSchema,
   moderatePostSchema,
+  setPostVisibilitySchema,
   setUserLockSchema,
 } from "./admin-users.schema.js";
 
@@ -54,6 +57,8 @@ router.get("/users", validate(listAdminUsersSchema), asyncHandler(listAdminUsers
 router.patch("/users/:id/lock", validate(setUserLockSchema), asyncHandler(setUserLockController));
 
 router.get("/community/posts", validate(listModerationPostsSchema), asyncHandler(listModerationPostsController));
+router.get("/community/posts/:postId", validate(moderatePostSchema), asyncHandler(getModerationPostController));
+router.patch("/community/posts/:postId/visibility", validate(setPostVisibilitySchema), asyncHandler(setPostVisibilityController));
 router.delete("/community/posts/:postId", validate(moderatePostSchema), asyncHandler(moderateDeletePostController));
 router.delete("/community/comments/:commentId", validate(moderateCommentSchema), asyncHandler(moderateDeleteCommentController));
 

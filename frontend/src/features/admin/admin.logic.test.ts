@@ -6,6 +6,7 @@ import {
   validateRecipeForm, violationsByRow, type RecipeFormValues,
 } from "./admin-recipes.logic";
 import { hasWeeklyActivity, statsCards, weekLabel } from "./admin-stats.logic";
+import { AUDIT_ACTION_LABELS, auditDetails, postVisibilityConfirmText } from "./admin-people.logic";
 
 const detail: AdminRecipeDetail = {
   id: "recipe-a", slug: "dau-hu-sot", name: "Đậu hũ sốt", description: "Món chay", instructions: ["Chiên đậu", "Rưới sốt"],
@@ -146,5 +147,19 @@ describe("Admin people, moderation and audit logic", () => {
     expect(auditTargetLink({ targetType: "RECIPE", targetId: "gone", targetLabel: "Món cũ" }, existing)).toBeNull();
     expect(auditTargetLink({ targetType: "USER", targetId: "u1", targetLabel: "demo@nouri.vn" }, existing)).toBe("/admin/users?search=demo%40nouri.vn");
     expect(auditTargetLink({ targetType: "COMMUNITY_POST", targetId: "p", targetLabel: "x" }, existing)).toBeNull();
+  });
+});
+
+describe("moderation: hide/show a post and member-recipe audit entries", () => {
+  it("asks before hiding (others stop seeing it) and before showing it again", () => {
+    const author = { id: "u", name: "Linh", email: "linh@nouri.vn" };
+    expect(postVisibilityConfirmText({ author, hidden: false })).toMatchObject({ title: "Ẩn bài của Linh?", confirmLabel: "Ẩn bài" });
+    expect(postVisibilityConfirmText({ author, hidden: true })).toMatchObject({ confirmLabel: "Hiện lại bài" });
+  });
+
+  it("labels the new audit actions and names the library recipe made from a post", () => {
+    expect([AUDIT_ACTION_LABELS.POST_HIDE, AUDIT_ACTION_LABELS.POST_SHOW, AUDIT_ACTION_LABELS.POST_PROMOTE])
+      .toEqual(["Ẩn bài viết", "Hiện lại bài viết", "Chuyển thành công thức"]);
+    expect(auditDetails({ action: "POST_PROMOTE", details: { recipeName: "Canh chua tôm" } })).toBe("Thêm vào thư viện: Canh chua tôm");
   });
 });

@@ -1,5 +1,5 @@
 import { api } from "../../api/client";
-import type { CommunityComment, CommunityPost } from "../../types";
+import type { CommunityComment, CommunityPost, MemberRecipe } from "../../types";
 
 export interface CommunityLikeResult {
   liked: boolean;
@@ -18,19 +18,27 @@ export async function listCommunityPosts() {
 export interface PublishCommunityPostInput {
   content: string;
   recipeId?: string;
+  /** Công thức tự viết (không đi cùng recipeId). */
+  memberRecipe?: MemberRecipe;
   images?: File[];
 }
 
-/** Có ảnh thì gửi multipart (trường "images"), không có thì gửi JSON như trước. */
-export async function publishCommunityPost({ content, recipeId, images = [] }: PublishCommunityPostInput) {
+/** Có ảnh thì gửi multipart (trường "images"; công thức tự viết là chuỗi JSON), không có thì gửi JSON như trước. */
+export async function publishCommunityPost({ content, recipeId, memberRecipe, images = [] }: PublishCommunityPostInput) {
   if (!images.length) {
-    return (await api.post<CommunityPost>("/community", { content, ...(recipeId ? { recipeId } : {}) })).data;
+    return (await api.post<CommunityPost>("/community", { content, ...(recipeId ? { recipeId } : {}), ...(memberRecipe ? { memberRecipe } : {}) })).data;
   }
   const form = new FormData();
   form.append("content", content);
   if (recipeId) form.append("recipeId", recipeId);
+  if (memberRecipe) form.append("memberRecipe", JSON.stringify(memberRecipe));
   for (const image of images) form.append("images", image, image.name);
   return (await api.post<CommunityPost>("/community", form)).data;
+}
+
+/** Sửa bài của tôi: nội dung và công thức tự viết (null = bỏ). Backend chỉ cho tác giả (bài người khác → 404). */
+export async function updateCommunityPost({ postId, content, memberRecipe }: { postId: string; content: string; memberRecipe: MemberRecipe | null }) {
+  return (await api.patch<CommunityPost>(`/community/${postId}`, { content, memberRecipe })).data;
 }
 
 export async function toggleCommunityLike(postId: string) {

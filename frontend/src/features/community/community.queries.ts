@@ -7,6 +7,7 @@ import {
   listCommunityPosts,
   publishCommunityPost,
   toggleCommunityLike,
+  updateCommunityPost,
   type CommunityLikeResult,
 } from "./community.api";
 
@@ -19,10 +20,16 @@ export const communityMutations = {
   toggleLike: () => mutationOptions({ mutationFn: toggleCommunityLike }),
   addComment: () => mutationOptions({ mutationFn: addCommunityComment }),
   remove: () => mutationOptions({ mutationFn: deleteCommunityPost }),
+  update: () => mutationOptions({ mutationFn: updateCommunityPost }),
 };
 
 export function removeCommunityPost(queryClient: QueryClient, postId: string) {
   queryClient.setQueryData<CommunityPost[]>(queryKeys.community.feed(), (posts = []) => posts.filter((post) => post.id !== postId));
+}
+
+/** Bài vừa sửa thay đúng chỗ trong bảng tin (giữ bình luận, lượt thích từ phản hồi của backend). */
+export function replaceCommunityPost(queryClient: QueryClient, post: CommunityPost) {
+  queryClient.setQueryData<CommunityPost[]>(queryKeys.community.feed(), (posts = []) => posts.map((item) => (item.id === post.id ? post : item)));
 }
 
 export function prependCommunityPost(queryClient: QueryClient, post: CommunityPost) {

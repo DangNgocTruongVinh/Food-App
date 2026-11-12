@@ -20,6 +20,7 @@ const mocks = vi.hoisted(() => ({
   findRecipe: vi.fn(),
   deletePost: vi.fn(),
   createAuditLog: vi.fn(),
+  findProfile: vi.fn(),
 }));
 
 vi.mock("../../config/env.js", () => ({ env: { JWT_SECRET: mocks.secret } }));
@@ -37,6 +38,7 @@ vi.mock("../../lib/prisma.js", () => ({
       count: mocks.countLikes,
     },
     user: { findUnique: mocks.findUser },
+    nutritionProfile: { findUnique: mocks.findProfile },
     recipe: { findUnique: mocks.findRecipe },
     notification: { deleteMany: mocks.deleteNotifications },
     adminAuditLog: { create: mocks.createAuditLog },
@@ -61,6 +63,7 @@ const recipeSelect = { id: true, name: true, imageUrl: true, calories: true, pre
 const recipeRow = { ...recipeSummary, hiddenAt: null };
 const imagesSelect = { select: { url: true, position: true }, orderBy: { position: "asc" } };
 const recipeResponse = { ...recipeSummary, hidden: false };
+const promotedSelect = { select: { id: true, name: true } };
 const basePost = { id: postId, authorId: ownerId, content: "Bữa trưa", recipeId: null, recipe: null, createdAt, updatedAt: createdAt, author };
 const createdComment = {
   id: commentId,
@@ -75,6 +78,7 @@ const createdComment = {
 beforeEach(() => {
   vi.resetAllMocks();
   mocks.findPosts.mockResolvedValue([]);
+  mocks.findProfile.mockResolvedValue(null);
   mocks.createPost.mockResolvedValue(basePost);
   mocks.findPost.mockResolvedValue({ id: postId, authorId: ownerId });
   mocks.findRecipe.mockResolvedValue({ id: recipeId, hiddenAt: null });
@@ -151,11 +155,13 @@ describe("Community HTTP contract (mock Prisma, no database)", () => {
     expect(response.body[0]).not.toHaveProperty("likes");
     expect(response.body[0]).not.toHaveProperty("_count");
     expect(mocks.findPosts).toHaveBeenCalledWith({
+      where: { OR: [{ hiddenAt: null }, { authorId: userId }] },
       orderBy: { createdAt: "desc" },
       take: 30,
       include: {
         author: { select: { id: true, name: true, isSample: true } },
         recipe: { select: recipeSelect },
+        promotedRecipe: promotedSelect,
         images: imagesSelect,
         likes: { where: { userId }, select: { userId: true } },
         comments: {
@@ -183,7 +189,9 @@ describe("Community HTTP contract (mock Prisma, no database)", () => {
     });
     expect(mocks.createPost).toHaveBeenCalledWith({
       data: { authorId: userId, content: "Bữa trưa", recipeId: null },
-      include: { author: { select: { id: true, name: true, isSample: true } }, recipe: { select: recipeSelect }, images: imagesSelect },
+      include: {
+        author: { select: { id: true, name: true, isSample: true } }, recipe: { select: recipeSelect }, promotedRecipe: promotedSelect, images: imagesSelect,
+      },
     });
     expect(mocks.findRecipe).not.toHaveBeenCalled();
   });
@@ -207,7 +215,9 @@ describe("Community HTTP contract (mock Prisma, no database)", () => {
     expect(mocks.findRecipe).toHaveBeenCalledWith({ where: { id: recipeId }, select: { id: true, hiddenAt: true } });
     expect(mocks.createPost).toHaveBeenCalledWith({
       data: { authorId: userId, content: "Món tối nay", recipeId },
-      include: { author: { select: { id: true, name: true, isSample: true } }, recipe: { select: recipeSelect }, images: imagesSelect },
+      include: {
+        author: { select: { id: true, name: true, isSample: true } }, recipe: { select: recipeSelect }, promotedRecipe: promotedSelect, images: imagesSelect,
+      },
     });
   });
 

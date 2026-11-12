@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import { ChevronLeft } from "lucide-react";
 import { type FormEvent, useEffect, useRef, useState } from "react";
-import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { getApiError } from "../../api/client";
 import { AdminRecipeBasics } from "../../components/admin/AdminRecipeBasics";
 import { AdminRecipeImageField } from "../../components/admin/AdminRecipeImageField";
@@ -10,10 +10,10 @@ import { AdminIngredientsEditor, AdminStepsEditor } from "../../components/admin
 import { Button, ButtonLink, ErrorState, LoadingState, Skeleton } from "../../components/ui";
 import type { AdminRecipeDetail } from "../../features/admin/admin.api";
 import {
-  emptyRecipeForm, hasRecipeErrors, toRecipeForm, toRecipeInput, validateRecipeForm, violationsByRow,
+  emptyRecipeForm, hasRecipeErrors, recipeFormFromMemberRecipe, toRecipeForm, toRecipeInput, validateRecipeForm, violationsByRow,
   type DietViolation, type RecipeFormErrors, type RecipeFormValues,
 } from "../../features/admin/admin-recipes.logic";
-import { adminMutations, adminQueries, invalidateAdminRecipeQueries } from "../../features/admin/admin.queries";
+import { adminMutations, adminQueries, invalidateAdminQueries, invalidateAdminRecipeQueries } from "../../features/admin/admin.queries";
 
 type LocationState = { notice?: string } | null;
 const noErrors: RecipeFormErrors = { fields: {}, ingredients: {}, steps: {} };
@@ -25,7 +25,10 @@ function uploadErrorMessage(error: unknown) {
   return `Chưa tải được ảnh: ${getApiError(error)}`;
 }
 
-/** /admin/recipes/new và /admin/recipes/:id/edit: form tạo/sửa món, kiểm tra phía client giống Zod backend. */
+/**
+ * /admin/recipes/new và /admin/recipes/:id/edit: form tạo/sửa món, kiểm tra phía client giống Zod backend.
+ * /admin/recipes/new?fromPost=<id>: "Chuyển thành công thức" — điền sẵn từ công thức tự viết của bài, lưu kèm sourcePostId.
+ */
 export default function AdminRecipeEditorPage() {
   const { id } = useParams();
   const editing = Boolean(id);
@@ -33,6 +36,9 @@ export default function AdminRecipeEditorPage() {
   const location = useLocation();
   const queryClient = useQueryClient();
   const detail = useQuery({ ...adminQueries.recipe(id ?? ""), enabled: editing });
+  const [searchParams] = useSearchParams();
+  const fromPostId = editing ? null : searchParams.get("fromPost");
+  const sourcePost = useQuery({ ...adminQueries.moderationPost(fromPostId ?? ""), enabled: Boolean(fromPostId) });
   const [form, setForm] = useState<RecipeFormValues>(emptyRecipeForm);
   const [file, setFile] = useState<File | null>(null);
   const [imageError, setImageError] = useState("");
@@ -48,6 +54,20 @@ export default function AdminRecipeEditorPage() {
     loadedId.current = detail.data.id;
     setForm(toRecipeForm(detail.data));
   }, [detail.data]);
+
+  // Điền sẵn một lần từ công thức tự viết của bài (Admin bổ sung dinh dưỡng, bữa, nhãn rồi lưu).
+  const prefilledFrom = useRef<string | null>(null);
+  useEffect(() => {
+    const post = sourcePost.data;
+    if (!post?.memberRecipe || prefilledFrom.current === post.id) return;
+    prefilledFrom.current = post.id;
+    setForm(recipeFormFromMemberRecipe(post.memberRecipe, post.content));
+  }, [sourcePost.data]);
+  const sourceProblem = !fromPostId || sourcePost.isLoading ? ""
+    : sourcePost.isError ? `Chưa tải được bài viết: ${getApiError(sourcePost.error)}`
+      : !sourcePost.data?.memberRecipe ? "Bài viết này không có công thức tự viết để chuyển."
+        : sourcePost.data.promotedRecipe ? `Công thức của bài này đã được thêm vào thư viện (“${sourcePost.data.promotedRecipe.name}”).` : "";
+  const sourceId = fromPostId && sourcePost.data?.memberRecipe && !sourcePost.data.promotedRecipe ? fromPostId : undefined;
 
   const errors = submitted ? validateRecipeForm(form) : noErrors;
   const create = useMutation(adminMutations.createRecipe());
@@ -78,7 +98,9 @@ export default function AdminRecipeEditorPage() {
     }
     let saved: AdminRecipeDetail;
     try {
-      saved = editing ? await update.mutateAsync({ id: id!, input: toRecipeInput(form) }) : await create.mutateAsync(toRecipeInput(form));
+      saved = editing
+        ? await update.mutateAsync({ id: id!, input: toRecipeInput(form) })
+        : await create.mutateAsync({ ...toRecipeInput(form), ...(sourceId ? { sourcePostId: sourceId } : {}) });
     } catch (error) {
       const violations = axios.isAxiosError(error) ? (error.response?.data?.details?.violations as DietViolation[] | undefined) : undefined;
       if (violations?.length) {
@@ -91,6 +113,7 @@ export default function AdminRecipeEditorPage() {
       return;
     }
     invalidateAdminRecipeQueries(queryClient);
+    if (sourceId) invalidateAdminQueries(queryClient);
     try {
       await uploadFor(saved);
       invalidateAdminRecipeQueries(queryClient);
@@ -144,6 +167,14 @@ export default function AdminRecipeEditorPage() {
         {detail.data?.hidden && <span className="ad-status ad-status--hidden">Đã ẩn</span>}
       </div>
       {notice && <p className="ui-notice" role="status">{notice}</p>}
+      {sourceId && sourcePost.data && (
+        <p className="ui-notice" role="status">
+          Điền sẵn từ công thức của {sourcePost.data.author.name}. Kiểm tra số lượng, đơn vị nguyên liệu (dòng để trống số lượng cần
+          điền), bổ sung dinh dưỡng, bữa và nhãn rồi bấm "Tạo món". Bài viết sẽ hiện "Đã được thêm vào thư viện".
+        </p>
+      )}
+      {fromPostId && sourcePost.isLoading && <LoadingState label="Đang tải công thức của thành viên"><Skeleton kind="block" height={48} /></LoadingState>}
+      {sourceProblem && <ErrorState message={sourceProblem} />}
       <form className="ad-form" noValidate onSubmit={(event) => void submit(event)}>
         <AdminRecipeBasics form={form} errors={errors.fields} onChange={change} />
         <AdminIngredientsEditor

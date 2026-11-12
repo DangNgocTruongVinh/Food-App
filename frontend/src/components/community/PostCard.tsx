@@ -1,4 +1,4 @@
-import { Heart, MessageCircle, MoreHorizontal, Share2, Trash2 } from "lucide-react";
+import { EyeOff, Heart, MessageCircle, MoreHorizontal, Pencil, Share2, Trash2 } from "lucide-react";
 import type { FormEvent } from "react";
 import {
   communityCommentInputId, communityExactTime, communityInitials, communityPostElementId, communityRelativeTime, shareCommunityPost,
@@ -8,6 +8,7 @@ import { cx } from "../../features/ui/ui.logic";
 import type { CommunityPost } from "../../types";
 import { Card, Tag } from "../ui";
 import CommentForm from "./CommentForm";
+import MemberRecipeCard from "./MemberRecipeCard";
 import PostImages from "./PostImages";
 import RecipeAttachmentCard from "./RecipeAttachmentCard";
 
@@ -23,6 +24,7 @@ type PostCardProps = {
   commentDraft: string;
   onToggleLike: () => void;
   onDelete: () => void;
+  onEdit: () => void;
   onCommentDraftChange: (value: string) => void;
   onSubmitComment: (event: FormEvent) => void;
 };
@@ -31,8 +33,8 @@ function PostTime({ value }: { value: string }) {
   return <time className="cm-time" dateTime={value} title={communityExactTime(value)}>{communityRelativeTime(value)}</time>;
 }
 
-/** Menu "Tùy chọn bài viết" (chỉ bài của mình): hiện có "Xóa bài"; "Lưu bài" làm ở GĐ5. */
-function PostMenu({ onDelete, deleting }: { onDelete: () => void; deleting: boolean }) {
+/** Menu "Tùy chọn bài viết" (chỉ bài của mình): "Sửa bài", "Xóa bài"; "Lưu bài" làm ở GĐ5. */
+function PostMenu({ onDelete, onEdit, deleting }: { onDelete: () => void; onEdit: () => void; deleting: boolean }) {
   const { open, rootRef, panelId, buttonProps, close } = useDisclosure();
   return (
     <div className="cm-menu" ref={rootRef}>
@@ -40,6 +42,9 @@ function PostMenu({ onDelete, deleting }: { onDelete: () => void; deleting: bool
         <MoreHorizontal aria-hidden="true" />
       </button>
       <div id={panelId} className="cm-menu__panel" hidden={!open}>
+        <button type="button" className="cm-menu__item" onClick={() => { close(); onEdit(); }}>
+          <Pencil aria-hidden="true" /><span>Sửa bài</span>
+        </button>
         <button type="button" className="cm-menu__item cm-menu__item--danger" disabled={deleting} onClick={() => { close(); onDelete(); }}>
           <Trash2 aria-hidden="true" /><span>Xóa bài</span>
         </button>
@@ -68,12 +73,16 @@ export default function PostCard(props: PostCardProps) {
           </span>
           <PostTime value={post.createdAt} />
         </div>
-        {isOwn && <PostMenu onDelete={props.onDelete} deleting={props.isDeleting} />}
+        {isOwn && <PostMenu onDelete={props.onDelete} onEdit={props.onEdit} deleting={props.isDeleting} />}
       </header>
 
+      {post.hidden && (
+        <p className="cm-post__hidden" role="note"><EyeOff aria-hidden="true" />Quản trị viên đã ẩn bài này; chỉ bạn còn thấy.</p>
+      )}
       {post.content && <p className="cm-post__content">{post.content}</p>}
       <PostImages images={post.images ?? []} authorName={post.author.name} />
       {post.recipe && <RecipeAttachmentCard recipe={post.recipe} />}
+      {post.memberRecipe && <MemberRecipeCard recipe={post.memberRecipe} allergens={post.memberRecipeAllergens} promoted={post.promotedRecipe} />}
 
       <p className="cm-post__stats">
         <span>{post.likeCount} lượt thích</span>

@@ -1,3 +1,4 @@
+import type { Prisma } from "@prisma/client";
 import { prisma } from "../../lib/prisma.js";
 import { detectImageFormat } from "../../services/image-file.js";
 import { stripImageMetadata } from "../../services/image-sanitize.js";
@@ -5,6 +6,7 @@ import { deleteImageQuietly, IMAGE_FOLDERS, type UploadedImage, uploadImage } fr
 import { HIDDEN_RECIPE_MESSAGE, isRecipeHidden } from "../../services/recipe-visibility.js";
 import { HttpError } from "../../utils/http-error.js";
 import { recordAdminAction } from "../admin/admin-audit.service.js";
+import { memberRecipeAllergens, readMemberRecipe } from "./community-member-recipe.js";
 import type { CreateCommunityPostBody } from "./community.schema.js";
 
 const COMMUNITY_FEED_LIMIT = 30;
@@ -16,6 +18,24 @@ export const communityRecipeSelect = {
 } as const;
 /** Ảnh trong bài: chỉ URL và thứ tự (publicId chỉ dùng nội bộ để xóa). */
 const postImagesInclude = { images: { select: { url: true, position: true }, orderBy: { position: "asc" } } } as const;
+/** Món trong thư viện được Admin tạo từ công thức tự viết của bài ("Đã được thêm vào thư viện"). */
+export const promotedRecipeInclude = { promotedRecipe: { select: { id: true, name: true } } } as const;
+
+/** Dị ứng trong hồ sơ người xem (chưa có hồ sơ → không cảnh báo). */
+export async function viewerAllergies(userId: string) {
+  const profile = await prisma.nutritionProfile.findUnique({ where: { userId }, select: { allergies: true } });
+  return profile?.allergies ?? [];
+}
+
+/**
+ * Phần chung của bài trả cho bảng tin: công thức tự viết đã đọc lại, cảnh báo dị ứng theo hồ sơ người xem, cờ "bị ẩn"
+ * (chỉ tác giả còn thấy bài bị ẩn). Bỏ hiddenAt khỏi dữ liệu trả về.
+ */
+export function withMemberRecipe<T extends { memberRecipe: unknown; hiddenAt: Date | null }>(post: T, allergies: string[]) {
+  const { hiddenAt, ...rest } = post;
+  const memberRecipe = readMemberRecipe(post.memberRecipe);
+  return { ...rest, memberRecipe, memberRecipeAllergens: memberRecipeAllergens(memberRecipe, allergies), hidden: Boolean(hiddenAt) };
+}
 
 type CommunityRecipeRow = { hiddenAt: Date | null } & Record<string, unknown>;
 
@@ -33,30 +53,40 @@ async function assertAttachableRecipe(recipeId: string) {
   if (isRecipeHidden(recipe)) throw new HttpError(422, HIDDEN_RECIPE_MESSAGE);
 }
 
-export async function listCommunityPosts(userId: string) {
-  const posts = await prisma.communityPost.findMany({
-    orderBy: { createdAt: "desc" },
-    take: COMMUNITY_FEED_LIMIT,
-    include: {
-      author: { select: authorSelect },
-      recipe: { select: communityRecipeSelect },
-      ...postImagesInclude,
-      likes: { where: { userId }, select: { userId: true } },
-      comments: {
-        orderBy: { createdAt: "asc" },
-        include: { author: { select: authorSelect } },
-      },
-      _count: { select: { likes: true, comments: true } },
-    },
-  });
+/** Dữ liệu một bài trên bảng tin (người xem userId: đã thích chưa). Dùng chung cho bảng tin và API sửa bài. */
+export function feedInclude(userId: string) {
+  return {
+    author: { select: authorSelect },
+    recipe: { select: communityRecipeSelect },
+    ...promotedRecipeInclude,
+    ...postImagesInclude,
+    likes: { where: { userId }, select: { userId: true } },
+    comments: { orderBy: { createdAt: "asc" }, include: { author: { select: authorSelect } } },
+    _count: { select: { likes: true, comments: true } },
+  } as const;
+}
 
-  return posts.map(({ likes, _count, recipe, ...post }) => ({
-    ...post,
+type FeedRow = Prisma.CommunityPostGetPayload<{ include: ReturnType<typeof feedInclude> }>;
+
+export function toFeedPost({ likes, _count, recipe, ...post }: FeedRow, allergies: string[]) {
+  return {
+    ...withMemberRecipe(post, allergies),
     recipe: toRecipeSummary(recipe),
     likedByMe: likes.length > 0,
     likeCount: _count.likes,
     commentCount: _count.comments,
-  }));
+  };
+}
+
+export async function listCommunityPosts(userId: string) {
+  const [posts, allergies] = await Promise.all([prisma.communityPost.findMany({
+    // Bài Admin đã ẩn: chỉ tác giả còn thấy (kèm ghi chú), người khác không thấy.
+    where: { OR: [{ hiddenAt: null }, { authorId: userId }] },
+    orderBy: { createdAt: "desc" },
+    take: COMMUNITY_FEED_LIMIT,
+    include: feedInclude(userId),
+  }), viewerAllergies(userId)]);
+  return posts.map((post) => toFeedPost(post, allergies));
 }
 
 /** Xóa EXIF/GPS rồi tải lần lượt lên nouri/posts; một ảnh lỗi thì xóa các ảnh đã tải trước đó. */
@@ -74,23 +104,28 @@ async function uploadPostImages(files: Buffer[]) {
   }
 }
 
+export const EMPTY_POST_MESSAGE = "Bài viết cần có nội dung, công thức hoặc ảnh.";
+
 /**
- * Đăng bài: cần có ít nhất một trong ba (chữ, công thức, ảnh). Tải hết ảnh trước rồi tạo bài cùng ảnh trong một lệnh
- * (nested create, Prisma chạy trong transaction); tạo bài lỗi thì xóa các ảnh đã tải để không để ảnh mồ côi.
+ * Đăng bài: cần có ít nhất một trong bốn (chữ, món có sẵn, công thức tự viết, ảnh); món có sẵn và công thức tự viết không
+ * đi cùng nhau (Zod). Tải hết ảnh trước rồi tạo bài cùng ảnh trong một lệnh (nested create, Prisma chạy trong transaction);
+ * tạo bài lỗi thì xóa các ảnh đã tải để không để ảnh mồ côi.
  */
-export async function createCommunityPost(authorId: string, { content, recipeId }: CreateCommunityPostBody, files: Buffer[] = []) {
-  if (!content && !recipeId && !files.length) throw new HttpError(422, "Bài viết cần có nội dung, công thức hoặc ảnh.");
+export async function createCommunityPost(authorId: string, { content, recipeId, memberRecipe }: CreateCommunityPostBody, files: Buffer[] = []) {
+  if (!content && !recipeId && !memberRecipe && !files.length) throw new HttpError(422, EMPTY_POST_MESSAGE);
   if (recipeId) await assertAttachableRecipe(recipeId);
   const images = await uploadPostImages(files);
   try {
-    const post = await prisma.communityPost.create({
+    const [post, allergies] = await Promise.all([prisma.communityPost.create({
       data: {
-        authorId, content, recipeId: recipeId ?? null,
+        authorId, content, recipeId: recipeId ?? null, ...(memberRecipe ? { memberRecipe } : {}),
         ...(images.length ? { images: { create: images.map((image, position) => ({ ...image, position })) } } : {}),
       },
-      include: { author: { select: authorSelect }, recipe: { select: communityRecipeSelect }, ...postImagesInclude },
-    });
-    return { ...post, recipe: toRecipeSummary(post.recipe), likedByMe: false, likeCount: 0, commentCount: 0, comments: [] };
+      include: { author: { select: authorSelect }, recipe: { select: communityRecipeSelect }, ...promotedRecipeInclude, ...postImagesInclude },
+    }), viewerAllergies(authorId)]);
+    return {
+      ...withMemberRecipe(post, allergies), recipe: toRecipeSummary(post.recipe), likedByMe: false, likeCount: 0, commentCount: 0, comments: [],
+    };
   } catch (error) {
     await Promise.all(images.map((image) => deleteImageQuietly(image.publicId)));
     throw error;
@@ -222,6 +257,23 @@ export async function deleteCommunityComment(commentId: string, actor: Community
   ]);
 }
 
+const moderationInclude = {
+  recipe: { select: communityRecipeSelect },
+  ...promotedRecipeInclude,
+  ...postImagesInclude,
+  comments: { orderBy: { createdAt: "asc" }, include: { author: { select: { id: true, name: true, email: true } } } },
+  _count: { select: { likes: true, comments: true } },
+} as const;
+
+type ModerationRow = Prisma.CommunityPostGetPayload<{ include: typeof moderationInclude & { author: { select: { id: true; name: true; email: true } } } }>;
+
+/** Bài cho Admin: kèm công thức tự viết (không cảnh báo dị ứng), cờ "đã ẩn", món đã chuyển vào thư viện. */
+export function toModerationPost({ _count, recipe, ...post }: ModerationRow) {
+  return { ...withMemberRecipe(post, []), recipe: toRecipeSummary(recipe), likeCount: _count.likes, commentCount: _count.comments };
+}
+
+export const moderationPostInclude = { author: { select: { id: true, name: true, email: true } }, ...moderationInclude } as const;
+
 /** Danh sách bài cho Admin kiểm duyệt: mới nhất trước, kèm tác giả (có email), bình luận và số lượt thích. */
 export async function listCommunityPostsForModeration(page: number, pageSize: number) {
   const [total, posts] = await Promise.all([
@@ -232,15 +284,10 @@ export async function listCommunityPostsForModeration(page: number, pageSize: nu
       take: pageSize,
       include: {
         author: { select: { id: true, name: true, email: true } },
-        recipe: { select: communityRecipeSelect },
-        ...postImagesInclude,
-        comments: { orderBy: { createdAt: "asc" }, include: { author: { select: { id: true, name: true, email: true } } } },
-        _count: { select: { likes: true, comments: true } },
+        ...moderationInclude,
       },
     }),
   ]);
-  const items = posts.map(({ _count, recipe, ...post }) => ({
-    ...post, recipe: toRecipeSummary(recipe), likeCount: _count.likes, commentCount: _count.comments,
-  }));
+  const items = posts.map(toModerationPost);
   return { items, total, page, pageSize };
 }

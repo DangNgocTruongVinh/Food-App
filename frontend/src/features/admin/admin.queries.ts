@@ -4,7 +4,7 @@ import { queryKeys } from "../../api/query-keys";
 import {
   createAdminRecipe, deleteAdminRecipe, getAdminRecipe, getAdminStats, listAdminRecipes, setAdminRecipeVisibility, updateAdminRecipe,
   uploadAdminRecipeImage, type AdminRecipeListQuery, listAdminUsers, listAuditLogs, listModerationPosts, moderateDeleteComment,
-  moderateDeletePost, setAdminUserLock, type AuditLogQuery,
+  moderateDeletePost, setAdminUserLock, type AuditLogQuery, getModerationPost, setModerationPostVisibility,
 } from "./admin.api";
 
 export const adminQueries = {
@@ -18,6 +18,9 @@ export const adminQueries = {
   }),
   moderation: (query: { page: number; pageSize: number }) => queryOptions({
     queryKey: ["admin", "moderation", query] as const, queryFn: () => listModerationPosts(query), placeholderData: keepPreviousData,
+  }),
+  moderationPost: (postId: string) => queryOptions({
+    queryKey: ["admin", "moderation", "post", postId] as const, queryFn: () => getModerationPost(postId), retry: retryUnlessClientError,
   }),
   auditLogs: (query: AuditLogQuery) => queryOptions({
     queryKey: ["admin", "audit-logs", query] as const, queryFn: () => listAuditLogs(query), placeholderData: keepPreviousData,
@@ -57,6 +60,7 @@ export const adminMutations = {
   deleteRecipe: () => mutationOptions({ mutationFn: deleteAdminRecipe }),
   setUserLock: () => mutationOptions({ mutationFn: setAdminUserLock }),
   deletePost: () => mutationOptions({ mutationFn: moderateDeletePost }),
+  setPostVisibility: () => mutationOptions({ mutationFn: setModerationPostVisibility }),
   deleteComment: () => mutationOptions({ mutationFn: moderateDeleteComment }),
 };
 
