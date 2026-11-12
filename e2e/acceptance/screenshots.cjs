@@ -49,7 +49,7 @@ async function login(page, account) {
   fs.mkdirSync(OUT, { recursive: true });
   const browser = await chromium.launch();
   const context = (width) => browser.newContext({
-    viewport: { width, height: width > 600 ? 900 : 844 }, deviceScaleFactor: width > 600 ? 1 : 2, colorScheme: "light", reducedMotion: "reduce",
+    viewport: { width, height: width > 600 ? 900 : 844 }, deviceScaleFactor: width > 600 ? 1 : 2, reducedMotion: "reduce",
   });
 
   // Khách (chưa đăng nhập).

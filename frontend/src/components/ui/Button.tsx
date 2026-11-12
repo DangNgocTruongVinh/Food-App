@@ -41,7 +41,7 @@ export type IconButtonProps = Omit<ButtonHTMLAttributes<HTMLButtonElement>, "ari
   /** Bắt buộc: tên đọc cho trình đọc màn hình. */
   label: string;
   icon: ReactNode;
-  /** Nút bật/tắt (vd. chế độ tối) → aria-pressed. */
+  /** Nút bật/tắt (vd. kiểu xem lưới/danh sách) → aria-pressed. */
   pressed?: boolean;
   quiet?: boolean;
 };

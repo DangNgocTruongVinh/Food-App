@@ -39,7 +39,7 @@ export default function PrivacyPage() {
         <h2 className="ui-section-title">Trong trình duyệt của bạn</h2>
         <p className="ui-text">
           Nouri lưu phiên đăng nhập (localStorage nếu chọn "Nhớ đăng nhập", sessionStorage nếu không), tên và email hiển thị, lựa
-          chọn "Nhớ đăng nhập" và chế độ sáng/tối. Đăng xuất sẽ xóa phiên đăng nhập.
+          chọn "Nhớ đăng nhập" và thông báo "Tạo bằng AI" đã đóng (chỉ trong phiên). Đăng xuất sẽ xóa phiên đăng nhập.
         </p>
       </section>
 

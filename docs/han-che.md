@@ -102,6 +102,9 @@ Chi tiết cách kiểm: `docs/test-evidence/bao-mat.md`. Hướng xử lý: nâ
 - Bảng tin cộng đồng chỉ tải 30 bài mới nhất, chưa phân trang; lịch sử chat hiện 50 tin gần nhất.
 - Ô chọn công thức khi đăng bài lọc ở trình duyệt trên toàn bộ danh sách món (đủ với 33 món, cần chuyển sang tìm ở backend khi nhiều món).
 - Lượng nước ở Tổng quan chỉ ghi nhận trong lần xem, chưa lưu vào tài khoản.
+- **Chỉ có giao diện sáng** (bỏ chế độ tối 12/11/2026): máy để chế độ tối vẫn thấy giao diện sáng. Lý do: mỗi màn hình, trạng thái
+  và ảnh món phải kiểm hai lần (tương phản, biểu đồ, trang chủ có bộ màu riêng), dễ sót lỗi trong thời gian còn lại; ưu tiên một giao
+  diện sáng đã kiểm kỹ.
 
 ## 3. Hướng phát triển
 
@@ -109,6 +112,8 @@ Chi tiết cách kiểm: `docs/test-evidence/bao-mat.md`. Hướng xử lý: nâ
 - **Theo dõi thành viên** (bảng tin theo người mình theo dõi, thông báo khi họ đăng bài).
 - Cộng đồng: tab "Dành cho bạn" (gợi ý bài theo khẩu vị, R9), phân trang bảng tin.
 - **Đăng nhập Google (OAuth)**: tùy chọn ở giai đoạn 6, chưa làm.
+- **Chế độ tối**: thêm lại bộ token tối (theo `prefers-color-scheme` + nút chuyển, nhớ lựa chọn), kiểm tương phản bằng test
+  `contrast.test.ts` cho cả hai bộ, chụp so sánh mọi trang ở cả hai chế độ.
 - Các chức năng đã gỡ khỏi giao diện vì chưa có xử lý thật: giọng nói, đính kèm tệp trong chat AI, bình chọn (poll) trong bài viết.
 - Đánh giá OCR trên ≥ 10 hóa đơn thật, so sánh Tesseract và OpenAI (độ đúng, thời gian, chi phí); đọc nhãn sản phẩm có HSD.
 - Nhận diện dị ứng theo thành phần (cơ sở dữ liệu nguyên liệu có thành phần ẩn) thay vì chỉ theo tên.

@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import { BookOpen, LayoutDashboard, LogOut, Menu, ScrollText, ShieldCheck, Users, X, type LucideIcon } from "lucide-react";
 import { Link, NavLink, Outlet } from "react-router-dom";
-import { Button, NouriWordmark, ThemeToggle } from "../components/ui";
+import { Button, NouriWordmark } from "../components/ui";
 import { useAuth } from "../contexts/AuthContext";
 import { ADMIN_NAV, userInitial } from "../features/layout/layout.logic";
 import { useDisclosure } from "../features/layout/useDisclosure";
@@ -17,7 +17,7 @@ const ICONS: Record<string, LucideIcon> = {
 
 /**
  * Khung riêng của khu Quản trị (tách khỏi khung người dùng). ≥ 1024px: menu trái cố định (logo + nhãn "Quản trị", 5 mục,
- * cuối menu: chế độ tối, tài khoản admin, Đăng xuất). < 1024px: thanh trên (logo + nút menu) mở menu dạng ngăn kéo.
+ * cuối menu: tài khoản admin, Đăng xuất). < 1024px: thanh trên (logo + nút menu) mở menu dạng ngăn kéo.
  * Mục menu dùng lại kiểu liên kết chữ phẳng của menu người dùng (.site-nav__link); chỉ dùng token.
  */
 export default function AdminLayout() {
@@ -59,10 +59,6 @@ export default function AdminLayout() {
             </ul>
           </nav>
           <div className="ad-sidebar__foot">
-            <div className="ad-sidebar__theme">
-              <span>Chế độ tối</span>
-              <ThemeToggle className="ad-sidebar__icon" />
-            </div>
             <div className="ad-account">
               <span className="account-menu__avatar" aria-hidden="true">{userInitial(user?.name)}</span>
               <span className="ad-account__who">

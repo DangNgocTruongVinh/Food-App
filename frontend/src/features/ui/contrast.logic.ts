@@ -1,6 +1,4 @@
-// Tương phản màu theo WCAG 2.x (dùng để kiểm các cặp token chữ/nền ở cả hai chế độ, xem docs/design/contrast.md).
-
-export type ThemeName = "light" | "dark";
+// Tương phản màu theo WCAG 2.x (kiểm các cặp token chữ/nền của giao diện sáng, xem docs/design/contrast.md).
 
 export function hexToRgb(hex: string): [number, number, number] {
   const value = hex.trim().replace(/^#/, "");
@@ -18,11 +16,11 @@ export function relativeLuminance(hex: string) {
 }
 
 export function contrastRatio(foreground: string, background: string) {
-  const [light, dark] = [relativeLuminance(foreground), relativeLuminance(background)].sort((a, b) => b - a);
-  return (light + 0.05) / (dark + 0.05);
+  const [lighter, darker] = [relativeLuminance(foreground), relativeLuminance(background)].sort((a, b) => b - a);
+  return (lighter + 0.05) / (darker + 0.05);
 }
 
-/** Đọc các token màu dạng hex của một khối selector trong tokens.css (vd. `[data-theme="dark"] {`). */
+/** Đọc các token màu dạng hex của một khối selector trong tokens.css (vd. `:root {`, khối token màu đầu tiên). */
 export function readColorTokens(css: string, selector: string) {
   const start = css.indexOf(`${selector} {`);
   if (start < 0) throw new Error(`Không tìm thấy khối ${selector}`);

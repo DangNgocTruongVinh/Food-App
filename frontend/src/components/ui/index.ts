@@ -12,5 +12,4 @@ export { CalorieRing, MACROS, MacroList, type MacroValues } from "./NutritionMet
 export { PageHeader } from "./PageHeader";
 export { RecipeImage } from "./RecipeImage";
 export { EmptyState, ErrorState, LoadingState, Skeleton } from "./States";
-export { ThemeToggle } from "./ThemeToggle";
 export { Toast } from "./Toast";

@@ -186,5 +186,10 @@ Docker Compose: postgres:16-alpine, backend node:22-alpine (chạy migration khi
 nginx:1.27-alpine (gzip, chuyển `/api`). Biến môi trường khai báo trong `env.ts` (Zod) và `.env.example`. Nguồn: `docker-compose.yml`.
 
 **38. Hướng phát triển chính?**
-Theo dõi thành viên, lưu lượng nước vào tài khoản, đăng nhập Google, đánh giá OCR trên hóa đơn thật, nhận diện dị ứng theo thành
-phần ẩn, Redis cho trạng thái dùng chung, thông báo đẩy. Nguồn: `docs/han-che.md` mục 3.
+Theo dõi thành viên, lưu lượng nước vào tài khoản, đăng nhập Google, chế độ tối, đánh giá OCR trên hóa đơn thật, nhận diện dị ứng
+theo thành phần ẩn, Redis cho trạng thái dùng chung, thông báo đẩy. Nguồn: `docs/han-che.md` mục 3.
+
+**39. Sao không có chế độ tối?**
+Đã có bản chế độ tối nhưng bỏ (12/11/2026) để tập trung chất lượng: mỗi màn hình, trạng thái, biểu đồ và trang chủ (bộ màu riêng) phải
+kiểm tương phản và chụp so sánh hai lần, dễ sót lỗi trước hạn nộp. Giữ một giao diện sáng đã kiểm WCAG AA bằng test
+(`contrast.test.ts`), đặt `color-scheme: light` để máy để chế độ tối vẫn hiện đúng. Thêm lại là hướng phát triển (`docs/han-che.md` mục 3).

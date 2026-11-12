@@ -7,7 +7,7 @@ import { ButtonLink, EmptyState } from "../ui";
 type PantrySnapshotProps = { pantryCount: number; expiringItems: PantryItem[]; expiredCount: number };
 
 /**
- * Tủ bếp: dải xanh rừng thương hiệu (giống nhau ở chế độ sáng/tối). Số đếm của kho nằm ở dải số liệu đầu trang; ở đây là
+ * Tủ bếp: dải xanh rừng thương hiệu. Số đếm của kho nằm ở dải số liệu đầu trang; ở đây là
  * "Cần dùng sớm" (mỗi món mở thẳng dòng đó trong Kho, ?item=), cảnh báo đồ đã hết hạn và hai nút Thêm thực phẩm / Quét hóa đơn.
  */
 export function PantrySnapshot({ pantryCount, expiringItems, expiredCount }: PantrySnapshotProps) {

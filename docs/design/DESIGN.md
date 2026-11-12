@@ -40,7 +40,7 @@ Lấy tinh thần của các sản phẩm hiện nay (ứng dụng nấu ăn, s�
 | Ảnh thật làm nhân vật chính | Ảnh món ăn lớn, cùng một phong cách chụp (ánh sáng ấm, góc 45° hoặc từ trên xuống), không ảnh 3D/minh họa AI |
 | Typography biên tập (editorial) | Tiêu đề Fraunces lớn, nội dung Be Vietnam Pro; phân cấp bằng cỡ chữ và khoảng trắng, không bằng khung màu |
 | Bố cục bất đối xứng có chủ đích | Khối quan trọng nhất to nhất (bento có thứ bậc), không lưới thẻ đều tăm tắp ở mọi nơi |
-| Chế độ sáng/tối | Mặc định sáng, nút chuyển trên menu, nhớ lựa chọn |
+| Chỉ giao diện sáng | Một bộ màu sáng, không nút chuyển; không theo chế độ tối của hệ điều hành (bỏ chế độ tối 12/11/2026, `docs/han-che.md`) |
 | Giao diện "dữ liệu là nội dung" | Số liệu thật (calo, ngày còn lại, số nguyên liệu có trong kho) đặt ngay cạnh hành động liên quan |
 | Tương tác phản hồi rõ | Đánh dấu "Đã ăn" có phản hồi tức thì; trạng thái tải bằng skeleton; lỗi tại chỗ |
 | Mobile-first cho thao tác | Vùng bấm ≥ 44px, nút chính dễ với ngón cái, bảng biến thành thẻ trên điện thoại |
@@ -78,41 +78,41 @@ Lấy tinh thần của các sản phẩm hiện nay (ứng dụng nấu ăn, s�
 
 ---
 
-## 4. Màu (token CSS, hai chế độ)
+## 4. Màu (token CSS, chỉ giao diện sáng)
 
 > **Hai nhóm trang (chốt 10/11/2026):** trang **công khai** — trang chủ, đăng nhập, đăng ký — dùng bộ màu thương hiệu **xanh rừng / ngà**
 > (`--home-*`, `--login-*`: forest #173F32, ivory #FAF8F2, gold #F6DFA6, sage #A8BDA5). Trang **trong ứng dụng** (sau khi đăng nhập) dùng
 > **bảng màu bản 8** (`docs/design/ke-hoach-ui8.md`); bảng dưới đây là bản 2, sẽ được thay khi làm bản 8.
 Chỉ dùng biến; **không viết mã màu cứng** trong CSS của trang/thành phần.
 
-| Token | Sáng | Tối | Dùng cho |
-|---|---|---|---|
-| `--bg` | #FBFAF6 | #111814 | Nền trang |
-| `--surface` | #FFFFFF | #18211C | Card, bảng, hộp thoại |
-| `--surface-2` | #F3F1EA | #202B25 | Nền phụ: nhóm menu, footer, khối phụ |
-| `--ink` | #17302A | #F2EFE7 | Chữ chính |
-| `--ink-2` | #3C4F47 | #CDD1C7 | Đoạn văn phụ |
-| `--muted` | #5E6D66 | #A9B1A6 | Nhãn, chú thích |
-| `--line` | #E3E1D8 | #2A352F | Đường kẻ, viền card |
-| `--action` | #15483C | #2F725D | **Nền**: nút chính, chip đang chọn |
-| `--action-hover` | #0F3A30 | #3A8270 | Hover nút chính (nền) |
-| `--action-text` | #15483C | #8FC2AE | **Chữ và viền** màu action: liên kết, mục menu đang chọn, chữ nút phụ, viền ô nhập đang focus, outline focus |
-| `--on-action` | #FFFFFF | #FFFFFF | Chữ trên nền `--action` / `--action-hover` |
-| `--accent` | #2F725D | #9CCB8F | Dấu chấm logo, số liệu tích cực, một đường trong biểu đồ Admin |
-| `--warn` | #A43C18 | #F0A070 | Chữ cảnh báo (sắp/đã hết hạn, dị ứng) |
-| `--warn-bg` | #FBEDE3 | #2E231C | Nền khối/dòng cảnh báo |
-| `--track` | #E9E6DC | #2A352F | Nền thanh/vòng tiến độ |
-| `--tag-bg` | #E6F1E7 | #1F3A2C | Nền nhãn (chế độ ăn, nhóm) |
-| `--border-input` | #C9D0C6 | #3A4740 | Viền ô nhập, nút phụ |
-| `--focus-ring` | #DFF184 | #DFF184 | Vòng focus ô nhập (3px) |
-| `--dot` | #FF8A52 | #FF8A52 | Chấm thông báo chưa đọc (chỉ chấm, không làm nền chữ) |
+| Token | Giá trị | Dùng cho |
+|---|---|---|
+| `--bg` | #FBFAF6 | Nền trang |
+| `--surface` | #FFFFFF | Card, bảng, hộp thoại |
+| `--surface-2` | #F3F1EA | Nền phụ: nhóm menu, footer, khối phụ |
+| `--ink` | #17302A | Chữ chính |
+| `--ink-2` | #3C4F47 | Đoạn văn phụ |
+| `--muted` | #5E6D66 | Nhãn, chú thích |
+| `--line` | #E3E1D8 | Đường kẻ, viền card |
+| `--action` | #15483C | **Nền**: nút chính, chip đang chọn |
+| `--action-hover` | #0F3A30 | Hover nút chính (nền) |
+| `--action-text` | #15483C | **Chữ và viền** màu action: liên kết, mục menu đang chọn, chữ nút phụ, viền ô nhập đang focus, outline focus |
+| `--on-action` | #FFFFFF | Chữ trên nền `--action` / `--action-hover` |
+| `--accent` | #2F725D | Dấu chấm logo, số liệu tích cực, một đường trong biểu đồ Admin |
+| `--warn` | #A43C18 | Chữ cảnh báo (sắp/đã hết hạn, dị ứng) |
+| `--warn-bg` | #FBEDE3 | Nền khối/dòng cảnh báo |
+| `--track` | #E9E6DC | Nền thanh/vòng tiến độ |
+| `--tag-bg` | #E6F1E7 | Nền nhãn (chế độ ăn, nhóm) |
+| `--border-input` | #C9D0C6 | Viền ô nhập, nút phụ |
+| `--focus-ring` | #DFF184 | Vòng focus ô nhập (3px) |
+| `--dot` | #FF8A52 | Chấm thông báo chưa đọc (chỉ chấm, không làm nền chữ) |
 
-Điều chỉnh 31/10/2026 (lượt UI-1, đã duyệt): bản đầu dùng `--action-hover` tối #3A8570 và dùng `--action` cho cả nền lẫn chữ. Ở chế độ tối, chữ trắng trên #3A8570 chỉ đạt 4.40:1, còn #2F725D làm chữ/viền trên nền tối chỉ đạt 2.90:1 (card) và 3.16:1 (nền trang), không đạt quy tắc dưới. Vì vậy: `--action-hover` tối đổi sang #3A8270 (4.56:1, gần như cùng màu) và tách `--action-text` cho chữ/viền (tối #8FC2AE, ≥ 7.3:1). Chế độ sáng không đổi (`--action-text` = `--action`). Ngoài ra có token phụ không phải màu mới: `--shadow-overlay`, `--backdrop` (nền mờ sau hộp thoại). Bảng đo: `docs/design/contrast.md`.
+`--action-text` (chữ/viền) tách khỏi `--action` (nền) từ lượt UI-1; ở giao diện sáng hai token cùng giá trị. Ngoài ra có token phụ không phải màu mới: `--shadow-overlay`, `--backdrop` (nền mờ sau hộp thoại). Bảng đo: `docs/design/contrast.md`.
 
 Quy tắc:
 - Mọi cặp chữ/nền ≥ 4.5:1 (chữ ≥ 24px hoặc đậm ≥ 19px: ≥ 3:1). Thêm test hoặc ghi bảng đo vào `docs/design/contrast.md`.
 - Màu không phải kênh duy nhất truyền ý nghĩa: cảnh báo luôn có chữ ("còn 1 ngày") hoặc icon.
-- Màu biểu đồ (Admin, dinh dưỡng): `--action`, `--accent`, `--warn`, `--muted` — tối đa 4 màu, đọc được ở cả hai chế độ.
+- Màu biểu đồ (Admin, dinh dưỡng): `--action`, `--accent`, `--warn`, `--muted` — tối đa 4 màu.
 
 ---
 
@@ -157,7 +157,7 @@ Quy tắc:
 | Chip (lọc) | Cao 40–44px, bo tròn; chọn: nền `--action` chữ trắng; có số đếm thật nếu hữu ích |
 | Tag (nhãn) | Nền `--tag-bg`, chữ `--ink`, 13px, không in hoa |
 | Card | Nền `--surface`, viền 1px `--line`, bo 16px, **không bóng**. Không lồng card trong card |
-| Overlay (menu thả, hộp thoại, toast) | Bóng `0 12px 32px rgba(21,72,60,.12)` (tối: `rgba(0,0,0,.4)`), bo 16px |
+| Overlay (menu thả, hộp thoại, toast) | Bóng `0 12px 32px rgba(21,72,60,.12)`, bo 16px |
 | ConfirmDialog | Thay mọi `window.confirm`. Tiêu đề nêu rõ hành động + đối tượng ("Xóa thực đơn Tuần 44?"), nêu hậu quả, nút nguy hiểm ghi đúng hành động ("Xóa thực đơn") |
 | Bảng | Hàng ≥ 52px, nhãn cột 13px, cột thao tác 44px; ≤ 760px chuyển thành thẻ |
 | Trạng thái | Loading: skeleton đúng hình nội dung. Empty: 1 câu nói điều gì đang trống + 1 nút hành động. Error: nền `--warn-bg`, nói điều gì sai + "Thử lại"; không xin lỗi, không mơ hồ |
@@ -213,7 +213,7 @@ Quy tắc:
 ---
 
 ## 12. Responsive
-- Kiểm ở 390, 768, 1366, 1920px, cả hai chế độ màu. Không cuộn ngang ở 320px.
+- Kiểm ở 390, 768, 1366, 1920px. Không cuộn ngang ở 320px.
 - ≤ 1200px: liên kết menu thu vào nút menu. ≤ 1024px: lưới 2 cột → 1 cột; hero Tổng quan: ảnh thành nền phía sau chữ, phủ lớp `--bg` 86% (vẫn đạt tương phản); hero Landing: ảnh xếp dưới chữ. ≤ 760px: bảng → thẻ (bảng Admin: ≤ 1023px, vì bảng Công thức có 8 cột).
 - Trên điện thoại, hành động chính của trang nằm trong tầm ngón cái (đầu nội dung hoặc thanh dưới).
 
@@ -223,9 +223,9 @@ Quy tắc:
 **Menu trên** (đồng bộ trang chủ 11/11/2026; sticky, cao 68px, nền `--bg`, kẻ dưới 1px):
 - Trái: logo chiếc bát `NouriWordmark` (components/ui, Fraunces 600, màu `--home-ink`; cùng logo trang chủ). `Logo` cũ chỉ còn ở Đăng nhập (Admin dùng `NouriWordmark` + nhãn "Quản trị").
 - Chính giữa thanh (lưới `1fr auto 1fr`, cột hai bên tối thiểu bằng nội dung): liên kết chữ phẳng 15px, bo 8px, nền `--home-soft` khi rê chuột; đang chọn: chữ `--action-text` 600 trên nền `--home-soft`. ≤ 1200px thu vào nút menu.
-- Phải (sát mép phải): nút chế độ tối (aria-pressed), chuông có chấm `--dot`, nút tài khoản (avatar + tên) mở menu: Hồ sơ, Quản trị (chỉ ADMIN), Đăng xuất. Nút biểu tượng và nút tài khoản không viền, nền `--home-soft` khi rê chuột/mở.
+- Phải (sát mép phải): chuông có chấm `--dot`, nút tài khoản (avatar + tên) mở menu: Hồ sơ, Quản trị (chỉ ADMIN), Đăng xuất. Nút biểu tượng và nút tài khoản không viền, nền `--home-soft` khi rê chuột/mở.
 
-**Footer** (đồng bộ footer trang chủ 11/11/2026): nền xanh rừng `--home-forest-deep` (giống nhau ở chế độ sáng/tối), gọn một hàng: cột thương hiệu (logo ngà, "Ăn ngon hơn. Sống khỏe hơn.", 1 câu mô tả, "© 2026 Nouri · Đồ án tốt nghiệp" nhỏ) + nhóm liên kết **chỉ gồm trang có thật**. Bỏ FooterBotanical. Liên kết chưa có trang (/privacy, /terms, Tin tức, mạng xã hội): làm trang tĩnh ngắn hoặc bỏ.
+**Footer** (đồng bộ footer trang chủ 11/11/2026): nền xanh rừng `--home-forest-deep`, gọn một hàng: cột thương hiệu (logo ngà, "Ăn ngon hơn. Sống khỏe hơn.", 1 câu mô tả, "© 2026 Nouri · Đồ án tốt nghiệp" nhỏ) + nhóm liên kết **chỉ gồm trang có thật**. Bỏ FooterBotanical. Liên kết chưa có trang (/privacy, /terms, Tin tức, mạng xã hội): làm trang tĩnh ngắn hoặc bỏ.
 
 ---
 
@@ -285,7 +285,7 @@ Quy tắc:
 
 ### Đăng nhập / Đăng ký (bản thiết kế đã duyệt 10/11/2026: "nouri-login-handoff")
 - Chia đôi: ảnh món ăn trái (11fr ≈ 55%, slogan Fraunces "Hôm nay ăn gì cho khỏe?" trên lớp tối `--login-scrim`), form phải nền
-  `--login-forest`; màu riêng `--login-*` (forest #173F32, gold #F6DFA6, ivory #FAF8F2), giống nhau ở chế độ sáng và tối, không có
+  `--login-forest`; màu riêng `--login-*` (forest #173F32, gold #F6DFA6, ivory #FAF8F2), không có
   nút đổi chế độ. Fraunces cho tiêu đề/slogan, Be Vietnam Pro cho nội dung. ≤ 1023px ảnh lên trên 300px, ≤ 640px 176px.
 - Tinh chỉnh 10/11: logo cùng cỡ trang chủ (`ui-logo` 1.75rem, dấu chấm vàng trên nền tối); tiêu đề Fraunces 400; ô nhập và nút cao
   52px, bo 10px (không pill); focus là outline vàng tách khỏi ô; autofill giữ nền ngà (`:-webkit-autofill`, `:autofill`); lỗi viền 2px +
@@ -298,9 +298,9 @@ Quy tắc:
 
 ### Admin (tách khu riêng 11/11/2026)
 - Điều hướng: ADMIN đăng nhập xong vào thẳng `/admin` (giữ `next` nếu là trang Admin hoặc `/recipes/:id`); ADMIN mở trang người dùng → `/admin`, trừ xem trước công thức `/recipes/:id` (dải "Về trang quản trị" dưới menu). USER mở `/admin` → Tổng quan. Hàm thuần `postLoginPath`, `adminRedirect` (`features/layout/layout.logic.ts`, có test).
-- Khung riêng `AdminLayout` (không menu trên/footer của người dùng): ≥ 1024px menu trái 264px — logo chiếc bát + nhãn "Quản trị", Tổng quan / Công thức / Người dùng / Kiểm duyệt / Nhật ký (`ADMIN_NAV`, liên kết kiểu `.site-nav__link`), cuối menu: chế độ tối, tài khoản admin, Đăng xuất. < 1024px: thanh trên (logo + nút menu) mở menu dạng ngăn kéo. Không có chuông thông báo.
+- Khung riêng `AdminLayout` (không menu trên/footer của người dùng): ≥ 1024px menu trái 264px — logo chiếc bát + nhãn "Quản trị", Tổng quan / Công thức / Người dùng / Kiểm duyệt / Nhật ký (`ADMIN_NAV`, liên kết kiểu `.site-nav__link`), cuối menu: tài khoản admin, Đăng xuất. < 1024px: thanh trên (logo + nút menu) mở menu dạng ngăn kéo. Không có chuông thông báo.
 - Kiểu trang theo trang người dùng: tiêu đề lớn Fraunces, khung bảng/biểu đồ/bài viết bo 24px, ô lọc dạng viên. Trang công cụ: không ảnh, mật độ thông tin cao nhưng gọn.
-- Tổng quan: 4 số tổng (có chú thích: "trong đó 1 bị khóa") thành dải ngăn bằng đường mảnh, ghi "không tính tài khoản mẫu minh họa" + biểu đồ 12 tuần (Recharts, màu token, có nhãn trục, đọc được ở chế độ tối).
+- Tổng quan: 4 số tổng (có chú thích: "trong đó 1 bị khóa") thành dải ngăn bằng đường mảnh, ghi "không tính tài khoản mẫu minh họa" + biểu đồ 12 tuần (Recharts, màu token, có nhãn trục).
 - Bảng có tìm kiếm, lọc, phân trang. Công thức: form tạo/sửa có upload ảnh (xem trước), báo lỗi nhãn chay theo từng nguyên liệu. Người dùng: Khóa/Mở khóa. Kiểm duyệt: xem bài + xóa. Nhật ký: thời gian, người thực hiện, hành động, đối tượng.
 - Mọi thao tác xóa/khóa dùng ConfirmDialog. Test kiểm kê `features/admin/admin-controls.test.ts`: mọi nút/hộp thoại Admin phải còn.
 
@@ -313,7 +313,7 @@ Quy tắc:
   màn hình, chữ thẳng lề logo; ≤ 1023px: chữ trên, vòm giữa, mảng xanh nửa dưới; ảnh do người dùng cung cấp, xem
   `public/assets/home/NGUON.txt`]; 5 chức năng (Kho là khối lớn, kèm quét hóa đơn); món thật + số theo nhóm
   từ `/stats`; 4 bước; Cộng đồng; dải mời cuối; footer riêng nền xanh. Khách bấm trang cần đăng nhập → `/login?next=…` (`landingLink`).
-- Menu bản cho khách (logo, liên kết neo tới các phần, chế độ tối, Đăng nhập) + footer chung.
+- Menu bản cho khách (logo, liên kết neo tới các phần, Đăng nhập) + footer chung.
 - Hero: một câu nói rõ Nouri làm gì + "Đăng ký miễn phí" / "Đăng nhập"; ảnh món thật nếu có (`GET /api/recipes/featured`), chưa có thì chỉ chữ.
 - Các phần, mỗi phần một ý: Nouri giúp gì (3 việc, không icon) → Món trong Nouri (số thật từ `/api/recipes/stats`, 6 món từ `/featured`; khách bấm món thì sang đăng nhập rồi mở đúng món) → Cách hoạt động (4 bước đánh số: kho → hồ sơ → thực đơn → đi chợ) → Cộng đồng (chỉ mô tả) → lời kêu gọi đăng ký.
 - Không blob/lá/kính mờ, không GSAP, không hiệu ứng khi cuộn, không số minh họa.
@@ -321,7 +321,7 @@ Quy tắc:
 ---
 
 ## 15. Nghiệm thu mỗi lượt UI (Claude Code tự làm trước khi báo xong)
-1. Chụp Playwright trước/sau ở 390 và 1440px, **cả sáng và tối**; lưu vào `docs/design/screens/<lượt>/`.
+1. Chụp Playwright trước/sau ở 390 và 1440px (chỉ giao diện sáng); lưu vào `docs/design/screens/<lượt>/`.
 2. Đi qua checklist mục 3 cho từng trang đã làm, ghi kết quả vào báo cáo (bảng tổng hợp cuối đợt: `docs/design/nghiem-thu-ui.md`).
 3. Kiểm tương phản các cặp màu mới dùng; kiểm Tab qua toàn trang; không cuộn ngang ở 320px.
 4. Kiểm chữ tiếng Việt có dấu chồng hiển thị đúng ở tiêu đề.

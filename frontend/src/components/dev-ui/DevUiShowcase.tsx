@@ -1,10 +1,9 @@
 import { Bell, CalendarPlus, Heart, Search, Trash2, UtensilsCrossed } from "lucide-react";
 import { type ReactNode, useState } from "react";
 import { type ConfirmRequest, createConfirmController } from "../../features/ui/ui.logic";
-import type { Theme } from "../../features/theme/theme.logic";
 import { Button, Card, Chip, ConfirmDialog, EmptyState, ErrorState, Field, IconButton, LoadingState, Logo, PageHeader, Tag } from "../ui";
 
-// Bảng mẫu thành phần cho trang /dev/ui (chỉ môi trường dev). Mỗi cột cố định một chế độ bằng data-theme.
+// Bảng mẫu thành phần cho trang /dev/ui (chỉ môi trường dev).
 
 const SAMPLE = "Sống uống ặc ữ ỗ ẫ ợ Đậu hũ";
 const SANS_WEIGHTS = [400, 500, 600, 700];
@@ -20,7 +19,7 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
   );
 }
 
-export function DevUiShowcase({ theme }: { theme: Theme }) {
+export function DevUiShowcase() {
   const [chip, setChip] = useState<string>("Tất cả");
   const [request, setRequest] = useState<ConfirmRequest | null>(null);
   const [controller] = useState(() => createConfirmController(setRequest));
@@ -36,8 +35,7 @@ export function DevUiShowcase({ theme }: { theme: Theme }) {
   };
 
   return (
-    <div data-theme={theme} className="ui-root dev-ui-panel">
-      <p className="ui-small">Chế độ {theme === "dark" ? "tối" : "sáng"}</p>
+    <div className="ui-root dev-ui-panel">
 
       <Section title="Logo và đầu trang">
         <Logo />
