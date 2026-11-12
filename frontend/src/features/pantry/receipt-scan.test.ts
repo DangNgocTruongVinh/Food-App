@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { ReceiptDraftLine } from "../../types";
 import {
-  commitMessage, isExpiryEstimated, providerNotice, receiptFileError, scanModeOptions, restoreSkippedLine, reviewErrors, scaledSize, scanStageText, scanStepOf,
+  commitMessage, isExpiryEstimated, providerNotice, receiptFileError, scanModeOptions, sendsImageToAI, restoreSkippedLine, reviewErrors, scaledSize, scanStageText, scanStepOf,
   targetText, toCommitLines, toEditableLines, undoMessage, uploadErrorMessage,
 } from "./receipt-scan.logic";
 
@@ -52,6 +52,12 @@ describe("receipt-scan.logic", () => {
     expect(scanModeOptions(status(false))).toBeNull();
     expect(scanModeOptions(status(true, false))).toBeNull();
     expect(scanModeOptions(undefined)).toBeNull();
+
+    // Dòng nhắc "ảnh gửi tới dịch vụ AI bên ngoài": chỉ khi lần quét có thể dùng OpenAI.
+    expect(sendsImageToAI(status(true), "auto")).toBe(true);
+    expect(sendsImageToAI(status(true), "openai")).toBe(true);
+    expect(sendsImageToAI(status(true), "tesseract")).toBe(false);
+    expect(sendsImageToAI(status(false), "auto")).toBe(false);
   });
 
   it("hạn ước tính chỉ còn khi chưa sửa ngày", () => {

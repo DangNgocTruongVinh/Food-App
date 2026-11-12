@@ -140,13 +140,15 @@ async function main() {
     console.log(`Chưa có đáp án nào trong ${dir} (xem README.md và _mau-dap-an.json).`);
     return;
   }
+  console.log(`Model đọc ảnh: ${visionModel}; giá ${prices.inputPerMillion}/${prices.outputPerMillion} USD mỗi triệu token vào/ra.`);
   const sections = [];
   for (const mode of modes) sections.push(await evaluate(mode, answers));
   const report = [
     "# Kết quả quét hóa đơn",
     "",
     `Chạy ngày ${new Date().toISOString().slice(0, 10)}, ${answers.length} đáp án. Lệnh: \`npm run eval:receipt -w backend${args.length ? ` -- ${args.join(" ")}` : ""}\`.`,
-    `Giá tính chi phí: ${prices.inputPerMillion} USD/1 triệu token vào, ${prices.outputPerMillion} USD/1 triệu token ra, 1 USD = ${prices.vndPerUsd} đ.`,
+    `Model đọc ảnh: \`${visionModel}\` — giá tính chi phí: ${prices.inputPerMillion} USD/1 triệu token vào, `
+      + `${prices.outputPerMillion} USD/1 triệu token ra, 1 USD = ${prices.vndPerUsd} đ (đối chiếu bảng giá của đúng model này).`,
     "",
     ...sections,
     "Ghép dòng theo độ giống tên (bỏ dấu) ≥ 0,5; tên đúng = trùng hẳn sau khi bỏ dấu; đơn vị đúng = cùng nhóm quy đổi; số lượng đúng = lệch ≤ 1 %.",

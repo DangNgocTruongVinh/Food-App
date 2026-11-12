@@ -20,9 +20,10 @@ Tệp bắt đầu bằng `_` là mẫu, script bỏ qua.
 - Nên có nhiều loại: siêu thị in không dấu, cửa hàng tiện lợi, chợ/tạp hóa viết tay (nếu có), 1–2 nhãn sản phẩm có HSD, 1 ảnh chụp nghiêng hoặc thiếu sáng.
 - Ảnh tối đa 5 MB (giới hạn của ứng dụng); ảnh điện thoại lớn hơn thì giảm độ phân giải khi xuất.
 
-## Che thông tin trước khi commit
+## Che thông tin
 
-Bắt buộc che (tô đen kín, không làm mờ) trước khi đưa ảnh vào repo:
+Ảnh (`*.jpg`, `*.jpeg`, `*.png`, `*.webp`) nằm trong `.gitignore`, chỉ để trên máy; chỉ commit đáp án `.json`, `.txt` và
+`ket-qua.md`. Nếu cần đưa ảnh vào quyển/repo, bắt buộc che (tô đen kín, không làm mờ) trước:
 
 - số thẻ ngân hàng (kể cả 4 số cuối), mã giao dịch thẻ/QR;
 - số điện thoại, mã thành viên/mã khách hàng, tên khách hàng, điểm tích lũy;

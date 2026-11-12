@@ -26,5 +26,11 @@ e2e/output/
 # Cấu hình Claude Code và skill cài cục bộ (không thuộc mã nguồn dự án)
 .claude/
 
+# Ảnh hóa đơn thật để đánh giá quét (thông tin cá nhân, không commit); đáp án .json và ket-qua.md vẫn commit
+docs/test-evidence/receipts/*.jpg
+docs/test-evidence/receipts/*.jpeg
+docs/test-evidence/receipts/*.png
+docs/test-evidence/receipts/*.webp
+
 # Bộ tài liệu thiết kế trang đăng nhập (chỉ dùng để tham khảo, không commit)
 nouri-login-handoff/

@@ -62,6 +62,14 @@ export function scanModeOptions(status: ReceiptScanStatus | undefined) {
   return available("openai") && available("tesseract") ? SCAN_MODE_OPTIONS : null;
 }
 
+/** Lần quét này có gửi ảnh tới OpenAI không: "Đọc bằng AI", hoặc "Tự động" khi máy chủ có OpenAI. */
+export function sendsImageToAI(status: ReceiptScanStatus | undefined, mode: ReceiptScanMode) {
+  const openai = status?.providers.some((option) => option.id === "openai" && option.available) ?? false;
+  return mode === "openai" || (mode === "auto" && openai);
+}
+
+export const AI_UPLOAD_NOTICE = "Ảnh sẽ được gửi tới dịch vụ AI bên ngoài (OpenAI) để đọc; Nouri không lưu lại ảnh.";
+
 const FALLBACK_REASONS: Record<string, string> = {
   OPENAI_TIMEOUT: "quá thời gian",
   OPENAI_INVALID_OUTPUT: "trả kết quả không hợp lệ",

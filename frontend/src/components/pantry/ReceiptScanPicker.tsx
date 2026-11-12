@@ -1,6 +1,6 @@
 import { Camera, ImageUp, PencilLine } from "lucide-react";
 import { useRef, useState } from "react";
-import { PROVIDER_LABELS, scanModeOptions } from "../../features/pantry/receipt-scan.logic";
+import { AI_UPLOAD_NOTICE, PROVIDER_LABELS, scanModeOptions, sendsImageToAI } from "../../features/pantry/receipt-scan.logic";
 import type { ReceiptScanMode, ReceiptScanStatus } from "../../types";
 import { Button, ChoiceGroup, ErrorState, LoadingState } from "../ui";
 
@@ -54,6 +54,7 @@ export function ReceiptScanPicker({ status, statusError, error, onPick, onManual
         <ChoiceGroup legend="Chế độ đọc" name="receipt-mode" options={modes} value={mode} onChange={(value) => setMode(value as ReceiptScanMode)}
           hint="Tự động: đọc bằng AI, lỗi thì tự chuyển sang chế độ dự phòng (đọc trên máy chủ)." />
       )}
+      {sendsImageToAI(status, mode) && <p className="kho-sub">{AI_UPLOAD_NOTICE}</p>}
       {status && (
         <p className="kho-sub">
           {provider && !modes && <>Chế độ đọc: {PROVIDER_LABELS[provider]}. </>}
