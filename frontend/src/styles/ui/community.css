@@ -224,3 +224,51 @@ a.cm-recipe:hover { border-color: var(--action-text); }
 .cm-guide { border-color: transparent; border-radius: 28px; }
 .cm-composer,
 .cm-post { border-radius: 24px; }
+
+/*
+ * Công thức tự viết (giai-doan-cong-dong): ô nhập trong form đăng bài / hộp sửa bài và thẻ hiển thị trong bài.
+ * Khối nền dịu bo theo thẻ như các khối phụ đã đồng bộ; cảnh báo dị ứng dùng màu cảnh báo.
+ */
+.cm-member-form { position: relative; display: grid; gap: var(--space-3); min-width: 0; margin: 0; padding: var(--space-4); border: 0; border-radius: var(--radius-card); background: var(--surface-2); }
+.cm-member-form__title { padding: 0; color: var(--ink); font-family: var(--font-serif); font-size: 1.25rem; font-weight: 500; }
+.cm-member-form__note { margin: 0; color: var(--ink-2); font-size: var(--fs-small); }
+.cm-member-form__close { position: absolute; top: var(--space-2); right: var(--space-2); }
+.cm-member-form__row { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr); gap: var(--space-3); }
+.cm-member-form__label { margin: var(--space-2) 0 0; color: var(--ink); font-size: var(--fs-small); font-weight: 600; }
+.cm-member-form > .ui-button { justify-self: start; }
+.cm-member-field { display: grid; gap: var(--space-1); min-width: 0; color: var(--ink-2); font-size: var(--fs-label); font-weight: 600; }
+.cm-member-rows { display: grid; gap: var(--space-2); margin: 0; padding: 0; list-style: none; }
+.cm-member-ingredient { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 1fr) minmax(0, 1fr) auto; align-items: center; gap: var(--space-2); }
+.cm-member-step { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: start; gap: var(--space-2); }
+.cm-member-ingredient .ui-input,
+.cm-member-step .ui-input { min-width: 0; }
+
+.cm-member-recipe { display: grid; gap: var(--space-2); padding: var(--space-4); border-radius: var(--radius-card); background: var(--surface-2); }
+.cm-member-recipe__label { margin: 0; color: var(--action-text); font-size: var(--fs-label); font-weight: 600; letter-spacing: .04em; text-transform: uppercase; }
+.cm-member-recipe__name { margin: 0; color: var(--ink); font-family: var(--font-serif); font-size: 1.375rem; font-weight: 500; line-height: 1.2; }
+.cm-member-recipe__meta { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-4); margin: 0; color: var(--ink-2); font-size: var(--fs-small); }
+.cm-member-recipe__meta span { display: inline-flex; align-items: center; gap: var(--space-1); }
+.cm-member-recipe__meta svg,
+.cm-member-recipe__allergy svg,
+.cm-member-recipe__promoted svg,
+.cm-post__hidden svg { width: 18px; height: 18px; flex: 0 0 auto; stroke-width: 1.75; }
+.cm-member-recipe__allergy { display: flex; align-items: flex-start; gap: var(--space-2); margin: 0; padding: var(--space-2) var(--space-3); border-radius: var(--radius-field); color: var(--warn); background: var(--warn-bg); font-size: var(--fs-small); font-weight: 600; }
+.cm-member-recipe__note { margin: 0; color: var(--muted); font-size: var(--fs-label); }
+.cm-member-recipe__details summary { color: var(--action-text); font-size: var(--fs-small); font-weight: 600; cursor: pointer; }
+.cm-member-recipe__sub { margin: var(--space-3) 0 var(--space-1); color: var(--ink); font-size: var(--fs-small); font-weight: 600; }
+.cm-member-recipe__list,
+.cm-member-recipe__steps { display: grid; gap: var(--space-1); margin: 0; padding-left: var(--space-5); color: var(--ink); font-size: var(--fs-small); line-height: var(--lh-small); }
+.cm-member-recipe__promoted { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); margin: 0; color: var(--ink-2); font-size: var(--fs-small); }
+.cm-member-recipe__promoted svg { color: var(--action-text); }
+.cm-post__hidden { display: flex; align-items: center; gap: var(--space-2); margin: 0; padding: var(--space-2) var(--space-3); border-radius: var(--radius-field); color: var(--ink-2); background: var(--surface-2); font-size: var(--fs-small); }
+
+.cm-edit-form { display: grid; gap: var(--space-4); }
+.cm-edit-form__add { justify-self: start; }
+.cm-edit-form__actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: var(--space-3); }
+
+@media (max-width: 640px) {
+  .cm-member-form__row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .cm-member-field--wide { grid-column: 1 / -1; }
+  .cm-member-ingredient { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; }
+  .cm-member-ingredient > .ui-input:first-child { grid-column: 1 / -1; }
+}

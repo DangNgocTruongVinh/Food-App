@@ -1,4 +1,4 @@
-import { BookOpen, ImagePlus } from "lucide-react";
+import { BookOpen, ImagePlus, NotebookPen } from "lucide-react";
 import type { FormEvent, ReactNode } from "react";
 import { COMMUNITY_IMAGE_TYPES, COMMUNITY_MAX_IMAGES, COMMUNITY_POST_MAX_LENGTH, communityInitials } from "../../features/community/community.logic";
 import { cx } from "../../features/ui/ui.logic";
@@ -22,6 +22,10 @@ type PostComposerProps = {
   onTogglePicker: () => void;
   /** Ô chọn công thức, hiện ngay dưới khung nhập khi đang mở. */
   picker?: ReactNode;
+  /** Đang tự viết công thức (loại trừ với món có sẵn); form hiện ngay dưới khung nhập. */
+  isWriting: boolean;
+  onToggleWriting: () => void;
+  memberFields?: ReactNode;
   images: File[];
   imageError: string | null;
   onAddImages: (files: File[]) => void;
@@ -30,7 +34,7 @@ type PostComposerProps = {
   error?: ReactNode;
 };
 
-/** Ô đăng bài: chữ (tối đa 2000 ký tự), tối đa 4 ảnh, gắn một công thức có sẵn. */
+/** Ô đăng bài: chữ (tối đa 2000 ký tự), tối đa 4 ảnh, chọn một trong hai: đính kèm món có sẵn hoặc tự viết công thức. */
 export default function PostComposer(props: PostComposerProps) {
   const { userName, value, onChange, onSubmit, isPending, canPublish, attachedRecipe } = props;
   const imagesFull = props.images.length >= COMMUNITY_MAX_IMAGES;
@@ -52,6 +56,7 @@ export default function PostComposer(props: PostComposerProps) {
           aria-describedby="cm-composer-count"
         />
         {props.isPickerOpen && props.picker}
+        {props.isWriting && props.memberFields}
         {attachedRecipe && <RecipeAttachmentCard recipe={attachedRecipe} onRemove={props.onRemoveRecipe} />}
         <ComposerImagePreviews images={props.images} onRemove={props.onRemoveImage} />
         {props.imageError && <p className="cm-composer__error" role="alert">{props.imageError}</p>}
@@ -74,7 +79,8 @@ export default function PostComposer(props: PostComposerProps) {
                 }}
               />
             </label>
-            <Button className="cm-tool" icon={<BookOpen />} aria-expanded={props.isPickerOpen} onClick={props.onTogglePicker}>Công thức</Button>
+            <Button className="cm-tool" icon={<BookOpen />} aria-expanded={props.isPickerOpen} onClick={props.onTogglePicker}>Đính kèm món có sẵn</Button>
+            <Button className="cm-tool" icon={<NotebookPen />} aria-pressed={props.isWriting} onClick={props.onToggleWriting}>Tự viết công thức</Button>
           </div>
           <div className="cm-composer__publish">
             <span id="cm-composer-count" className="cm-composer__count">{value.length}/{COMMUNITY_POST_MAX_LENGTH}</span>

@@ -20,9 +20,23 @@ export interface CommunityComment {
 export interface CommunityRecipeSummary {
   id: string; name: string; imageUrl?: string | null; calories: number; prepMinutes: number; cookMinutes: number; hidden?: boolean;
 }
+/** Công thức tự viết trong bài cộng đồng (không phải Recipe: không vào thực đơn/gợi ý/kho; số lượng, đơn vị nhập tự do). */
+export interface MemberRecipe {
+  name: string; servings: number; minutes: number;
+  ingredients: Array<{ name: string; quantity: string; unit: string }>;
+  steps: string[];
+}
+
 export interface CommunityPost {
   id: string; content: string; createdAt: string; updatedAt: string; author: CommunityAuthor;
   recipe: CommunityRecipeSummary | null;
+  memberRecipe: MemberRecipe | null;
+  /** Từ khóa dị ứng (theo hồ sơ người xem) có trong tên món/nguyên liệu của công thức tự viết. */
+  memberRecipeAllergens: string[];
+  /** Admin đã ẩn bài (chỉ tác giả còn thấy). */
+  hidden: boolean;
+  /** Món trong thư viện Admin tạo từ công thức tự viết của bài. */
+  promotedRecipe: { id: string; name: string } | null;
   /** Ảnh trong bài (tối đa 4), URL Cloudinary gốc; hiển thị qua optimizedImageUrl. */
   images: Array<{ url: string; position: number }>;
   likedByMe: boolean; likeCount: number; commentCount: number; comments: CommunityComment[];

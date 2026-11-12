@@ -1,4 +1,4 @@
-import type { DietTag, FoodUnit, MealType } from "../../types";
+import type { DietTag, FoodUnit, MealType, MemberRecipe } from "../../types";
 import { COMMUNITY_IMAGE_MAX_BYTES, COMMUNITY_IMAGE_TYPES } from "../community/community.logic";
 import type { AdminRecipeDetail, AdminRecipeInput, RecipeUsage } from "./admin.api";
 
@@ -45,6 +45,55 @@ export function toRecipeForm(recipe: AdminRecipeDetail): RecipeFormValues {
     fiberG: String(recipe.fiberG), dietTags: recipe.dietTags, mealTypes: recipe.mealTypes, imageUrl: recipe.imageUrl,
     ingredients: recipe.ingredients.map((item) => ({ key: newRowKey(), name: item.name, quantity: String(item.quantity), unit: item.unit, optional: item.optional })),
     steps: recipe.instructions.map((text) => ({ key: newRowKey(), text })),
+  };
+}
+
+// ---------- "Chuyển thành công thức" từ công thức tự viết của bài cộng đồng ----------
+
+/** Đơn vị nhập tự do của thành viên → đơn vị chuẩn của món (so không phân biệt hoa thường, bỏ dấu chấm cuối). */
+const UNIT_WORDS: Array<[FoodUnit, string[]]> = [
+  ["G", ["g", "gr", "gam", "gram", "grams"]],
+  ["KG", ["kg", "ký", "kí", "kilogram", "cân"]],
+  ["ML", ["ml", "mililit", "mililít"]],
+  ["L", ["l", "lít", "lit", "liter", "litre"]],
+  ["ITEM", ["cái", "quả", "trái", "củ", "con", "miếng", "lát", "tép", "nhánh", "bó", "cây", "lá", "quả trứng"]],
+  ["PACKAGE", ["gói", "hộp", "túi", "lon", "chai", "vỉ", "bịch"]],
+];
+
+export function guessFoodUnit(raw: string): FoodUnit | null {
+  const word = raw.trim().toLocaleLowerCase("vi").replace(/\.$/, "");
+  if (!word) return null;
+  return UNIT_WORDS.find(([, words]) => words.includes(word))?.[0] ?? null;
+}
+
+/** "300", "1,5", "1.5", "1/2" → chuỗi số dương; không đọc được → "" (Admin điền, form báo lỗi tại dòng đó). */
+export function guessQuantity(raw: string) {
+  const text = raw.trim().replace(",", ".");
+  const fraction = /^(\d+)\s*\/\s*(\d+)$/.exec(text);
+  const value = fraction ? Number(fraction[1]) / Number(fraction[2]) : Number(text);
+  return text && Number.isFinite(value) && value > 0 && value <= RECIPE_LIMITS.ingredientQuantityMax ? String(Number(value.toFixed(3))) : "";
+}
+
+/**
+ * Điền trước form món mới từ công thức tự viết: tên, khẩu phần (≤ 12), thời gian nấu, nguyên liệu, các bước, mô tả lấy từ
+ * nội dung bài. Dinh dưỡng, bữa, nhãn để Admin bổ sung. Đơn vị không quy đổi được → để trống số lượng để Admin xem lại dòng đó.
+ */
+export function recipeFormFromMemberRecipe(recipe: MemberRecipe, postContent: string): RecipeFormValues {
+  const empty = emptyRecipeForm();
+  const description = postContent.trim().slice(0, RECIPE_LIMITS.description[1]) || `Công thức của thành viên: ${recipe.name}.`;
+  return {
+    ...empty,
+    name: recipe.name.slice(0, RECIPE_LIMITS.name[1]),
+    description,
+    prepMinutes: "0",
+    cookMinutes: String(Math.min(recipe.minutes, RECIPE_LIMITS.cookMinutes[1])),
+    servings: String(Math.min(Math.max(recipe.servings, RECIPE_LIMITS.servings[0]), RECIPE_LIMITS.servings[1])),
+    ingredients: recipe.ingredients.slice(0, RECIPE_LIMITS.ingredients[1]).map((item) => {
+      const unit = guessFoodUnit(item.unit);
+      const knownUnit = unit !== null || !item.unit.trim();
+      return { key: newRowKey(), name: item.name, quantity: knownUnit ? guessQuantity(item.quantity) : "", unit: unit ?? "G", optional: false };
+    }),
+    steps: recipe.steps.slice(0, RECIPE_LIMITS.steps[1]).map((text) => ({ key: newRowKey(), text })),
   };
 }
 

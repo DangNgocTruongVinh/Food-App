@@ -1,6 +1,6 @@
 import { format, formatDistanceToNow } from "date-fns";
 import { vi } from "date-fns/locale";
-import type { CommunityPost, CommunityRecipeSummary, Recipe } from "../../types";
+import type { CommunityPost, CommunityRecipeSummary, MemberRecipe, Recipe } from "../../types";
 
 export const COMMUNITY_POST_MAX_LENGTH = 2000;
 export const COMMUNITY_COMMENT_MAX_LENGTH = 500;
@@ -52,11 +52,20 @@ export function normalizeCommunityContent(value: string) {
   return normalized || null;
 }
 
-/** Bài viết cần có chữ, công thức hoặc ảnh; trả về dữ liệu gửi API hoặc null nếu chưa đăng được. */
-export function toCommunityPublishInput(content: string, recipe: Pick<CommunityRecipeSummary, "id"> | null, images: File[] = []) {
+/**
+ * Bài viết cần có chữ, công thức (món có sẵn hoặc tự viết) hoặc ảnh; trả về dữ liệu gửi API hoặc null nếu chưa đăng được.
+ * Món có sẵn và công thức tự viết không đi cùng nhau (giao diện chỉ cho chọn một).
+ */
+export function toCommunityPublishInput(
+  content: string, recipe: Pick<CommunityRecipeSummary, "id"> | null, images: File[] = [], memberRecipe: MemberRecipe | null = null,
+) {
   const normalized = content.trim();
-  if (!normalized && !recipe && !images.length) return null;
-  return { content: normalized, ...(recipe ? { recipeId: recipe.id } : {}), ...(images.length ? { images } : {}) };
+  if (!normalized && !recipe && !memberRecipe && !images.length) return null;
+  return {
+    content: normalized,
+    ...(recipe ? { recipeId: recipe.id } : memberRecipe ? { memberRecipe } : {}),
+    ...(images.length ? { images } : {}),
+  };
 }
 
 // Kiểm tra trước khi gửi, khớp với backend (backend vẫn kiểm tra lại theo byte đầu file).
