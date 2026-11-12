@@ -147,12 +147,12 @@ Kế hoạch chi tiết: `docs/ke-hoach-gd3c.md`. Phần 1 (Tesseract trên serv
 - [x] Nội dung: món sắp hết hạn (tên, số lượng, còn mấy ngày) + 3 món từ `getRecommendations(context: "pantry")` kèm lý do và liên kết, nút "Mở kho", "Tắt nhắc" một chạm (`/tat-nhac-han`, token HMAC riêng, tắt bằng JS khi trang mở để trình quét liên kết không tự tắt).
 - [x] `DEMO_EMAIL_INBOX`: thư gửi demo@nouri.vn chuyển tới hộp thư thật (tiêu đề ghi "[Demo …]"), chỉ tài khoản demo. Gộp `main` 13/11/2026.
 
-### Báo cáo (nhánh `giai-doan-bao-cao`, chưa merge)
+### Báo cáo (nhánh `giai-doan-bao-cao`, gộp `main` 13/11/2026)
 - [x] Xóa khỏi kho bắt buộc chọn lý do (`DELETE /api/pantry/:id?reason=USED_UP|DISCARDED|MISTAKE`), lưu `PantryTransaction.removalReason`; lịch sử kho chụp lại `category`, `expiryDate`, `unitPrice` lúc thay đổi. "Nhập nhầm" không tính.
 - [x] Đơn giá tùy chọn `PantryItem.unitPrice` (đ / đơn vị): nhập tay trong form Kho; quét hóa đơn có thành tiền → `price / quantity`.
 - [x] `/reports` (menu "Báo cáo", Recharts tải lazy): lãng phí 4/8 tuần (`GET /api/reports/waste`): món bỏ đi, lượng theo nhóm (g/ml/cái), tiền lãng phí "ước tính trên N món có giá", tỉ lệ dùng trước hạn = dùng trước hạn / (dùng + bỏ đi), nhóm hay bỏ nhất, so với tuần trước. "Dùng" = trừ kho khi ăn, sửa về 0, xóa "Đã dùng hết" khi còn hàng. Dinh dưỡng tuần (`GET /api/reports/nutrition?week=current|previous`) từ bữa "Đã ăn": ngày chưa ghi = "chưa ghi" (không tính 0), trung bình chỉ trên ngày đã ghi. Tuần: Thứ Hai 00:00 giờ VN (`reports.logic.ts`).
 - [x] `demo:reset`: 8 tuần lịch sử kho mẫu (bỏ đi giảm dần, dùng trước hạn tăng dần, một phần có giá) + thực đơn mẫu 6 ngày qua có bữa "Đã ăn" (bỏ trống 1 ngày) — `prisma/demo-report.ts`.
-- [ ] Người dùng thử trên app rồi mới merge.
+- [x] Menu 7 mục: đo bằng Playwright 1201–1440px, tên tài khoản dài làm trang tràn 48px ở 1201px → rút nhãn "Kho thực phẩm" thành "Kho" trên menu; gộp `main` 13/11/2026.
 
 ### Giai đoạn 4 — Bảo mật tài khoản
 - [x] Access token 15 phút + refresh token (cookie httpOnly, `SameSite=Strict`, `Path=/api/auth`; DB lưu SHA-256, bảng `RefreshToken`), xoay vòng, dùng lại token cũ → thu hồi cả chuỗi (trừ 10 giây cho hai tab, `REFRESH_RACE`); thu hồi khi đăng xuất, Admin khóa, đổi mật khẩu (`POST /api/auth/change-password`, `passwordChangedAt` chặn access token cũ); frontend tự làm mới một lần khi 401. Kèm C3: rate limit 20/phút/IP cho login/register, body JSON ≤ 100 KB, lỗi JSON 400/413. Chi tiết, việc còn lại: `docs/test-evidence/bao-mat.md`.
