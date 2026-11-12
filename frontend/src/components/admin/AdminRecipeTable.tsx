@@ -1,7 +1,7 @@
 import { Eye, EyeOff, Pencil, Trash2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import type { AdminRecipeSummary } from "../../features/admin/admin.api";
-import { deleteBlockedReason, isRecipeUsed, MEAL_TYPE_OPTIONS, usageText } from "../../features/admin/admin-recipes.logic";
+import { isRecipeUsed, MEAL_TYPE_OPTIONS, usageText } from "../../features/admin/admin-recipes.logic";
 import { formatNumber } from "../../features/dashboard/dashboard.logic";
 import { recipeDietLabel } from "../../features/recipes/recipes.logic";
 import { IMAGE_WIDTHS } from "../../utils/images";
@@ -34,8 +34,6 @@ export function AdminRecipeTable({ recipes, pendingId, onToggleHidden, onDelete 
       </thead>
       <tbody>
         {recipes.map((recipe) => {
-          const reason = deleteBlockedReason(recipe.usage);
-          const reasonId = `ad-delete-reason-${recipe.id}`;
           const busy = pendingId === recipe.id;
           return (
             <tr key={recipe.id} className={recipe.hidden ? "ad-row is-hidden" : "ad-row"}>
@@ -71,12 +69,10 @@ export function AdminRecipeTable({ recipes, pendingId, onToggleHidden, onDelete 
                     className="ad-actions__delete"
                     label={`Xóa ${recipe.name}`}
                     icon={<Trash2 />}
-                    disabled={Boolean(reason) || busy}
-                    aria-describedby={reason ? reasonId : undefined}
-                    title={reason ?? undefined}
+                    disabled={busy}
+                    title={isRecipeUsed(recipe.usage) ? "Đang được dùng: xóa mềm (dữ liệu cũ vẫn giữ tên món)" : "Chưa được dùng: xóa hẳn"}
                     onClick={() => onDelete(recipe)}
                   />
-                  {reason && <span id={reasonId} className="ui-visually-hidden">{reason}</span>}
                 </div>
               </td>
             </tr>

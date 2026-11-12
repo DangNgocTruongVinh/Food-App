@@ -105,6 +105,17 @@
 .ld-nav__link:hover { color: var(--home-ink); background: var(--home-soft); }
 .ld-header__actions { display: flex; align-items: center; justify-self: end; gap: var(--space-2); }
 .ld-header__account { display: flex; align-items: center; gap: var(--space-2); }
+/* Lời chào khi đã có phiên: tên dài thì cắt "…" (đủ tên ở title). */
+.ld-header__greeting {
+  overflow: hidden;
+  max-width: 16rem;
+  color: var(--home-ink-2);
+  font-size: .9375rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ld-header__greeting strong { color: var(--home-ink); font-weight: 600; }
+@media (min-width: 1024px) and (max-width: 1279px) { .ld-header__greeting { max-width: 8rem; } }
 .ld-header__icon, .ld-header__icon[aria-pressed="true"] { border-color: transparent; color: var(--home-ink); background: transparent; }
 .ld-header__icon:hover { background: var(--home-soft); }
 .ld-header__menu {
@@ -128,6 +139,7 @@
 .ld-mobile-nav .ld-nav__link { display: flex; min-height: var(--control-h); }
 .ld-mobile-nav__account { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2); padding: var(--space-3) var(--ld-pad) var(--space-4); }
 .ld-mobile-nav__account .ld-btn--quiet { border-color: var(--home-line); }
+.ld-mobile-nav__account .ld-header__greeting { grid-column: 1 / -1; max-width: none; }
 
 
 /* ---------- Hero "bàn ăn trong vòm": nền ngà, mảng xanh rừng tràn phải, ảnh thật trong khung vòm, mockup màn Thực đơn ---------- */

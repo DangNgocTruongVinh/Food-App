@@ -70,7 +70,7 @@ describe("GET /api/recommendations", () => {
       expect(Object.keys(entry).sort()).toEqual(["components", "reason", "recipe", "score"]);
       expect(entry.reason).toEqual(expect.any(String));
     }
-    expect(mocks.findRecipes.mock.calls[0][0].where).toEqual({ hiddenAt: null });
+    expect(mocks.findRecipes.mock.calls[0][0].where).toEqual({ hiddenAt: null, deletedAt: null });
     expect(mocks.findProfile).toHaveBeenCalledWith({ where: { userId } });
     expect(mocks.findPantry).toHaveBeenCalledWith({ where: { userId, quantity: { gt: 0 } } });
     expect(mocks.findMealItems.mock.calls[0][0].where.day.mealPlan).toEqual({ userId, status: "ACTIVE" });

@@ -195,17 +195,17 @@ describe("Deleting a recipe removes its uploaded image", () => {
   it("deletes the Cloudinary image after the recipe row is deleted", async () => {
     mocks.findUnique.mockResolvedValue({ id: recipeId, name: "Món thử", slug: "mon-thu", imagePublicId: "nouri/recipes/old", ...unused });
     mocks.remove.mockResolvedValue({ id: recipeId });
-    expect((await request(app, deletePath, { method: "DELETE", token: token() })).status).toBe(204);
+    expect((await request(app, deletePath, { method: "DELETE", token: token() })).body).toEqual({ id: recipeId, mode: "hard" });
     expect(mocks.destroy).toHaveBeenCalledWith("nouri/recipes/old", { resource_type: "image", invalidate: true });
     expect(mocks.remove.mock.invocationCallOrder[0]).toBeLessThan(mocks.destroy.mock.invocationCallOrder[0]);
   });
 
-  it("keeps the image when the recipe cannot be deleted (409) or the delete fails", async () => {
+  it("keeps the image when the recipe is only soft-deleted (still referenced) or the delete fails", async () => {
     vi.spyOn(console, "error").mockImplementation(() => undefined);
     mocks.findUnique.mockResolvedValue({
       id: recipeId, name: "Món thử", slug: "mon-thu", imagePublicId: "nouri/recipes/old", _count: { mealItems: 1, communityPosts: 0 },
     });
-    expect((await request(app, deletePath, { method: "DELETE", token: token() })).status).toBe(409);
+    expect((await request(app, deletePath, { method: "DELETE", token: token() })).body).toEqual({ id: recipeId, mode: "soft" });
     mocks.findUnique.mockResolvedValue({ id: recipeId, name: "Món thử", slug: "mon-thu", imagePublicId: "nouri/recipes/old", ...unused });
     mocks.remove.mockRejectedValue(new Error("database unavailable"));
     expect((await request(app, deletePath, { method: "DELETE", token: token() })).status).toBe(500);

@@ -58,11 +58,11 @@ const recipeId = "cm55555555555555555555555";
 const recipeSummary = {
   id: recipeId, name: "Cá kho tộ (kèm cơm)", imageUrl: "/assets/recipe-salmon.jpg", calories: 520, prepMinutes: 15, cookMinutes: 35,
 };
-const recipeSelect = { id: true, name: true, imageUrl: true, calories: true, prepMinutes: true, cookMinutes: true, hiddenAt: true };
+const recipeSelect = { id: true, name: true, imageUrl: true, calories: true, prepMinutes: true, cookMinutes: true, hiddenAt: true, deletedAt: true };
 // Bản ghi DB có hiddenAt; phản hồi API thay bằng cờ hidden.
 const recipeRow = { ...recipeSummary, hiddenAt: null };
 const imagesSelect = { select: { url: true, position: true }, orderBy: { position: "asc" } };
-const recipeResponse = { ...recipeSummary, hidden: false };
+const recipeResponse = { ...recipeSummary, hidden: false, deleted: false };
 const promotedSelect = { select: { id: true, name: true } };
 const basePost = { id: postId, authorId: ownerId, content: "Bữa trưa", recipeId: null, recipe: null, createdAt, updatedAt: createdAt, author, savedBy: [] };
 const createdComment = {
@@ -215,7 +215,7 @@ describe("Community HTTP contract (mock Prisma, no database)", () => {
     });
     expect(response.status).toBe(201);
     expect(response.body.recipe).toEqual(recipeResponse);
-    expect(mocks.findRecipe).toHaveBeenCalledWith({ where: { id: recipeId }, select: { id: true, hiddenAt: true } });
+    expect(mocks.findRecipe).toHaveBeenCalledWith({ where: { id: recipeId }, select: { id: true, hiddenAt: true, deletedAt: true } });
     expect(mocks.createPost).toHaveBeenCalledWith({
       data: { authorId: userId, content: "Món tối nay", recipeId },
       include: {
@@ -248,7 +248,7 @@ describe("Community HTTP contract (mock Prisma, no database)", () => {
       likes: [], comments: [], _count: { likes: 0, comments: 0 },
     }]);
     const response = await request(app, "/api/community", { token: token() });
-    expect(response.body[0].recipe).toEqual({ ...recipeSummary, hidden: true });
+    expect(response.body[0].recipe).toEqual({ ...recipeSummary, hidden: true, deleted: false });
   });
 
   it("rejects a recipe that does not exist without creating the post", async () => {

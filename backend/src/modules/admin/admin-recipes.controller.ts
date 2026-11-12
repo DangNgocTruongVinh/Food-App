@@ -37,6 +37,6 @@ export async function replaceAdminRecipeImageController(req: ValidatedRequest<un
 }
 
 export async function deleteAdminRecipeController(req: ValidatedRequest<unknown, AdminRecipeIdParams>, res: Response) {
-  await deleteRecipe(adminId(req), req.params.id);
-  res.status(204).end();
+  // mode: "hard" (xóa hẳn) | "soft" (xóa mềm vì món đã được tham chiếu).
+  res.json(await deleteRecipe(adminId(req), req.params.id));
 }

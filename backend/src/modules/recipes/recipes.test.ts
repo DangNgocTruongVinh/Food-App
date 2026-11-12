@@ -79,7 +79,7 @@ describe("Recipes HTTP contract (no database)", () => {
     expect(response).toEqual({ status: 200, body: JSON.parse(JSON.stringify([{ ...recipe, fit, favorite: false }])) });
     expect(mocks.findProfile).toHaveBeenCalledWith({ where: { userId } });
     expect(mocks.findMany).toHaveBeenCalledWith({
-      where: { hiddenAt: null }, include: { ingredients: true }, orderBy: { name: "asc" },
+      where: { hiddenAt: null, deletedAt: null }, include: { ingredients: true }, orderBy: { name: "asc" },
     });
   });
 
@@ -93,6 +93,7 @@ describe("Recipes HTTP contract (no database)", () => {
     expect(mocks.findMany).toHaveBeenCalledWith({
       where: {
         hiddenAt: null,
+        deletedAt: null,
         name: { contains: "Ức gà", mode: "insensitive" },
         cuisine: "Việt Nam",
       },
@@ -104,13 +105,13 @@ describe("Recipes HTTP contract (no database)", () => {
   it("preserves empty search and cuisine parameters as no filters", async () => {
     await request(app, "/api/recipes?search=&cuisine=", { token: token() });
     expect(mocks.findMany).toHaveBeenCalledWith({
-      where: { hiddenAt: null }, include: { ingredients: true }, orderBy: { name: "asc" },
+      where: { hiddenAt: null, deletedAt: null }, include: { ingredients: true }, orderBy: { name: "asc" },
     });
   });
 
   it("gets one recipe with its ingredients", async () => {
     const response = await request(app, `/api/recipes/${recipeId}`, { token: token() });
-    expect(response).toEqual({ status: 200, body: JSON.parse(JSON.stringify({ ...recipe, hidden: false, favorite: false })) });
+    expect(response).toEqual({ status: 200, body: JSON.parse(JSON.stringify({ ...recipe, hidden: false, deleted: false, favorite: false })) });
     expect(mocks.findUnique).toHaveBeenCalledWith({
       where: { id: recipeId }, include: { ingredients: true },
     });
@@ -216,12 +217,12 @@ describe("Public recipe stats for the Landing page", () => {
       status: 200, body: { total: 33, breakfast: 9, vegetarian: 17, vegan: 10, lowCarb: 4, highProtein: 12 },
     });
     expect(mocks.count.mock.calls.map((call) => call[0])).toEqual([
-      { where: { hiddenAt: null } },
-      { where: { hiddenAt: null, mealTypes: { has: "BREAKFAST" } } },
-      { where: { hiddenAt: null, dietTags: { hasSome: ["VEGETARIAN", "VEGAN"] } } },
-      { where: { hiddenAt: null, dietTags: { has: "VEGAN" } } },
-      { where: { hiddenAt: null, dietTags: { has: "LOW_CARB" } } },
-      { where: { hiddenAt: null, dietTags: { has: "HIGH_PROTEIN" } } },
+      { where: { hiddenAt: null, deletedAt: null } },
+      { where: { hiddenAt: null, deletedAt: null, mealTypes: { has: "BREAKFAST" } } },
+      { where: { hiddenAt: null, deletedAt: null, dietTags: { hasSome: ["VEGETARIAN", "VEGAN"] } } },
+      { where: { hiddenAt: null, deletedAt: null, dietTags: { has: "VEGAN" } } },
+      { where: { hiddenAt: null, deletedAt: null, dietTags: { has: "LOW_CARB" } } },
+      { where: { hiddenAt: null, deletedAt: null, dietTags: { has: "HIGH_PROTEIN" } } },
     ]);
     expect(mocks.findMany).not.toHaveBeenCalled();
     expect(mocks.findUnique).not.toHaveBeenCalled();
@@ -254,7 +255,7 @@ describe("Public featured recipes for the Landing page", () => {
     const response = await request(app, "/api/recipes/featured");
     expect(response.status).toBe(200);
     const query = mocks.findMany.mock.calls[0][0];
-    expect(query.where).toEqual({ hiddenAt: null });
+    expect(query.where).toEqual({ hiddenAt: null, deletedAt: null });
     expect(query.include).toBeUndefined();
     expect(Object.keys(query.select).sort()).toEqual([...SUMMARY_KEYS, "imagePublicId"].sort());
     expect(Object.keys(response.body[0]).sort()).toEqual(SUMMARY_KEYS);
@@ -308,7 +309,7 @@ describe("Hidden (discontinued) recipes", () => {
 
   it("excludes hidden recipes from the list and from every public count", async () => {
     await request(app, "/api/recipes", { token: token() });
-    expect(mocks.findMany.mock.calls[0][0].where).toEqual({ hiddenAt: null });
+    expect(mocks.findMany.mock.calls[0][0].where).toEqual({ hiddenAt: null, deletedAt: null });
     mocks.count.mockResolvedValue(0);
     await request(app, "/api/recipes/stats");
     expect(mocks.count.mock.calls.every((call) => call[0].where.hiddenAt === null)).toBe(true);
@@ -368,7 +369,7 @@ describe("UC24 Yêu thích công thức", () => {
     expect(favorites.status).toBe(200);
     expect(favorites.body).toEqual([expect.objectContaining({ id: recipeId, favorite: true, fit: expect.any(Object) })]);
     expect(mocks.findFavorites).toHaveBeenCalledWith(expect.objectContaining({
-      where: { userId, recipe: { hiddenAt: null } }, orderBy: { createdAt: "desc" },
+      where: { userId, recipe: { hiddenAt: null, deletedAt: null } }, orderBy: { createdAt: "desc" },
     }));
     const list = await request(app, "/api/recipes", { token: token() });
     expect(list.body[0].favorite).toBe(true);

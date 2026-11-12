@@ -19,7 +19,7 @@ export default function RecipeAttachmentCard({ recipe, onRemove }: RecipeAttachm
         <span className="cm-recipe__meta">
           <span>{formatNumber(recipe.calories)} kcal</span>
           <span>{recipeTotalMinutes(recipe)} phút</span>
-          {recipe.hidden && <Tag className="cm-recipe__hidden">Đã ngừng sử dụng</Tag>}
+          {recipe.hidden && <Tag className="cm-recipe__hidden">{recipe.deleted ? "Món đã bị xóa" : "Đã ngừng sử dụng"}</Tag>}
         </span>
       </span>
     </>

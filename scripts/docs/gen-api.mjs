@@ -104,7 +104,7 @@ const DESCRIPTIONS = {
   "PUT /api/admin/recipes/:id": ["Sửa món; ghi nhật ký (tên trường đã đổi)", "món + nguyên liệu", "món"],
   "PATCH /api/admin/recipes/:id/visibility": ["Ẩn / hiện món (món đã dùng chỉ ẩn, không xóa)", "hidden", "món"],
   "PUT /api/admin/recipes/:id/image": ["Thay ảnh món (Cloudinary, xóa ảnh cũ sau khi lưu DB)", "image", "món"],
-  "DELETE /api/admin/recipes/:id": ["Xóa món chưa được dùng", "—", "204"],
+  "DELETE /api/admin/recipes/:id": ["Xóa món: chưa được dùng → xóa hẳn (kèm ảnh), đã có trong thực đơn/bài viết → xóa mềm (deletedAt); ghi nhật ký", "—", "{ id, mode: hard | soft }"],
   "GET /api/admin/users": ["Danh sách người dùng", "search, page, pageSize", "items, total"],
   "PATCH /api/admin/users/:id/lock": ["Khóa / mở khóa (không khóa chính mình/Admin khác; khóa thu hồi refresh token)", "locked", "id, locked"],
   "GET /api/admin/community/posts": ["Bài cho kiểm duyệt; lọc \"AI đánh dấu\"", "page, pageSize, filter = all | ai", "items, total"],

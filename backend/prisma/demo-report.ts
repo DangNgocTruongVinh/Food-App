@@ -82,7 +82,7 @@ export async function createDemoReportHistory(client: ReportClient, userId: stri
   const today = vietnamToday(now);
   const date = (day: number) => new Date(today.getTime() + day * DAY_MS);
   const slugs = [...new Set(DEMO_REPORT_MEALS.map((meal) => meal.slug))];
-  const recipes = await client.recipe.findMany({ where: { slug: { in: slugs }, hiddenAt: null }, select: { id: true, slug: true, calories: true } });
+  const recipes = await client.recipe.findMany({ where: { slug: { in: slugs }, hiddenAt: null, deletedAt: null }, select: { id: true, slug: true, calories: true } });
   const bySlug = new Map(recipes.map((recipe) => [recipe.slug, recipe]));
   const meals = DEMO_REPORT_MEALS.filter((meal) => bySlug.has(meal.slug));
   await client.mealPlan.create({

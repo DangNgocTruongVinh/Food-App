@@ -256,7 +256,7 @@ describe("Meal Plan and Shopping HTTP contract (no database)", () => {
 
     const response = await request(app, "/api/meal-plans/generate", { method: "POST", token: token(), body: { startDate: "2026-10-01" } });
     expect(response.status).toBe(201);
-    expect(mocks.listRecipes).toHaveBeenCalledWith({ where: { hiddenAt: null }, include: { ingredients: true } });
+    expect(mocks.listRecipes).toHaveBeenCalledWith({ where: { hiddenAt: null, deletedAt: null }, include: { ingredients: true } });
     expect(mocks.generatePlanWithAI.mock.calls[0][0].recipes.map((item: { id: string }) => item.id)).not.toContain(hidden.id);
     const data = mocks.createPlan.mock.calls[0][0].data;
     const savedIds = data.days.create.flatMap((day: { items: { create: Array<{ recipeId: string }> } }) => day.items.create.map((item) => item.recipeId));

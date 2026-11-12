@@ -35,7 +35,7 @@ export async function setRecipeFavorite(userId: string, recipeId: string, favori
     await prisma.favoriteRecipe.deleteMany({ where: { userId, recipeId } });
     return { recipeId, favorite: false };
   }
-  const recipe = await prisma.recipe.findUnique({ where: { id: recipeId }, select: { id: true, hiddenAt: true } });
+  const recipe = await prisma.recipe.findUnique({ where: { id: recipeId }, select: { id: true, hiddenAt: true, deletedAt: true } });
   if (!recipe) throw new HttpError(404, "Không tìm thấy công thức.");
   if (isRecipeHidden(recipe)) throw new HttpError(422, HIDDEN_RECIPE_MESSAGE);
   await prisma.favoriteRecipe.createMany({ data: [{ userId, recipeId }], skipDuplicates: true });
@@ -93,7 +93,7 @@ export async function getRecipe(id: string, userId?: string) {
   ]);
   if (!recipe) throw new HttpError(404, "Không tìm thấy công thức.");
   // Món đã ẩn vẫn xem được qua link trực tiếp (thực đơn cũ, bài viết cũ); frontend hiện "Món này đã ngừng sử dụng".
-  return { ...recipe, hidden: isRecipeHidden(recipe), favorite: Boolean(favorite) };
+  return { ...recipe, hidden: isRecipeHidden(recipe), deleted: Boolean(recipe.deletedAt), favorite: Boolean(favorite) };
 }
 
 /** Khối "Dành cho bạn" ở trang chi tiết công thức, tính cho người dùng đang đăng nhập (userId lấy từ JWT). */

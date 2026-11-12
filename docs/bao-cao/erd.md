@@ -209,6 +209,7 @@ erDiagram
     String imageUrl
     String imagePublicId
     DateTime hiddenAt
+    DateTime deletedAt
     DateTime createdAt
     DateTime updatedAt
   }
@@ -399,7 +400,7 @@ Bài viết cộng đồng: chữ, ảnh, gắn món có sẵn hoặc công th�
 | id | String | có | PK | — |
 | authorId | String | có | FK | — |
 | content | String | có | — | — |
-| recipeId | String | không | FK | Công thức có sẵn được gắn kèm (tùy chọn). Restrict: công thức đã được bài viết gắn thì không xóa hẳn được (GĐ3: chỉ ẩn). |
+| recipeId | String | không | FK | Công thức có sẵn được gắn kèm (tùy chọn). Restrict: công thức đã được bài viết gắn thì không xóa hẳn, Admin xóa thì chuyển thành xóa mềm (`Recipe.deletedAt`). |
 | memberRecipe | Json | không | — | Công thức tự viết của thành viên (JSON: tên, khẩu phần, phút, nguyên liệu {tên, số lượng, đơn vị} nhập tự do, các bước). Không phải Recipe: không vào thực đơn, gợi ý, kho. Không đồng thời với recipeId. Kiểm tra bằng Zod (community-member-recipe.ts). |
 | hiddenAt | DateTime | không | — | Khác null: Admin ẩn bài (không hiện ở bảng tin của người khác; tác giả vẫn thấy kèm ghi chú). |
 | pendingReviewAt | DateTime | không | — | AI kiểm duyệt (Moderation API + kiểm tra "có liên quan ăn uống"): nghi vấn → khác null, bài chờ Admin duyệt, chỉ tác giả thấy. AI không bao giờ tự xóa bài; không có key/API lỗi thì đăng như thường. aiReviewReason: lý do AI (giữ lại sau khi duyệt). |
@@ -599,6 +600,7 @@ Công thức trong thư viện (seed 33 món, Admin thêm/sửa): dinh dưỡng 
 | imageUrl | String | không | — | — |
 | imagePublicId | String | không | — | publicId trên Cloudinary của ảnh do Admin tải lên (null với ảnh nhóm món /assets); dùng để xóa ảnh cũ khi thay. |
 | hiddenAt | DateTime | không | — | Khác null: món đã ngừng sử dụng (Admin ẩn thay vì xóa món đã được dùng). Không hiện ở danh sách, không chọn được khi tạo thực đơn/đăng bài; trang chi tiết, thực đơn cũ và bài viết cũ vẫn hiển thị. |
+| deletedAt | DateTime | không | — | Admin xóa món đã được tham chiếu (thực đơn, bài viết): xóa mềm — ẩn khỏi mọi danh sách/gợi ý/chọn mới, thực đơn và bài cũ vẫn hiện tên kèm "món đã bị xóa". Món chưa được tham chiếu thì xóa hẳn. |
 | createdAt | DateTime | có | — | — |
 | updatedAt | DateTime | có | — | — |
 

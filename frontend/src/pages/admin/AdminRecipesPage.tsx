@@ -8,6 +8,7 @@ import { AdminRecipeTable } from "../../components/admin/AdminRecipeTable";
 import { ButtonLink, Card, Chip, EmptyState, ErrorState, LoadingState, Skeleton, Toast, useConfirm } from "../../components/ui";
 import type { AdminRecipeStatus, AdminRecipeSummary } from "../../features/admin/admin.api";
 import { adminMutations, adminQueries, invalidateAdminRecipeQueries } from "../../features/admin/admin.queries";
+import { deleteRecipeConfirmText } from "../../features/admin/admin-recipes.logic";
 
 const PAGE_SIZE = 20;
 const STATUS_OPTIONS: Array<[AdminRecipeStatus, string]> = [["all", "Tất cả"], ["visible", "Đang hiện"], ["hidden", "Đã ẩn"]];
@@ -59,15 +60,10 @@ export default function AdminRecipesPage() {
   };
   const deleteRecipe = async (recipe: AdminRecipeSummary) => {
     setActionError("");
-    const ok = await confirm({
-      title: `Xóa “${recipe.name}”?`,
-      description: "Món chưa được dùng ở thực đơn hay bài viết nào. Xóa hẳn cả nguyên liệu, các bước và ảnh đã tải lên. Không hoàn tác được.",
-      confirmLabel: "Xóa món",
-      tone: "danger",
-    });
+    const ok = await confirm({ ...deleteRecipeConfirmText(recipe), confirmLabel: "Xóa món", tone: "danger" });
     if (!ok) return;
     remove.mutate(recipe.id, {
-      onSuccess: () => setToast(`Đã xóa “${recipe.name}”.`),
+      onSuccess: (result) => setToast(result.mode === "soft" ? `Đã xóa mềm “${recipe.name}”.` : `Đã xóa hẳn “${recipe.name}”.`),
       onError: (error) => setActionError(getApiError(error)),
     });
   };

@@ -56,6 +56,7 @@ function prepareRecipeData(input: RecipeInput) {
 export async function listRecipesForAdmin(query: AdminRecipeListQuery) {
   const where: Prisma.RecipeWhereInput = {
     ...(query.search ? { name: { contains: query.search, mode: "insensitive" } } : {}),
+    deletedAt: null,
     ...(query.status === "visible" ? { hiddenAt: null } : query.status === "hidden" ? { hiddenAt: { not: null } } : {}),
   };
   const [total, recipes] = await Promise.all([
@@ -76,6 +77,7 @@ export async function listRecipesForAdmin(query: AdminRecipeListQuery) {
 
 export async function getRecipeForAdmin(id: string) {
   const recipe = await prisma.recipe.findUnique({ where: { id }, include: { ingredients: true, ...usageCount } });
+  if (recipe?.deletedAt) throw new HttpError(404, NOT_FOUND);
   if (!recipe) throw new HttpError(404, NOT_FOUND);
   return withUsage(recipe);
 }
@@ -116,7 +118,7 @@ export async function updateRecipe(actorId: string, id: string, input: RecipeInp
   const prepared = prepareRecipeData(input);
   const { data, ingredients } = prepared;
   const current = await prisma.recipe.findUnique({ where: { id }, include: { ingredients: true } });
-  if (!current) throw new HttpError(404, NOT_FOUND);
+  if (!current || current.deletedAt) throw new HttpError(404, NOT_FOUND);
   // Đổi sang ảnh khác (vd. về ảnh nhóm món) thì bỏ liên kết ảnh Cloudinary cũ và xóa nó sau khi lưu xong.
   const replacesUploadedImage = Boolean(current.imagePublicId) && data.imageUrl !== current.imageUrl;
   const updated = await prisma.$transaction(async (tx) => {
@@ -140,8 +142,8 @@ export async function updateRecipe(actorId: string, id: string, input: RecipeInp
  * lưu xong mới xóa ảnh cũ (lỗi chỉ ghi log).
  */
 export async function replaceRecipeImage(actorId: string, id: string, file: Buffer) {
-  const current = await prisma.recipe.findUnique({ where: { id }, select: { id: true, name: true, imagePublicId: true } });
-  if (!current) throw new HttpError(404, NOT_FOUND);
+  const current = await prisma.recipe.findUnique({ where: { id }, select: { id: true, name: true, imagePublicId: true, deletedAt: true } });
+  if (!current || current.deletedAt) throw new HttpError(404, NOT_FOUND);
   const uploaded = await uploadImage(file, IMAGE_FOLDERS.recipes);
   let updated;
   try {
@@ -170,8 +172,8 @@ export async function replaceRecipeImage(actorId: string, id: string, file: Buff
  * Chỉ ghi nhật ký khi trạng thái thực sự đổi (gửi lại cùng trạng thái không tạo dòng mới).
  */
 export async function setRecipeVisibility(actorId: string, id: string, hidden: boolean) {
-  const recipe = await prisma.recipe.findUnique({ where: { id }, select: { id: true, name: true, hiddenAt: true } });
-  if (!recipe) throw new HttpError(404, NOT_FOUND);
+  const recipe = await prisma.recipe.findUnique({ where: { id }, select: { id: true, name: true, hiddenAt: true, deletedAt: true } });
+  if (!recipe || recipe.deletedAt) throw new HttpError(404, NOT_FOUND);
   const hiddenAt = hidden ? recipe.hiddenAt ?? new Date() : null;
   const changed = (recipe.hiddenAt !== null) !== hidden;
   const updated = await prisma.$transaction(async (tx) => {
@@ -186,35 +188,39 @@ export async function setRecipeVisibility(actorId: string, id: string, hidden: b
   return { ...updated, hidden: updated.hiddenAt !== null };
 }
 
-function usedRecipeError(usage: { mealPlanItems: number; posts: number }) {
-  return new HttpError(
-    409,
-    "Món đã được dùng trong thực đơn hoặc bài viết nên không xóa được. Hãy ẩn món (ngừng sử dụng) thay vì xóa.",
-    { usage },
-  );
+/** Xóa mềm: món đã được tham chiếu (thực đơn, bài viết) — giữ dòng để dữ liệu cũ còn tên, ẩn khỏi mọi nơi chọn mới; giữ ảnh. */
+async function softDeleteRecipe(actorId: string, recipe: { id: string; name: string; slug: string }, now: Date) {
+  await prisma.$transaction([
+    prisma.recipe.update({ where: { id: recipe.id }, data: { deletedAt: now } }),
+    recordAdminAction(prisma, {
+      actorId, action: "RECIPE_DELETE", targetType: "RECIPE", targetId: recipe.id, targetLabel: recipe.name, details: { slug: recipe.slug, soft: true },
+    }),
+  ]);
+  return { id: recipe.id, mode: "soft" as const };
 }
 
 /**
- * Chỉ xóa hẳn món chưa từng được dùng; FK Restrict là lớp chặn cuối nếu món vừa được dùng giữa chừng.
- * Xóa xong mới dọn ảnh Cloudinary của món (nếu có), lỗi chỉ ghi log.
+ * Admin xóa món. Chưa được tham chiếu (thực đơn, bài viết) → xóa hẳn rồi dọn ảnh Cloudinary (lỗi chỉ ghi log); đã được tham chiếu →
+ * xóa mềm (`deletedAt`). Nếu món vừa được dùng giữa lúc kiểm và lúc xóa (FK Restrict, P2003) thì chuyển sang xóa mềm.
+ * Ghi nhật ký RECIPE_DELETE (details.soft) trong cùng transaction.
  */
-export async function deleteRecipe(actorId: string, id: string) {
+export async function deleteRecipe(actorId: string, id: string, now = new Date()) {
   const recipe = await prisma.recipe.findUnique({
-    where: { id }, select: { id: true, name: true, slug: true, imagePublicId: true, ...usageCount },
+    where: { id }, select: { id: true, name: true, slug: true, imagePublicId: true, deletedAt: true, ...usageCount },
   });
-  if (!recipe) throw new HttpError(404, NOT_FOUND);
-  const usage = { mealPlanItems: recipe._count.mealItems, posts: recipe._count.communityPosts };
-  if (usage.mealPlanItems || usage.posts) throw usedRecipeError(usage);
+  if (!recipe || recipe.deletedAt) throw new HttpError(404, NOT_FOUND);
+  if (recipe._count.mealItems || recipe._count.communityPosts) return softDeleteRecipe(actorId, recipe, now);
   try {
     await prisma.$transaction([
       prisma.recipe.delete({ where: { id } }),
       recordAdminAction(prisma, {
-        actorId, action: "RECIPE_DELETE", targetType: "RECIPE", targetId: id, targetLabel: recipe.name, details: { slug: recipe.slug },
+        actorId, action: "RECIPE_DELETE", targetType: "RECIPE", targetId: id, targetLabel: recipe.name, details: { slug: recipe.slug, soft: false },
       }),
     ]);
   } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2003") throw usedRecipeError(usage);
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2003") return softDeleteRecipe(actorId, recipe, now);
     throw error;
   }
   await deleteImageQuietly(recipe.imagePublicId);
+  return { id, mode: "hard" as const };
 }

@@ -92,6 +92,7 @@ export async function getDashboard(userId: string, now = new Date()) {
         name: item.recipe.name,
         prepMinutes: item.recipe.prepMinutes,
         cookMinutes: item.recipe.cookMinutes,
+        deleted: Boolean(item.recipe.deletedAt),
       },
     })),
   };

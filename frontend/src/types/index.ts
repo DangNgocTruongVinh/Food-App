@@ -18,7 +18,7 @@ export interface CommunityComment {
 }
 /** Tóm tắt công thức gắn trong bài viết (feed không trả nguyên liệu/các bước). */
 export interface CommunityRecipeSummary {
-  id: string; name: string; imageUrl?: string | null; calories: number; prepMinutes: number; cookMinutes: number; hidden?: boolean;
+  id: string; name: string; imageUrl?: string | null; calories: number; prepMinutes: number; cookMinutes: number; hidden?: boolean; deleted?: boolean;
 }
 /** Công thức tự viết trong bài cộng đồng (không phải Recipe: không vào thực đơn/gợi ý/kho; số lượng, đơn vị nhập tự do). */
 export interface MemberRecipe {
@@ -172,6 +172,8 @@ export interface Recipe {
   hidden?: boolean;
   /** UC24: người đang đăng nhập đã yêu thích món này. */
   favorite?: boolean;
+  /** Admin đã xóa mềm món (vẫn còn trong thực đơn/bài cũ): `deleted` ở API công thức, `deletedAt` khi đi kèm thực đơn. */
+  deleted?: boolean; deletedAt?: string | null;
   /** GET /api/recipes: độ phù hợp với hồ sơ người đang đăng nhập (GĐ3b-R1). */
   fit?: RecipeFit;
 }
@@ -284,7 +286,7 @@ export interface DashboardData {
   recommendedRecipes: DashboardRecommendedRecipe[];
   todayMeals: Array<{
     id: string; mealType: MealType; calories: number; completed: boolean;
-    recipe: { id: string; name: string; prepMinutes: number; cookMinutes: number };
+    recipe: { id: string; name: string; prepMinutes: number; cookMinutes: number; deleted?: boolean };
   }>;
 }
 

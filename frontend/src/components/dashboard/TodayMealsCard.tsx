@@ -4,7 +4,7 @@ import { dashboardMealLabels, formatNumber, type TodayMeal } from "../../feature
 import { recipeDetailPath } from "../../features/recipes/recipes.logic";
 import type { MealPlanItem } from "../../types";
 import { IMAGE_WIDTHS } from "../../utils/images";
-import { Button, ButtonLink, EmptyState, RecipeImage } from "../ui";
+import { Button, ButtonLink, EmptyState, RecipeImage, Tag } from "../ui";
 
 type TodayMealsCardProps = {
   planId: string | null;
@@ -49,6 +49,7 @@ export function TodayMealsCard({ planId, meals, nextId, planItems, pendingId, on
                     {isNext && <span className="dash-meal__state dash-meal__state--next">Bữa tiếp theo</span>}
                   </p>
                   <Link className="dash-meal__name" to={recipeDetailPath(meal.recipe.id)}>{meal.recipe.name}</Link>
+                  {meal.recipe.deleted && <Tag>Món đã bị xóa</Tag>}
                 </div>
                 <div className="dash-meal__end">
                   <span className="dash-meal__kcal">{formatNumber(meal.calories)} kcal</span>

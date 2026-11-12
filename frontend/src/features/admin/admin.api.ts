@@ -61,8 +61,9 @@ export async function uploadAdminRecipeImage({ id, file }: { id: string; file: F
   return (await api.put<AdminRecipeDetail>(`/admin/recipes/${id}/image`, form)).data;
 }
 
+/** mode: "hard" = xóa hẳn (món chưa được dùng), "soft" = xóa mềm (món đang có trong thực đơn/bài viết). */
 export async function deleteAdminRecipe(id: string) {
-  await api.delete(`/admin/recipes/${id}`);
+  return (await api.delete<{ id: string; mode: "hard" | "soft" }>(`/admin/recipes/${id}`)).data;
 }
 
 // ---------- Người dùng, kiểm duyệt, nhật ký (UI-10) ----------

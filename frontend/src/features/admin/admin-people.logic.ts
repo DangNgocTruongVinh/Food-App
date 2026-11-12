@@ -93,8 +93,11 @@ export function auditDetails(log: Pick<AuditLog, "action" | "details">) {
       return fields.length ? `Đổi ${fields.map((field) => RECIPE_FIELD_LABELS[field] ?? field).join(", ")}` : "Không đổi trường nào";
     }
     case "RECIPE_CREATE":
-    case "RECIPE_DELETE":
       return details.slug ? `Đường dẫn: ${String(details.slug)}` : "";
+    case "RECIPE_DELETE": {
+      const mode = details.soft === true ? "Xóa mềm (món đang được dùng)" : details.soft === false ? "Xóa hẳn" : "";
+      return [mode, details.slug ? `đường dẫn: ${String(details.slug)}` : ""].filter(Boolean).join(", ");
+    }
     case "RECIPE_IMAGE_REPLACE":
       return details.replacedUploadedImage ? "Thay ảnh đã tải lên trước đó (ảnh cũ đã xóa)" : "Tải ảnh lên lần đầu";
     case "POST_DELETE":

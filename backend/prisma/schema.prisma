@@ -186,7 +186,7 @@ model CommunityPost {
   authorId  String
   author    User               @relation(fields: [authorId], references: [id], onDelete: Cascade)
   content   String
-  // Công thức có sẵn được gắn kèm (tùy chọn). Restrict: công thức đã được bài viết gắn thì không xóa hẳn được (GĐ3: chỉ ẩn).
+  // Công thức có sẵn được gắn kèm (tùy chọn). Restrict: công thức đã được bài viết gắn thì không xóa hẳn, Admin xóa thì chuyển thành xóa mềm (`Recipe.deletedAt`).
   recipeId  String?
   recipe    Recipe?            @relation("CommunityPostRecipe", fields: [recipeId], references: [id], onDelete: Restrict)
   // Công thức tự viết của thành viên (JSON: tên, khẩu phần, phút, nguyên liệu {tên, số lượng, đơn vị} nhập tự do, các bước).
@@ -422,6 +422,9 @@ model Recipe {
   // Khác null: món đã ngừng sử dụng (Admin ẩn thay vì xóa món đã được dùng). Không hiện ở danh sách, không chọn được
   // khi tạo thực đơn/đăng bài; trang chi tiết, thực đơn cũ và bài viết cũ vẫn hiển thị.
   hiddenAt     DateTime?
+  // Admin xóa món đã được tham chiếu (thực đơn, bài viết): xóa mềm — ẩn khỏi mọi danh sách/gợi ý/chọn mới,
+  // thực đơn và bài cũ vẫn hiện tên kèm "món đã bị xóa". Món chưa được tham chiếu thì xóa hẳn.
+  deletedAt    DateTime?
   ingredients  RecipeIngredient[]
   mealItems    MealPlanItem[]
   communityPosts CommunityPost[] @relation("CommunityPostRecipe")
