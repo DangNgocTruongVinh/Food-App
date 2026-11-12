@@ -341,3 +341,6 @@ body:has(.ad-shell) { background: var(--bg); }
 .ad-section > .ui-card { border-radius: 24px; }
 .ad-comment { border-radius: var(--radius-card); }
 .ad-filter-field .ui-input { border-radius: var(--radius-pill); padding-left: var(--space-4); }
+
+/* Kiểm duyệt: cụm nút của bài (Chuyển thành công thức, Ẩn/Hiện lại, Xóa) xuống dòng khi hẹp. */
+.ad-post__actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: var(--space-2); }

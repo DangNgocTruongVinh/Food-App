@@ -31,7 +31,10 @@ const CONTROLS: Record<string, string[]> = {
     "`Xóa ${label}`", "Chọn ảnh khác", "Tải ảnh l", "Bỏ ảnh đã chọn", "Bỏ ảnh hiện tại",
   ],
   "Người dùng": ["Tìm theo tên hoặc email", "Mở khóa", "Khóa", "Mở khóa tài khoản", "Khóa tài khoản", "Tài khoản mẫu", "Phân trang người dùng"],
-  "Kiểm duyệt": ["Xóa bài", "`Xóa bài của ${post.author.name}`", "`Xóa bình luận của ${comment.author.name}`", "\"Xóa bình luận\"", "Phân trang bài viết"],
+  "Kiểm duyệt": [
+    "Xóa bài", "`Xóa bài của ${post.author.name}`", "`Xóa bình luận của ${comment.author.name}`", "\"Xóa bình luận\"", "Phân trang bài viết",
+    "Chuyển thành công thức", "\"Ẩn bài\"", "\"Hiện lại bài\"", "fromPost",
+  ],
   "Nhật ký": ["Nhật ký thao tác", "Phân trang nhật ký", "Chưa có thao tác quản trị nào."],
   "phân trang chung": ["Trang trước", "Trang sau"],
 };

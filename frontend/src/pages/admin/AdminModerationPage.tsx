@@ -1,13 +1,14 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Trash2 } from "lucide-react";
+import { BookPlus, Eye, EyeOff, Trash2 } from "lucide-react";
 import { useCallback, useState } from "react";
 import { getApiError } from "../../api/client";
 import { AdminPager } from "../../components/admin/AdminListParts";
+import MemberRecipeCard from "../../components/community/MemberRecipeCard";
 import PostImages from "../../components/community/PostImages";
 import RecipeAttachmentCard from "../../components/community/RecipeAttachmentCard";
-import { Button, Card, EmptyState, ErrorState, LoadingState, Skeleton, Toast, useConfirm } from "../../components/ui";
+import { Button, ButtonLink, Card, EmptyState, ErrorState, LoadingState, Skeleton, Tag, Toast, useConfirm } from "../../components/ui";
 import type { ModerationPost } from "../../features/admin/admin.api";
-import { deleteCommentConfirmText, deletePostConfirmText, vietnamTime } from "../../features/admin/admin-people.logic";
+import { deleteCommentConfirmText, deletePostConfirmText, postVisibilityConfirmText, vietnamTime } from "../../features/admin/admin-people.logic";
 import { adminMutations, adminQueries, invalidateAdminQueries } from "../../features/admin/admin.queries";
 import { communityRelativeTime } from "../../features/community/community.logic";
 
@@ -17,7 +18,10 @@ function Time({ value }: { value: string }) {
   return <time className="ad-sub" dateTime={value} title={vietnamTime(value)}>{communityRelativeTime(value)}, {vietnamTime(value)}</time>;
 }
 
-/** /admin/moderation: bài mới nhất (tác giả, thời gian thật, nội dung, ảnh, công thức, lượt thích, bình luận); xóa bài/bình luận. */
+/**
+ * /admin/moderation: bài mới nhất (tác giả, thời gian thật, nội dung, ảnh, công thức, lượt thích, bình luận); ẩn/hiện hoặc xóa bài,
+ * xóa bình luận; bài có công thức tự viết: "Chuyển thành công thức" (mở form tạo món điền sẵn).
+ */
 export default function AdminModerationPage() {
   const queryClient = useQueryClient();
   const confirm = useConfirm();
@@ -28,6 +32,16 @@ export default function AdminModerationPage() {
   const list = useQuery(adminQueries.moderation({ page, pageSize: PAGE_SIZE }));
   const removePost = useMutation({ ...adminMutations.deletePost(), onSuccess: () => invalidateAdminQueries(queryClient) });
   const removeComment = useMutation({ ...adminMutations.deleteComment(), onSuccess: () => invalidateAdminQueries(queryClient) });
+  const visibility = useMutation({ ...adminMutations.setPostVisibility(), onSuccess: () => invalidateAdminQueries(queryClient) });
+
+  const toggleHidden = async (post: ModerationPost) => {
+    setActionError("");
+    if (!(await confirm({ ...postVisibilityConfirmText(post), tone: post.hidden ? undefined : "danger" }))) return;
+    visibility.mutate({ postId: post.id, hidden: !post.hidden }, {
+      onSuccess: () => setToast(post.hidden ? `Đã hiện lại bài của ${post.author.name}.` : `Đã ẩn bài của ${post.author.name}.`),
+      onError: (error) => setActionError(`Chưa đổi được trạng thái bài: ${getApiError(error)}`),
+    });
+  };
 
   const deletePost = async (post: ModerationPost) => {
     setActionError("");
@@ -69,19 +83,36 @@ export default function AdminModerationPage() {
                       <span className="ad-sub">{post.author.email}</span>
                       <Time value={post.createdAt} />
                     </div>
-                    <Button
-                      variant="danger"
-                      icon={<Trash2 />}
-                      busy={removePost.isPending && removePost.variables === post.id}
-                      aria-label={`Xóa bài của ${post.author.name}`}
-                      onClick={() => void deletePost(post)}
-                    >
-                      Xóa bài
-                    </Button>
+                    <div className="ad-post__actions">
+                      {post.memberRecipe && !post.promotedRecipe && (
+                        <ButtonLink icon={<BookPlus />} to={`/admin/recipes/new?fromPost=${encodeURIComponent(post.id)}`}>Chuyển thành công thức</ButtonLink>
+                      )}
+                      <Button
+                        icon={post.hidden ? <Eye /> : <EyeOff />}
+                        busy={visibility.isPending && visibility.variables?.postId === post.id}
+                        aria-label={`${post.hidden ? "Hiện lại" : "Ẩn"} bài của ${post.author.name}`}
+                        onClick={() => void toggleHidden(post)}
+                      >
+                        {post.hidden ? "Hiện lại bài" : "Ẩn bài"}
+                      </Button>
+                      <Button
+                        variant="danger"
+                        icon={<Trash2 />}
+                        busy={removePost.isPending && removePost.variables === post.id}
+                        aria-label={`Xóa bài của ${post.author.name}`}
+                        onClick={() => void deletePost(post)}
+                      >
+                        Xóa bài
+                      </Button>
+                    </div>
                   </header>
+                  {post.hidden && <p className="ad-sub"><Tag>Đã ẩn</Tag> Người khác không thấy bài này trên bảng tin.</p>}
                   {post.content ? <p className="ad-post__content">{post.content}</p> : <p className="ad-sub">Bài không có chữ.</p>}
                   <PostImages images={post.images} authorName={post.author.name} />
                   {post.recipe && <RecipeAttachmentCard recipe={post.recipe} />}
+                  {post.memberRecipe && (
+                    <MemberRecipeCard recipe={post.memberRecipe} promoted={post.promotedRecipe} promotedHref={(id) => `/admin/recipes/${id}/edit`} />
+                  )}
                   <p className="ad-post__stats"><span>{post.likeCount} lượt thích</span><span>{post.commentCount} bình luận</span></p>
                   {post.comments.length > 0 && (
                     <ul className="ad-comments" aria-label="Bình luận">
