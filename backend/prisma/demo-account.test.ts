@@ -75,6 +75,7 @@ describe("resetDemoAccount", () => {
     chatMessage: { deleteMany: vi.fn() },
     pantryTransaction: { deleteMany: vi.fn() },
     receiptScan: { deleteMany: vi.fn() },
+    expiryEmailLog: { deleteMany: vi.fn() },
     mealPlan: { deleteMany: vi.fn() },
     communityLike: { deleteMany: vi.fn() },
     communityComment: { deleteMany: vi.fn() },
@@ -100,7 +101,7 @@ describe("resetDemoAccount", () => {
     for (const [model, where] of [
       [tx.chatMessage, { userId: "demo-id" }], [tx.pantryTransaction, { userId: "demo-id" }], [tx.mealPlan, { userId: "demo-id" }],
       [tx.communityLike, { userId: "demo-id" }], [tx.communityComment, { authorId: "demo-id" }], [tx.communityPost, { authorId: "demo-id" }],
-      [tx.pantryItem, { userId: "demo-id" }], [tx.receiptScan, { userId: "demo-id" }],
+      [tx.pantryItem, { userId: "demo-id" }], [tx.receiptScan, { userId: "demo-id" }], [tx.expiryEmailLog, { userId: "demo-id" }],
     ] as const) expect(model.deleteMany).toHaveBeenCalledWith({ where });
     expect(result.imagePublicIds).toEqual(["nouri/posts/a"]);
   });
@@ -123,7 +124,7 @@ describe("resetDemoAccount", () => {
   it("recreates the sample profile and pantry, unlocks the account and resets name/password", async () => {
     await reset();
     expect(tx.user.update).toHaveBeenCalledWith({ where: { id: "demo-id" }, data: expect.objectContaining({ name: "Minh Anh", lockedAt: null, role: "USER" }) });
-    expect(tx.nutritionProfile.upsert.mock.calls[0][0].update).toMatchObject({ dietType: "BALANCED", allergies: [], dislikedFoods: ["Cần tây"] });
+    expect(tx.nutritionProfile.upsert.mock.calls[0][0].update).toMatchObject({ dietType: "BALANCED", allergies: [], dislikedFoods: ["Cần tây"], expiryEmailEnabled: true, expiryEmailDays: 2 });
     const data = tx.pantryItem.createMany.mock.calls[0][0].data;
     expect(data).toHaveLength(demoPantryTemplate.length);
     expect(data[0]).toMatchObject({ userId: "demo-id", name: "Đậu hũ", expiryDate: new Date("2026-11-04T00:00:00.000Z") });

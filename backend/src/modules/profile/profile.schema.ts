@@ -15,6 +15,8 @@ export const updateProfileSchema = z.object({
     dislikedFoods: z.array(z.string().max(60)).max(30).optional(),
     preferredCuisines: z.array(z.string().max(60)).max(20).optional(),
     mealsPerDay: z.number().int().min(3).max(4).optional(),
+    expiryEmailEnabled: z.boolean().optional(),
+    expiryEmailDays: z.number().int().min(1).max(3).optional(),
   }),
   params: z.object({}),
   query: z.object({}),

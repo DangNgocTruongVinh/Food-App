@@ -64,3 +64,40 @@ export function passwordChangedEmail(to: { email: string; name: string }, change
     ].join("\n"),
   };
 }
+
+export type ExpiringLine = { name: string; quantity: string; daysLeft: number };
+export type SuggestedRecipe = { name: string; reason: string; url: string };
+
+const daysText = (daysLeft: number) => (daysLeft <= 0 ? "hết hạn hôm nay" : `còn ${daysLeft} ngày`);
+
+/** Email nhắc đồ sắp hết hạn: danh sách món, tối đa 3 món nên nấu (bộ gợi ý ngữ cảnh kho), nút "Mở kho", liên kết "Tắt nhắc". */
+export function expiryReminderEmail(
+  to: { email: string; name: string }, items: ExpiringLine[], recipes: SuggestedRecipe[], links: { pantry: string; unsubscribe: string },
+): MailMessage {
+  const list = items.map((item) => `<li style="margin:0 0 6px"><strong>${escapeHtml(item.name)}</strong> (${escapeHtml(item.quantity)}): `
+    + `${daysText(item.daysLeft)}</li>`).join("");
+  const cook = recipes.map((recipe) => `<li style="margin:0 0 8px"><a href="${escapeHtml(recipe.url)}" style="color:${BRAND.forest};font-weight:600">`
+    + `${escapeHtml(recipe.name)}</a><br><span style="color:${BRAND.muted}">${escapeHtml(recipe.reason)}</span></li>`).join("");
+  const unsubscribe = `<a href="${escapeHtml(links.unsubscribe)}" style="color:${BRAND.muted}">Tắt nhắc</a>`;
+  const html = layout("Đồ trong kho sắp hết hạn", [
+    `Chào ${escapeHtml(to.name)}, trong kho của bạn có ${items.length} thực phẩm nên dùng sớm:`,
+    `<ul style="margin:0;padding-left:20px">${list}</ul>`,
+    ...(recipes.length ? ["Món nên nấu:", `<ul style="margin:0;padding-left:20px">${cook}</ul>`] : []),
+  ], { label: "Mở kho", url: links.pantry }).replace(
+    "Email tự động từ Nouri, vui lòng không trả lời.",
+    `Email tự động từ Nouri, vui lòng không trả lời. Không muốn nhận nhắc nữa? ${unsubscribe}.`,
+  );
+  return {
+    to: to.email,
+    subject: `Nouri: ${items.length} thực phẩm sắp hết hạn`,
+    html,
+    text: [
+      `Chào ${to.name}, trong kho của bạn có ${items.length} thực phẩm nên dùng sớm:`,
+      ...items.map((item) => `- ${item.name} (${item.quantity}): ${daysText(item.daysLeft)}`),
+      ...(recipes.length ? ["", "Món nên nấu:", ...recipes.map((recipe) => `- ${recipe.name}: ${recipe.reason} ${recipe.url}`)] : []),
+      "",
+      `Mở kho: ${links.pantry}`,
+      `Tắt nhắc: ${links.unsubscribe}`,
+    ].join("\n"),
+  };
+}

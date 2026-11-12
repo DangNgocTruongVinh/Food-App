@@ -41,7 +41,7 @@ export function recordPantryChange(db: HistoryClient, change: PantryChange) {
   });
 }
 
-const UNIT_LABEL: Record<FoodUnit, string> = { G: "g", KG: "kg", ML: "ml", L: "l", ITEM: "cái", PACKAGE: "gói" };
+export const UNIT_LABEL: Record<FoodUnit, string> = { G: "g", KG: "kg", ML: "ml", L: "l", ITEM: "cái", PACKAGE: "gói" };
 const amount = (quantity: number, unit: FoodUnit) => `${new Intl.NumberFormat("vi-VN", { maximumFractionDigits: 3 }).format(quantity)} ${UNIT_LABEL[unit]}`;
 
 /**

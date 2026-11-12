@@ -15,6 +15,8 @@ export const DEMO_NAME = "Minh Anh";
 export const demoProfile = {
   age: 24, gender: "FEMALE", heightCm: 162, weightKg: 55, targetWeightKg: 53, activityLevel: "MODERATE", goal: "MAINTAIN",
   dietType: "BALANCED", allergies: [], dislikedFoods: ["Cần tây"], preferredCuisines: ["Việt Nam", "Nhật Bản"], mealsPerDay: 3,
+  // Demo bật sẵn nhắc đồ sắp hết hạn qua email (người dùng thật mặc định tắt, tự bật trong Hồ sơ).
+  expiryEmailEnabled: true, expiryEmailDays: 2,
 } satisfies Prisma.NutritionProfileCreateWithoutUserInput;
 
 type DemoPantryTemplate = Omit<Prisma.PantryItemCreateManyInput, "userId" | "expiryDate"> & { expiresInDays: number };
@@ -95,6 +97,8 @@ export async function resetDemoAccount(
       pantryTransactions: (await tx.pantryTransaction.deleteMany({ where: { userId } })).count,
       // Lần quét hóa đơn (GĐ3c): xóa để số lần quét trong ngày của demo về 0.
       receiptScans: (await tx.receiptScan.deleteMany({ where: { userId } })).count,
+      // Email nhắc hạn đã gửi: xóa để demo nhận lại nhắc và có lại 3 lần "Gửi thử ngay".
+      expiryEmails: (await tx.expiryEmailLog.deleteMany({ where: { userId } })).count,
       mealPlans: (await tx.mealPlan.deleteMany({ where: { userId } })).count,
       likes: (await tx.communityLike.deleteMany({ where: { userId } })).count,
       comments: (await tx.communityComment.deleteMany({ where: { authorId: userId } })).count,

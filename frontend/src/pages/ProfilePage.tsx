@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { type FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { getApiError } from "../api/client";
 import { ChangePasswordForm } from "../components/profile/ChangePasswordForm";
+import { ExpiryEmailCard } from "../components/profile/ExpiryEmailCard";
 import { ProfileForm } from "../components/profile/ProfileForm";
 import { ProfileTargetsCard } from "../components/profile/ProfileTargetsCard";
 import { ErrorState, LoadingState, Skeleton, Toast } from "../components/ui";
@@ -9,8 +10,11 @@ import { useAuth } from "../contexts/AuthContext";
 import * as authApi from "../features/auth/auth.api";
 import { type ChangePasswordValues, emptyChangePassword, validateChangePassword } from "../features/auth/auth.logic";
 import { renewAuthSession } from "../features/auth/auth.session";
+import { type ExpiryEmailSettings, saveExpiryEmailSettings, sendTestExpiryEmail } from "../features/profile/expiry-email.api";
 import type { ProfileFormValues } from "../features/profile/profile.api";
-import { bodyMassIndex, emptyProfileForm, isProfileDirty, toProfileForm, validateProfileForm } from "../features/profile/profile.logic";
+import {
+  bodyMassIndex, emptyProfileForm, isProfileDirty, testEmailMessage, toProfileForm, validateProfileForm,
+} from "../features/profile/profile.logic";
 import { invalidateProfileQueries, profileMutations, profileQueries } from "../features/profile/profile.queries";
 
 export default function ProfilePage() {
@@ -86,6 +90,29 @@ export default function ProfilePage() {
     changePassword.mutate();
   };
 
+  // Nhắc đồ sắp hết hạn qua email: state riêng, lưu ngay khi đổi; không ghi đè bộ đệm hồ sơ để phần hồ sơ đang sửa dở không bị mất.
+  const [expiry, setExpiry] = useState<ExpiryEmailSettings>({ expiryEmailEnabled: false, expiryEmailDays: 2 });
+  const [expiryError, setExpiryError] = useState("");
+  useEffect(() => {
+    const loaded = profile.data?.profile;
+    if (loaded) setExpiry({ expiryEmailEnabled: loaded.expiryEmailEnabled ?? false, expiryEmailDays: loaded.expiryEmailDays ?? 2 });
+  }, [profile.data]);
+  const saveExpiry = useMutation({
+    mutationFn: saveExpiryEmailSettings,
+    onMutate: (next) => { setExpiryError(""); const previous = expiry; setExpiry(next); return previous; },
+    onSuccess: (_data, next) => setToast(next.expiryEmailEnabled ? "Đã bật nhắc đồ sắp hết hạn qua email." : "Đã tắt nhắc qua email."),
+    onError: (error, _next, previous) => {
+      if (previous) setExpiry(previous);
+      setExpiryError(`Chưa lưu được cài đặt nhắc: ${getApiError(error)}`);
+    },
+  });
+  const testExpiry = useMutation({
+    mutationFn: sendTestExpiryEmail,
+    onMutate: () => setExpiryError(""),
+    onSuccess: (result) => setToast(testEmailMessage(result)),
+    onError: (error) => setExpiryError(getApiError(error)),
+  });
+
   return (
     <div className="hs-view">
       <header className="hs-hero">
@@ -118,6 +145,15 @@ export default function ProfilePage() {
             saveError={passwordError}
             onChange={(key, value) => setPassword((current) => ({ ...current, [key]: value }))}
             onSubmit={submitPassword}
+          />
+          <ExpiryEmailCard
+            enabled={expiry.expiryEmailEnabled}
+            days={expiry.expiryEmailDays}
+            saving={saveExpiry.isPending}
+            testing={testExpiry.isPending}
+            error={expiryError}
+            onChange={(next) => saveExpiry.mutate(next)}
+            onTest={() => testExpiry.mutate()}
           />
         </div>
       )}

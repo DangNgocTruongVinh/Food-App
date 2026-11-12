@@ -11,6 +11,7 @@ import LandingPage from "./pages/LandingPage";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import LoginPage from "./pages/LoginPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
+import UnsubscribeExpiryPage from "./pages/UnsubscribeExpiryPage";
 import MealPlansPage from "./pages/MealPlansPage";
 import PantryPage from "./pages/PantryPage";
 import ProfilePage from "./pages/ProfilePage";
@@ -43,6 +44,7 @@ export default function App() {
       <Route path="/login" element={<LoginPage />} />
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
       <Route path="/reset-password" element={<ResetPasswordPage />} />
+      <Route path="/tat-nhac-han" element={<UnsubscribeExpiryPage />} />
       <Route element={<PublicLayout />}>
         <Route path="privacy" element={<PrivacyPage />} />
         <Route path="terms" element={<TermsPage />} />

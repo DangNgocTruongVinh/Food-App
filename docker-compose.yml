@@ -35,6 +35,7 @@ services:
       SMTP_USER: ${SMTP_USER:-}
       SMTP_PASS: ${SMTP_PASS:-}
       MAIL_FROM: ${MAIL_FROM:-}
+      EXPIRY_EMAIL_TIME: ${EXPIRY_EMAIL_TIME:-}
       # Upload ảnh (tùy chọn): đủ cả ba hoặc để trống cả ba (khi đó API upload trả 503).
       CLOUDINARY_CLOUD_NAME: ${CLOUDINARY_CLOUD_NAME:-}
       CLOUDINARY_API_KEY: ${CLOUDINARY_API_KEY:-}

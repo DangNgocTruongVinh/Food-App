@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { ProfileResponse } from "../../types";
 import {
-  addTag, bodyMassIndex, emptyProfileForm, isProfileDirty, PROFILE_LIMITS, toProfileForm, validateProfileForm,
+  addTag, bodyMassIndex, emptyProfileForm, isProfileDirty, PROFILE_LIMITS, testEmailMessage, toProfileForm, validateProfileForm,
 } from "./profile.logic";
 
 const saved: ProfileResponse = {
@@ -53,5 +53,12 @@ describe("Profile form", () => {
   it("computes BMI only when height and weight are known", () => {
     expect(bodyMassIndex({ heightCm: "160", weightKg: "52" })).toBe(20.3);
     expect(bodyMassIndex({ heightCm: "", weightKg: "52" })).toBeNull();
+  });
+});
+
+describe("Nhắc đồ sắp hết hạn: thông báo gửi thử", () => {
+  it("nói rõ email đã gửi hay chỉ ghi log (chưa cấu hình SMTP), kèm số lần còn lại", () => {
+    expect(testEmailMessage({ emailConfigured: true, remainingToday: 2 })).toBe("Đã gửi email thử tới hộp thư của bạn. Còn 2 lần gửi thử hôm nay.");
+    expect(testEmailMessage({ emailConfigured: false, remainingToday: 0 })).toContain("chỉ được ghi vào log máy chủ. Còn 0 lần");
   });
 });

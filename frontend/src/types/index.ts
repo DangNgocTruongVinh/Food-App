@@ -75,6 +75,8 @@ export interface NutritionProfile {
   age?: number; gender?: "MALE" | "FEMALE" | "OTHER"; heightCm?: number; weightKg?: number;
   targetWeightKg?: number; activityLevel: string; goal: string; dietType: string;
   allergies: string[]; dislikedFoods: string[]; preferredCuisines: string[]; mealsPerDay: number;
+  /** Nhắc đồ sắp hết hạn qua email (mặc định tắt), báo trước 1–3 ngày. */
+  expiryEmailEnabled?: boolean; expiryEmailDays?: number;
   dailyCalorieTarget?: number; proteinTargetG?: number; carbTargetG?: number; fatTargetG?: number;
 }
 
