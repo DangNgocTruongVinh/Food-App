@@ -38,7 +38,7 @@ Tác nhân: **Khách** (chưa đăng nhập), **Người dùng** (đã đăng nh
 | UC25 | Lưu bài / theo dõi thành viên (UI) | UI ONLY | Chưa làm | Nút giả đã gỡ (UI-7); `SavedPost`, `Follow` chưa làm (GĐ5) | Không còn trong `frontend/src` |
 | UC26 | Chia sẻ bài viết qua trình duyệt | UI ONLY | Đã làm | Giữ nguyên theo quyết định: Web Share API, không có thì sao chép | `frontend/src/features/community/community.logic.ts` (`shareCommunityPost`) |
 
-Tổng: Đã làm 12, Làm khác 12, Chưa làm 2 (UC24, UC25).
+Tổng: Đã làm 14, Làm khác 10, Chưa làm 2 (UC24, UC25).
 
 ## 2. Use case mới ngoài khảo sát
 
