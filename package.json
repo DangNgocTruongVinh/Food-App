@@ -13,7 +13,8 @@
     "test": "npm run test -w backend && npm run test -w frontend",
     "db:migrate": "npm run db:migrate -w backend",
     "db:seed": "npm run db:seed -w backend",
-    "e2e:acceptance": "node e2e/acceptance/run.cjs"
+    "e2e:acceptance": "node e2e/acceptance/run.cjs",
+    "upload:recipe-photos": "npm run upload:recipe-photos -w backend --"
   },
   "devDependencies": {
     "concurrently": "^9.1.2",
