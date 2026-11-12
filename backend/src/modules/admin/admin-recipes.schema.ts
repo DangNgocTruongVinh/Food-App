@@ -42,7 +42,7 @@ export const listAdminRecipesSchema = z.object({
   params: empty,
   query: z.object({
     search: z.string().trim().max(80).optional(),
-    status: z.enum(["all", "visible", "hidden"]).default("all"),
+    status: z.enum(["all", "visible", "hidden", "deleted"]).default("all"),
     page: z.coerce.number().int().min(1).max(10_000).default(1),
     pageSize: z.coerce.number().int().min(1).max(50).default(20),
   }),

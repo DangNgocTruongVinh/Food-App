@@ -7,7 +7,7 @@ export const listAdminAuditLogsSchema = z.object({
   params: empty,
   query: z.object({
     action: z.enum([
-      "RECIPE_CREATE", "RECIPE_UPDATE", "RECIPE_HIDE", "RECIPE_SHOW", "RECIPE_DELETE", "RECIPE_IMAGE_REPLACE",
+      "RECIPE_CREATE", "RECIPE_UPDATE", "RECIPE_HIDE", "RECIPE_SHOW", "RECIPE_DELETE", "RECIPE_RESTORE", "RECIPE_IMAGE_REPLACE",
       "USER_LOCK", "USER_UNLOCK", "POST_DELETE", "COMMENT_DELETE", "POST_HIDE", "POST_SHOW", "POST_PROMOTE", "POST_APPROVE",
     ]).optional(),
     targetType: z.enum(["RECIPE", "USER", "COMMUNITY_POST", "COMMUNITY_COMMENT"]).optional(),

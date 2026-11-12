@@ -8,12 +8,14 @@ export type AdminStats = {
 };
 
 export type RecipeUsage = { mealPlanItems: number; posts: number };
-export type AdminRecipeStatus = "all" | "visible" | "hidden";
+export type AdminRecipeStatus = "all" | "visible" | "hidden" | "deleted";
 export type AdminRecipeListQuery = { search?: string; status: AdminRecipeStatus; page: number; pageSize: number };
 
 export type AdminRecipeSummary = {
   id: string; slug: string; name: string; imageUrl: string | null; calories: number; cuisine: string;
   dietTags: DietTag[]; mealTypes: MealType[]; hidden: boolean; usage: RecipeUsage; createdAt: string; updatedAt: string;
+  /** Khác null: món đã xóa mềm (chỉ có ở bộ lọc "Đã xóa"). */
+  deletedAt?: string | null;
 };
 export type AdminRecipeList = { items: AdminRecipeSummary[]; total: number; page: number; pageSize: number };
 
@@ -62,6 +64,11 @@ export async function uploadAdminRecipeImage({ id, file }: { id: string; file: F
 }
 
 /** mode: "hard" = xóa hẳn (món chưa được dùng), "soft" = xóa mềm (món đang có trong thực đơn/bài viết). */
+/** Khôi phục món đã xóa mềm (bộ lọc "Đã xóa"). */
+export async function restoreAdminRecipe(id: string) {
+  return (await api.post<{ id: string; restored: true }>(`/admin/recipes/${id}/restore`)).data;
+}
+
 export async function deleteAdminRecipe(id: string) {
   return (await api.delete<{ id: string; mode: "hard" | "soft" }>(`/admin/recipes/${id}`)).data;
 }
@@ -96,7 +103,7 @@ export type ModerationPost = {
 };
 
 export const AUDIT_ACTIONS = [
-  "RECIPE_CREATE", "RECIPE_UPDATE", "RECIPE_HIDE", "RECIPE_SHOW", "RECIPE_DELETE", "RECIPE_IMAGE_REPLACE",
+  "RECIPE_CREATE", "RECIPE_UPDATE", "RECIPE_HIDE", "RECIPE_SHOW", "RECIPE_DELETE", "RECIPE_RESTORE", "RECIPE_IMAGE_REPLACE",
   "USER_LOCK", "USER_UNLOCK", "POST_DELETE", "COMMENT_DELETE", "POST_HIDE", "POST_SHOW", "POST_PROMOTE", "POST_APPROVE",
 ] as const;
 export type AuditAction = (typeof AUDIT_ACTIONS)[number];

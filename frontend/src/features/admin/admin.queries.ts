@@ -2,7 +2,7 @@ import { keepPreviousData, mutationOptions, queryOptions, type QueryClient } fro
 import { retryUnlessClientError } from "../../api/query-client";
 import { queryKeys } from "../../api/query-keys";
 import {
-  createAdminRecipe, deleteAdminRecipe, getAdminRecipe, getAdminStats, listAdminRecipes, setAdminRecipeVisibility, updateAdminRecipe,
+  createAdminRecipe, deleteAdminRecipe, getAdminRecipe, getAdminStats, listAdminRecipes, restoreAdminRecipe, setAdminRecipeVisibility, updateAdminRecipe,
   uploadAdminRecipeImage, type AdminRecipeListQuery, listAdminUsers, listAuditLogs, listModerationPosts, moderateDeleteComment,
   moderateDeletePost, setAdminUserLock, type AuditLogQuery, getModerationPost, setModerationPostVisibility, reviewModerationPost,
   estimatePostRecipe, type ModerationQuery,
@@ -59,6 +59,7 @@ export const adminMutations = {
   setVisibility: () => mutationOptions({ mutationFn: setAdminRecipeVisibility }),
   uploadImage: () => mutationOptions({ mutationFn: uploadAdminRecipeImage }),
   deleteRecipe: () => mutationOptions({ mutationFn: deleteAdminRecipe }),
+  restoreRecipe: () => mutationOptions({ mutationFn: restoreAdminRecipe }),
   setUserLock: () => mutationOptions({ mutationFn: setAdminUserLock }),
   deletePost: () => mutationOptions({ mutationFn: moderateDeletePost }),
   setPostVisibility: () => mutationOptions({ mutationFn: setModerationPostVisibility }),

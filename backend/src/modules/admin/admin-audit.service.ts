@@ -8,7 +8,7 @@ import type { AdminAuditLogQuery } from "./admin-audit.schema.js";
 
 /** Chi tiết theo loại thao tác (chỉ các trường này được lưu). */
 export type AdminAuditDetails =
-  | { slug: string } // RECIPE_CREATE
+  | { slug: string } // RECIPE_CREATE, RECIPE_RESTORE
   | { slug: string; soft: boolean } // RECIPE_DELETE: soft = xóa mềm (món đã được tham chiếu), false = xóa hẳn
   | { changedFields: string[] } // RECIPE_UPDATE: tên trường đã đổi, không lưu giá trị
   | { replacedUploadedImage: boolean } // RECIPE_IMAGE_REPLACE: có thay ảnh Cloudinary cũ hay không
