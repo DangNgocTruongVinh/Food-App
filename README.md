@@ -1,104 +1,142 @@
-# NOURI AI
+# NOURI
 
-Ứng dụng quản lý thực phẩm và lập kế hoạch bữa ăn thông minh, hướng đến giảm lãng phí thực phẩm, cân bằng dinh dưỡng và cá nhân hoá khẩu vị.
+Ứng dụng quản lý thực phẩm trong gia đình và lập kế hoạch bữa ăn/dinh dưỡng cá nhân hóa, hướng đến giảm lãng phí thực phẩm,
+cân bằng dinh dưỡng và hợp khẩu vị (đồ án tốt nghiệp).
 
-## Kiến trúc
-
-```text
-Food_App/
-├── frontend/                 # React + TypeScript + Vite
-│   └── src/
-│       ├── api/              # HTTP client
-│       ├── components/       # UI dùng chung
-│       ├── contexts/         # Auth state
-│       ├── layouts/          # App shell
-│       ├── pages/            # Dashboard, pantry, meal plan, AI...
-│       └── types/            # Kiểu dữ liệu dùng chung
-├── backend/                  # Node.js + Express + TypeScript
-│   ├── prisma/               # PostgreSQL schema và seed
-│   └── src/
-│       ├── config/           # Biến môi trường
-│       ├── controllers/      # HTTP handlers
-│       ├── middleware/       # Auth, validation, errors
-│       ├── routes/           # REST API
-│       ├── services/         # Nghiệp vụ và OpenAI
-│       └── utils/            # Tiện ích
-├── docs/                     # Tài liệu kiến trúc và API
-└── docker-compose.yml        # PostgreSQL local
-```
+**Công nghệ:** React 19 + Vite + TypeScript + React Query (frontend, nginx khi chạy Docker) · Express 5 + Prisma 6 + Zod (backend)
+· PostgreSQL 16 · OpenAI, Cloudinary, SMTP là dịch vụ ngoài **tùy chọn** (thiếu thì ứng dụng vẫn chạy bằng nhánh dự phòng).
 
 ## Chức năng chính
 
-- Đăng ký, đăng nhập và hồ sơ dinh dưỡng cá nhân.
-- Quản lý kho thực phẩm, số lượng, hạn sử dụng và cảnh báo sắp hết hạn.
-- Quản lý công thức cùng thành phần dinh dưỡng.
-- AI lập thực đơn theo mục tiêu calo, chế độ ăn, dị ứng, khẩu vị và thực phẩm sẵn có.
-- Tự động tạo danh sách mua sắm từ phần nguyên liệu còn thiếu.
-- Trợ lý AI trả lời câu hỏi dinh dưỡng dựa trên hồ sơ và kho thực phẩm.
-- Dashboard theo dõi dinh dưỡng, thực phẩm sắp hết hạn và mức độ tận dụng nguyên liệu.
+- Đăng ký, đăng nhập (access token 15 phút + refresh token), quên/đặt lại mật khẩu qua email, hồ sơ dinh dưỡng.
+- Kho thực phẩm: số lượng, hạn, đơn giá, lịch sử thay đổi; quét hóa đơn (OpenAI Vision hoặc Tesseract dự phòng); nhắc hạn qua email.
+- Thực đơn 7 ngày (OpenAI, hoặc bộ tạo chấm điểm khi không có AI), danh sách đi chợ, "Đã ăn" trừ kho, "Đã mua" vào kho.
+- 33 công thức, tìm kiếm không dấu theo tên/nguyên liệu/ẩm thực, gợi ý cá nhân hóa (lọc an toàn dị ứng/chế độ ăn), món yêu thích.
+- Cộng đồng: bài viết kèm ảnh và công thức, AI kiểm duyệt; Trợ lý AI "Hỏi Nouri"; Báo cáo lãng phí và dinh dưỡng tuần.
+- Khu Admin: thống kê, công thức (ẩn, xóa hẳn/xóa mềm, khôi phục), người dùng (khóa/mở khóa), kiểm duyệt, nhật ký thao tác.
 
-## Chạy dự án
+## Cấu trúc
 
-1. Sao chép `.env.example` (thư mục gốc) thành `.env` và điền `POSTGRES_PASSWORD`, `JWT_SECRET`; file này được `docker compose` đọc và không được commit.
-2. Sao chép `backend/.env.example` thành `backend/.env`; `DATABASE_URL` dùng cùng mật khẩu với `POSTGRES_PASSWORD`, điền `OPENAI_API_KEY` nếu muốn dùng AI thật.
-3. Chạy PostgreSQL: `docker compose up -d postgres`.
-4. Cài dependencies tại thư mục gốc: `npm install`.
-5. Khởi tạo database: `npm run db:migrate && npm run db:seed`.
-6. Chạy cả frontend và backend: `npm run dev`.
-
-Frontend mặc định ở `http://localhost:5173`, API ở `http://localhost:4000`. Nếu không có OpenAI key, hệ thống dùng bộ lập kế hoạch dự phòng theo quy tắc để vẫn demo được.
-
-Tài khoản dữ liệu mẫu sau khi chạy seed: `demo@nouri.vn` / `Demo@123`.
-
-### Chạy hoàn toàn bằng Docker
-
-Cần file `.env` ở thư mục gốc (bước 1 ở trên); thiếu biến thì `docker compose` dừng và báo tên biến.
-
-```bash
-docker compose up -d --build
-docker exec app_food-backend-1 node dist/prisma/seed.js
+```text
+App_Food/
+├── frontend/src/      # pages/ (ghép component), components/<module>/, features/<module>/ (*.api.ts, *.logic.ts + test), styles/ui/
+├── backend/
+│   ├── prisma/        # schema.prisma, migrations/, seed.ts, demo-reset.ts (dữ liệu demo)
+│   ├── scripts/       # eval-recommendation, eval-meal-plan, eval-receipt-ocr, upload-recipe-photos
+│   └── src/modules/   # mỗi module: *.routes.ts → *.controller.ts → *.service.ts → Prisma; *.schema.ts (Zod); *.test.ts
+├── e2e/acceptance/    # script Playwright (luồng demo, chụp ảnh màn hình, nghiệm thu từng lượt cũ)
+├── docs/              # tài liệu (bao-cao/: API, ERD, use case, số liệu, ảnh màn hình; thuat-toan-goi-y.md; han-che.md…)
+└── docker-compose.yml # postgres + backend + frontend (nginx)
 ```
 
-Mở `http://localhost:8080`. Migration PostgreSQL được chạy tự động khi backend khởi động.
+## Cài đặt và chạy từ đầu (máy mới, Docker)
 
-### Đặt lại dữ liệu demo (chạy trước buổi demo)
+Cần: **Docker Desktop** (có Docker Compose), **Node.js 20+** và npm (để chạy test, đánh giá, script Playwright), Git.
 
-Tài khoản `demo@nouri.vn` được đưa về trạng thái chuẩn: xóa thực đơn, bài viết (kèm ảnh trên Cloudinary), bình luận,
-lượt thích, tin nhắn trợ lý, lịch sử kho, thông báo và kho của demo; tạo lại hồ sơ mẫu và kho mẫu với hạn sử dụng tính từ
-ngày chạy (giờ Việt Nam): một món còn 1 ngày, một món còn 2 ngày, các món khác 5–10 ngày, một món dưới mức tối thiểu.
-Không đụng tới 33 món, tài khoản Admin và người dùng thật khác.
+1. Lấy mã và cài thư viện (cho test/đánh giá chạy trên máy):
 
-Lệnh cũng tạo **dữ liệu mẫu** cho thuật toán gợi ý (không phải hoạt động thật):
+   ```bash
+   git clone <địa chỉ repo> App_Food && cd App_Food
+   npm install
+   ```
 
-- **Lịch sử mẫu của demo**, khoảng 2 tuần trước ngày chạy: một thực đơn đã qua với 12 bữa "đã ăn" theo một khẩu vị nhất quán
-  (món Việt, thích món cá, vài món Nhật) và 3 lượt thích bài của tài khoản mẫu. Các bữa này được đánh dấu "chỉ đánh dấu, không
-  trừ kho" nên không có lịch sử kho. Nhờ vậy demo không rơi vào "khởi đầu lạnh" của bộ gợi ý.
-- **8 tài khoản mẫu minh họa** (`mau1–8@nouri.vn`, "Người dùng mẫu N") được tạo lại: không đăng nhập được, không tính vào
-  thống kê Admin. Xem [docs/thuat-toan-goi-y.md](docs/thuat-toan-goi-y.md).
+2. Tạo file biến môi trường ở thư mục gốc: sao chép `.env.example` thành `.env` rồi điền. **Không commit `.env`.**
+   - Bắt buộc: `POSTGRES_PASSWORD` (chỉ chữ và số), `JWT_SECRET` (chuỗi ngẫu nhiên ≥ 32 ký tự).
+   - Nên có: `ADMIN_EMAIL`, `ADMIN_PASSWORD` (seed tạo tài khoản Admin; không có thì không có Admin).
+   - Tùy chọn: `OPENAI_API_KEY` (thực đơn/chat/quét hóa đơn bằng AI), `CLOUDINARY_*` (tải ảnh), `SMTP_*` + `MAIL_FROM` (email),
+     `DEMO_EMAIL`/`DEMO_PASSWORD` (chỉ cho script Playwright). Ý nghĩa từng biến ghi ngay trong `.env.example`.
+
+3. Build và chạy (migration cơ sở dữ liệu tự áp khi backend khởi động):
+
+   ```bash
+   docker compose up -d --build
+   ```
+
+4. Tạo dữ liệu gốc (33 món, tài khoản Admin, tài khoản demo và kho mẫu) — chạy một lần; chạy lại không tạo trùng:
+
+   ```bash
+   docker compose exec backend node dist/prisma/seed.js
+   ```
+
+5. Đưa tài khoản demo về trạng thái chuẩn (nên chạy trước mỗi buổi demo, xem mục dưới):
+
+   ```bash
+   docker compose exec backend npm run demo:reset -- --yes
+   ```
+
+6. Mở **http://localhost:8080**. API ở `http://localhost:4000/api` (chỉ nghe trên máy, kiểm tra `GET /api/health`).
+
+**Tài khoản:** demo `demo@nouri.vn` / `Demo@123` (dữ liệu mẫu, dùng khi trình bày); Admin là `ADMIN_EMAIL`/`ADMIN_PASSWORD` trong `.env`.
+
+**Ảnh món:** seed chưa có ảnh món thật; Admin tải ảnh ở *Admin → Công thức → Sửa*, hoặc dùng `npm run upload:recipe-photos`
+(cần `CLOUDINARY_*`, xem [docs/anh-mon-can-tim.md](docs/anh-mon-can-tim.md)).
+
+Không có `OPENAI_API_KEY`: thực đơn dùng bộ tạo chấm điểm, chat AI báo chưa cấu hình, quét hóa đơn dùng Tesseract. OpenAI lỗi
+hoặc quá 120 giây khi tạo thực đơn thì backend cũng tự chuyển sang bộ tạo dự phòng.
+
+### Chạy khi phát triển (không build Docker cho frontend/backend)
 
 ```bash
-docker compose exec backend npm run demo:reset -- --yes   # trong container (bản build)
+docker compose up -d postgres            # chỉ cơ sở dữ liệu
+cp backend/.env.example backend/.env     # điền DATABASE_URL (localhost:5432, cùng mật khẩu POSTGRES_PASSWORD), JWT_SECRET…
+npm run db:seed                           # sau khi backend đã áp migration
+npm run dev                               # frontend http://localhost:5173 (proxy /api → 4000), backend http://localhost:4000
+```
+
+### Đặt lại dữ liệu demo (`demo:reset`)
+
+Chỉ tác động `demo@nouri.vn`: xóa thực đơn, bài viết (kèm ảnh Cloudinary), bình luận, lượt thích, tin nhắn trợ lý, lịch sử kho,
+lượt quét hóa đơn, thông báo và kho; tạo lại hồ sơ mẫu, kho mẫu 8 thực phẩm với hạn tính từ ngày chạy (giờ Việt Nam: Đậu hũ còn
+1 ngày, Ức gà 2 ngày, các món khác 5–10 ngày, Trứng dưới mức tối thiểu), lịch sử mẫu ~2 tuần trước (12 bữa đã ăn, tránh "khởi đầu
+lạnh" của bộ gợi ý), dữ liệu 8 tuần cho trang Báo cáo, 8 tài khoản mẫu `mau1–8@nouri.vn` (không đăng nhập được, không tính vào
+thống kê Admin). Mở khóa và đặt lại tên/mật khẩu demo. **Không đụng** tới công thức, Admin, nhật ký Admin và người dùng thật khác.
+
+```bash
+docker compose exec backend npm run demo:reset -- --yes   # trong container
 npm run demo:reset:dev -w backend -- --yes                 # máy dev (tsx)
 ```
 
-Không có `--yes` thì lệnh hỏi xác nhận (gõ `dat lai`); không có terminal để hỏi thì lệnh dừng, không xóa gì.
-Seed (`db:seed`) chỉ tạo kho mẫu (kèm lịch sử mẫu, nếu demo chưa có thực đơn) khi kho demo đang trống, và chỉ tạo tài khoản
-mẫu khi còn thiếu; không ghi đè dữ liệu đã có.
+Không có `--yes` thì lệnh hỏi xác nhận (gõ `dat lai`); không có terminal thì dừng, không xóa gì.
 
-### Nghiệm thu bằng Playwright (`e2e/acceptance/`)
+**Món đã bị Admin xóa mềm** (món đã có trong thực đơn/bài viết nên không xóa hẳn được): seed không tạo lại và không tạo trùng
+(món vẫn còn dòng theo đường dẫn), kể cả khi `SEED_UPDATE_RECIPES=true` cũng không bỏ trạng thái xóa; `demo:reset` chỉ dùng món
+còn dùng được, bữa mẫu của món đã xóa được bỏ qua (không lỗi). Muốn dùng lại món: *Admin → Công thức → Đã xóa → Khôi phục*.
 
-Mỗi lượt có một script nghiệm thu (UI-1 → UI-12, GĐ3b lượt 2–7, GĐ3b-R4 → R7). Cần frontend Vite ở `http://localhost:5173`
-(`npm run dev -w frontend`), backend ở `http://localhost:4000` (Docker hoặc `npm run dev -w backend`) và trình duyệt Chromium
-cho Playwright (`npx playwright-core install chromium` nếu máy chưa có). Tài khoản đọc từ biến môi trường hoặc `.env` ở gốc repo,
-không có giá trị mặc định trong mã: `DEMO_EMAIL`, `DEMO_PASSWORD` (tài khoản demo của seed), `ADMIN_EMAIL`, `ADMIN_PASSWORD`
-(script có thao tác Admin).
+## Kiểm thử
 
 ```bash
-npm run e2e:acceptance -- r7-check                 # ảnh ghi vào e2e/output/r7-check/
-npm run e2e:acceptance -- gd3b-l7-check docs/design/screens/GD3b-L7   # chọn thư mục ảnh
+npm test                     # toàn bộ test backend + frontend (Vitest, không cần cơ sở dữ liệu)
+npm run typecheck            # kiểm tra kiểu TypeScript cả hai phía
+npm run build                # build backend + frontend
+npm run test:perf -w backend # đo hiệu năng bộ gợi ý
 ```
 
-Một số script tạo/xóa dữ liệu thử hoặc chạy `demo:reset` (ghi rõ ở đầu file); script lượt UI cũ so với bản `main` ở
-`http://localhost:8080` và có thể cần tham số thêm (xem dòng đầu mỗi file). Chạy `npm run e2e:acceptance` không tham số để xem danh sách.
+## Đánh giá thuật toán (dữ liệu mô phỏng, chạy trong bộ nhớ)
 
-Xem thêm [kiến trúc](docs/ARCHITECTURE.md) và [danh sách API](docs/API.md).
+```bash
+npm run eval:recommend -w backend   # bộ gợi ý: so 3 thuật toán và bộ trộn (docs/thuat-toan-goi-y.md)
+npm run eval:mealplan -w backend    # bộ tạo thực đơn dự phòng (mục 9 docs/thuat-toan-goi-y.md)
+npm run eval:receipt -w backend     # quét hóa đơn: cần ảnh thật trong docs/test-evidence/receipts/ (không commit) + đáp án .json
+```
+
+## Script Playwright (`e2e/acceptance/`)
+
+Cần Docker đang chạy (app `http://localhost:8080`, API `http://localhost:4000`) và Chromium cho Playwright
+(`npx playwright-core install chromium`). Tài khoản đọc từ biến môi trường hoặc `.env` ở gốc: `DEMO_EMAIL`, `DEMO_PASSWORD`,
+`ADMIN_EMAIL`, `ADMIN_PASSWORD` (không có giá trị mặc định trong mã, không in mật khẩu).
+
+```bash
+npm run e2e:acceptance -- demo-flow             # luồng demo: đăng nhập → kho → quét hóa đơn (dự phòng) → thực đơn → đã ăn
+                                                #   → báo cáo → gợi ý → tìm kiếm → Admin. Tạo 1 thực đơn: chạy demo:reset sau đó.
+npm run e2e:acceptance -- screenshots docs/bao-cao/anh-man-hinh   # ảnh màn hình cho quyển (chạy ngay sau demo:reset)
+npm run e2e:acceptance -- landing-header-check  # đo header trang chủ 1024–1279px khi đã đăng nhập (không chụp ảnh)
+```
+
+Các script theo lượt cũ (`gd3b-*`, `r2`–`r7`, `ui1`–`ui12`) là bằng chứng nghiệm thu từng giai đoạn, viết cho giao diện lúc đó:
+**lỗi thời**, không bảo trì (trình chạy in cảnh báo). Chạy `npm run e2e:acceptance` không tham số để xem danh sách.
+
+## Tài liệu
+
+[Kiến trúc](docs/ARCHITECTURE.md) · [API](docs/bao-cao/api.md) · [ERD](docs/bao-cao/erd.md) · [Use case](docs/bao-cao/use-case.md)
+· [Số liệu](docs/bao-cao/so-lieu.md) · [Ảnh màn hình](docs/bao-cao/anh-man-hinh/README.md) · [Thuật toán gợi ý](docs/thuat-toan-goi-y.md)
+· [Hạn chế](docs/han-che.md) · [Lịch sử giai đoạn](docs/lich-su-giai-doan.md).
