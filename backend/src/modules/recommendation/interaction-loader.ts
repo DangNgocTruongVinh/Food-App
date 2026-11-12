@@ -8,11 +8,15 @@ import type { CollaborativeKind, Interaction, InteractionKind } from "./interact
 type Db = Pick<PrismaClient, "$queryRaw">;
 type Row = { userId: string; recipeId: string; kind: InteractionKind; at: Date; count: number };
 
-/** Đã ăn, đăng bài gắn món, thích bài người khác gắn món; `forUser` = chỉ của một người (thuật toán 1). */
+/**
+ * Đã ăn, đăng bài gắn món, thích bài người khác gắn món, yêu thích công thức (UC24 — cùng loại "LIKED", cùng trọng số);
+ * `forUser` = chỉ của một người (thuật toán 1).
+ */
 const collaborativeSql = (forUser?: string) => {
   const eaten = forUser ? Prisma.sql`AND mp."userId" = ${forUser}` : Prisma.empty;
   const posted = forUser ? Prisma.sql`AND p."authorId" = ${forUser}` : Prisma.empty;
   const liked = forUser ? Prisma.sql`AND l."userId" = ${forUser}` : Prisma.empty;
+  const favorite = forUser ? Prisma.sql`WHERE f."userId" = ${forUser}` : Prisma.empty;
   return Prisma.sql`
     SELECT mp."userId" AS "userId", mi."recipeId" AS "recipeId", 'EATEN' AS "kind", d."date" AS "at", COUNT(*)::int AS "count"
     FROM "MealPlanItem" mi
@@ -30,7 +34,12 @@ const collaborativeSql = (forUser?: string) => {
     FROM "CommunityLike" l
     JOIN "CommunityPost" p ON p."id" = l."postId"
     WHERE p."recipeId" IS NOT NULL AND l."userId" <> p."authorId" ${liked}
-    GROUP BY l."userId", p."recipeId", date_trunc('day', l."createdAt")`;
+    GROUP BY l."userId", p."recipeId", date_trunc('day', l."createdAt")
+    UNION ALL
+    SELECT f."userId", f."recipeId", 'LIKED', date_trunc('day', f."createdAt"), COUNT(*)::int
+    FROM "FavoriteRecipe" f
+    ${favorite}
+    GROUP BY f."userId", f."recipeId", date_trunc('day', f."createdAt")`;
 };
 
 /** Toàn bộ tương tác cho thuật toán 2 (không có "có trong thực đơn" — xem chú thích đầu file). Chỉ dùng để tính số liệu tổng hợp. */

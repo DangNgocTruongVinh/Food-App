@@ -12,6 +12,7 @@ export const listRecipesSchema = z.object({
 });
 
 export const recipeStatsSchema = z.object({ body: empty, params: empty, query: empty });
+export const listFavoriteRecipesSchema = z.object({ body: empty, params: empty, query: empty });
 
 export const featuredRecipesSchema = z.object({
   body: empty,

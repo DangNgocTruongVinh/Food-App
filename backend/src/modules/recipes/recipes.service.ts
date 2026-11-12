@@ -9,6 +9,39 @@ import type { RecipeListQuery } from "./recipes.schema.js";
 
 const recipeWithIngredients = { ingredients: true } as const;
 
+/** Id các món người dùng đã yêu thích (UC24). */
+async function favoriteRecipeIds(userId: string) {
+  const rows = await prisma.favoriteRecipe.findMany({ where: { userId }, select: { recipeId: true } });
+  return new Set(rows.map((row) => row.recipeId));
+}
+
+/** GET /api/recipes/favorites: món yêu thích của chính người dùng (mới thêm trước), bỏ món đã ngừng sử dụng; kèm `fit` như danh sách. */
+export async function listFavoriteRecipes(userId: string) {
+  const [favorites, profile] = await Promise.all([
+    prisma.favoriteRecipe.findMany({
+      where: { userId, recipe: visibleRecipeWhere }, orderBy: { createdAt: "desc" }, select: { recipe: { include: recipeWithIngredients } },
+    }),
+    prisma.nutritionProfile.findUnique({ where: { userId } }),
+  ]);
+  return favorites.map(({ recipe }) => ({ ...recipe, fit: recipeFit(recipe, profile), favorite: true }));
+}
+
+/**
+ * PUT/DELETE /api/recipes/:id/favorite: bật/tắt yêu thích (gọi lại nhiều lần vẫn cùng kết quả). Bật cho món không có → 404,
+ * món đã ngừng sử dụng → 422; tắt luôn được.
+ */
+export async function setRecipeFavorite(userId: string, recipeId: string, favorite: boolean) {
+  if (!favorite) {
+    await prisma.favoriteRecipe.deleteMany({ where: { userId, recipeId } });
+    return { recipeId, favorite: false };
+  }
+  const recipe = await prisma.recipe.findUnique({ where: { id: recipeId }, select: { id: true, hiddenAt: true } });
+  if (!recipe) throw new HttpError(404, "Không tìm thấy công thức.");
+  if (isRecipeHidden(recipe)) throw new HttpError(422, HIDDEN_RECIPE_MESSAGE);
+  await prisma.favoriteRecipe.createMany({ data: [{ userId, recipeId }], skipDuplicates: true });
+  return { recipeId, favorite: true };
+}
+
 /**
  * Số công thức theo nhóm cho Landing (công khai, Guest xem được): chỉ trả số đếm, không trả dữ liệu công thức.
  * Nhóm khớp với nhãn thật của công thức: bữa ăn (mealTypes) và chế độ ăn (dietTags).
@@ -45,21 +78,22 @@ export async function listRecipes(userId: string, query: RecipeListQuery) {
     ...(query.cuisine ? { cuisine: query.cuisine } : {}),
   };
 
-  const [recipes, profile] = await Promise.all([
+  const [recipes, profile, favorites] = await Promise.all([
     prisma.recipe.findMany({ where, include: recipeWithIngredients, orderBy: { name: "asc" } }),
     prisma.nutritionProfile.findUnique({ where: { userId } }),
+    favoriteRecipeIds(userId),
   ]);
-  return recipes.map((recipe) => ({ ...recipe, fit: recipeFit(recipe, profile) }));
+  return recipes.map((recipe) => ({ ...recipe, fit: recipeFit(recipe, profile), favorite: favorites.has(recipe.id) }));
 }
 
-export async function getRecipe(id: string) {
-  const recipe = await prisma.recipe.findUnique({
-    where: { id },
-    include: recipeWithIngredients,
-  });
+export async function getRecipe(id: string, userId?: string) {
+  const [recipe, favorite] = await Promise.all([
+    prisma.recipe.findUnique({ where: { id }, include: recipeWithIngredients }),
+    userId ? prisma.favoriteRecipe.findUnique({ where: { userId_recipeId: { userId, recipeId: id } }, select: { id: true } }) : null,
+  ]);
   if (!recipe) throw new HttpError(404, "Không tìm thấy công thức.");
   // Món đã ẩn vẫn xem được qua link trực tiếp (thực đơn cũ, bài viết cũ); frontend hiện "Món này đã ngừng sử dụng".
-  return { ...recipe, hidden: isRecipeHidden(recipe) };
+  return { ...recipe, hidden: isRecipeHidden(recipe), favorite: Boolean(favorite) };
 }
 
 /** Khối "Dành cho bạn" ở trang chi tiết công thức, tính cho người dùng đang đăng nhập (userId lấy từ JWT). */

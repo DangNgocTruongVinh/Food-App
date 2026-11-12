@@ -89,7 +89,13 @@ Chi tiết cách kiểm: `docs/test-evidence/bao-mat.md`. Hướng xử lý: nâ
 - Thực phẩm không có hạn được coi là dùng trước hạn. Tiền lãng phí chỉ tính món có đơn giá và ghi rõ "ước tính trên N món có giá".
 - Báo cáo chỉ đúng khi người dùng chọn đúng lý do khi xóa; lịch sử trước khi có tính năng (chưa có lý do, chưa chụp nhóm/hạn) không tính.
 
-### 2.7. Giao diện và thời gian
+### 2.7. Cộng đồng
+
+- **Không làm "theo dõi thành viên"** (UC25 khảo sát có nút giả): đề tài tập trung vào quản lý thực phẩm, giảm lãng phí và dinh dưỡng cá
+  nhân hóa; mạng xã hội theo dõi người dùng nằm ngoài trọng tâm, chỉ giữ lưu bài (UC25) và yêu thích công thức (UC24) vì phục vụ nấu ăn.
+- Lưu bài và yêu thích chỉ người chủ tài khoản thấy; chưa có thư mục/nhãn để sắp xếp bài đã lưu.
+
+### 2.8. Giao diện và thời gian
 
 - Ngày từ server (hạn sử dụng, ngày thực đơn) hiển thị theo múi giờ máy người dùng; ở múi giờ âm (vd. châu Mỹ) có thể lệch về ngày hôm
   trước. Lịch tuần, báo cáo, nhắc hạn tính theo giờ Việt Nam.
@@ -99,8 +105,8 @@ Chi tiết cách kiểm: `docs/test-evidence/bao-mat.md`. Hướng xử lý: nâ
 
 ## 3. Hướng phát triển
 
-- **Lưu vào tài khoản** các chức năng còn ở mức giao diện hoặc đã gỡ: yêu thích công thức (`FavoriteRecipe`), lưu bài (`SavedPost`), theo
-  dõi thành viên (`Follow`), lượng nước theo ngày; thành viên/chủ đề nổi bật tính từ dữ liệu thật.
+- **Lượng nước** theo ngày lưu vào tài khoản; thành viên/chủ đề nổi bật tính từ dữ liệu thật.
+- **Theo dõi thành viên** (bảng tin theo người mình theo dõi, thông báo khi họ đăng bài).
 - Cộng đồng: tab "Dành cho bạn" (gợi ý bài theo khẩu vị, R9), phân trang bảng tin.
 - **Đăng nhập Google (OAuth)**: tùy chọn ở giai đoạn 6, chưa làm.
 - Các chức năng đã gỡ khỏi giao diện vì chưa có xử lý thật: giọng nói, đính kèm tệp trong chat AI, bình chọn (poll) trong bài viết.

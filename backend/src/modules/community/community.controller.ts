@@ -12,6 +12,8 @@ import {
   createCommunityPost,
   deleteCommunityPost,
   listCommunityPosts,
+  listSavedPosts,
+  setPostSaved,
   toggleCommunityLike,
 } from "./community.service.js";
 
@@ -58,4 +60,16 @@ export async function addCommunityCommentController(
   res: Response,
 ) {
   res.status(201).json(await addCommunityComment(authenticatedUserId(req), req.params.postId, req.body.content));
+}
+
+export async function listSavedPostsController(req: Request, res: Response) {
+  res.json(await listSavedPosts(authenticatedUserId(req)));
+}
+
+export async function savePostController(req: ValidatedRequest<unknown, CommunityPostIdParams>, res: Response) {
+  res.json(await setPostSaved(authenticatedUserId(req), req.params.postId, true));
+}
+
+export async function unsavePostController(req: ValidatedRequest<unknown, CommunityPostIdParams>, res: Response) {
+  res.json(await setPostSaved(authenticatedUserId(req), req.params.postId, false));
 }

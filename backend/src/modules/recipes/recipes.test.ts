@@ -12,6 +12,10 @@ const mocks = vi.hoisted(() => ({
   findProfile: vi.fn(),
   findPantry: vi.fn(),
   count: vi.fn(),
+  findFavorites: vi.fn(),
+  findFavorite: vi.fn(),
+  createFavorites: vi.fn(),
+  deleteFavorites: vi.fn(),
 }));
 
 vi.mock("../../config/env.js", () => ({ env: { JWT_SECRET: mocks.secret } }));
@@ -20,6 +24,9 @@ vi.mock("../../lib/prisma.js", () => ({
     recipe: { findMany: mocks.findMany, findUnique: mocks.findUnique, count: mocks.count },
     nutritionProfile: { findUnique: mocks.findProfile },
     pantryItem: { findMany: mocks.findPantry },
+    favoriteRecipe: {
+      findMany: mocks.findFavorites, findUnique: mocks.findFavorite, createMany: mocks.createFavorites, deleteMany: mocks.deleteFavorites,
+    },
   },
 }));
 
@@ -57,6 +64,10 @@ beforeEach(() => {
   mocks.findUnique.mockResolvedValue(recipe);
   mocks.findProfile.mockResolvedValue(null);
   mocks.findPantry.mockResolvedValue([]);
+  mocks.findFavorites.mockResolvedValue([]);
+  mocks.findFavorite.mockResolvedValue(null);
+  mocks.createFavorites.mockResolvedValue({ count: 1 });
+  mocks.deleteFavorites.mockResolvedValue({ count: 1 });
 });
 
 afterEach(() => vi.restoreAllMocks());
@@ -65,7 +76,7 @@ describe("Recipes HTTP contract (no database)", () => {
   it("lists recipes with ingredients using the existing name order, each with the user's fit", async () => {
     const response = await request(app, "/api/recipes", { token: token() });
     const fit = { allergens: [], dislikedFoods: [], dietConflict: null, safe: true };
-    expect(response).toEqual({ status: 200, body: JSON.parse(JSON.stringify([{ ...recipe, fit }])) });
+    expect(response).toEqual({ status: 200, body: JSON.parse(JSON.stringify([{ ...recipe, fit, favorite: false }])) });
     expect(mocks.findProfile).toHaveBeenCalledWith({ where: { userId } });
     expect(mocks.findMany).toHaveBeenCalledWith({
       where: { hiddenAt: null }, include: { ingredients: true }, orderBy: { name: "asc" },
@@ -99,7 +110,7 @@ describe("Recipes HTTP contract (no database)", () => {
 
   it("gets one recipe with its ingredients", async () => {
     const response = await request(app, `/api/recipes/${recipeId}`, { token: token() });
-    expect(response).toEqual({ status: 200, body: JSON.parse(JSON.stringify({ ...recipe, hidden: false })) });
+    expect(response).toEqual({ status: 200, body: JSON.parse(JSON.stringify({ ...recipe, hidden: false, favorite: false })) });
     expect(mocks.findUnique).toHaveBeenCalledWith({
       where: { id: recipeId }, include: { ingredients: true },
     });
@@ -322,5 +333,49 @@ describe("Recipes validation", () => {
     expect(response.status).toBe(422);
     expect(response.body.message).toBe("Dữ liệu gửi lên chưa hợp lệ.");
     expect(mocks.findUnique).not.toHaveBeenCalled();
+  });
+});
+
+describe("UC24 Yêu thích công thức", () => {
+  const recipeId = recipe.id;
+  const path = `/api/recipes/${recipeId}/favorite`;
+
+  it("bật yêu thích: ghi cho đúng người trong JWT, gọi lại không tạo trùng (skipDuplicates)", async () => {
+    const response = await request(app, path, { method: "PUT", token: token() });
+    expect(response).toEqual({ status: 200, body: { recipeId, favorite: true } });
+    expect(mocks.createFavorites).toHaveBeenCalledWith({ data: [{ userId, recipeId }], skipDuplicates: true });
+  });
+
+  it("tắt yêu thích: chỉ xóa của chính người dùng", async () => {
+    const response = await request(app, path, { method: "DELETE", token: token() });
+    expect(response.body).toEqual({ recipeId, favorite: false });
+    expect(mocks.deleteFavorites).toHaveBeenCalledWith({ where: { userId, recipeId } });
+  });
+
+  it("món không có → 404, món đã ngừng sử dụng → 422; không ghi gì", async () => {
+    mocks.findUnique.mockResolvedValueOnce(null);
+    expect((await request(app, path, { method: "PUT", token: token() })).status).toBe(404);
+    mocks.findUnique.mockResolvedValueOnce({ ...recipe, hiddenAt: new Date() });
+    expect((await request(app, path, { method: "PUT", token: token() })).status).toBe(422);
+    expect(mocks.createFavorites).not.toHaveBeenCalled();
+  });
+
+  it("danh sách yêu thích: chỉ của người trong JWT, bỏ món đã ngừng sử dụng, mới thêm trước; danh sách món gắn cờ favorite", async () => {
+    mocks.findFavorites.mockImplementation(async (args: { select: Record<string, unknown> }) => (
+      "recipe" in args.select ? [{ recipe }] : [{ recipeId }]
+    ));
+    const favorites = await request(app, "/api/recipes/favorites", { token: token() });
+    expect(favorites.status).toBe(200);
+    expect(favorites.body).toEqual([expect.objectContaining({ id: recipeId, favorite: true, fit: expect.any(Object) })]);
+    expect(mocks.findFavorites).toHaveBeenCalledWith(expect.objectContaining({
+      where: { userId, recipe: { hiddenAt: null } }, orderBy: { createdAt: "desc" },
+    }));
+    const list = await request(app, "/api/recipes", { token: token() });
+    expect(list.body[0].favorite).toBe(true);
+  });
+
+  it("cần đăng nhập", async () => {
+    expect((await request(app, "/api/recipes/favorites")).status).toBe(401);
+    expect((await request(app, path, { method: "PUT" })).status).toBe(401);
   });
 });

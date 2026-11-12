@@ -6,6 +6,7 @@ import { recipeDetailPath, recipeDietLabel, recipeTotalMinutes } from "../../fea
 import type { Recipe } from "../../types";
 import { IMAGE_WIDTHS } from "../../utils/images";
 import { RecipeImage, Tag } from "../ui";
+import { FavoriteButton } from "./FavoriteButton";
 
 /**
  * Thẻ món trong "Tất cả công thức": ảnh 4:3, tên (link), thông số là nhãn riêng có icon, nhãn ẩm thực/chế độ ăn;
@@ -16,7 +17,10 @@ export function RecipeCard({ recipe, layout }: { recipe: Recipe; layout: "grid" 
   const warnings = recipe.fit ? forYouWarnings(recipe.fit) : [];
   return (
     <article className={`recipe-tile recipe-tile--${layout}`}>
-      <RecipeImage className="recipe-tile__image" recipe={recipe} width={IMAGE_WIDTHS.card} alt="" loading="lazy" />
+      <div className="recipe-tile__media">
+        <RecipeImage className="recipe-tile__image" recipe={recipe} width={IMAGE_WIDTHS.card} alt="" loading="lazy" />
+        <FavoriteButton recipe={recipe} />
+      </div>
       <div className="recipe-tile__body">
         {warnings.length > 0 && (
           <ul className="recipe-tile__warnings" aria-label="Cảnh báo theo hồ sơ của bạn">

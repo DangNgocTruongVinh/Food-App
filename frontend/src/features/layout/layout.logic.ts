@@ -57,7 +57,8 @@ export function postLoginPath(user: { role?: string } | null | undefined, next: 
 export function accountMenuItems(user: { role?: string } | null | undefined): AccountMenuItem[] {
   return [
     { kind: "link", to: "/profile", label: "Hồ sơ" },
-    ...(isAdmin(user) ? [{ kind: "link", to: "/admin", label: "Quản trị" } as const] : []),
+    // Admin dùng khu /admin riêng nên không có danh sách cá nhân.
+    ...(isAdmin(user) ? [{ kind: "link", to: "/admin", label: "Quản trị" } as const] : [{ kind: "link", to: "/recipes/favorites", label: "Món yêu thích" } as const]),
     { kind: "logout", label: "Đăng xuất" },
   ];
 }

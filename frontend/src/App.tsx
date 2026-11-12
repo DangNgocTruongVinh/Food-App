@@ -9,6 +9,7 @@ import CommunityPage from "./pages/CommunityPage";
 import DashboardPage from "./pages/DashboardPage";
 import LandingPage from "./pages/LandingPage";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
+import FavoriteRecipesPage from "./pages/FavoriteRecipesPage";
 import LoginPage from "./pages/LoginPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
 import UnsubscribeExpiryPage from "./pages/UnsubscribeExpiryPage";
@@ -58,6 +59,7 @@ export default function App() {
           <Route path="meal-plans" element={<MealPlansPage />} />
           <Route path="meal-plans/:id" element={<MealPlansPage />} />
           <Route path="recipes" element={<RecipesPage />} />
+          <Route path="recipes/favorites" element={<FavoriteRecipesPage />} />
           <Route path="recipes/:id" element={<RecipeDetailPage />} />
           <Route path="community" element={<CommunityPage />} />
           <Route path="assistant" element={<AiAssistantPage />} />

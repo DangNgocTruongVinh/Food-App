@@ -3,8 +3,8 @@ import { accountMenuItems, ADMIN_NAV, adminRedirect, FOOTER_GROUPS, isAdmin, isR
 
 describe("account menu", () => {
   it("shows Quản trị only to an ADMIN account", () => {
-    expect(accountMenuItems({ role: "USER" }).map((item) => item.label)).toEqual(["Hồ sơ", "Đăng xuất"]);
-    expect(accountMenuItems(null).map((item) => item.label)).toEqual(["Hồ sơ", "Đăng xuất"]);
+    expect(accountMenuItems({ role: "USER" }).map((item) => item.label)).toEqual(["Hồ sơ", "Món yêu thích", "Đăng xuất"]);
+    expect(accountMenuItems(null).map((item) => item.label)).toEqual(["Hồ sơ", "Món yêu thích", "Đăng xuất"]);
     expect(accountMenuItems({ role: "ADMIN" })).toEqual([
       { kind: "link", to: "/profile", label: "Hồ sơ" },
       { kind: "link", to: "/admin", label: "Quản trị" },

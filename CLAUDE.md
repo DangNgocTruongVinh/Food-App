@@ -162,7 +162,7 @@ Kế hoạch chi tiết: `docs/ke-hoach-gd3c.md`. Phần 1 (Tesseract trên serv
 ### Giai đoạn 5 — Nghiệp vụ bổ sung
 - [x] ~~Tách dữ liệu tĩnh của Landing ra `features/landing/landing.data.ts`~~: làm trong UI-11 (Landing viết lại). (`MealPlansPage` đã tách vào `components/meal-plans/` khi làm lại giao diện ở UI-6.)
 - [x] Thêm món thủ công vào thực đơn (C2): `POST /api/meal-plans/:id/items`, `DELETE /api/meal-plans/items/:id`; đi chợ chỉ đổi theo phần của bữa (`shoppingChangesForMeal`, dùng chung với "Đổi món"); thêm vào ngày trống/bữa phụ; nút "Thêm vào thực đơn" ở chi tiết công thức.
-- [ ] Lưu DB: favorite recipe, saved post, follow, lượng nước. (UI-7 đã gỡ nút "Lưu" bài và "Theo dõi" chỉ có state cục bộ; làm lại kèm API ở đây.)
+- [x] Yêu thích công thức (UC24, `FavoriteRecipe`, `/recipes/favorites`, là tín hiệu "LIKED" cho gợi ý, không đổi trọng số) và lưu bài (UC25, `SavedPost`, "Bài đã lưu" ở Cộng đồng): nhánh `uc24-uc25`. **Theo dõi thành viên: không làm** (ngoài trọng tâm, ghi `docs/han-che.md`). Lượng nước: chưa lưu DB.
 - [ ] Chủ đề/thành viên nổi bật từ dữ liệu thật. (UI-7 đã gỡ bản dữ liệu giả ở cột phải Cộng đồng.)
 - [ ] Xóa bài của tôi:
   - Endpoint `DELETE /api/community/:postId`.

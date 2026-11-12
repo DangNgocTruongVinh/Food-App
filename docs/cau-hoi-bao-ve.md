@@ -11,11 +11,11 @@ hồ sơ (dị ứng, chế độ ăn, calo), lập thực đơn 7 ngày, tự t
 Nguồn: `REPORT_NOURI.md`, `docs/bao-cao/use-case.md`.
 
 **2. Phạm vi so với khảo sát ban đầu?**
-26 use case khảo sát: 14 làm đúng, 10 làm khác/mở rộng, 2 chưa làm (yêu thích công thức, lưu bài/theo dõi — nút giả đã gỡ). Thêm 13 use
-case mới (UC27–UC39). Nguồn: `docs/bao-cao/use-case.md`.
+26 use case khảo sát: 15 làm đúng, 11 làm khác/mở rộng; phần "theo dõi thành viên" của UC25 không làm (ngoài trọng tâm, ghi ở
+`docs/han-che.md`). Thêm 13 use case mới (UC27–UC39). Nguồn: `docs/bao-cao/use-case.md`.
 
 **3. Hệ thống gồm những thành phần nào?**
-SPA React 19 (nginx) → API Express 5 → PostgreSQL 16 qua Prisma 6; dịch vụ ngoài tùy chọn: OpenAI, Cloudinary, SMTP. 74 endpoint, 21 bảng.
+SPA React 19 (nginx) → API Express 5 → PostgreSQL 16 qua Prisma 6; dịch vụ ngoài tùy chọn: OpenAI, Cloudinary, SMTP. 80 endpoint, 23 bảng.
 Nguồn: `docs/bao-cao/kien-truc.md`, `api.md`, `erd.md`.
 
 ## B. Thuật toán gợi ý
@@ -167,7 +167,7 @@ Không: `demo:reset` tạo 8 tuần lịch sử kho **mẫu** (bỏ đi 4 → 1 
 6,25·chiều cao − 5·tuổi ± hằng số giới tính) × hệ số vận động. Nguồn: `backend/prisma/seed-data.ts`, `services/nutrition.service.ts`.
 
 **35. Kiểm thử thế nào?**
-1.721 test tự động (backend 1.221, frontend 500) chạy không cần CSDL/mạng: Prisma giả lập kèm transaction giả, OpenAI/Cloudinary/SMTP
+1.737 test tự động (backend 1.234, frontend 503) chạy không cần CSDL/mạng: Prisma giả lập kèm transaction giả, OpenAI/Cloudinary/SMTP
 giả lập, đồng hồ giả. Kiểm cả quy tắc giao diện và kiểm kê nút Admin. Đo hiệu năng riêng: gợi ý < 150 ms với 500 món × 1.000 người.
 Nguồn: `docs/bao-cao/so-lieu.md` mục 1.
 
@@ -180,5 +180,5 @@ Docker Compose: postgres:16-alpine, backend node:22-alpine (chạy migration khi
 nginx:1.27-alpine (gzip, chuyển `/api`). Biến môi trường khai báo trong `env.ts` (Zod) và `.env.example`. Nguồn: `docker-compose.yml`.
 
 **38. Hướng phát triển chính?**
-Lưu yêu thích/lưu bài/theo dõi/lượng nước vào tài khoản, đăng nhập Google, đánh giá OCR trên hóa đơn thật, nhận diện dị ứng theo thành
+Theo dõi thành viên, lưu lượng nước vào tài khoản, đăng nhập Google, đánh giá OCR trên hóa đơn thật, nhận diện dị ứng theo thành
 phần ẩn, Redis cho trạng thái dùng chung, thông báo đẩy. Nguồn: `docs/han-che.md` mục 3.

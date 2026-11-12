@@ -102,6 +102,8 @@ export async function resetDemoAccount(
       receiptScans: (await tx.receiptScan.deleteMany({ where: { userId } })).count,
       // Email nhắc hạn đã gửi: xóa để demo nhận lại nhắc và có lại 3 lần "Gửi thử ngay".
       expiryEmails: (await tx.expiryEmailLog.deleteMany({ where: { userId } })).count,
+      favoriteRecipes: (await tx.favoriteRecipe.deleteMany({ where: { userId } })).count,
+      savedPosts: (await tx.savedPost.deleteMany({ where: { userId } })).count,
       mealPlans: (await tx.mealPlan.deleteMany({ where: { userId } })).count,
       likes: (await tx.communityLike.deleteMany({ where: { userId } })).count,
       comments: (await tx.communityComment.deleteMany({ where: { authorId: userId } })).count,

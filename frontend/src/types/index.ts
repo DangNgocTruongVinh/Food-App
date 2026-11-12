@@ -35,6 +35,8 @@ export interface CommunityPost {
   memberRecipeAllergens: string[];
   /** Admin đã ẩn bài (chỉ tác giả còn thấy). */
   hidden: boolean;
+  /** UC25: người đang xem đã lưu bài này. */
+  savedByMe?: boolean;
   /** AI đánh dấu, bài chờ Admin duyệt (chỉ tác giả còn thấy). */
   pendingReview?: boolean;
   /** Món trong thư viện Admin tạo từ công thức tự viết của bài. */
@@ -168,6 +170,8 @@ export interface Recipe {
   cuisine: string; dietTags: string[]; mealTypes?: MealType[]; imageUrl?: string | null; ingredients: Ingredient[];
   /** Món đã ngừng sử dụng (Admin ẩn): vẫn xem được chi tiết, không chia sẻ/không chọn mới. */
   hidden?: boolean;
+  /** UC24: người đang đăng nhập đã yêu thích món này. */
+  favorite?: boolean;
   /** GET /api/recipes: độ phù hợp với hồ sơ người đang đăng nhập (GĐ3b-R1). */
   fit?: RecipeFit;
 }
