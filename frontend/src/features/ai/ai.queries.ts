@@ -13,6 +13,7 @@ export const aiMutations = {
   chat: () => mutationOptions({ mutationFn: sendChatMessage }),
 };
 
+/** Trả Promise: gọi trong onSuccess thì mutation còn "đang chờ" tới khi lịch sử tải lại xong (tin vừa gửi không nháy mất). */
 export function invalidateAIHistory(queryClient: QueryClient) {
-  void queryClient.invalidateQueries({ queryKey: queryKeys.ai.history });
+  return queryClient.invalidateQueries({ queryKey: queryKeys.ai.history });
 }

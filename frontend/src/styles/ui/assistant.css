@@ -100,7 +100,7 @@
 .as-history { display: grid; margin: 0; padding: 0; list-style: none; }
 .as-history li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--space-3); padding: var(--space-2) 0; border-top: 1px solid var(--line); }
 .as-history li:first-child { border-top: 0; }
-.as-history__text { overflow: hidden; color: var(--ink); font-size: var(--fs-small); text-overflow: ellipsis; white-space: nowrap; }
+.as-history__text { overflow: clip; color: var(--ink); font-size: var(--fs-small); text-overflow: ellipsis; white-space: nowrap; }
 .as-history__time { color: var(--muted); font-size: var(--fs-label); white-space: nowrap; }
 
 @media (max-width: 1024px) {
@@ -117,3 +117,5 @@
 
 /* Đồng bộ với Tổng quan (11/11/2026): khối phụ cột phải là mảng nền dịu không viền, bo 28px. */
 .as-side .ui-card { border-color: transparent; border-radius: 28px; background: var(--surface-2); }
+/* Chữ dài liền (tên thực phẩm, dị ứng, câu hỏi gần đây) xuống dòng thay vì làm thẻ cột phải tràn/cắt mép. */
+.as-card { min-width: 0; overflow-wrap: anywhere; }

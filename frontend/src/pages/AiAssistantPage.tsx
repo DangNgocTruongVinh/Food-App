@@ -5,7 +5,7 @@ import { ASSISTANT_INPUT_ID, AssistantChat } from "../components/assistant/Assis
 import { AssistantContextCard, AssistantHistoryCard, AssistantSuggestionsCard } from "../components/assistant/AssistantSide";
 import { ErrorState, LoadingState, Skeleton } from "../components/ui";
 import {
-  assistantPromptSuggestions, normalizeChatMessage, RECENT_HISTORY_LIMIT, recentUserHistory, scrollChatToLatest,
+  assistantPromptSuggestions, isNearChatBottom, normalizeChatMessage, RECENT_HISTORY_LIMIT, recentUserHistory, scrollChatToBottom,
 } from "../features/ai/ai.logic";
 import { aiMutations, aiQueries, invalidateAIHistory } from "../features/ai/ai.queries";
 import { profileQueries } from "../features/profile/profile.queries";
@@ -16,29 +16,39 @@ export default function AiAssistantPage() {
   const [error, setError] = useState("");
   const [showAllHistory, setShowAllHistory] = useState(false);
   const windowRef = useRef<HTMLDivElement>(null);
-  const bottomRef = useRef<HTMLDivElement>(null);
-  const userHasSent = useRef(false);
+  // Người dùng đang ở gần cuối khung tin nhắn: tin mới tới thì tự cuộn theo; đã cuộn lên đọc tin cũ thì để yên.
+  const stickToBottom = useRef(true);
+  const scrolledOnce = useRef(false);
 
   const history = useQuery(aiQueries.history());
   const data = history.data ?? [];
   const { data: dashboard } = useQuery(aiQueries.dashboard());
   const { data: profileData } = useQuery(profileQueries.detail());
   const { data: aiStatus } = useQuery(aiQueries.status());
-  const chat = useMutation({
-    ...aiMutations.chat(),
-    onSuccess: () => { setMessage(""); setError(""); invalidateAIHistory(queryClient); },
-    onError: (err) => setError(getApiError(err)),
-  });
+  // onSuccess trả Promise: "đang trả lời" giữ tới khi lịch sử tải lại xong, tin vừa gửi không nháy mất.
+  const chat = useMutation({ ...aiMutations.chat(), onSuccess: () => invalidateAIHistory(queryClient) });
 
-  // Vào trang chỉ cuộn bên trong khung chat; sau khi gửi mới kéo cả trang tới câu trả lời (sửa ở GĐ2c).
-  useEffect(() => scrollChatToLatest(windowRef.current, bottomRef.current, userHasSent.current), [data, chat.isPending]);
+  // Chỉ cuộn khung tin nhắn (scrollTop của khung), không cuộn trang; lần đầu vào trang nhảy thẳng tới tin mới nhất.
+  useEffect(() => {
+    if (!windowRef.current || !stickToBottom.current) return;
+    scrollChatToBottom(windowRef.current, scrolledOnce.current);
+    scrolledOnce.current = true;
+  }, [data.length, chat.isPending]);
 
   const submit = (event: FormEvent) => {
     event.preventDefault();
     const content = normalizeChatMessage(message);
     if (!content || chat.isPending) return;
-    userHasSent.current = true;
-    chat.mutate(content);
+    stickToBottom.current = isNearChatBottom(windowRef.current);
+    // Xóa ô nhập ngay; tin hiện trong khung kèm "Nouri đang trả lời…". Gửi lỗi thì trả lại nội dung (nếu ô vẫn trống).
+    setMessage("");
+    setError("");
+    chat.mutate(content, {
+      onError: (err) => {
+        setMessage((current) => current || content);
+        setError(`Chưa gửi được câu hỏi: ${getApiError(err)}`);
+      },
+    });
   };
   const pickSuggestion = (text: string) => {
     setMessage(text);
@@ -79,7 +89,7 @@ export default function AiAssistantPage() {
             suggestions={suggestions}
             onPickSuggestion={pickSuggestion}
             windowRef={windowRef}
-            bottomRef={bottomRef}
+            onScroll={() => { stickToBottom.current = isNearChatBottom(windowRef.current); }}
           />
         )}
 

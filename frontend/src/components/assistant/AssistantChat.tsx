@@ -1,6 +1,6 @@
 import { Send } from "lucide-react";
 import { type FormEvent, type RefObject } from "react";
-import { chatMessageTime } from "../../features/ai/ai.logic";
+import { chatMessageTime, isSubmitEnter } from "../../features/ai/ai.logic";
 import type { ChatMessage } from "../../types";
 import { Button, ErrorState } from "../ui";
 
@@ -17,8 +17,10 @@ type AssistantChatProps = {
   onSubmit: (event: FormEvent) => void;
   suggestions: string[];
   onPickSuggestion: (text: string) => void;
+  /** Khung danh sách tin nhắn (trang tự cuộn khung này, không cuộn cả trang). */
   windowRef: RefObject<HTMLDivElement | null>;
-  bottomRef: RefObject<HTMLDivElement | null>;
+  /** Người dùng cuộn khung: trang ghi nhận có đang ở gần cuối không. */
+  onScroll: () => void;
 };
 
 function Message({ role, content, createdAt }: Pick<ChatMessage, "role" | "content"> & { createdAt?: string }) {
@@ -38,7 +40,7 @@ export function AssistantChat(props: AssistantChatProps) {
   return (
     <section className="as-chat" aria-labelledby="as-chat-title">
       <h2 id="as-chat-title" className="ui-visually-hidden">Trò chuyện với trợ lý</h2>
-      <div className="as-chat__window" ref={props.windowRef} tabIndex={0} role="region" aria-label="Lịch sử trò chuyện">
+      <div className="as-chat__window" ref={props.windowRef} onScroll={props.onScroll} tabIndex={0} role="region" aria-label="Lịch sử trò chuyện">
         {empty ? (
           <div className="as-chat__empty">
             <p className="as-chat__empty-text">Chưa có câu hỏi nào. Chọn một câu gợi ý hoặc tự gõ câu hỏi bên dưới.</p>
@@ -54,12 +56,11 @@ export function AssistantChat(props: AssistantChatProps) {
             {pending && pendingQuestion && <Message role="user" content={pendingQuestion} />}
             {pending && (
               <li className="as-msg as-msg--assistant" role="status">
-                <p className="as-msg__bubble as-msg__bubble--pending">Nouri đang trả lời...</p>
+                <p className="as-msg__bubble as-msg__bubble--pending">Nouri đang trả lời…</p>
               </li>
             )}
           </ol>
         )}
-        <div ref={props.bottomRef} />
       </div>
       {props.error && <div className="as-chat__error"><ErrorState message={props.error} /></div>}
       <form className="as-composer" onSubmit={onSubmit}>
@@ -73,10 +74,9 @@ export function AssistantChat(props: AssistantChatProps) {
           placeholder="Hỏi về bữa ăn, dinh dưỡng hoặc thực phẩm trong kho"
           aria-describedby="as-composer-hint as-composer-allergy"
           onKeyDown={(event) => {
-            if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) {
-              event.preventDefault();
-              event.currentTarget.form?.requestSubmit();
-            }
+            if (!isSubmitEnter({ key: event.key, shiftKey: event.shiftKey, isComposing: event.nativeEvent.isComposing, keyCode: event.keyCode })) return;
+            event.preventDefault();
+            if (!pending) event.currentTarget.form?.requestSubmit();
           }}
         />
         <Button type="submit" variant="primary" icon={<Send />} disabled={!value.trim()} busy={pending}>Gửi</Button>
