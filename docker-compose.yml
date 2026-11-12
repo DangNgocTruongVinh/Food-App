@@ -30,6 +30,11 @@ services:
       OPENAI_MODEL: ${OPENAI_MODEL:-gpt-5-mini}
       OPENAI_VISION_MODEL: ${OPENAI_VISION_MODEL:-gpt-5-mini}
       AI_CHAT_DAILY_LIMIT: ${AI_CHAT_DAILY_LIMIT:-}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      MAIL_FROM: ${MAIL_FROM:-}
       # Upload ảnh (tùy chọn): đủ cả ba hoặc để trống cả ba (khi đó API upload trả 503).
       CLOUDINARY_CLOUD_NAME: ${CLOUDINARY_CLOUD_NAME:-}
       CLOUDINARY_API_KEY: ${CLOUDINARY_API_KEY:-}

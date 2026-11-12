@@ -1,6 +1,6 @@
 import { AxiosError, AxiosHeaders } from "axios";
 import { describe, expect, it } from "vitest";
-import { authErrorMessage, validateAuthForm, validateChangePassword } from "./auth.logic";
+import { authErrorMessage, emailError, recoveryErrorMessage, validateAuthForm, validateChangePassword, validateResetPassword } from "./auth.logic";
 
 const httpError = (status: number, data?: unknown) => {
   const config = { headers: new AxiosHeaders() };
@@ -47,5 +47,27 @@ describe("Auth form", () => {
       .toBe("Email này đã có tài khoản. Hãy đăng nhập, hoặc dùng email khác để đăng ký.");
     expect(authErrorMessage(httpError(500, { message: "Máy chủ gặp lỗi." }), "login")).toBe("Máy chủ gặp lỗi.");
     expect(authErrorMessage(new AxiosError("Network Error"), "login")).toBe("Không kết nối được máy chủ. Kiểm tra mạng rồi thử lại.");
+  });
+});
+
+describe("Quên / đặt lại mật khẩu", () => {
+  it("kiểm email như form đăng nhập", () => {
+    expect(emailError("")).toBe("Nhập email của bạn.");
+    expect(emailError("abc")).toContain("@");
+    expect(emailError(" ten@email.com ")).toBeUndefined();
+  });
+
+  it("mật khẩu mới: 8–72 ký tự như lúc đăng ký, nhập lại phải trùng", () => {
+    expect(validateResetPassword({ password: "ngan", confirmPassword: "ngan" })).toEqual({ password: "Mật khẩu cần ít nhất 8 ký tự." });
+    expect(validateResetPassword({ password: "a".repeat(73), confirmPassword: "a".repeat(73) }).password).toBe("Mật khẩu tối đa 72 ký tự.");
+    expect(validateResetPassword({ password: "MatKhau123", confirmPassword: "MatKhau12" })).toEqual({ confirmPassword: "Nhập lại đúng mật khẩu mới." });
+    expect(validateResetPassword({ password: "MatKhau123", confirmPassword: "MatKhau123" })).toEqual({});
+  });
+
+  it("lỗi: dùng lời của máy chủ (hết hạn, quá nhiều lần, bị khóa); 422 và mất mạng có câu riêng", () => {
+    expect(recoveryErrorMessage(httpError(400, { message: "Liên kết đã hết hạn." }))).toBe("Liên kết đã hết hạn.");
+    expect(recoveryErrorMessage(httpError(429, { message: "Quá nhiều lần." }))).toBe("Quá nhiều lần.");
+    expect(recoveryErrorMessage(httpError(422))).toContain("yêu cầu liên kết mới");
+    expect(recoveryErrorMessage(new Error("x"))).toBe("Đã có lỗi. Thử lại sau ít phút.");
   });
 });

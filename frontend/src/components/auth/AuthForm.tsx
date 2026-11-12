@@ -1,5 +1,6 @@
 import { CircleAlert, Check, LoaderCircle } from "lucide-react";
 import { type FormEvent, type KeyboardEvent, useState } from "react";
+import { Link } from "react-router-dom";
 import type { AuthFormErrors, AuthFormValues, AuthMode } from "../../features/auth/auth.logic";
 
 type AuthFormProps = {
@@ -9,6 +10,8 @@ type AuthFormProps = {
   /** Email đã đúng dạng: hiện dấu tích trong ô (chỉ để nhìn, không thay cho kiểm tra khi gửi). */
   emailValid: boolean;
   serverError: string;
+  /** Thông báo thành công ở đầu form (vd. vừa đặt mật khẩu mới). */
+  notice?: string;
   loading: boolean;
   remember: boolean;
   onChange: (key: keyof AuthFormValues, value: string) => void;
@@ -37,8 +40,8 @@ function FieldError({ id, message }: { id: string; message?: string }) {
 
 /**
  * Form đăng nhập / đăng ký theo bản thiết kế đã duyệt (nouri-login-handoff): lỗi máy chủ ở đầu form, lỗi từng ô ngay dưới ô,
- * hiện/ẩn mật khẩu, báo Caps Lock, khóa form khi đang gửi. Nút Google/Apple/Microsoft và "Quên mật khẩu?" của bản thiết kế
- * không hiện vì Nouri chưa có các luồng đó (OAuth tùy chọn; quên mật khẩu ghi ở hướng phát triển).
+ * hiện/ẩn mật khẩu, báo Caps Lock, khóa form khi đang gửi, "Quên mật khẩu?" (đặt lại qua email). Nút Google/Apple/Microsoft
+ * của bản thiết kế không hiện vì Nouri chưa có OAuth (tùy chọn).
  */
 export function AuthForm(props: AuthFormProps) {
   const { mode, form, errors, emailValid, serverError, loading, remember, onChange, onEmailBlur, onRememberChange, onSubmit, onToggleMode } = props;
@@ -54,6 +57,7 @@ export function AuthForm(props: AuthFormProps) {
       <h1 className="dn-title">{copy.title}</h1>
       <p className="dn-lede">{copy.lede}</p>
       {serverError && <p className="dn-alert" role="alert"><CircleAlert aria-hidden="true" />{serverError}</p>}
+      {props.notice && <p className="dn-alert dn-alert--ok" role="status"><Check aria-hidden="true" />{props.notice}</p>}
 
       <form id="auth-form" className="dn-form" noValidate onSubmit={onSubmit} aria-busy={loading}>
         {register && (
@@ -137,6 +141,7 @@ export function AuthForm(props: AuthFormProps) {
               <input type="checkbox" checked={remember} disabled={loading} onChange={(event) => onRememberChange(event.target.checked)} />
               <span>Giữ tôi đăng nhập</span>
             </label>
+            <Link className="dn-link" to="/forgot-password">Quên mật khẩu?</Link>
           </div>
         )}
 

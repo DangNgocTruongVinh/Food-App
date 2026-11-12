@@ -36,5 +36,5 @@ Chi tiết cách kiểm: `docs/test-evidence/bao-mat.md`. Hướng xử lý: nâ
 
 ## 2. Hướng phát triển
 
-- **Quên/đặt lại mật khẩu qua email** (Nodemailer + SMTP, token đặt lại có hạn và dùng một lần). Hiện người dùng chỉ đổi được mật khẩu khi
-  đang đăng nhập (Hồ sơ → Đổi mật khẩu).
+
+- **Đăng nhập Google (OAuth)**: tùy chọn ở giai đoạn 6, chưa làm.

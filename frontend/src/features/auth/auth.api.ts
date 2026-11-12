@@ -20,3 +20,13 @@ export async function logout() {
 export async function changePassword(input: ChangePasswordInput) {
   return (await api.post<AuthResponse>("/auth/change-password", input)).data;
 }
+
+/** Luôn trả cùng một câu, dù email có tài khoản hay không. */
+export async function forgotPassword(email: string) {
+  return (await api.post<{ message: string }>("/auth/forgot-password", { email })).data;
+}
+
+/** Đặt mật khẩu mới bằng token trong email; xong thì mọi phiên cũ bị đăng xuất (không tự đăng nhập). */
+export async function resetPassword(token: string, password: string) {
+  return (await api.post<{ message: string }>("/auth/reset-password", { token, password })).data;
+}

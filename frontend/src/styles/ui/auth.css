@@ -236,3 +236,6 @@ body:has(.dn-page) { background: var(--login-forest); }
   .dn-wrap { margin-bottom: 0; padding: 16px 0 28px; }
   .dn-legal { margin-top: auto; }
 }
+
+/* Thông báo thành công (vd. vừa đặt mật khẩu mới, đã gửi liên kết quên mật khẩu): nền vàng thương hiệu, chữ xanh rừng. */
+.dn-alert--ok { color: var(--login-forest); background: var(--login-gold); }

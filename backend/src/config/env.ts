@@ -15,6 +15,13 @@ export const envSchema = z.object({
   // Quét hóa đơn bằng AI (GĐ3c phần 2): model phải đọc được ảnh.
   OPENAI_VISION_MODEL: z.preprocess((value) => (value === "" ? undefined : value), z.string().default("gpt-5-mini")),
   // Upload ảnh (tùy chọn): đủ cả ba hoặc không có biến nào; không có thì API upload trả 503, phần còn lại vẫn chạy.
+  // Email (quên mật khẩu): SMTP_HOST + MAIL_FROM là đủ để gửi (SMTP_USER/SMTP_PASS khi máy chủ cần đăng nhập, vd. Gmail
+  // dùng App Password). Thiếu thì email chỉ được ghi ra log, /api/health báo email chưa cấu hình.
+  SMTP_HOST: optionalText,
+  SMTP_PORT: z.preprocess((value) => (value === "" ? undefined : value), z.coerce.number().int().min(1).max(65535).default(587)),
+  SMTP_USER: optionalText,
+  SMTP_PASS: optionalText,
+  MAIL_FROM: optionalText,
   CLOUDINARY_CLOUD_NAME: optionalText,
   CLOUDINARY_API_KEY: optionalText,
   CLOUDINARY_API_SECRET: optionalText,

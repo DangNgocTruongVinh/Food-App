@@ -14,13 +14,41 @@ export function validateAuthForm(form: AuthFormValues, mode: AuthMode): AuthForm
   const errors: AuthFormErrors = {};
   const name = form.name.trim();
   if (mode === "register" && (name.length < 2 || name.length > 80)) errors.name = "Nhập họ tên từ 2 đến 80 ký tự.";
-  const email = form.email.trim();
-  if (!email) errors.email = "Nhập email của bạn.";
-  else if (!EMAIL_PATTERN.test(email)) errors.email = "Email thiếu phần @ hoặc tên miền, ví dụ: ten@email.com.";
+  const email = emailError(form.email);
+  if (email) errors.email = email;
   if (!form.password) errors.password = "Nhập mật khẩu của bạn.";
   else if (form.password.length < 8) errors.password = "Mật khẩu cần ít nhất 8 ký tự.";
   else if (form.password.length > 72) errors.password = "Mật khẩu tối đa 72 ký tự.";
   return errors;
+}
+
+/** Lỗi ô email (dùng chung cho đăng nhập, đăng ký, quên mật khẩu); undefined khi hợp lệ. */
+export function emailError(value: string) {
+  const email = value.trim();
+  if (!email) return "Nhập email của bạn.";
+  if (!EMAIL_PATTERN.test(email)) return "Email thiếu phần @ hoặc tên miền, ví dụ: ten@email.com.";
+  return undefined;
+}
+
+export type ResetPasswordValues = { password: string; confirmPassword: string };
+export type ResetPasswordErrors = Partial<Record<keyof ResetPasswordValues, string>>;
+
+/** Đặt mật khẩu mới qua email: độ mạnh như lúc đăng ký (8–72 ký tự, khớp backend), nhập lại phải trùng. */
+export function validateResetPassword(values: ResetPasswordValues): ResetPasswordErrors {
+  const errors: ResetPasswordErrors = {};
+  if (values.password.length < 8) errors.password = "Mật khẩu cần ít nhất 8 ký tự.";
+  else if (values.password.length > 72) errors.password = "Mật khẩu tối đa 72 ký tự.";
+  if (values.confirmPassword !== values.password) errors.confirmPassword = "Nhập lại đúng mật khẩu mới.";
+  return errors;
+}
+
+/** Lỗi quên/đặt lại mật khẩu: lời của máy chủ đã nói rõ (liên kết hết hạn, quá nhiều lần, tài khoản khóa). */
+export function recoveryErrorMessage(error: unknown) {
+  if (!axios.isAxiosError(error)) return "Đã có lỗi. Thử lại sau ít phút.";
+  if (!error.response) return "Không kết nối được máy chủ. Kiểm tra mạng rồi thử lại.";
+  const { status, data } = error.response as { status: number; data?: { message?: string } };
+  if (status === 422) return "Liên kết hoặc mật khẩu chưa hợp lệ. Mở lại liên kết trong email, hoặc yêu cầu liên kết mới.";
+  return data?.message ?? "Máy chủ đang gặp lỗi. Thử lại sau ít phút.";
 }
 
 export type ChangePasswordValues = { currentPassword: string; newPassword: string; confirmPassword: string };

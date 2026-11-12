@@ -110,6 +110,7 @@ model User {
   // Lần đổi mật khẩu gần nhất (GĐ4): access token phát trước thời điểm này bị từ chối.
   passwordChangedAt DateTime?
   refreshTokens     RefreshToken[]
+  passwordResetTokens PasswordResetToken[]
   profile           NutritionProfile?
   pantryItems       PantryItem[]
   pantryTransactions PantryTransaction[]
@@ -510,4 +511,18 @@ model RefreshToken {
 
   @@index([userId])
   @@index([familyId])
+}
+
+// Quên mật khẩu (giai-doan-email): token ngẫu nhiên 32 byte gửi qua email, DB chỉ lưu SHA-256; hết hạn 30 phút, dùng một lần
+// (usedAt). Yêu cầu mới xóa các token cũ của người đó.
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
 }
