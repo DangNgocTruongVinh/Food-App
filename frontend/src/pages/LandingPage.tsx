@@ -24,7 +24,7 @@ export default function LandingPage() {
   return (
     <div className="ld-root">
       <a className="ui-skip-link" href="#noi-dung-chinh">Bỏ qua menu, tới nội dung</a>
-      <LandingHeader signedIn={signedIn} />
+      <LandingHeader />
       <main id="noi-dung-chinh" tabIndex={-1} className="ld-page">
         <LandingHero signedIn={signedIn} />
         <LandingFeatures signedIn={signedIn} />
