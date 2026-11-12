@@ -58,6 +58,9 @@ vi.mock("../../lib/prisma.js", () => {
   };
   return { prisma: client };
 });
+// Email giả lập: không gửi thật, chỉ ghi lại thư báo đổi mật khẩu.
+const mail = vi.hoisted(() => ({ send: vi.fn() }));
+vi.mock("../../services/email.service.js", () => ({ sendMailInBackground: mail.send }));
 vi.mock("../../services/account-status.service.js", () => ({
   getAccountStatus: async (id: string) => {
     const user = db.users.find((candidate) => candidate.id === id);
@@ -181,6 +184,7 @@ describe("Refresh token cookie (GĐ4)", () => {
       method: "POST", token: `Bearer ${current.body.token}`, cookie: asCookie(current.refresh), body: { currentPassword: "Sai@12345", newPassword: "Moi@123456" },
     });
     expect(wrong).toMatchObject({ status: 400, body: { message: "Mật khẩu hiện tại không đúng." } });
+    expect(mail.send).not.toHaveBeenCalled();
 
     // Token cũ phát trước lần đổi (lùi iat 1 phút để không trùng giây với lần đổi).
     const oldAccess = jwt.sign({ sub: "user-a", email: "demo@nouri.vn", iat: Math.floor(Date.now() / 1000) - 60 }, db.secret);
@@ -190,6 +194,8 @@ describe("Refresh token cookie (GĐ4)", () => {
     expect(changed.status).toBe(200);
     expect(await bcrypt.compare("Moi@123456", db.users[0].passwordHash)).toBe(true);
     expect(db.users[0].passwordChangedAt).toBeInstanceOf(Date);
+    expect(mail.send).toHaveBeenCalledOnce();
+    expect(mail.send.mock.calls[0][0]).toMatchObject({ to: "demo@nouri.vn", subject: "Mật khẩu Nouri vừa được đổi" });
     // Cả hai phiên cũ bị thu hồi; thiết bị này nhận phiên mới, giữ kiểu cookie phiên (không nhớ đăng nhập).
     expect((await refresh(other.refresh)).status).toBe(401);
     expect(cookieOf(changed.setCookie)).not.toMatch(/Max-Age/);

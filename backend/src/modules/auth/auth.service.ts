@@ -4,6 +4,8 @@ import jwt from "jsonwebtoken";
 import { env } from "../../config/env.js";
 import { prisma } from "../../lib/prisma.js";
 import { accountLockedError } from "../../middleware/auth.js";
+import { passwordChangedEmail } from "../../services/email-templates.js";
+import { sendMailInBackground } from "../../services/email.service.js";
 import { HttpError } from "../../utils/http-error.js";
 import type { ChangePasswordInput, LoginInput, RegisterInput } from "./auth.schema.js";
 import { issueRefreshToken, revokeUserRefreshTokens } from "./refresh-token.service.js";
@@ -74,5 +76,6 @@ export async function changePassword(userId: string, input: ChangePasswordInput,
     await revokeUserRefreshTokens(tx, userId, now);
     return issueRefreshToken(tx, userId, remember, undefined, now);
   });
+  sendMailInBackground(passwordChangedEmail(user, now));
   return { token: issueAccessToken(user), user: publicUser(user), refreshToken, remember };
 }
