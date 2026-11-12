@@ -17,7 +17,8 @@
     "demo:reset:dev": "tsx prisma/demo-reset.ts",
     "eval:recommend": "tsx scripts/eval-recommendation.ts",
     "eval:receipt": "tsx scripts/eval-receipt-ocr.ts",
-    "eval:mealplan": "tsx scripts/eval-meal-plan.ts"
+    "eval:mealplan": "tsx scripts/eval-meal-plan.ts",
+    "upload:recipe-photos": "tsx scripts/upload-recipe-photos.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.5.0",
