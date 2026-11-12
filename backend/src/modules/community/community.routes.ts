@@ -9,6 +9,7 @@ import {
   deleteOwnCommunityPostController,
   listCommunityPostsController,
   toggleCommunityLikeController,
+  updateOwnCommunityPostController,
 } from "./community.controller.js";
 import {
   addCommunityCommentSchema,
@@ -16,6 +17,7 @@ import {
   deleteCommunityPostSchema,
   listCommunityPostsSchema,
   toggleCommunityLikeSchema,
+  updateCommunityPostSchema,
 } from "./community.schema.js";
 
 const router = Router();
@@ -23,6 +25,7 @@ router.use(requireAuth);
 
 router.get("/", validate(listCommunityPostsSchema), asyncHandler(listCommunityPostsController));
 router.post("/", communityPostImagesUpload, validate(createCommunityPostSchema), asyncHandler(createCommunityPostController));
+router.patch("/:postId", validate(updateCommunityPostSchema), asyncHandler(updateOwnCommunityPostController));
 router.delete("/:postId", validate(deleteCommunityPostSchema), asyncHandler(deleteOwnCommunityPostController));
 router.post("/:postId/like", validate(toggleCommunityLikeSchema), asyncHandler(toggleCommunityLikeController));
 router.post("/:postId/comments", validate(addCommunityCommentSchema), asyncHandler(addCommunityCommentController));

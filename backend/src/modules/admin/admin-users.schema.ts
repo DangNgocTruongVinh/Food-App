@@ -18,6 +18,11 @@ export const setUserLockSchema = z.object({
 
 export const listModerationPostsSchema = z.object({ body: empty, params: empty, query: z.object({ page, pageSize }) });
 export const moderatePostSchema = z.object({ body: empty, params: z.object({ postId: z.string().cuid() }), query: empty });
+export const setPostVisibilitySchema = z.object({
+  body: z.object({ hidden: z.boolean() }).strict(),
+  params: z.object({ postId: z.string().cuid() }),
+  query: empty,
+});
 export const moderateCommentSchema = z.object({ body: empty, params: z.object({ commentId: z.string().cuid() }), query: empty });
 export const adminStatsSchema = z.object({ body: empty, params: empty, query: empty });
 

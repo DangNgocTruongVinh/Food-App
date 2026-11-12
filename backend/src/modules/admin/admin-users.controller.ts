@@ -1,5 +1,6 @@
 import type { Request, Response } from "express";
 import type { AuthenticatedRequest, ValidatedRequest } from "../../types/http.js";
+import { getCommunityPostForModeration, setCommunityPostHidden } from "../community/community-post-edit.service.js";
 import {
   deleteCommunityComment, deleteCommunityPost, listCommunityPostsForModeration,
 } from "../community/community.service.js";
@@ -21,6 +22,16 @@ export async function setUserLockController(req: ValidatedRequest<{ locked: bool
 export async function listModerationPostsController(req: Request, res: Response) {
   const { page, pageSize } = listModerationPostsSchema.shape.query.parse(req.query);
   res.json(await listCommunityPostsForModeration(page, pageSize));
+}
+
+/** Một bài (form "Chuyển thành công thức" điền trước từ công thức tự viết). */
+export async function getModerationPostController(req: ValidatedRequest<unknown, { postId: string }>, res: Response) {
+  res.json(await getCommunityPostForModeration(req.params.postId));
+}
+
+/** Ẩn/hiện bài vi phạm (không xóa); ghi nhật ký Admin. */
+export async function setPostVisibilityController(req: ValidatedRequest<{ hidden: boolean }, { postId: string }>, res: Response) {
+  res.json(await setCommunityPostHidden(adminId(req), req.params.postId, req.body.hidden));
 }
 
 export async function moderateDeletePostController(req: ValidatedRequest<unknown, { postId: string }>, res: Response) {

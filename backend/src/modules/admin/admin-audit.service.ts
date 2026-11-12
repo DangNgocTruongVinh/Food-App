@@ -12,7 +12,9 @@ export type AdminAuditDetails =
   | { changedFields: string[] } // RECIPE_UPDATE: tên trường đã đổi, không lưu giá trị
   | { replacedUploadedImage: boolean } // RECIPE_IMAGE_REPLACE: có thay ảnh Cloudinary cũ hay không
   | { authorId: string; imageCount: number; commentCount: number; likeCount: number; hasRecipe: boolean } // POST_DELETE
-  | { authorId: string; postId: string }; // COMMENT_DELETE
+  | { authorId: string; postId: string } // COMMENT_DELETE
+  | { authorId: string } // POST_HIDE, POST_SHOW
+  | { authorId: string; recipeId: string; recipeName: string }; // POST_PROMOTE: món mới tạo từ công thức tự viết
 
 export type AdminAuditEntry = {
   actorId: string;

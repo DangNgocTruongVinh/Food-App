@@ -136,6 +136,9 @@ enum AdminAuditAction {
   USER_UNLOCK
   POST_DELETE
   COMMENT_DELETE
+  POST_HIDE
+  POST_SHOW
+  POST_PROMOTE
 }
 
 enum AdminAuditTargetType {
@@ -173,7 +176,15 @@ model CommunityPost {
   content   String
   // Công thức có sẵn được gắn kèm (tùy chọn). Restrict: công thức đã được bài viết gắn thì không xóa hẳn được (GĐ3: chỉ ẩn).
   recipeId  String?
-  recipe    Recipe?            @relation(fields: [recipeId], references: [id], onDelete: Restrict)
+  recipe    Recipe?            @relation("CommunityPostRecipe", fields: [recipeId], references: [id], onDelete: Restrict)
+  // Công thức tự viết của thành viên (JSON: tên, khẩu phần, phút, nguyên liệu {tên, số lượng, đơn vị} nhập tự do, các bước).
+  // Không phải Recipe: không vào thực đơn, gợi ý, kho. Không đồng thời với recipeId. Kiểm tra bằng Zod (community-member-recipe.ts).
+  memberRecipe Json?
+  // Khác null: Admin ẩn bài (không hiện ở bảng tin của người khác; tác giả vẫn thấy kèm ghi chú).
+  hiddenAt  DateTime?
+  // Admin "Chuyển thành công thức": món mới tạo từ công thức tự viết. SetNull: xóa món thì bài chỉ mất liên kết.
+  promotedRecipeId String?
+  promotedRecipe   Recipe?         @relation("CommunityPostPromotedRecipe", fields: [promotedRecipeId], references: [id], onDelete: SetNull)
   images    CommunityPostImage[]
   likes     CommunityLike[]
   comments  CommunityComment[]
@@ -183,6 +194,7 @@ model CommunityPost {
   @@index([createdAt])
   @@index([authorId, createdAt])
   @@index([recipeId])
+  @@index([promotedRecipeId])
 }
 
 // Ảnh trong bài viết (tối đa 4, lưu trên Cloudinary thư mục nouri/posts, đã xóa EXIF/GPS trước khi tải lên).
@@ -380,7 +392,8 @@ model Recipe {
   hiddenAt     DateTime?
   ingredients  RecipeIngredient[]
   mealItems    MealPlanItem[]
-  communityPosts CommunityPost[]
+  communityPosts CommunityPost[] @relation("CommunityPostRecipe")
+  promotedFromPosts CommunityPost[] @relation("CommunityPostPromotedRecipe")
   createdAt    DateTime           @default(now())
   updatedAt    DateTime           @updatedAt
 

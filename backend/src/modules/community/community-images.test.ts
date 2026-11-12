@@ -8,13 +8,14 @@ import communityRoutes from "./community.routes.js";
 const mocks = vi.hoisted(() => ({
   env: {} as Record<string, string | undefined>,
   createPost: vi.fn(), findPost: vi.fn(), deletePost: vi.fn(), findRecipe: vi.fn(),
-  deleteNotifications: vi.fn(), transaction: vi.fn(),
+  deleteNotifications: vi.fn(), transaction: vi.fn(), findProfile: vi.fn(),
   uploadStream: vi.fn(), destroy: vi.fn(),
   uploadedBuffers: [] as Buffer[],
 }));
 
 vi.mock("../../config/env.js", () => ({ env: mocks.env }));
 vi.mock("../../lib/prisma.js", () => ({ prisma: {
+  nutritionProfile: { findUnique: mocks.findProfile },
   communityPost: { create: mocks.createPost, findUnique: mocks.findPost, delete: mocks.deletePost },
   recipe: { findUnique: mocks.findRecipe },
   notification: { deleteMany: mocks.deleteNotifications },
