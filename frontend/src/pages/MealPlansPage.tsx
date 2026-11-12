@@ -19,7 +19,7 @@ import { ShoppingListCard } from "../components/meal-plans/ShoppingListCard";
 import { EmptyState, ErrorState, Toast, useConfirm } from "../components/ui";
 import { aiQueries } from "../features/ai/ai.queries";
 import {
-  dayNutrition, generateSourceLabel, initialDayIndex, latestMealPlanId, mealPlanDeleteConfirm, mealPlanPath,
+  dayNutrition, initialDayIndex, latestMealPlanId, mealPlanDeleteConfirm, mealPlanPath,
   nextMealPlanIdAfterDelete, planTargets, selectMealPlanDay, summarizeMealPlan, todayDayIndex,
 } from "../features/meal-plans/meal-plans.logic";
 import {
@@ -27,6 +27,8 @@ import {
 } from "../features/meal-plans/meal-plans.queries";
 import { profileQueries } from "../features/profile/profile.queries";
 import { useMealConsumption } from "../features/meal-plans/useMealConsumption";
+import { useAIMealPlanJob } from "../features/meal-plans/useAIMealPlanJob";
+import { AIMealPlanJobNotice } from "../components/meal-plans/AIMealPlanJobNotice";
 import { useShoppingPurchase } from "../features/meal-plans/useShoppingPurchase";
 import type { MealPlan, MealPlanItem } from "../types";
 import { type DateDraftStatus, formatDisplayDate } from "../utils/date";
@@ -110,6 +112,7 @@ export default function MealPlansPage() {
     },
     onError: (err) => setError(getApiError(err)),
   });
+  const aiJob = useAIMealPlanJob(startDate);
   const activate = useMutation({
     ...mealPlanMutations.updateStatus(),
     onSuccess: (plan) => { invalidateMealPlanQueries(queryClient, true); setToast(`Đã áp dụng “${plan.name}”.`); },
@@ -182,12 +185,13 @@ export default function MealPlansPage() {
       onSubmit={() => generate.mutate()}
       pending={generate.isPending}
       aiAvailable={aiStatus?.available}
+      onSubmitAI={() => aiJob.start.mutate()}
+      aiBusy={aiJob.start.isPending || aiJob.running}
     />
   );
   const generatingNotice = generate.isPending && (
     <p className="ui-notice" role="status">
-      Đang tạo thực đơn 7 ngày từ {formatDisplayDate(startDate)} ({generateSourceLabel(aiStatus?.available).toLowerCase()}).
-      {aiStatus?.available ? " AI có thể mất tới vài chục giây." : " Thường xong trong vài giây."}
+      Đang tạo thực đơn 7 ngày từ {formatDisplayDate(startDate)} bằng thuật toán gợi ý, thường xong trong vài giây.
     </p>
   );
   const messages = (
@@ -195,6 +199,8 @@ export default function MealPlansPage() {
       {error && <ErrorState message={error} />}
       {notice && <p className="ui-notice" role="status">{notice}</p>}
       {generatingNotice}
+      {aiJob.startError && <ErrorState message={aiJob.startError} />}
+      {aiJob.job && <AIMealPlanJobNotice job={aiJob.job} now={aiJob.now} onDismiss={aiJob.dismiss} onRetry={() => aiJob.start.mutate()} />}
     </>
   );
   const toastRegion = <Toast message={toast} onDone={clearToast} />;

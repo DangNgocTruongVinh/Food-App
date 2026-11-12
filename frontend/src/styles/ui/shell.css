@@ -226,7 +226,7 @@ body:has(.ui-shell) { background: var(--bg); }
   .account-menu__chevron { display: none; }
 }
 
-/* Footer (đồng bộ footer trang chủ 11/11/2026): nền xanh rừng thương hiệu (giống nhau ở chế độ sáng/tối), gọn một hàng. */
+/* Footer (đồng bộ footer trang chủ 11/11/2026): nền xanh rừng thương hiệu, gọn một hàng. */
 .site-footer { color: var(--home-ivory); background: var(--home-forest-deep); font-family: var(--font-sans); }
 .site-footer :focus-visible { outline: 2px solid var(--home-gold); outline-offset: 3px; }
 .site-footer__inner {

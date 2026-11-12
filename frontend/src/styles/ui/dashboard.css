@@ -2,7 +2,7 @@
  * Trang Tổng quan — làm lại 11/11/2026 (lượt 2): "báo ẩm thực mỗi ngày", bố cục riêng, không lặp hero trang chủ. DESIGN.md mục 14.
  * Nhịp trang: đầu trang kiểu trang bìa (dòng ngày, "Hôm nay nấu gì?", Món của hôm nay, ảnh lớn khung hình lá) → dải số liệu
  * ngăn bằng đường mảnh → Hôm nay (các bữa | dinh dưỡng + nước trên nền dịu) → dải Tủ bếp xanh rừng → Gợi ý cho bạn.
- * Chỉ dùng token; --home-* là màu thương hiệu (giống nhau ở cả chế độ sáng/tối), phần còn lại đổi theo chế độ.
+ * Chỉ dùng token; --home-* là màu thương hiệu của trang chủ.
  */
 
 /* Khung nội dung: --content-max (tokens.css), dùng chung với thanh menu, footer và mọi trang trong ứng dụng. */

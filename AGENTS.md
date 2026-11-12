@@ -44,5 +44,7 @@ Từ 12/11/2026 (sau nhánh `ra-soat-cuoi`): **chỉ sửa lỗi**, trừ đánh
   tất cả đều đạt.
 - Giao diện dùng tiếng Việt, tuân luật “không giống AI” trong DESIGN.md:
   không emoji, không gradient, không chữ tiếng Anh.
+- Chỉ có giao diện sáng (bỏ chế độ tối 12/11/2026): không thêm token tối,
+  `data-theme`, `prefers-color-scheme` hay nút chuyển sáng/tối (giữ khớp CLAUDE.md).
 - Cuối mỗi việc ghi 3–6 dòng vào `docs/lich-su-giai-doan.md`, mục
   “Việc do Codex làm”, gồm việc, commit và số test.

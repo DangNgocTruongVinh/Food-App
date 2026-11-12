@@ -9,6 +9,7 @@ import {
   deleteMealPlan, generateWeeklyPlan, getMealPlan, listMealPlans, updateMealPlanStatus,
 } from "./meal-plans.service.js";
 import { swapMealItem } from "./meal-swap.service.js";
+import { currentMealPlanJob, startMealPlanJob } from "./meal-plan-jobs.js";
 import { addMealPlanItem, deleteMealPlanItem } from "./meal-plan-items.service.js";
 import { updateShoppingPurchased } from "./shopping-purchase.service.js";
 
@@ -29,7 +30,17 @@ export async function generateMealPlanController(
   req: ValidatedRequest<GenerateMealPlanInput>,
   res: Response,
 ) {
-  res.status(201).json(await generateWeeklyPlan(authenticatedUserId(req), req.body.startDate));
+  const userId = authenticatedUserId(req);
+  if (req.body.mode === "ai") {
+    res.status(202).json(startMealPlanJob(userId, req.body.startDate));
+    return;
+  }
+  res.status(201).json(await generateWeeklyPlan(userId, req.body.startDate));
+}
+
+/** Việc "Tạo bằng AI" gần nhất của người dùng (đang chạy / xong / lỗi) hoặc null. */
+export async function currentMealPlanJobController(req: Request, res: Response) {
+  res.json(currentMealPlanJob(authenticatedUserId(req)));
 }
 
 export async function addMealPlanItemController(

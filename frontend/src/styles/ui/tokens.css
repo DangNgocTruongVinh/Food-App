@@ -1,14 +1,12 @@
 /*
  * Token giao diện mới (docs/design/DESIGN.md, mục 4–8). CSS của trang/thành phần mới chỉ dùng biến ở đây,
- * không viết mã màu cứng. Chế độ đặt bằng data-theme trên <html> (script trong index.html, trước khi vẽ trang);
- * đặt data-theme trên một phần tử con thì vùng đó dùng bộ màu tương ứng (trang /dev/ui hiện cả hai chế độ).
- * --action: nền (nút chính, chip đang chọn); --action-text: chữ, liên kết, viền/outline focus (chế độ tối #2f725d
- * làm chữ trên nền tối chỉ đạt 2.9:1). --action-hover tối #3a8570 → #3a8270 để chữ trắng đạt 4.5:1.
+ * không viết mã màu cứng. Chỉ có giao diện sáng (bỏ chế độ tối 12/11/2026, xem docs/han-che.md): color-scheme: light,
+ * không theo prefers-color-scheme của hệ điều hành.
+ * --action: nền (nút chính, chip đang chọn); --action-text: chữ, liên kết, viền/outline focus.
  * Bảng đo: docs/design/contrast.md (test: src/features/ui/contrast.test.ts).
  */
 
-:root,
-[data-theme="light"] {
+:root {
   --bg: #fbfaf6;
   --surface: #ffffff;
   --surface-2: #f3f1ea;
@@ -37,37 +35,6 @@
   --home-line: #dce3da;
   --home-soft: #e6ece4;
   color-scheme: light;
-}
-
-[data-theme="dark"] {
-  --bg: #111814;
-  --surface: #18211c;
-  --surface-2: #202b25;
-  --ink: #f2efe7;
-  --ink-2: #cdd1c7;
-  --muted: #a9b1a6;
-  --line: #2a352f;
-  --action: #2f725d;
-  --action-hover: #3a8270;
-  --action-text: #8fc2ae;
-  --on-action: #ffffff;
-  --accent: #9ccb8f;
-  --warn: #f0a070;
-  --warn-bg: #2e231c;
-  --track: #2a352f;
-  --tag-bg: #1f3a2c;
-  --border-input: #3a4740;
-  --focus-ring: #dff184;
-  --dot: #ff8a52;
-  --shadow-overlay: 0 12px 32px rgba(0, 0, 0, .4);
-  --backdrop: rgba(0, 0, 0, .6);
-  --home-bg: #0f2a21;
-  --home-surface: #143629;
-  --home-ink: #faf8f2;
-  --home-ink-2: #b9c8b7;
-  --home-line: #2b4b3f;
-  --home-soft: #1b4234;
-  color-scheme: dark;
 }
 
 :root {
@@ -123,8 +90,8 @@
 }
 
 /*
- * Trang chủ công khai (Landing, làm lại 10/11/2026): --home-* đổi theo chế độ sáng/tối (khai báo ở hai khối trên);
- * các màu thương hiệu dưới đây giống nhau ở cả hai chế độ (hero, dải mời cuối trang, footer luôn nền xanh rừng).
+ * Trang chủ công khai (Landing, làm lại 10/11/2026): --home-* nền/chữ khai báo ở khối :root đầu tệp;
+ * các màu thương hiệu dưới đây dùng cho hero, dải mời cuối trang, footer (luôn nền xanh rừng).
  * Tương phản: ivory/forest 11,0:1; sage/forest 5,9:1; forest/gold 8,9:1; ivory/forest-deep 12,8:1.
  */
 :root {

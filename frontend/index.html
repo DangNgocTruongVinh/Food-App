@@ -6,18 +6,8 @@
     <meta name="theme-color" content="#173f32" />
     <meta name="description" content="Nouri — trợ lý dinh dưỡng AI giúp bạn ăn ngon, sống khỏe và lập kế hoạch bữa ăn cá nhân hóa." />
     <title>Nouri — Ăn ngon mỗi ngày, sống khỏe dài lâu</title>
-    <script>
-      // Đặt chế độ sáng/tối trước khi vẽ trang (không nháy màu). Cùng khóa với src/features/theme/theme.logic.ts.
-      (function () {
-        var theme = "light";
-        try {
-          var stored = window.localStorage.getItem("nouri.theme");
-          if (stored === "light" || stored === "dark") theme = stored;
-        } catch (error) {}
-        document.documentElement.setAttribute("data-theme", theme);
-        document.documentElement.style.colorScheme = theme;
-      })();
-    </script>
+    <!-- Chỉ có giao diện sáng: trình duyệt không tự đổi ô nhập/thanh cuộn sang tối theo hệ điều hành. -->
+    <meta name="color-scheme" content="light" />
     <link rel="preconnect" href="https://res.cloudinary.com" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />

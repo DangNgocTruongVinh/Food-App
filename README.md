@@ -43,8 +43,10 @@ Cần: **Docker Desktop** (có Docker Compose), **Node.js 20+** và npm (để c
 2. Tạo file biến môi trường ở thư mục gốc: sao chép `.env.example` thành `.env` rồi điền. **Không commit `.env`.**
    - Bắt buộc: `POSTGRES_PASSWORD` (chỉ chữ và số), `JWT_SECRET` (chuỗi ngẫu nhiên ≥ 32 ký tự).
    - Nên có: `ADMIN_EMAIL`, `ADMIN_PASSWORD` (seed tạo tài khoản Admin; không có thì không có Admin).
-   - Tùy chọn: `OPENAI_API_KEY` (thực đơn/chat/quét hóa đơn bằng AI), `CLOUDINARY_*` (tải ảnh), `SMTP_*` + `MAIL_FROM` (email),
-     `DEMO_EMAIL`/`DEMO_PASSWORD` (chỉ cho script Playwright). Ý nghĩa từng biến ghi ngay trong `.env.example`.
+   - Tùy chọn: `OPENAI_API_KEY` (thực đơn/chat/quét hóa đơn bằng AI), `CLOUDINARY_*` (tải ảnh), `SMTP_*` + `MAIL_FROM` (email).
+   - Cho script Playwright (`e2e/acceptance/`): `DEMO_EMAIL`, `DEMO_PASSWORD` = email và mật khẩu tài khoản demo (mục **Tài khoản**
+     bên dưới); ứng dụng không đọc hai biến này, chỉ script đọc. Thiếu thì script dừng và báo tên biến.
+   - Ý nghĩa từng biến ghi ngay trong `.env.example`.
 
 3. Build và chạy (migration cơ sở dữ liệu tự áp khi backend khởi động):
 
@@ -71,8 +73,8 @@ Cần: **Docker Desktop** (có Docker Compose), **Node.js 20+** và npm (để c
 **Ảnh món:** seed chưa có ảnh món thật; Admin tải ảnh ở *Admin → Công thức → Sửa*, hoặc dùng `npm run upload:recipe-photos`
 (cần `CLOUDINARY_*`, xem [docs/anh-mon-can-tim.md](docs/anh-mon-can-tim.md)).
 
-Không có `OPENAI_API_KEY`: thực đơn dùng bộ tạo chấm điểm, chat AI báo chưa cấu hình, quét hóa đơn dùng Tesseract. OpenAI lỗi
-hoặc quá 120 giây khi tạo thực đơn thì backend cũng tự chuyển sang bộ tạo dự phòng.
+"Tạo thực đơn" mặc định dùng bộ tạo thuật toán (có kết quả ngay); "Tạo bằng AI (1–2 phút)" chỉ hiện khi có `OPENAI_API_KEY`, chạy
+nền, AI lỗi hoặc quá 120 giây thì tự dùng bộ tạo thuật toán. Không có key: chat AI báo chưa cấu hình, quét hóa đơn dùng Tesseract.
 
 ### Chạy khi phát triển (không build Docker cho frontend/backend)
 
@@ -128,7 +130,7 @@ Cần Docker đang chạy (app `http://localhost:8080`, API `http://localhost:40
 ```bash
 npm run e2e:acceptance -- demo-flow             # luồng demo: đăng nhập → kho → quét hóa đơn (dự phòng) → thực đơn → đã ăn
                                                 #   → báo cáo → gợi ý → tìm kiếm → Admin. Tạo 1 thực đơn: chạy demo:reset sau đó.
-npm run e2e:acceptance -- screenshots docs/bao-cao/anh-man-hinh   # ảnh màn hình cho quyển (chạy ngay sau demo:reset)
+npm run e2e:acceptance -- screenshots docs/bao-cao/anh-man-hinh   # ảnh màn hình cho quyển, WebP (chạy ngay sau demo:reset)
 npm run e2e:acceptance -- landing-header-check  # đo header trang chủ 1024–1279px khi đã đăng nhập (không chụp ảnh)
 ```
 

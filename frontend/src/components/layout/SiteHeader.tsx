@@ -4,13 +4,13 @@ import { PRIMARY_NAV } from "../../features/layout/layout.logic";
 import { useDisclosure } from "../../features/layout/useDisclosure";
 import type { User } from "../../types";
 import NotificationCenter from "../notifications/NotificationCenter";
-import { NouriWordmark, ThemeToggle } from "../ui";
+import { NouriWordmark } from "../ui";
 import { AccountMenu } from "./AccountMenu";
 
 const navClass = ({ isActive }: { isActive: boolean }) => (isActive ? "site-nav__link is-active" : "site-nav__link");
 
 /**
- * Menu trên (DESIGN.md mục 13, đồng bộ trang chủ 11/11/2026): logo chiếc bát, liên kết chữ phẳng ở giữa, chế độ tối, chuông, tài khoản.
+ * Menu trên (DESIGN.md mục 13, đồng bộ trang chủ 11/11/2026): logo chiếc bát, liên kết chữ phẳng ở giữa, chuông, tài khoản.
  * ≤ 1200px nhóm liên kết thu vào nút "Menu" (mở danh sách ngay dưới, đóng bằng Esc hoặc khi chuyển trang).
  */
 export function SiteHeader({ user, onLogout }: { user: User | null; onLogout: () => void }) {
@@ -27,7 +27,6 @@ export function SiteHeader({ user, onLogout }: { user: User | null; onLogout: ()
         </nav>
 
         <div className="site-header__actions">
-          <ThemeToggle className="site-header__icon" />
           <NotificationCenter />
           <AccountMenu user={user} onLogout={onLogout} />
           <button

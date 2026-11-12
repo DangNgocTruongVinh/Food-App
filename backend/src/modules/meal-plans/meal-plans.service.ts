@@ -6,14 +6,22 @@ import { visibleRecipeWhere } from "../../services/recipe-visibility.js";
 import { foodCategoryOf, withFoodCategory } from "../../services/food-category.js";
 import { requiredQuantity } from "../../services/pantry-consumption.js";
 import { HttpError } from "../../utils/http-error.js";
-import { generatePlanWithAI } from "../ai/ai.service.js";
+import { generatePlanWithAI, getAIStatus } from "../ai/ai.service.js";
 import { loadUserInteractions } from "../recommendation/interaction-loader.js";
 import { recipeFit, type SafetyProfile } from "../recommendation/safety.js";
 import { reconcileAIPlan } from "./meal-plan-generator.js";
 import { scoredPlan } from "./meal-plan-scorer.js";
 import { planSuggestions, type SuggestionProfile } from "./meal-plan-suggestions.js";
 
-export async function generateWeeklyPlan(userId: string, startDateInput: string) {
+/** Vì sao thực đơn "Tạo bằng AI" phải dùng bộ tạo thuật toán: chưa có key, OpenAI quá 120 giây, OpenAI lỗi, kết quả AI hỏng quá nửa. */
+export type PlanFallbackReason = "AI_NOT_CONFIGURED" | "AI_TIMEOUT" | "AI_ERROR" | "AI_INVALID";
+
+/**
+ * Tạo thực đơn 7 ngày. Mặc định (useAI = false) dùng bộ tạo thuật toán `scoredPlan` (R8): có kết quả ngay, không gọi OpenAI.
+ * useAI = true (chỉ chạy nền qua meal-plan-jobs.ts): gọi OpenAI, kết quả luôn qua reconcileAIPlan; lỗi/hết giờ/hỏng → thuật toán.
+ * Trả kèm `generation` (không lưu DB) để giao diện báo đã dùng cách nào và vì sao.
+ */
+export async function generateWeeklyPlan(userId: string, startDateInput: string, { useAI = false }: { useAI?: boolean } = {}) {
   const [user, pantry, allRecipes, history] = await Promise.all([
     prisma.user.findUnique({ where: { id: userId }, include: { profile: true } }),
     prisma.pantryItem.findMany({ where: { userId, quantity: { gt: 0 } }, orderBy: { expiryDate: "asc" } }),
@@ -45,14 +53,22 @@ export async function generateWeeklyPlan(userId: string, startDateInput: string)
   };
 
   const startDate = new Date(`${startDateInput}T00:00:00.000Z`);
-  // OpenAI lỗi hoặc quá 120 giây: không báo lỗi cho người dùng, chuyển sang bộ tạo dự phòng như khi chưa có key.
-  const aiPlan = await generatePlanWithAI(aiContext).catch((error: unknown) => {
-    console.warn("Tạo thực đơn bằng OpenAI lỗi, dùng bộ tạo dự phòng:", error instanceof Error ? error.message : error);
-    return null;
-  });
+  let fallbackReason: PlanFallbackReason | null = null;
+  let aiPlan: Awaited<ReturnType<typeof generatePlanWithAI>> = null;
+  if (useAI && !getAIStatus().available) fallbackReason = "AI_NOT_CONFIGURED";
+  else if (useAI) {
+    // OpenAI lỗi hoặc quá 120 giây: không báo lỗi, chuyển sang bộ tạo thuật toán và ghi lý do.
+    aiPlan = await generatePlanWithAI(aiContext).catch((error: unknown) => {
+      const message = error instanceof Error ? error.message : String(error);
+      console.warn("Tạo thực đơn bằng OpenAI lỗi, dùng bộ tạo thuật toán:", message);
+      fallbackReason = /timed? ?out|timeout|abort/i.test(message) ? "AI_TIMEOUT" : "AI_ERROR";
+      return null;
+    });
+  }
   // Kết quả OpenAI luôn qua reconcileAIPlan (đúng danh sách đã lọc, đúng bữa); không có key, hoặc AI hỏng quá nửa số bữa → bộ
   // tạo chấm điểm (thuật toán 3 + 0,3·thuật toán 1, kho ảo, không lặp trong 3 ngày).
   const reconciled = aiPlan ? reconcileAIPlan(aiPlan, recipes, pantryNames, mealsPerDay, dietType) : null;
+  if (useAI && !fallbackReason && (!reconciled || reconciled.source === "fallback")) fallbackReason = "AI_INVALID";
   const { plan: rawPlan, source } = reconciled && reconciled.source !== "fallback"
     ? reconciled
     : { plan: scoredPlan({ recipes, catalog: allRecipes, profile, mealsPerDay, pantry, history, startDate }), source: "fallback" as const };
@@ -111,7 +127,7 @@ export async function generateWeeklyPlan(userId: string, startDateInput: string)
     },
     include: planInclude,
   });
-  return forReading(created, profile);
+  return { ...forReading(created, profile), generation: { mode: useAI ? "ai" as const : "algorithm" as const, fallbackReason } };
 }
 
 export const planInclude = {

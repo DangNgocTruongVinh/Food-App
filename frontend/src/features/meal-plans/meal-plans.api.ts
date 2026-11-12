@@ -16,8 +16,26 @@ export async function getMealPlan(id: string) {
   return (await api.get<MealPlan>(`/meal-plans/${id}`)).data;
 }
 
+/** Vì sao "Tạo bằng AI" phải dùng bộ tạo thuật toán (backend PlanFallbackReason). */
+export type PlanFallbackReason = "AI_NOT_CONFIGURED" | "AI_TIMEOUT" | "AI_ERROR" | "AI_INVALID";
+/** Việc "Tạo bằng AI" chạy nền (backend meal-plan-jobs.ts). */
+export interface MealPlanJob {
+  id: string; status: "RUNNING" | "DONE" | "FAILED"; startDate: string; startedAt: string; finishedAt: string | null;
+  planId: string | null; fallbackReason: PlanFallbackReason | null; error: string | null;
+}
+
+/** Mặc định: bộ tạo thuật toán, trả thực đơn ngay. */
 export async function generateMealPlan(startDate: string) {
   return (await api.post<MealPlan>("/meal-plans/generate", { startDate })).data;
+}
+
+/** "Tạo bằng AI (1–2 phút)": backend trả ngay việc nền (202); hỏi trạng thái bằng getMealPlanJob. */
+export async function startAIMealPlan(startDate: string) {
+  return (await api.post<MealPlanJob>("/meal-plans/generate", { startDate, mode: "ai" })).data;
+}
+
+export async function getMealPlanJob() {
+  return (await api.get<MealPlanJob | null>("/meal-plans/generate/current")).data;
 }
 
 export async function addMealPlanItem({ planId, dayId, mealType, recipeId, servings }: AddMealPlanItemInput) {

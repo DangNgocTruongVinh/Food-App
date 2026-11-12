@@ -2,7 +2,7 @@ import { CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, X
 import type { AdminStats } from "../../features/admin/admin.api";
 import { STATS_SERIES, weekLabel } from "../../features/admin/admin-stats.logic";
 
-// Màu biểu đồ theo DESIGN.md mục 4 (token, đổi theo chế độ sáng/tối); thêm kiểu nét và hình điểm để không phân biệt chỉ bằng màu.
+// Màu biểu đồ theo DESIGN.md mục 4 (token); thêm kiểu nét và hình điểm để không phân biệt chỉ bằng màu.
 const SERIES_STYLE: Record<(typeof STATS_SERIES)[number]["key"], { color: string; dash?: string; dot: "circle" | "square" | "diamond" }> = {
   users: { color: "var(--accent)", dot: "circle" },
   mealPlans: { color: "var(--warn)", dash: "6 4", dot: "square" },

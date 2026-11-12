@@ -1,12 +1,10 @@
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { CONTRAST_PAIRS, contrastRatio, hexToRgb, readColorTokens } from "./contrast.logic";
 
 const tokensCss = readFileSync(new URL("../../styles/ui/tokens.css", import.meta.url), "utf8");
-const themes = {
-  light: readColorTokens(tokensCss, '[data-theme="light"]'),
-  dark: readColorTokens(tokensCss, '[data-theme="dark"]'),
-};
+// Chỉ có giao diện sáng: khối token màu là khối :root đầu tiên của tokens.css.
+const light = readColorTokens(tokensCss, ":root");
 
 describe("contrast helpers", () => {
   it("parses hex colors (3 and 6 digits) and rejects anything else", () => {
@@ -23,22 +21,29 @@ describe("contrast helpers", () => {
 });
 
 describe("design tokens (DESIGN.md mục 4)", () => {
-  it("defines the same color tokens in both themes, matching the DESIGN.md table", () => {
-    expect(Object.keys(themes.dark).sort()).toEqual(Object.keys(themes.light).sort());
-    expect(themes.light).toMatchObject({ bg: "#fbfaf6", surface: "#ffffff", ink: "#17302a", action: "#15483c", accent: "#2f725d", warn: "#a43c18" });
-    expect(themes.dark).toMatchObject({ bg: "#111814", surface: "#18211c", ink: "#f2efe7", action: "#2f725d", accent: "#9ccb8f", warn: "#f0a070" });
+  it("defines the color tokens of the light UI, matching the DESIGN.md table", () => {
+    expect(light).toMatchObject({ bg: "#fbfaf6", surface: "#ffffff", ink: "#17302a", action: "#15483c", accent: "#2f725d", warn: "#a43c18" });
   });
 
-  it.each(["light", "dark"] as const)("every text/background pair reaches its minimum contrast in %s mode", (theme) => {
+  it("chỉ có giao diện sáng: không CSS nào còn chế độ tối, tokens đặt color-scheme: light", () => {
+    const stylesDir = new URL("../../styles/ui/", import.meta.url);
+    const code = (css: string) => css.replace(/\/\*[\s\S]*?\*\//g, ""); // bỏ chú thích, chỉ kiểm mã
+    const offenders = readdirSync(stylesDir).filter((file) => file.endsWith(".css"))
+      .filter((file) => /data-theme|prefers-color-scheme|color-scheme:\s*dark/.test(code(readFileSync(new URL(file, stylesDir), "utf8"))));
+    expect(offenders).toEqual([]);
+    expect(code(tokensCss)).toMatch(/:root\s*\{[^}]*color-scheme:\s*light/);
+  });
+
+  it("every text/background pair reaches its minimum contrast", () => {
     const failures = CONTRAST_PAIRS
-      .map((pair) => ({ ...pair, ratio: contrastRatio(themes[theme][pair.fg], themes[theme][pair.bg]) }))
+      .map((pair) => ({ ...pair, ratio: contrastRatio(light[pair.fg], light[pair.bg]) }))
       .filter((pair) => pair.ratio < pair.min)
       .map((pair) => `${pair.fg} / ${pair.bg}: ${pair.ratio.toFixed(2)} < ${pair.min}`);
     expect(failures).toEqual([]);
   });
 });
 
-// Trang Đăng nhập / Đăng ký: bộ màu riêng --login-* (một khối :root trong tokens.css, giống nhau ở cả hai chế độ).
+// Trang Đăng nhập / Đăng ký: bộ màu riêng --login-* (một khối :root riêng trong tokens.css).
 function readLoginTokens(css: string) {
   const at = css.indexOf("--login-forest:");
   if (at < 0) throw new Error("Không tìm thấy token --login-*");
@@ -65,7 +70,7 @@ describe("login page colors (WCAG AA trên nền xanh đậm)", () => {
   });
 });
 
-// Trang chủ công khai: --home-* đổi theo chế độ (khai báo trong hai khối theme) + màu thương hiệu cố định (khối :root riêng).
+// Trang chủ công khai: --home-* nền/chữ (khối :root đầu tệp) + màu thương hiệu (khối :root riêng).
 function readHomeBrandTokens(css: string) {
   const at = css.indexOf("--home-forest:");
   if (at < 0) throw new Error("Không tìm thấy token --home-forest");
@@ -74,8 +79,8 @@ function readHomeBrandTokens(css: string) {
 }
 
 describe("home page colors (WCAG AA)", () => {
-  it.each(["light", "dark"] as const)("text on page, card and soft backgrounds reaches 4.5:1 in %s mode", (theme) => {
-    const t = themes[theme];
+  it("text on page, card and soft backgrounds reaches 4.5:1", () => {
+    const t = light;
     const pairs = [["home-ink", "home-bg"], ["home-ink", "home-surface"], ["home-ink", "home-soft"],
       ["home-ink-2", "home-bg"], ["home-ink-2", "home-surface"], ["home-ink-2", "home-soft"]];
     const failures = pairs.map(([fg, bg]) => ({ fg, bg, ratio: contrastRatio(t[fg], t[bg]) })).filter((pair) => pair.ratio < 4.5)

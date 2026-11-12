@@ -42,10 +42,6 @@ body:has(.ad-shell) { background: var(--bg); }
 .ad-nav__link { display: flex; gap: var(--space-3); width: 100%; min-height: var(--control-h); }
 .ad-nav__link svg { width: 20px; height: 20px; flex: 0 0 auto; stroke-width: 1.75; }
 .ad-sidebar__foot { display: grid; gap: var(--space-3); margin-top: auto; padding-top: var(--space-4); border-top: 1px solid var(--line); }
-.ad-sidebar__theme { display: flex; align-items: center; justify-content: space-between; padding: 0 var(--space-2); color: var(--ink-2); font-size: var(--fs-small); }
-.ad-sidebar__icon,
-.ad-sidebar__icon[aria-pressed="true"] { border-color: transparent; color: var(--ink); background: transparent; }
-.ad-sidebar__icon:hover { background: var(--home-soft); }
 .ad-account { display: flex; align-items: center; gap: var(--space-3); min-width: 0; padding: 0 var(--space-2); }
 .ad-account__who { display: grid; min-width: 0; }
 .ad-account__name { color: var(--ink); font-size: var(--fs-small); font-weight: 600; }

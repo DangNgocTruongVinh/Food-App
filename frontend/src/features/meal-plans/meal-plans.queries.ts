@@ -2,7 +2,8 @@ import { mutationOptions, queryOptions, type QueryClient } from "@tanstack/react
 import { retryUnlessClientError } from "../../api/query-client";
 import { queryKeys } from "../../api/query-keys";
 import {
-  addMealPlanItem, deleteMealPlan, deleteMealPlanItem, generateMealPlan, getMealPlan, listMealPlans, swapMealItem, updateMealPlanStatus,
+  addMealPlanItem, deleteMealPlan, deleteMealPlanItem, generateMealPlan, getMealPlan, getMealPlanJob, listMealPlans, startAIMealPlan, swapMealItem,
+  updateMealPlanStatus,
 } from "./meal-plans.api";
 import type { MealPlan } from "../../types";
 
@@ -13,10 +14,17 @@ export const mealPlanQueries = {
     queryFn: () => getMealPlan(id),
     retry: retryUnlessClientError,
   }),
+  /** Việc "Tạo bằng AI": hỏi lại mỗi 3 giây khi đang chạy (kể cả khi người dùng vừa quay lại trang). */
+  aiJob: () => queryOptions({
+    queryKey: queryKeys.mealPlans.aiJob,
+    queryFn: getMealPlanJob,
+    refetchInterval: (query) => (query.state.data?.status === "RUNNING" ? 3000 : false),
+  }),
 };
 
 export const mealPlanMutations = {
   generate: (startDate: string) => mutationOptions({ mutationFn: () => generateMealPlan(startDate) }),
+  startAI: (startDate: string) => mutationOptions({ mutationFn: () => startAIMealPlan(startDate) }),
   addItem: () => mutationOptions({ mutationFn: addMealPlanItem }),
   removeItem: () => mutationOptions({ mutationFn: deleteMealPlanItem }),
   updateStatus: () => mutationOptions({ mutationFn: updateMealPlanStatus }),

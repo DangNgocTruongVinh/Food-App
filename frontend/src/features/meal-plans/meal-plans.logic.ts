@@ -1,3 +1,4 @@
+import type { MealPlanJob, PlanFallbackReason } from "./meal-plans.api";
 import type { MealPlan, MealPlanDay, MealPlanItem, MealPlanStatus, MealType, NutritionProfile, ShoppingItem } from "../../types";
 import { FOOD_CATEGORIES } from "../../utils/food-categories";
 
@@ -177,9 +178,34 @@ export function mealPlanSourceLabel(aiGenerated: boolean) {
   return aiGenerated ? "Tạo bởi AI" : "Thuật toán gợi ý";
 }
 
-/** Nguồn sẽ dùng khi bấm "Tạo thực đơn": chỉ nhắc tới AI khi backend xác nhận đã cấu hình OpenAI. */
-export function generateSourceLabel(aiAvailable: boolean | undefined) {
-  return mealPlanSourceLabel(Boolean(aiAvailable));
+const FALLBACK_TEXT: Record<PlanFallbackReason, string> = {
+  AI_NOT_CONFIGURED: "máy chủ chưa cấu hình AI",
+  AI_TIMEOUT: "AI quá 2 phút chưa trả lời",
+  AI_ERROR: "AI đang gặp lỗi",
+  AI_INVALID: "kết quả AI không hợp lệ",
+};
+
+/** Số giây đã chạy của việc nền (không âm khi lệch đồng hồ). */
+export function aiJobElapsedSeconds(job: Pick<MealPlanJob, "startedAt">, now: number) {
+  return Math.max(0, Math.round((now - Date.parse(job.startedAt)) / 1000));
+}
+
+/** Nội dung thông báo của việc "Tạo bằng AI" theo trạng thái. */
+export function aiJobMessage(job: MealPlanJob, now: number) {
+  if (job.status === "RUNNING") {
+    const seconds = aiJobElapsedSeconds(job, now);
+    const elapsed = `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`;
+    return `Đang tạo thực đơn bằng AI (đã chạy ${elapsed}, thường 1–2 phút). Bạn có thể rời trang, Nouri sẽ gửi thông báo khi xong.`;
+  }
+  if (job.status === "FAILED") return job.error ?? "Chưa tạo được thực đơn. Hãy thử lại.";
+  return job.fallbackReason
+    ? `Không dùng được AI (${FALLBACK_TEXT[job.fallbackReason]}) nên Nouri đã tạo thực đơn bằng thuật toán.`
+    : "Thực đơn AI đã sẵn sàng.";
+}
+
+/** Tiến trình ước tính 0–95% theo thời gian (AI không báo tiến độ thật; tối đa 120 giây rồi chuyển thuật toán). */
+export function aiJobProgress(job: Pick<MealPlanJob, "startedAt">, now: number) {
+  return Math.min(95, Math.round((aiJobElapsedSeconds(job, now) / 120) * 100));
 }
 
 export function generateMealPlanLabel(pending: boolean) {

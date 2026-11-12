@@ -4,10 +4,10 @@ import { useAuth } from "../../contexts/AuthContext";
 import { loginPath } from "../../features/auth/auth.logic";
 import { LANDING_SECTIONS } from "../../features/landing/landing.data";
 import { useDisclosure } from "../../features/layout/useDisclosure";
-import { NouriWordmark, ThemeToggle } from "../ui";
+import { NouriWordmark } from "../ui";
 
 /**
- * Menu trên của trang chủ: logo, liên kết neo tới các phần, chế độ sáng/tối, Đăng nhập + Đăng ký.
+ * Menu trên của trang chủ: logo, liên kết neo tới các phần, Đăng nhập + Đăng ký.
  * Đã có phiên ("Giữ tôi đăng nhập"): "Xin chào, <tên>" + "Về Tổng quan" + "Đăng xuất" để người dùng biết mình đang đăng nhập.
  * < 1024px: liên kết neo và nút tài khoản thu vào nút menu (bảng thả xuống).
  */
@@ -38,7 +38,6 @@ export function LandingHeader() {
           <ul>{links()}</ul>
         </nav>
         <div className="ld-header__actions">
-          <ThemeToggle className="ld-header__icon" />
           <div className="ld-header__account">{account()}</div>
           <button type="button" className="ld-header__menu" {...mobile.buttonProps} aria-label="Mở menu trang chủ">
             {mobile.open ? <X aria-hidden="true" /> : <Menu aria-hidden="true" />}

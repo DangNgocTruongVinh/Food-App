@@ -62,8 +62,6 @@
 .ld-btn--quiet:hover { background: var(--home-soft); }
 .ld-btn--outline-ink { border-color: var(--home-ink); color: var(--home-ink); background: transparent; }
 .ld-btn--outline-ink:hover { background: var(--home-soft); }
-[data-theme="dark"] .ld-btn--solid { color: var(--home-forest); background: var(--home-gold); }
-[data-theme="dark"] .ld-btn--solid:hover { background: var(--home-gold-hover); }
 
 .ld-root :focus-visible { outline: 2px solid var(--home-ink); outline-offset: 3px; }
 .ld-signup :focus-visible, .ld-footer :focus-visible { outline-color: var(--home-gold); }
@@ -116,8 +114,6 @@
 }
 .ld-header__greeting strong { color: var(--home-ink); font-weight: 600; }
 @media (min-width: 1024px) and (max-width: 1279px) { .ld-header__greeting { max-width: 8rem; } }
-.ld-header__icon, .ld-header__icon[aria-pressed="true"] { border-color: transparent; color: var(--home-ink); background: transparent; }
-.ld-header__icon:hover { background: var(--home-soft); }
 .ld-header__menu {
   display: none;
   place-items: center;
@@ -146,7 +142,7 @@
 /*
  * >= 1024px: khung --ld-container như thanh trên (chữ thẳng lề logo), cao vừa một màn hình. Mảng xanh bắt đầu ở giữa cột ảnh và tràn tới mép
  * phải, nên khung vòm nằm vắt qua ranh giới ngà / xanh; viền sage mảnh đồng tâm quanh vòm. Mockup Thực đơn đè góc dưới trái của vòm, nối
- * ảnh với cột chữ. Màu thương hiệu cố định ở cả chế độ sáng/tối.
+ * ảnh với cột chữ. Màu thương hiệu cố định.
  */
 .ld-hero {
   --home-ink: var(--home-forest);
@@ -184,8 +180,6 @@
 }
 .ld-hero__lead { max-width: 60ch; margin: var(--space-6) 0 0; color: var(--home-forest-muted); font-size: 1.125rem; line-height: 1.65; }
 .ld-hero__actions { display: flex; flex-wrap: wrap; gap: var(--space-3); margin-top: var(--space-7); }
-[data-theme="dark"] .ld-hero .ld-btn--solid { color: var(--home-ivory); background: var(--home-forest); }
-[data-theme="dark"] .ld-hero .ld-btn--solid:hover { background: var(--home-forest-deep); }
 
 .ld-hero__visual { --hero-photo-h: clamp(440px, calc(100svh - 69px - 132px), 660px); position: relative; display: grid; place-items: center; }
 /* Màn >= 1600px (khung rộng hơn): vòm cao tối đa 720px, vẫn trừ khoảng thở theo chiều cao màn. */

@@ -5,6 +5,7 @@ const ACC = require("./lib/env.cjs");
 const fs = require("fs");
 const path = require("path");
 const { chromium } = require("playwright-core");
+const { toWebp } = require("./lib/to-webp.cjs");
 const [OUT] = process.argv.slice(2);
 const APP = process.env.APP_URL || "http://localhost:8080";
 
@@ -29,7 +30,9 @@ async function shoot(page, file, title, url, prepare) {
   await settle(page);
   if (prepare) { await prepare(page); await settle(page); }
   await page.screenshot({ path: path.join(OUT, file), fullPage: true });
-  shots.push({ file, title, url: url ?? "", width: page.viewportSize().width });
+  // Lưu WebP chất lượng 90 (giữ số điểm ảnh); ảnh cao quá 16.383 px được cắt thành nhiều phần.
+  const files = await toWebp(path.join(OUT, file));
+  shots.push({ files, title, url: url ?? "", width: page.viewportSize().width });
   console.log("Đã chụp", file);
 }
 
@@ -46,7 +49,7 @@ async function login(page, account) {
   fs.mkdirSync(OUT, { recursive: true });
   const browser = await chromium.launch();
   const context = (width) => browser.newContext({
-    viewport: { width, height: width > 600 ? 900 : 844 }, deviceScaleFactor: width > 600 ? 1 : 2, colorScheme: "light", reducedMotion: "reduce",
+    viewport: { width, height: width > 600 ? 900 : 844 }, deviceScaleFactor: width > 600 ? 1 : 2, reducedMotion: "reduce",
   });
 
   // Khách (chưa đăng nhập).
@@ -103,11 +106,12 @@ async function login(page, account) {
 
   await browser.close();
   const day = new Date().toLocaleDateString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" });
-  const rows = shots.map((s) => `| [${s.file}](${s.file}) | ${s.title} | \`${s.url || "-"}\` | ${s.width}px |`).join("\n");
+  const rows = shots.map((s) => `| ${s.files.map((name) => `[${name}](${name})`).join(", ")} | ${s.title} | \`${s.url || "-"}\` | ${s.width}px |`).join("\n");
   fs.writeFileSync(path.join(OUT, "README.md"), `# Ảnh màn hình cho quyển báo cáo
 
 Chụp ngày ${day} bằng \`npm run e2e:acceptance -- screenshots docs/bao-cao/anh-man-hinh\` (script \`e2e/acceptance/screenshots.cjs\`),
-ngay sau \`demo:reset\`: tài khoản demo (dữ liệu mẫu) và Admin, chế độ sáng, ảnh chụp cả trang. Máy tính 1440px, điện thoại 390px (độ phân giải ×2).
+ngay sau \`demo:reset\`: tài khoản demo (dữ liệu mẫu) và Admin, ảnh chụp cả trang. Máy tính 1440px, điện thoại 390px (độ phân giải ×2).
+Định dạng WebP chất lượng 90 (đủ in, giữ nguyên số điểm ảnh); ảnh cao quá 16.383 px (giới hạn của WebP) được cắt thành nhiều phần nối tiếp.
 Chạy lại lệnh trên để cập nhật toàn bộ ảnh khi giao diện đổi.
 
 | Tệp | Màn hình | Đường dẫn | Rộng |
