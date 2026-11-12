@@ -159,7 +159,7 @@ Hiện chỉ có test với dữ liệu giả lập (`backend/src/services/recei
 |---|---|---|
 | Endpoint API | 80 (công khai 10, đăng nhập 52, Admin 18) | `docs/bao-cao/api.md` (sinh từ routes) |
 | Bảng CSDL / enum / quan hệ khóa ngoại | 23 / 16 / 33 | `docs/bao-cao/erd.md` (sinh từ `schema.prisma`) |
-| Migration | 22 | `backend/prisma/migrations/` |
+| Migration | 23 | `backend/prisma/migrations/` |
 | Món trong bộ seed | 33 | `backend/prisma/seed-data.ts` |
 | Use case | 26 khảo sát (15 đã làm, 11 làm khác; không làm phần "theo dõi thành viên") + 13 mới | `docs/bao-cao/use-case.md` |
 

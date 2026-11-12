@@ -118,7 +118,7 @@ describe("Dashboard service contract (mock Prisma, no database)", () => {
       include: { days: { include: { items: { include: { recipe: true } } } } },
       orderBy: { startDate: "desc" },
     });
-    expect(mocks.findRecipes).toHaveBeenCalledWith({ where: { hiddenAt: null }, include: { ingredients: true }, orderBy: { createdAt: "asc" } });
+    expect(mocks.findRecipes).toHaveBeenCalledWith({ where: { hiddenAt: null, deletedAt: null }, include: { ingredients: true }, orderBy: { createdAt: "asc" } });
     expect(mocks.findPantry).toHaveBeenCalledWith({ where: { userId, quantity: { gt: 0 } } });
   });
 
@@ -137,14 +137,14 @@ describe("Dashboard service contract (mock Prisma, no database)", () => {
           mealType: "LUNCH",
           calories: 450,
           completed: true,
-          recipe: { id: "recipe-a", name: "Ức gà rau củ", prepMinutes: 10, cookMinutes: 20 },
+          recipe: { id: "recipe-a", name: "Ức gà rau củ", prepMinutes: 10, cookMinutes: 20, deleted: false },
         },
         {
           id: "meal-b",
           mealType: "LUNCH",
           calories: 400,
           completed: false,
-          recipe: { id: "recipe-a", name: "Ức gà rau củ", prepMinutes: 10, cookMinutes: 20 },
+          recipe: { id: "recipe-a", name: "Ức gà rau củ", prepMinutes: 10, cookMinutes: 20, deleted: false },
         },
       ],
     });
@@ -185,7 +185,7 @@ describe("Dashboard recommendations follow the profile and pantry", () => {
 
   it("only considers recipes that are not hidden (discontinued)", async () => {
     await getDashboard(userId, now);
-    expect(mocks.findRecipes.mock.calls[0][0].where).toEqual({ hiddenAt: null });
+    expect(mocks.findRecipes.mock.calls[0][0].where).toEqual({ hiddenAt: null, deletedAt: null });
   });
 
   it("excludes dishes that break a vegetarian diet, an allergy or a disliked food", async () => {

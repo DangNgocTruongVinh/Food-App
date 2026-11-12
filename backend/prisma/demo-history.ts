@@ -37,7 +37,7 @@ export async function createDemoHistory(client: HistoryClient, userId: string, n
   const today = vietnamToday(now);
   const date = (day: number) => new Date(today.getTime() + day * DAY_MS);
   const slugs = [...new Set(DEMO_HISTORY_MEALS.map((meal) => meal.slug))];
-  const recipes = await client.recipe.findMany({ where: { slug: { in: slugs }, hiddenAt: null }, select: { id: true, slug: true, calories: true } });
+  const recipes = await client.recipe.findMany({ where: { slug: { in: slugs }, hiddenAt: null, deletedAt: null }, select: { id: true, slug: true, calories: true } });
   const bySlug = new Map(recipes.map((recipe) => [recipe.slug, recipe]));
   const meals = DEMO_HISTORY_MEALS.filter((meal) => bySlug.has(meal.slug));
   const start = Math.min(...DEMO_HISTORY_MEALS.map((meal) => meal.day));

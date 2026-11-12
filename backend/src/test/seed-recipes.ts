@@ -7,6 +7,7 @@ export function seedRecipesAsRecords() {
     id: recipe.slug,
     servings: 1,
     hiddenAt: null,
+    deletedAt: null,
     imagePublicId: null,
     createdAt: new Date(0),
     updatedAt: new Date(0),

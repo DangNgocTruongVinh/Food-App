@@ -6,7 +6,7 @@ import { forYouWarnings } from "../../features/recipes/recipe-for-you.logic";
 import { recipeDetailPath } from "../../features/recipes/recipes.logic";
 import type { MealPlan, MealPlanDay, MealPlanItem } from "../../types";
 import { IMAGE_WIDTHS } from "../../utils/images";
-import { Button, EmptyState, RecipeImage } from "../ui";
+import { Button, EmptyState, RecipeImage, Tag } from "../ui";
 
 type MealDayListProps = {
   plan: MealPlan;
@@ -73,6 +73,7 @@ export function MealDayList(props: MealDayListProps) {
                     {item.completed && <span className="td-meal__state"><Check aria-hidden="true" />Đã ăn</span>}
                   </p>
                   <Link className="td-meal__name" to={recipeDetailPath(item.recipe.id)}>{item.recipe.name}</Link>
+                  {item.recipe.deletedAt && <Tag>Món đã bị xóa</Tag>}
                   <p className="td-meal__facts">
                     <span>{formatNumber(item.calories)} kcal</span>
                     <span>{minutes} phút</span>

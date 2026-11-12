@@ -15,7 +15,7 @@ const COMMUNITY_FEED_LIMIT = 30;
 const authorSelect = { id: true, name: true, isSample: true } as const;
 /** Tóm tắt công thức gắn trong bài: chỉ các cột thẻ hiển thị cần, không lấy nguyên liệu/các bước. */
 export const communityRecipeSelect = {
-  id: true, name: true, imageUrl: true, calories: true, prepMinutes: true, cookMinutes: true, hiddenAt: true,
+  id: true, name: true, imageUrl: true, calories: true, prepMinutes: true, cookMinutes: true, hiddenAt: true, deletedAt: true,
 } as const;
 /** Ảnh trong bài: chỉ URL và thứ tự (publicId chỉ dùng nội bộ để xóa). */
 const postImagesInclude = { images: { select: { url: true, position: true }, orderBy: { position: "asc" } } } as const;
@@ -46,18 +46,18 @@ export function withMemberRecipe<T extends { memberRecipe: unknown; hiddenAt: Da
 /** Bài người khác thấy được: chưa bị Admin ẩn và không chờ duyệt; tác giả luôn thấy bài của mình. */
 export const visiblePostWhere = (userId: string) => ({ OR: [{ hiddenAt: null, pendingReviewAt: null }, { authorId: userId }] });
 
-type CommunityRecipeRow = { hiddenAt: Date | null } & Record<string, unknown>;
+type CommunityRecipeRow = { hiddenAt: Date | null; deletedAt?: Date | null } & Record<string, unknown>;
 
 /** Bài cũ gắn món đã ẩn vẫn hiện thẻ công thức, kèm cờ hidden để frontend gắn nhãn "đã ngừng sử dụng". */
 function toRecipeSummary<T extends CommunityRecipeRow>(recipe: T | null) {
   if (!recipe) return null;
-  const { hiddenAt, ...summary } = recipe;
-  return { ...summary, hidden: hiddenAt !== null };
+  const { hiddenAt, deletedAt, ...summary } = recipe;
+  return { ...summary, hidden: hiddenAt !== null || Boolean(deletedAt), deleted: Boolean(deletedAt) };
 }
 
 /** Chỉ gắn được công thức có sẵn và còn dùng (chưa bị Admin ẩn). */
 async function assertAttachableRecipe(recipeId: string) {
-  const recipe = await prisma.recipe.findUnique({ where: { id: recipeId }, select: { id: true, hiddenAt: true } });
+  const recipe = await prisma.recipe.findUnique({ where: { id: recipeId }, select: { id: true, hiddenAt: true, deletedAt: true } });
   if (!recipe) throw new HttpError(422, "Công thức đính kèm không tồn tại.");
   if (isRecipeHidden(recipe)) throw new HttpError(422, HIDDEN_RECIPE_MESSAGE);
 }

@@ -77,7 +77,7 @@ Dữ liệu của người khác hoặc không tồn tại → 404 (không lộ 
 | 66 | PUT | `/api/admin/recipes/:id` | Admin | Sửa món; ghi nhật ký (tên trường đã đổi) | món + nguyên liệu | món |
 | 67 | PATCH | `/api/admin/recipes/:id/visibility` | Admin | Ẩn / hiện món (món đã dùng chỉ ẩn, không xóa) | hidden | món |
 | 68 | PUT | `/api/admin/recipes/:id/image` | Admin; multipart: 1 ảnh | Thay ảnh món (Cloudinary, xóa ảnh cũ sau khi lưu DB) | image | món |
-| 69 | DELETE | `/api/admin/recipes/:id` | Admin | Xóa món chưa được dùng | — | 204 |
+| 69 | DELETE | `/api/admin/recipes/:id` | Admin | Xóa món: chưa được dùng → xóa hẳn (kèm ảnh), đã có trong thực đơn/bài viết → xóa mềm (deletedAt); ghi nhật ký | — | { id, mode: hard \| soft } |
 | 70 | GET | `/api/admin/users` | Admin | Danh sách người dùng | search, page, pageSize | items, total |
 | 71 | PATCH | `/api/admin/users/:id/lock` | Admin | Khóa / mở khóa (không khóa chính mình/Admin khác; khóa thu hồi refresh token) | locked | id, locked |
 | 72 | GET | `/api/admin/community/posts` | Admin | Bài cho kiểm duyệt; lọc "AI đánh dấu" | page, pageSize, filter = all \| ai | items, total |

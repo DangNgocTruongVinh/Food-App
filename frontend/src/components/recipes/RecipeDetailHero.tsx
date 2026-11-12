@@ -28,7 +28,7 @@ export function RecipeDetailHero({ recipe, alerts }: RecipeDetailHeroProps) {
         {recipe.hidden && (
           <p className="recipe-hidden-note" role="status">
             <CircleSlash aria-hidden="true" />
-            <span><strong>Món này đã ngừng sử dụng.</strong> Bạn vẫn xem được cách nấu, nhưng không chia sẻ hay chọn món này cho thực đơn mới.</span>
+            <span><strong>{recipe.deleted ? "Món này đã bị xóa." : "Món này đã ngừng sử dụng."}</strong> Bạn vẫn xem được cách nấu, nhưng không chia sẻ hay chọn món này cho thực đơn mới.</span>
           </p>
         )}
         {alerts}

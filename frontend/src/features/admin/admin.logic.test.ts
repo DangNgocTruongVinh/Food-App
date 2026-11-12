@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import { api } from "../../api/client";
 import { createAdminRecipe, deleteAdminRecipe, listAdminRecipes, setAdminRecipeVisibility, uploadAdminRecipeImage, type AdminRecipeDetail } from "./admin.api";
 import {
-  deleteBlockedReason, emptyIngredient, emptyRecipeForm, hasRecipeErrors, moveRow, recipeImageError, toRecipeForm, toRecipeInput, usageText,
+  deleteRecipeConfirmText, emptyIngredient, emptyRecipeForm, hasRecipeErrors, moveRow, recipeImageError, toRecipeForm, toRecipeInput, usageText,
   validateRecipeForm, violationsByRow, type RecipeFormValues,
 } from "./admin-recipes.logic";
 import { hasWeeklyActivity, statsCards, weekLabel } from "./admin-stats.logic";
@@ -59,12 +59,15 @@ describe("Admin recipe form", () => {
     expect(moveRow(["a", "b"], 0, -1)).toEqual(["a", "b"]);
   });
 
-  it("explains why a used recipe cannot be deleted and suggests hiding", () => {
+  it("hộp xác nhận nói rõ xóa hẳn (chưa dùng) hay xóa mềm (đang được dùng)", () => {
     expect(usageText({ mealPlanItems: 0, posts: 0 })).toBe("Chưa dùng");
-    expect(deleteBlockedReason({ mealPlanItems: 0, posts: 0 })).toBeNull();
-    expect(deleteBlockedReason({ mealPlanItems: 3, posts: 1 })).toBe(
-      "Món đang có trong 3 bữa trong thực đơn, 1 bài viết nên không xóa được. Hãy ẩn món: người dùng không thấy nữa, dữ liệu cũ vẫn giữ.",
-    );
+    const hard = deleteRecipeConfirmText({ name: "Phở bò", usage: { mealPlanItems: 0, posts: 0 } });
+    expect(hard.title).toBe("Xóa hẳn “Phở bò”?");
+    expect(hard.description).toContain("xóa hẳn cả nguyên liệu, các bước và ảnh");
+    const soft = deleteRecipeConfirmText({ name: "Phở bò", usage: { mealPlanItems: 3, posts: 1 } });
+    expect(soft.title).toBe("Xóa “Phở bò” (xóa mềm)?");
+    expect(soft.description).toContain("Món đang có trong 3 bữa trong thực đơn, 1 bài viết nên sẽ được xóa mềm");
+    expect(soft.description).toContain("Món đã bị xóa");
   });
 
   it("checks recipe images before upload", () => {

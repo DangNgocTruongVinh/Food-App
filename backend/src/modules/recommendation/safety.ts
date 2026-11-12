@@ -31,7 +31,7 @@ export function recipeFit(recipe: SafetyRecipe, profile: SafetyProfile) {
 
 /** Lọc cứng: món ẩn, dị ứng, không thích, trái chế độ ăn, sai bữa đều bị loại. */
 export function isRecipeSafe(recipe: SafetyRecipe, profile: SafetyProfile, context: SafetyContext = {}) {
-  if (recipe.hiddenAt !== undefined && isRecipeHidden({ hiddenAt: recipe.hiddenAt })) return false;
+  if (recipe.hiddenAt !== undefined && isRecipeHidden({ hiddenAt: recipe.hiddenAt, deletedAt: (recipe as { deletedAt?: Date | null }).deletedAt })) return false;
   return fitsMealType(recipe, context.mealType) && recipeFit(recipe, profile).safe;
 }
 

@@ -219,8 +219,22 @@ export function usageText(usage: RecipeUsage) {
 }
 
 /** Vì sao không xóa được (đã dùng): giải thích và gợi ý Ẩn; chưa dùng thì null. */
-export function deleteBlockedReason(usage: RecipeUsage) {
-  return isRecipeUsed(usage) ? `Món đang có trong ${usageText(usage)} nên không xóa được. Hãy ẩn món: người dùng không thấy nữa, dữ liệu cũ vẫn giữ.` : null;
+/**
+ * Hộp xác nhận xóa món: chưa được dùng → xóa hẳn (cả ảnh); đang có trong thực đơn/bài viết → xóa mềm (backend quyết định theo cùng
+ * điều kiện): món biến mất khỏi danh sách, tìm kiếm, gợi ý, yêu thích, thực đơn mới; dữ liệu cũ vẫn hiện tên kèm "Món đã bị xóa".
+ */
+export function deleteRecipeConfirmText(recipe: { name: string; usage: RecipeUsage }) {
+  if (!isRecipeUsed(recipe.usage)) {
+    return {
+      title: `Xóa hẳn “${recipe.name}”?`,
+      description: "Món chưa được dùng ở thực đơn hay bài viết nào nên sẽ bị xóa hẳn cả nguyên liệu, các bước và ảnh đã tải lên. Không hoàn tác được.",
+    };
+  }
+  return {
+    title: `Xóa “${recipe.name}” (xóa mềm)?`,
+    description: `Món đang có trong ${usageText(recipe.usage)} nên sẽ được xóa mềm: biến mất khỏi danh sách, tìm kiếm, gợi ý, món yêu thích và `
+      + "không chọn được cho thực đơn mới; thực đơn và bài viết cũ vẫn hiện tên món kèm “Món đã bị xóa”. Món không còn trong khu Quản trị.",
+  };
 }
 
 /** Ảnh công thức: kiểm tra trước khi gửi, khớp backend (JPG, PNG, WEBP; tối đa 5 MB). */

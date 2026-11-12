@@ -88,7 +88,7 @@ export async function rebuildSampleAccounts(tx: Tx, passwordHashes: string[], no
   const members = sampleMembers();
   const slugs = [...new Set(members.flatMap((member) => member.recipes))];
   const rows: SampleRecipe[] = await tx.recipe.findMany({
-    where: { slug: { in: slugs }, hiddenAt: null }, select: { id: true, slug: true, mealTypes: true, calories: true },
+    where: { slug: { in: slugs }, hiddenAt: null, deletedAt: null }, select: { id: true, slug: true, mealTypes: true, calories: true },
   });
   const bySlug = new Map(rows.map((recipe) => [recipe.slug, recipe]));
   const today = vietnamToday(now);

@@ -84,7 +84,7 @@ const endpoints = [
   ["POST", "/api/admin/recipes", input, 201],
   ["PUT", `/api/admin/recipes/${recipeId}`, input, 200],
   ["PATCH", `/api/admin/recipes/${recipeId}/visibility`, { hidden: true }, 200],
-  ["DELETE", `/api/admin/recipes/${recipeId}`, undefined, 204],
+  ["DELETE", `/api/admin/recipes/${recipeId}`, undefined, 200],
 ] as const;
 
 describe("Admin recipe API permission matrix", () => {
@@ -126,14 +126,14 @@ describe("Admin recipe management", () => {
     expect(response.body).toMatchObject({ total: 41, page: 3, pageSize: 20 });
     expect(response.body.items[0]).toMatchObject({ id: recipeId, hidden: true, usage: { mealPlanItems: 3, posts: 1 } });
     expect(response.body.items[0]).not.toHaveProperty("_count");
-    const where = { name: { contains: "đậu", mode: "insensitive" }, hiddenAt: { not: null } };
+    const where = { name: { contains: "đậu", mode: "insensitive" }, deletedAt: null, hiddenAt: { not: null } };
     expect(mocks.count).toHaveBeenCalledWith({ where });
     expect(mocks.findMany).toHaveBeenCalledWith(expect.objectContaining({ where, skip: 40, take: 20, orderBy: { name: "asc" } }));
   });
 
   it("uses defaults (all recipes, page 1, 20 per page) and rejects a page size over 50", async () => {
     await request(app, "/api/admin/recipes", { token: token() });
-    expect(mocks.findMany).toHaveBeenCalledWith(expect.objectContaining({ where: {}, skip: 0, take: 20 }));
+    expect(mocks.findMany).toHaveBeenCalledWith(expect.objectContaining({ where: { deletedAt: null }, skip: 0, take: 20 }));
     expect((await request(app, "/api/admin/recipes?pageSize=51", { token: token() })).status).toBe(422);
   });
 
@@ -221,26 +221,43 @@ describe("Admin recipe management", () => {
     expect(shown.body).toEqual({ id: recipeId, hiddenAt: null, hidden: false });
   });
 
-  it("deletes a recipe that was never used", async () => {
-    expect((await request(app, `/api/admin/recipes/${recipeId}`, { method: "DELETE", token: token() })).status).toBe(204);
+  it("món chưa được tham chiếu → xóa hẳn", async () => {
+    const response = await request(app, `/api/admin/recipes/${recipeId}`, { method: "DELETE", token: token() });
+    expect(response).toEqual({ status: 200, body: { id: recipeId, mode: "hard" } });
     expect(mocks.remove).toHaveBeenCalledWith({ where: { id: recipeId } });
+    expect(mocks.update).not.toHaveBeenCalled();
   });
 
   it.each([
-    [{ mealItems: 2, communityPosts: 0 }, { mealPlanItems: 2, posts: 0 }],
-    [{ mealItems: 0, communityPosts: 1 }, { mealPlanItems: 0, posts: 1 }],
-  ])("refuses to delete a used recipe (%o) with 409 and suggests hiding it", async (count, usage) => {
-    mocks.findUnique.mockResolvedValue({ id: recipeId, _count: count });
+    [{ mealItems: 2, communityPosts: 0 }],
+    [{ mealItems: 0, communityPosts: 1 }],
+  ])("món đã được tham chiếu (%o) → xóa mềm (deletedAt), không xóa dòng", async (count) => {
+    mocks.findUnique.mockResolvedValue({ id: recipeId, name: input.name, slug: "dau-hu-sot-nam", deletedAt: null, _count: count });
     const response = await request(app, `/api/admin/recipes/${recipeId}`, { method: "DELETE", token: token() });
-    expect(response.status).toBe(409);
-    expect(response.body.message).toContain("Hãy ẩn món");
-    expect(response.body.details).toEqual({ usage });
+    expect(response).toEqual({ status: 200, body: { id: recipeId, mode: "soft" } });
+    expect(mocks.update).toHaveBeenCalledWith({ where: { id: recipeId }, data: { deletedAt: expect.any(Date) } });
     expect(mocks.remove).not.toHaveBeenCalled();
   });
 
-  it("maps a foreign-key race (recipe used meanwhile) to the same 409", async () => {
+  it("món vừa được dùng giữa chừng (khóa ngoại P2003) → chuyển sang xóa mềm", async () => {
     mocks.remove.mockRejectedValue(new Prisma.PrismaClientKnownRequestError("fk", { code: "P2003", clientVersion: "test" }));
-    expect((await request(app, `/api/admin/recipes/${recipeId}`, { method: "DELETE", token: token() })).status).toBe(409);
+    const response = await request(app, `/api/admin/recipes/${recipeId}`, { method: "DELETE", token: token() });
+    expect(response.body).toEqual({ id: recipeId, mode: "soft" });
+    expect(mocks.update).toHaveBeenCalledWith({ where: { id: recipeId }, data: { deletedAt: expect.any(Date) } });
+  });
+
+  it("món đã xóa mềm → 404 (không xóa lại, không còn trong khu Admin)", async () => {
+    mocks.findUnique.mockResolvedValue({ id: recipeId, name: input.name, slug: "x", deletedAt: new Date(), _count: { mealItems: 1, communityPosts: 0 } });
+    expect((await request(app, `/api/admin/recipes/${recipeId}`, { method: "DELETE", token: token() })).status).toBe(404);
+    expect((await request(app, `/api/admin/recipes/${recipeId}`, { token: token() })).status).toBe(404);
+  });
+
+  it("món đã xóa mềm → không sửa, không ẩn/hiện được (404)", async () => {
+    mocks.findUnique.mockResolvedValue({ id: recipeId, name: input.name, hiddenAt: null, deletedAt: new Date(), ingredients: [] });
+    const put = await request(app, `/api/admin/recipes/${recipeId}`, { method: "PUT", token: token(), body: input });
+    const patch = await request(app, `/api/admin/recipes/${recipeId}/visibility`, { method: "PATCH", token: token(), body: { hidden: true } });
+    expect([put.status, patch.status]).toEqual([404, 404]);
+    expect(mocks.update).not.toHaveBeenCalled();
   });
 });
 
@@ -288,22 +305,27 @@ describe("Admin audit log for recipe actions", () => {
     expect(auditData(1)).toMatchObject({ action: "RECIPE_SHOW", targetId: recipeId });
   });
 
-  it("logs RECIPE_DELETE in the same transaction as the delete", async () => {
+  it("logs RECIPE_DELETE in the same transaction as the delete (soft: false khi xóa hẳn, true khi xóa mềm)", async () => {
     mocks.findUnique.mockResolvedValue({ id: recipeId, name: input.name, slug: "dau-hu-sot-nam", ...unused });
-    expect((await request(app, `/api/admin/recipes/${recipeId}`, { method: "DELETE", token: token() })).status).toBe(204);
+    expect((await request(app, `/api/admin/recipes/${recipeId}`, { method: "DELETE", token: token() })).status).toBe(200);
     expect(auditData()).toEqual({
       actorId: adminId, action: "RECIPE_DELETE", targetType: "RECIPE", targetId: recipeId, targetLabel: input.name,
-      details: { slug: "dau-hu-sot-nam" },
+      details: { slug: "dau-hu-sot-nam", soft: false },
     });
     expect(loggedInTransaction()).toBe(true);
     expect(mocks.transaction.mock.calls[0][0]).toHaveLength(2);
+
+    mocks.findUnique.mockResolvedValue({ id: recipeId, name: input.name, slug: "dau-hu-sot-nam", _count: { mealItems: 3, communityPosts: 0 } });
+    await request(app, `/api/admin/recipes/${recipeId}`, { method: "DELETE", token: token() });
+    expect(auditData(1)).toMatchObject({ action: "RECIPE_DELETE", details: { slug: "dau-hu-sot-nam", soft: true } });
+    expect(loggedInTransaction(1)).toBe(true);
   });
 
-  it("writes no log when the action is rejected (422, 409, 404)", async () => {
+  it("writes no log when the action is rejected (422, 404)", async () => {
     const vegetarianFish = { ...input, dietTags: ["VEGETARIAN"], ingredients: [{ name: "Nước mắm", quantity: 10, unit: "ML" }] };
     expect((await request(app, "/api/admin/recipes", { method: "POST", token: token(), body: vegetarianFish })).status).toBe(422);
-    mocks.findUnique.mockResolvedValue({ id: recipeId, name: input.name, slug: "x", _count: { mealItems: 1, communityPosts: 0 } });
-    expect((await request(app, `/api/admin/recipes/${recipeId}`, { method: "DELETE", token: token() })).status).toBe(409);
+    mocks.findUnique.mockResolvedValue({ id: recipeId, name: input.name, slug: "x", deletedAt: new Date(), _count: { mealItems: 1, communityPosts: 0 } });
+    expect((await request(app, `/api/admin/recipes/${recipeId}`, { method: "DELETE", token: token() })).status).toBe(404);
     mocks.findUnique.mockResolvedValue(null);
     expect((await request(app, `/api/admin/recipes/${recipeId}/visibility`, { method: "PATCH", token: token(), body: { hidden: true } })).status).toBe(404);
     expect(mocks.auditCreate).not.toHaveBeenCalled();
