@@ -2,6 +2,7 @@ import { existsSync, readdirSync, readFileSync, statSync, writeFileSync } from "
 import { dirname, extname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { seedRecipes } from "../prisma/seed-data.js";
+import { readSources } from "./recipe-photo-sources.js";
 
 // Tải ảnh thật cho các món lên Cloudinary bằng đúng luồng của Admin: kiểm định dạng theo byte đầu (jpg/png/webp), ≤ 5 MB, xóa EXIF
 // bằng sharp (stripImageMetadata), rồi replaceRecipeImage (tải lên nouri/recipes, lưu DB, ghi nhật ký Admin RECIPE_IMAGE_REPLACE
@@ -40,19 +41,6 @@ function writeList() {
   ].join("\n");
   writeFileSync(join(root, "docs/anh-mon-can-tim.md"), content, "utf8");
   console.log(`Đã ghi docs/anh-mon-can-tim.md: ${seedRecipes.length} món.`);
-}
-
-/** nguon.txt: "slug|nguồn"; dòng trống và dòng bắt đầu bằng # bị bỏ qua. */
-export function readSources(text: string) {
-  const sources = new Map<string, string>();
-  for (const line of text.split(/\r?\n/)) {
-    const trimmed = line.trim();
-    if (!trimmed || trimmed.startsWith("#")) continue;
-    const [slug, ...rest] = trimmed.split("|");
-    const source = rest.join("|").trim();
-    if (slug.trim() && source) sources.set(slug.trim(), source);
-  }
-  return sources;
 }
 
 async function main() {
