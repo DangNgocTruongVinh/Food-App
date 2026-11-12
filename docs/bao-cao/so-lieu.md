@@ -1,18 +1,29 @@
 # Số liệu cho quyển báo cáo
 
-Tổng hợp mọi bảng số liệu từ mã và kết quả chạy thật, cập nhật 12/11/2026. Mỗi mục ghi **nguồn** và **loại dữ liệu**:
+Tổng hợp mọi bảng số liệu từ mã và kết quả chạy thật, cập nhật 12/11/2026 (rà soát cuối). Mỗi mục ghi **nguồn** và **loại dữ liệu**:
 *đo thật* (chạy trên mã/máy thật), *mô phỏng* (người dùng giả lập sinh trong bộ nhớ, không có trong CSDL), *dữ liệu mẫu* (dựng sẵn cho demo).
 Các bảng mục 2–3 được chép nguyên văn từ `docs/thuat-toan-goi-y.md` (phần do script sinh ra, giữa các dấu `EVAL`).
 
 ## 1. Kiểm thử tự động — đo thật
 
-Chạy `npx vitest run` trong `backend/` và `frontend/` ngày 12/11/2026 trên nhánh `uc24-uc25`:
+Chạy `npm test` (Vitest, `backend/` và `frontend/`) ngày 12/11/2026 trên nhánh `ra-soat-cuoi` (rà soát cuối, trước khi đóng băng code):
 
 | Phần | File test | Test | Kết quả |
 |---|---|---|---|
-| Backend | 66 | 1.234 | tất cả đạt |
-| Frontend | 32 | 503 | tất cả đạt |
-| **Tổng** | **98** | **1.737** | **tất cả đạt** |
+| Backend | 67 | 1.248 | tất cả đạt |
+| Frontend | 33 | 507 | tất cả đạt |
+| **Tổng** | **100** | **1.755** | **tất cả đạt** |
+
+Kiểm thử trên ứng dụng thật (Playwright, Docker, cùng ngày, sau `demo:reset`), *đo thật*:
+
+| Script | Kiểm gì | Kết quả |
+|---|---|---|
+| `demo-flow` | Đăng nhập → kho → quét hóa đơn chế độ dự phòng (ảnh hóa đơn dựng trong script, đọc được 3/3 dòng) → tạo thực đơn → đã ăn → báo cáo → gợi ý → tìm "com tron" → Admin (thống kê, tìm, bộ lọc Đã xóa) | 10/10 đạt |
+| `landing-header-check` | Header trang chủ khi đã đăng nhập, tên 51 ký tự, 1024–1280px và 390px: không tràn ngang, cắt "…", không đè nút/menu | 31/31 đạt |
+
+Lần chạy đầu `demo-flow` phát hiện lỗi thật: tạo thực đơn bằng OpenAI mất ~83 giây, nginx cắt ở 60 giây (504) dù thực đơn vẫn được
+tạo. Đã sửa: OpenAI tối đa 120 giây rồi tự dùng bộ tạo dự phòng, nginx chờ 180 giây (lần đo sau: OpenAI quá 90 giây ở giới hạn cũ →
+dự phòng, trả 201).
 
 Test không cần CSDL hay mạng: Prisma được giả lập (có transaction giả `backend/src/test/fake-transaction.ts`), OpenAI/Cloudinary/SMTP
 dùng phản hồi giả lập, đồng hồ giả cho lịch nhắc hạn. Một số bộ test đáng chú ý:
@@ -127,6 +138,10 @@ Trước: cùng mã, chưa bật gzip (đo 03/11 khi nghiệm thu UI-12). Sau: b
 Tệp JS gói chính: 562.627 B gốc → 172.359 B khi nén (curl -H "Accept-Encoding: gzip").
 Phần còn lại chủ yếu là phông (Google Fonts, woff2 vốn đã nén).
 
+**Tách gói theo route (12/11/2026, rà soát cuối)** — `vite build`, *đo thật*: trước đó gói chính đã tăng lên 673,81 kB (gzip 204,98 kB,
+vượt cảnh báo 500 kB của Vite). Chuyển mọi trang trừ Trang chủ và Đăng nhập sang tải khi mở (`React.lazy`): gói chính còn
+**457,82 kB (gzip 145,81 kB)**, giảm 32%; Recharts (393,6 kB) chỉ tải ở Báo cáo và Admin. Bảng FCP/LCP trên đo trước thay đổi này.
+
 | Trang | Thiết bị | Trước FCP/LCP | Sau FCP/LCP | Trước KB (JS/CSS) | Sau KB (JS/CSS) |
 |---|---|---|---|---|---|
 | / | máy tính | 0,60/0,60 s | 0,51/0,51 s | 1023 (550/105) | 552 (169/17) |
@@ -157,10 +172,11 @@ Hiện chỉ có test với dữ liệu giả lập (`backend/src/services/recei
 
 | Mục | Số lượng | Nguồn |
 |---|---|---|
-| Endpoint API | 80 (công khai 10, đăng nhập 52, Admin 18) | `docs/bao-cao/api.md` (sinh từ routes) |
+| Endpoint API | 81 (công khai 10, đăng nhập 52, Admin 19) | `docs/bao-cao/api.md` (sinh từ routes) |
 | Bảng CSDL / enum / quan hệ khóa ngoại | 23 / 16 / 33 | `docs/bao-cao/erd.md` (sinh từ `schema.prisma`) |
-| Migration | 23 | `backend/prisma/migrations/` |
+| Migration | 24 | `backend/prisma/migrations/` |
 | Món trong bộ seed | 33 | `backend/prisma/seed-data.ts` |
+| Ảnh màn hình cho quyển | 29 (24 ở 1440px, 5 ở 390px) | `docs/bao-cao/anh-man-hinh/README.md` |
 | Use case | 26 khảo sát (15 đã làm, 11 làm khác; không làm phần "theo dõi thành viên") + 13 mới | `docs/bao-cao/use-case.md` |
 
 ## 7. Dữ liệu mẫu cho demo — dữ liệu mẫu, không phải hoạt động thật

@@ -8,6 +8,11 @@
   thành phần dùng chung ở `components/ui/`.
 - CSS dùng token trong `styles/ui/tokens.css`.
 
+## Đóng băng code
+
+Từ 12/11/2026 (sau nhánh `ra-soat-cuoi`): **chỉ sửa lỗi**, trừ đánh giá OCR (`eval:receipt` với ảnh hóa đơn thật) và tải ảnh món
+(`upload:recipe-photos`). Không thêm chức năng, không đổi giao diện/nghiệp vụ (giữ khớp CLAUDE.md).
+
 ## Phạm vi không được sửa
 
 - Không sửa `backend/src/modules/recommendation/` (công thức, trọng số),
