@@ -269,6 +269,7 @@ Quy tắc:
 
 ### Cộng đồng (chưa có mockup)
 - Cột chính: ô đăng bài (chữ, tối đa 4 ảnh, gắn công thức) → bảng tin. Thẻ bài: tác giả + thời gian, chữ, ảnh (1 ảnh to; 2–4 ảnh lưới), thẻ công thức đính kèm, hành động Thích / Bình luận / Chia sẻ, menu "…" chỉ trên bài của mình (Xóa bài). "Lưu bài", "Theo dõi", thành viên/chủ đề nổi bật làm ở GĐ5 khi có dữ liệu thật.
+- Ô đăng bài chọn một trong hai: "Đính kèm món có sẵn" (ô chọn món) hoặc "Tự viết công thức" (tên, khẩu phần, thời gian, nguyên liệu tên/số lượng/đơn vị nhập tự do, các bước). Thẻ "Công thức của thành viên" trong bài: nền `--surface-2` bo theo thẻ, cảnh báo dị ứng theo hồ sơ người xem nền `--warn-bg`, ghi "Chưa được kiểm duyệt dinh dưỡng", nguyên liệu và các bước thu gọn (`<details>`), "Đã được thêm vào thư viện" + liên kết khi Admin đã chuyển. Menu "…" bài của mình: Sửa bài, Xóa bài; bài bị Admin ẩn có ghi chú cho tác giả.
 - Cột phải (≥1024px): hướng dẫn ngắn cách đăng món kèm công thức. Không "thành viên nổi bật" giả.
 - Đạt khi: hàng nút ô đăng bài không vỡ ở 320–390px; ảnh dùng optimizedImageUrl.
 
