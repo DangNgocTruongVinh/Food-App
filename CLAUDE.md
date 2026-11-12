@@ -106,7 +106,7 @@ Biến môi trường mới phải thêm vào `backend/src/config/env.ts` (Zod) 
 - GĐ3c phần 1 (P1-1 backend Tesseract + parser + API quét/hoàn tác lô; P1-2 giao diện quét, màn duyệt, hoàn tác): xong, người dùng đã kiểm thử, gộp `main` 09/11/2026. Phần 2 (OpenAI Vision) chờ `OPENAI_API_KEY`.
 - Codex (tuần 45, nhánh `codex-tuan-45`): C0 `AGENTS.md`, C1 đối chiếu R2, C2 thêm/xóa món thủ công (Claude sửa: đi chợ chỉ đổi theo phần của bữa, ngày trống/bữa phụ, nút ở chi tiết công thức).
 
-**Nhánh (09/11/2026):** `main` đã đầy đủ (gộp `giai-doan-3b` gồm GĐ3, GĐ3b, R1–R7, R2, C0–C2; gộp `giai-doan-3c` gồm GĐ3c phần 1). Việc mới làm trên nhánh mới tách từ `main`; Codex làm trên `codex/<tên việc>`, không tự merge, Claude rà rồi mới merge.
+**Nhánh (09/11/2026):** `main` đã đầy đủ (gộp `giai-doan-3b` gồm GĐ3, GĐ3b, R1–R7, R2, C0–C2; gộp `giai-doan-3c` gồm GĐ3c phần 1). Việc mới làm trên nhánh mới tách từ `main`; **chỉ merge (không squash) vào `main` khi test + typecheck + build đều qua VÀ tính năng đã được kiểm tra thực tế (thử trên app với dữ liệu/dịch vụ thật, không chỉ test giả lập); merge xong push rồi mới tách nhánh mới** (quy tắc 12/11/2026); Codex làm trên `codex/<tên việc>`, không tự merge, Claude rà rồi mới merge.
 
 **Codex và `AGENTS.md`:** `AGENTS.md` là luật cho Codex, phải giữ khớp với CLAUDE.md (sửa luật ở đây thì sửa cả bên đó). Hai quy tắc chặt hơn có chủ đích cho Codex: không tạo migration, hỏi trước khi `demo:reset`.
 

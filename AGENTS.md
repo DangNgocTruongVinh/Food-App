@@ -24,7 +24,7 @@
 
 ## Bảo mật và vận hành
 
-- Codex làm trên nhánh `codex/<tên việc>` tách từ `main`, không tự merge; Claude rà rồi mới merge.
+- Codex làm trên nhánh `codex/<tên việc>` tách từ `main`, không tự merge; Claude rà rồi mới merge. Chỉ merge vào `main` khi test, typecheck, build đều qua và tính năng đã được kiểm tra thực tế (không chỉ test giả lập).
 - Không commit `.env`, không in mật khẩu/khóa.
 - Không chạy `docker volume prune`, `docker system prune --volumes` hoặc
   `docker compose down -v`.
