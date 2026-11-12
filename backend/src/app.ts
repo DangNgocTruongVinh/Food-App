@@ -15,6 +15,7 @@ import pantryRoutes from "./modules/pantry/pantry.routes.js";
 import receiptScanRoutes from "./modules/receipt-scan/receipt-scan.routes.js";
 import profileRoutes from "./modules/profile/profile.routes.js";
 import recipeRoutes from "./modules/recipes/recipes.routes.js";
+import { isEmailConfigured } from "./services/email.service.js";
 
 export const app = express();
 app.set("trust proxy", env.TRUST_PROXY);
@@ -24,7 +25,8 @@ app.use(cors({ origin: env.FRONTEND_URL, credentials: true }));
 // JSON hợp lệ lớn nhất (công thức của Admin) khoảng 20 KB; ảnh đi multipart với giới hạn riêng (image-upload.ts).
 app.use(express.json({ limit: "100kb" }));
 
-app.get("/api/health", (_req, res) => res.json({ status: "ok", service: "nouri-api" }));
+// email.configured: false = chưa có SMTP, email (quên mật khẩu) chỉ được ghi ra log.
+app.get("/api/health", (_req, res) => res.json({ status: "ok", service: "nouri-api", email: { configured: isEmailConfigured() } }));
 app.use("/api/auth", authRoutes);
 app.use("/api/community", communityRoutes);
 app.use("/api/notifications", notificationRoutes);

@@ -8,7 +8,9 @@ import AiAssistantPage from "./pages/AiAssistantPage";
 import CommunityPage from "./pages/CommunityPage";
 import DashboardPage from "./pages/DashboardPage";
 import LandingPage from "./pages/LandingPage";
+import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import LoginPage from "./pages/LoginPage";
+import ResetPasswordPage from "./pages/ResetPasswordPage";
 import MealPlansPage from "./pages/MealPlansPage";
 import PantryPage from "./pages/PantryPage";
 import ProfilePage from "./pages/ProfilePage";
@@ -39,6 +41,8 @@ export default function App() {
     <Routes>
       <Route index element={<LandingPage />} />
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+      <Route path="/reset-password" element={<ResetPasswordPage />} />
       <Route element={<PublicLayout />}>
         <Route path="privacy" element={<PrivacyPage />} />
         <Route path="terms" element={<TermsPage />} />

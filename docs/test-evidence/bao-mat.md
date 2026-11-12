@@ -55,13 +55,34 @@ không lặp. Tổng: backend 1099/1099, frontend 432/432; typecheck, build đ�
 | `vitest` (+ `tinypool`, `@vitest/mocker`) | nghiêm trọng | Vitest 5 | Chỉ dùng khi chạy test (dev), không có trong bản chạy |
 
 **Khác:**
-- Quên/đặt lại mật khẩu qua email: không làm, ghi vào hướng phát triển (`docs/han-che.md` mục 2).
+- ~~Quên/đặt lại mật khẩu qua email~~: đã làm (nhánh `giai-doan-email`, mục 6).
 - Rate limit lưu trong bộ nhớ một tiến trình: khởi động lại thì mất bộ đếm; chạy nhiều tiến trình cần kho chung (Redis).
 - ~~Cổng 4000 của backend mở ra mạng~~: đã sửa, `docker-compose.yml` chỉ nghe `127.0.0.1:4000` (máy khác không gọi thẳng được để giả
   `X-Forwarded-For`); trình duyệt gọi API qua nginx của frontend.
 - Access token vẫn lưu ở web storage (đọc được bằng JavaScript nếu có XSS); chỉ sống 15 phút. Phương án chặt hơn: giữ trong bộ nhớ và làm
   mới khi tải trang.
 - Đăng xuất chỉ thu hồi refresh token; access token đã phát còn dùng được tối đa 15 phút (khóa tài khoản và đổi mật khẩu thì bị chặn ngay).
+
+## 6. Quên / đặt lại mật khẩu qua email (nhánh `giai-doan-email`)
+
+| Yêu cầu | Cách làm | Kiểm bằng |
+|---|---|---|
+| Không lộ email nào đã đăng ký | `POST /api/auth/forgot-password` luôn trả cùng một câu (có tài khoản, không có, bị khóa); email gửi nền nên thời gian phản hồi như nhau | `password-reset.test.ts` |
+| Token khó đoán, không lộ khi DB bị đọc | 32 byte ngẫu nhiên (`crypto.randomBytes`, base64url); bảng `PasswordResetToken` chỉ lưu SHA-256 | test so bản băm với token trong email |
+| Có hạn, dùng một lần | hết hạn 30 phút; `usedAt` đặt trong transaction với điều kiện `usedAt: null` (hai lần gửi cùng lúc chỉ một lần thành công); yêu cầu mới xóa token cũ | test token sai / đã dùng / hết hạn / giành token thất bại → 400 |
+| Chống spam hộp thư | 5 yêu cầu/giờ cho mỗi email (không phân biệt hoa thường) và 5 yêu cầu/giờ cho mỗi IP → 429 | test rate limit theo email và theo IP |
+| Đổi xong đăng xuất mọi nơi | cùng transaction: đổi `passwordHash` (bcrypt 12), `passwordChangedAt` (access token cũ bị từ chối), thu hồi mọi refresh token; gửi email "Mật khẩu vừa được đổi" | test thu hồi trong transaction, email báo đổi |
+| Tài khoản khóa | không gửi liên kết; dùng liên kết cũ → 403 | test |
+| Mật khẩu mới | 8–72 ký tự như lúc đăng ký (Zod + kiểm phía client); token sai dạng → 422 trước khi đọc DB | test |
+| Token không nằm lại trên trình duyệt | trang `/reset-password` đọc token rồi xóa khỏi thanh địa chỉ (`replace`) | — |
+
+Email: `services/email.service.ts` (Nodemailer, SMTP từ `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `MAIL_FROM`); mẫu tiếng Việt
+HTML + bản chữ (`email-templates.ts`, tên người dùng được escape). Chưa cấu hình SMTP: email chỉ ghi ra log (kể cả liên kết đặt lại, để
+thử ở máy dev) và `GET /api/health` trả `email.configured: false` — **production phải cấu hình SMTP**. Test dùng transport giả lập,
+không gửi email thật. `nodemailer` dùng bản 10.3.1 (các bản ≤ 10.1.3 có cảnh báo `npm audit`).
+
+Hạn chế: rate limit theo email/IP lưu trong bộ nhớ một tiến trình như đăng nhập (mục 3); email bị nhà cung cấp chậm/thất lạc thì người
+dùng chỉ thấy câu chung, phải yêu cầu lại.
 
 ## 4. Cách bảo vệ
 

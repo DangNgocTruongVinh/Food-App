@@ -1,13 +1,11 @@
 import { type FormEvent, useState } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { AuthForm } from "../components/auth/AuthForm";
-import { Logo } from "../components/ui";
+import { AuthShell } from "../components/auth/AuthShell";
 import { useAuth } from "../contexts/AuthContext";
 import { type AuthFormValues, type AuthMode, authErrorMessage, safeNextPath, validateAuthForm } from "../features/auth/auth.logic";
 import { getRememberLoginPreference } from "../features/auth/auth.storage";
 import { postLoginPath } from "../features/layout/layout.logic";
-
-const asset = (path: string) => `${import.meta.env.BASE_URL}assets/login/${path}`;
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -15,6 +13,8 @@ export default function LoginPage() {
   const [params] = useSearchParams();
   // Bị Admin khóa khi đang dùng: client đăng xuất và chuyển về đây kèm ?locked=1 (api/client.ts).
   const lockedNotice = params.get("locked") === "1";
+  // Vừa đặt mật khẩu mới qua email (ResetPasswordPage chuyển về đây kèm ?reset=1).
+  const resetNotice = params.get("reset") === "1" ? "Đã đặt mật khẩu mới. Mọi phiên đăng nhập cũ đã bị đăng xuất, hãy đăng nhập lại." : "";
   // Landing: "Đăng ký miễn phí" mở sẵn form đăng ký (?mode=register); bấm món khi chưa đăng nhập thì quay lại món đó (?next=).
   const [mode, setMode] = useState<AuthMode>(() => (params.get("mode") === "register" ? "register" : "login"));
   const nextPath = safeNextPath(params.get("next"));
@@ -67,45 +67,26 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="dn-page">
-      <div className="dn-photo">
-        <picture>
-          <source media="(max-width: 1023px)" srcSet={asset("hero-mobile.jpg")} />
-          <img src={asset("hero-desktop.jpg")} alt="Đĩa cá hồi áp chảo với đậu que, cà chua bi và cơm súp lơ" />
-        </picture>
-        <div className="dn-scrim" />
-        <p className="dn-slogan">Hôm nay ăn gì cho khỏe?</p>
-      </div>
-      <main id="noi-dung-chinh" className="dn-panel" aria-label={mode === "register" ? "Đăng ký" : "Đăng nhập"}>
-        <div className="dn-bar">
-          <Link to="/" className="dn-logo" aria-label="Nouri, trang chủ"><Logo /></Link>
-        </div>
-        <div className="dn-wrap">
-          <AuthForm
-            mode={mode}
-            form={form}
-            errors={errors}
-            emailValid={!allErrors.email}
-            serverError={serverError}
-            loading={loading}
-            remember={rememberLogin}
-            onChange={(key, value) => {
-              // Đang sửa email thì tạm ẩn lỗi dạng email, rời ô thì kiểm lại.
-              if (key === "email") setEmailChecked(false);
-              setForm((current) => ({ ...current, [key]: value }));
-            }}
-            onEmailBlur={() => setEmailChecked(true)}
-            onRememberChange={setRememberLogin}
-            onSubmit={(event) => void submit(event)}
-            onToggleMode={toggleMode}
-          />
-        </div>
-        {/* Điều khoản ở chân cột form: thông tin phụ, không chen vào giữa các thao tác đăng nhập. */}
-        <p className="dn-legal">
-          Khi tiếp tục, bạn đồng ý với <Link className="dn-legal__link" to="/terms">Điều khoản sử dụng</Link> và{" "}
-          <Link className="dn-legal__link" to="/privacy">Chính sách bảo mật</Link> của Nouri.
-        </p>
-      </main>
-    </div>
+    <AuthShell label={mode === "register" ? "Đăng ký" : "Đăng nhập"}>
+      <AuthForm
+        mode={mode}
+        form={form}
+        errors={errors}
+        emailValid={!allErrors.email}
+        serverError={serverError}
+        notice={serverError ? "" : resetNotice}
+        loading={loading}
+        remember={rememberLogin}
+        onChange={(key, value) => {
+          // Đang sửa email thì tạm ẩn lỗi dạng email, rời ô thì kiểm lại.
+          if (key === "email") setEmailChecked(false);
+          setForm((current) => ({ ...current, [key]: value }));
+        }}
+        onEmailBlur={() => setEmailChecked(true)}
+        onRememberChange={setRememberLogin}
+        onSubmit={(event) => void submit(event)}
+        onToggleMode={toggleMode}
+      />
+    </AuthShell>
   );
 }

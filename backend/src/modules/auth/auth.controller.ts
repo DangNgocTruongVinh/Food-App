@@ -2,7 +2,8 @@ import type { Request, Response } from "express";
 import type { AuthenticatedRequest, ValidatedRequest } from "../../types/http.js";
 import { HttpError } from "../../utils/http-error.js";
 import { clearRefreshCookie, readRefreshCookie, setRefreshCookie } from "./auth.cookies.js";
-import type { ChangePasswordInput, LoginInput, RegisterInput } from "./auth.schema.js";
+import type { ChangePasswordInput, ForgotPasswordInput, LoginInput, RegisterInput, ResetPasswordInput } from "./auth.schema.js";
+import { requestPasswordReset, resetPassword } from "./password-reset.service.js";
 import { changePassword, issueAccessToken, login, publicUser, register, type Session } from "./auth.service.js";
 import { REFRESH_RACE_CODE, rememberOf, revokeRefreshToken, rotateRefreshToken } from "./refresh-token.service.js";
 
@@ -41,4 +42,12 @@ export async function logoutController(req: Request, res: Response) {
 export async function changePasswordController(req: ValidatedRequest<ChangePasswordInput>, res: Response) {
   const remember = await rememberOf(readRefreshCookie(req));
   sendSession(res, 200, await changePassword((req as unknown as AuthenticatedRequest).userId, req.body, remember));
+}
+
+export async function forgotPasswordController(req: ValidatedRequest<ForgotPasswordInput>, res: Response) {
+  res.json(await requestPasswordReset(req.body.email));
+}
+
+export async function resetPasswordController(req: ValidatedRequest<ResetPasswordInput>, res: Response) {
+  res.json(await resetPassword(req.body.token, req.body.password));
 }

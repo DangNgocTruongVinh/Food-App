@@ -143,7 +143,7 @@ Kế hoạch chi tiết: `docs/ke-hoach-gd3c.md`. Phần 1 (Tesseract trên serv
 
 ### Giai đoạn 4 — Bảo mật tài khoản
 - [x] Access token 15 phút + refresh token (cookie httpOnly, `SameSite=Strict`, `Path=/api/auth`; DB lưu SHA-256, bảng `RefreshToken`), xoay vòng, dùng lại token cũ → thu hồi cả chuỗi (trừ 10 giây cho hai tab, `REFRESH_RACE`); thu hồi khi đăng xuất, Admin khóa, đổi mật khẩu (`POST /api/auth/change-password`, `passwordChangedAt` chặn access token cũ); frontend tự làm mới một lần khi 401. Kèm C3: rate limit 20/phút/IP cho login/register, body JSON ≤ 100 KB, lỗi JSON 400/413. Chi tiết, việc còn lại: `docs/test-evidence/bao-mat.md`.
-- [x] ~~Quên/đặt lại mật khẩu qua email~~: không làm (quyết định 10/11), ghi vào hướng phát triển `docs/han-che.md` mục 2.
+- [x] Quên/đặt lại mật khẩu qua email (nhánh `giai-doan-email`, 13/11/2026, đổi quyết định 10/11): Nodemailer + SMTP (`SMTP_*`, `MAIL_FROM`; chưa cấu hình thì ghi log, `/api/health` báo), token 32 byte lưu SHA-256, 30 phút, một lần, yêu cầu mới xóa token cũ; 5/giờ/email và 5/giờ/IP; đổi xong thu hồi mọi refresh token + email báo đổi (cả khi đổi trong Hồ sơ); tài khoản khóa không đặt lại được. Gộp `main` 13/11/2026. Chi tiết: `docs/test-evidence/bao-mat.md` mục 6.
 - [x] `npm audit fix` (không `--force`): 18 → 9. Còn 9 cần nâng bản lớn (prisma 7, zod 4, openai 7, sharp 0.35, vitest 5): **không nâng** (quyết định 10/11), ghi rủi ro ở `docs/han-che.md` mục 1.1. Docker: cổng backend chỉ nghe `127.0.0.1:4000`.
 
 ### Giai đoạn 5 — Nghiệp vụ bổ sung
