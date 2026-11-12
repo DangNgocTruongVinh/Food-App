@@ -203,6 +203,16 @@ describe("Meal Plan and Shopping HTTP contract (no database)", () => {
     expect(data.days.create.every((day: { items: { create: unknown[] } }) => day.items.create.length === 3)).toBe(true);
   });
 
+  it("OpenAI lỗi hoặc hết giờ → vẫn tạo thực đơn bằng bộ tạo dự phòng (201, không 500)", async () => {
+    mocks.generatePlanWithAI.mockRejectedValue(new Error("Request timed out."));
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const response = await request(app, "/api/meal-plans/generate", { method: "POST", token: token(), body: { startDate: "2026-10-01" } });
+    expect(response.status).toBe(201);
+    expect(mocks.createPlan.mock.calls[0][0].data).toMatchObject({ aiGenerated: false });
+    expect(warn).toHaveBeenCalled();
+    warn.mockRestore();
+  });
+
   it("divides by recipe.servings in the shopping list: a 2-serving recipe needs half per 1-serving meal", async () => {
     mocks.listRecipes.mockResolvedValue([{ ...recipe, servings: 2 }]);
     await request(app, "/api/meal-plans/generate", { method: "POST", token: token(), body: { startDate: "2026-10-01" } });
