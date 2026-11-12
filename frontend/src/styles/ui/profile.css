@@ -113,3 +113,13 @@
 /* Đồng bộ với Tổng quan (11/11/2026): khối "Chỉ tiêu mỗi ngày" là mảng nền dịu không viền, bo 28px; ô đạm/tinh bột/béo nổi lên nền trang. */
 .hs-targets { border-color: transparent; border-radius: 28px; background: var(--surface-2); }
 .hs-targets__macros div { background: var(--surface); }
+
+/* Nhắc đồ sắp hết hạn qua email: thẻ riêng dưới "Đổi mật khẩu", công tắc là checkbox gốc (role="switch") tô màu thương hiệu. */
+.hs-layout > .hs-expiry { grid-row: 3; padding-top: var(--space-6); border-top: 1px solid var(--line); }
+.hs-expiry .hs-section { display: grid; gap: var(--space-4); }
+.hs-expiry .hs-actions__bar { justify-content: flex-end; }
+.hs-switch { display: inline-flex; align-items: center; gap: var(--space-3); min-height: var(--control-h); color: var(--ink); font-weight: 600; cursor: pointer; }
+.hs-switch input { width: 20px; height: 20px; margin: 0; accent-color: var(--action); cursor: pointer; }
+@media (max-width: 1024px) {
+  .hs-layout > .hs-expiry { grid-row: 4; }
+}

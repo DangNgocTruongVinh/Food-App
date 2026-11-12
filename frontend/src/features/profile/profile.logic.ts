@@ -102,3 +102,13 @@ export function bodyMassIndex(form: Pick<ProfileFormValues, "heightCm" | "weight
   const weight = Number(form.weightKg);
   return height > 0 && weight > 0 ? Math.round((weight / (height * height)) * 10) / 10 : null;
 }
+
+export const EXPIRY_DAY_OPTIONS = [["1", "1 ngày"], ["2", "2 ngày"], ["3", "3 ngày"]] as const;
+
+/** Thông báo sau "Gửi thử ngay": máy chủ chưa có SMTP thì email chỉ được ghi vào log. */
+export function testEmailMessage(result: { emailConfigured: boolean; remainingToday: number }) {
+  const left = `Còn ${result.remainingToday} lần gửi thử hôm nay.`;
+  return result.emailConfigured
+    ? `Đã gửi email thử tới hộp thư của bạn. ${left}`
+    : `Máy chủ chưa cấu hình email nên nội dung chỉ được ghi vào log máy chủ. ${left}`;
+}

@@ -22,6 +22,10 @@ export const envSchema = z.object({
   SMTP_USER: optionalText,
   SMTP_PASS: optionalText,
   MAIL_FROM: optionalText,
+  // Tùy chọn: mọi email gửi cho tài khoản demo (demo@nouri.vn) được chuyển tới hộp thư này (chỉ tài khoản demo).
+  DEMO_EMAIL_INBOX: z.preprocess((value) => (typeof value === "string" && value.trim() === "" ? undefined : value), z.string().trim().email().optional()),
+  // Nhắc đồ sắp hết hạn qua email: giờ gửi mỗi ngày (HH:mm, giờ Việt Nam).
+  EXPIRY_EMAIL_TIME: z.preprocess((value) => (value === "" ? undefined : value), z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/).default("07:00")),
   CLOUDINARY_CLOUD_NAME: optionalText,
   CLOUDINARY_API_KEY: optionalText,
   CLOUDINARY_API_SECRET: optionalText,

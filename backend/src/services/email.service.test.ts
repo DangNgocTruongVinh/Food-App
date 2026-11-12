@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { passwordChangedEmail } from "./email-templates.js";
-import { createMailer, sendMailInBackground } from "./email.service.js";
+import { createMailer, redirectDemoMail, sendMailInBackground } from "./email.service.js";
 
 vi.mock("../config/env.js", () => ({ env: { SMTP_PORT: 587 } }));
 
@@ -32,5 +32,17 @@ describe("email.service (transport giả lập, không gửi thật)", () => {
     const mail = passwordChangedEmail({ email: "a@b.vn", name: "An" }, new Date("2026-11-13T01:30:00.000Z"));
     expect(mail.text).toContain("08:30");
     expect(mail.html).toContain("<html lang=\"vi\">");
+  });
+});
+
+describe("DEMO_EMAIL_INBOX", () => {
+  it("chỉ thư gửi tài khoản demo được chuyển tới hộp thư demo; tài khoản khác giữ nguyên", async () => {
+    const transport = { sendMail: vi.fn().mockResolvedValue({}) };
+    const send = createMailer(transport as never, "Nouri <a@b.vn>", "toi@gmail.com");
+    await send({ ...message, to: "Demo@Nouri.vn" });
+    await send({ ...message, to: "khac@nouri.vn" });
+    expect(transport.sendMail.mock.calls[0][0]).toMatchObject({ to: "toi@gmail.com", subject: "[Demo demo@nouri.vn] Thử" });
+    expect(transport.sendMail.mock.calls[1][0]).toMatchObject({ to: "khac@nouri.vn", subject: "Thử" });
+    expect(redirectDemoMail(message, undefined)).toBe(message);
   });
 });

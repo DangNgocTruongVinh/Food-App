@@ -10,6 +10,7 @@ import communityRoutes from "./modules/community/community.routes.js";
 import dashboardRoutes from "./modules/dashboard/dashboard.routes.js";
 import recommendationRoutes from "./modules/recommendation/recommendation.routes.js";
 import mealPlanRoutes from "./modules/meal-plans/meal-plans.routes.js";
+import expiryEmailRoutes from "./modules/notifications/expiry-email.routes.js";
 import notificationRoutes from "./modules/notifications/notifications.routes.js";
 import pantryRoutes from "./modules/pantry/pantry.routes.js";
 import receiptScanRoutes from "./modules/receipt-scan/receipt-scan.routes.js";
@@ -30,6 +31,7 @@ app.get("/api/health", (_req, res) => res.json({ status: "ok", service: "nouri-a
 app.use("/api/auth", authRoutes);
 app.use("/api/community", communityRoutes);
 app.use("/api/notifications", notificationRoutes);
+app.use("/api/expiry-email", expiryEmailRoutes);
 app.use("/api/profile", profileRoutes);
 app.use("/api/pantry/receipt-scans", receiptScanRoutes);
 app.use("/api/pantry", pantryRoutes);
