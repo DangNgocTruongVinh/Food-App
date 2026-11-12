@@ -117,3 +117,5 @@
 
 /* Đồng bộ với Tổng quan (11/11/2026): khối phụ cột phải là mảng nền dịu không viền, bo 28px. */
 .as-side .ui-card { border-color: transparent; border-radius: 28px; background: var(--surface-2); }
+/* Chữ dài liền (tên thực phẩm, dị ứng, câu hỏi gần đây) xuống dòng thay vì làm thẻ cột phải tràn/cắt mép. */
+.as-card { min-width: 0; overflow-wrap: anywhere; }

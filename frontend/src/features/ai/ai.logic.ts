@@ -69,14 +69,29 @@ export function assistantPromptSuggestions({ profile, dashboard }: AssistantCont
   return [...prompts, ...generic].slice(0, 4);
 }
 
-type ChatScrollContainer = { scrollHeight: number; scrollTo: (options: ScrollToOptions) => void };
-type ChatScrollMarker = { scrollIntoView: (options: ScrollIntoViewOptions) => void };
+type ChatScrollBox = { scrollHeight: number; scrollTop: number; clientHeight: number };
+
+/** Khoảng cách tới cuối khung (px) vẫn coi là "đang ở cuối": tin mới tới thì tự cuộn theo. */
+export const CHAT_NEAR_BOTTOM_PX = 80;
+
+/** Người dùng đang ở gần cuối khung chat (chưa cuộn lên đọc tin cũ). Chưa có khung → coi như ở cuối. */
+export function isNearChatBottom(chatWindow: ChatScrollBox | null, threshold = CHAT_NEAR_BOTTOM_PX) {
+  if (!chatWindow) return true;
+  return chatWindow.scrollHeight - chatWindow.scrollTop - chatWindow.clientHeight <= threshold;
+}
 
 /**
- * Cuộn tới tin nhắn mới nhất. Luôn cuộn bên trong khung chat; chỉ kéo cả trang sau khi người dùng đã gửi tin,
- * để khi vừa vào trang tiêu đề không bị đẩy lên sau thanh menu cố định.
+ * Cuộn CHỈ khung danh sách tin nhắn xuống cuối (scrollTo của khung). Không dùng scrollIntoView: lệnh đó cuộn cả trang.
+ * smooth = false khi vừa vào trang (nhảy thẳng tới tin mới nhất).
  */
-export function scrollChatToLatest(chatWindow: ChatScrollContainer | null, latest: ChatScrollMarker | null, userHasSent: boolean) {
-  chatWindow?.scrollTo({ top: chatWindow.scrollHeight, behavior: userHasSent ? "smooth" : "auto" });
-  if (userHasSent) latest?.scrollIntoView({ behavior: "smooth" });
+export function scrollChatToBottom(chatWindow: { scrollHeight: number; scrollTo: (options: ScrollToOptions) => void } | null, smooth: boolean) {
+  chatWindow?.scrollTo({ top: chatWindow.scrollHeight, behavior: smooth ? "smooth" : "auto" });
+}
+
+/**
+ * Enter gửi câu hỏi; Shift+Enter xuống dòng. Bỏ qua Enter khi bộ gõ tiếng Việt (Telex/VNI qua IME) đang ghép chữ:
+ * isComposing, hoặc keyCode 229 ở trình duyệt chưa báo isComposing.
+ */
+export function isSubmitEnter(event: { key: string; shiftKey: boolean; isComposing: boolean; keyCode?: number }) {
+  return event.key === "Enter" && !event.shiftKey && !event.isComposing && event.keyCode !== 229;
 }

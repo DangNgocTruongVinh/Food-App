@@ -7,7 +7,9 @@ import type { ChatMessage, DashboardData } from "../../types";
 import { getAIStatus, getAssistantDashboard, getChatHistory, sendChatMessage } from "./ai.api";
 import {
   assistantDietLabel, assistantPromptSuggestions, chatHistoryTime, chatMessageTime, normalizeChatMessage, recentUserHistory,
-  scrollChatToLatest,
+  isNearChatBottom,
+  isSubmitEnter,
+  scrollChatToBottom,
 } from "./ai.logic";
 import { aiMutations, aiQueries, invalidateAIHistory } from "./ai.queries";
 
@@ -171,28 +173,30 @@ describe("AI assistant page business logic", () => {
   });
 });
 
-describe("Chat auto-scroll", () => {
-  const fakes = () => {
-    const chatWindow = { scrollHeight: 1200, scrollTo: vi.fn() };
-    const latest = { scrollIntoView: vi.fn() };
-    return { chatWindow, latest };
-  };
+describe("Chat scrolling and Enter key", () => {
+  const box = (scrollTop: number) => ({ scrollHeight: 1200, clientHeight: 400, scrollTop, scrollTo: vi.fn() });
 
-  it("on entering the page scrolls only inside the chat window, never the whole page", () => {
-    const { chatWindow, latest } = fakes();
-    scrollChatToLatest(chatWindow, latest, false);
+  it("knows whether the reader is near the bottom of the chat window", () => {
+    expect(isNearChatBottom(box(800))).toBe(true);
+    expect(isNearChatBottom(box(760))).toBe(true);
+    expect(isNearChatBottom(box(300))).toBe(false);
+    expect(isNearChatBottom(null)).toBe(true);
+  });
+
+  it("scrolls only the chat window (never the page), smoothly after the first time", () => {
+    const chatWindow = box(0);
+    scrollChatToBottom(chatWindow, false);
     expect(chatWindow.scrollTo).toHaveBeenCalledWith({ top: 1200, behavior: "auto" });
-    expect(latest.scrollIntoView).not.toHaveBeenCalled();
+    scrollChatToBottom(chatWindow, true);
+    expect(chatWindow.scrollTo).toHaveBeenLastCalledWith({ top: 1200, behavior: "smooth" });
+    expect(() => scrollChatToBottom(null, true)).not.toThrow();
   });
 
-  it("after the user sends a message still scrolls to the reply", () => {
-    const { chatWindow, latest } = fakes();
-    scrollChatToLatest(chatWindow, latest, true);
-    expect(chatWindow.scrollTo).toHaveBeenCalledWith({ top: 1200, behavior: "smooth" });
-    expect(latest.scrollIntoView).toHaveBeenCalledWith({ behavior: "smooth" });
-  });
-
-  it("does nothing before the chat window is rendered", () => {
-    expect(() => scrollChatToLatest(null, null, true)).not.toThrow();
+  it("sends on Enter, keeps Shift+Enter for a new line and ignores Enter while a Vietnamese IME is composing", () => {
+    expect(isSubmitEnter({ key: "Enter", shiftKey: false, isComposing: false, keyCode: 13 })).toBe(true);
+    expect(isSubmitEnter({ key: "Enter", shiftKey: true, isComposing: false, keyCode: 13 })).toBe(false);
+    expect(isSubmitEnter({ key: "Enter", shiftKey: false, isComposing: true, keyCode: 13 })).toBe(false);
+    expect(isSubmitEnter({ key: "Enter", shiftKey: false, isComposing: false, keyCode: 229 })).toBe(false);
+    expect(isSubmitEnter({ key: "a", shiftKey: false, isComposing: false })).toBe(false);
   });
 });
