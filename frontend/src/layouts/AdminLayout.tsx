@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { BookOpen, LayoutDashboard, LogOut, Menu, ScrollText, ShieldCheck, Users, X, type LucideIcon } from "lucide-react";
 import { Link, NavLink, Outlet } from "react-router-dom";
 import { Button, NouriWordmark, ThemeToggle } from "../components/ui";
@@ -77,7 +78,7 @@ export default function AdminLayout() {
       <main id="noi-dung-chinh" tabIndex={-1} className="ad-main">
         <div className="ad-view">
           <h1 className="ui-visually-hidden">Quản trị Nouri</h1>
-          <Outlet />
+          <Suspense fallback={null}><Outlet /></Suspense>
         </div>
       </main>
     </div>

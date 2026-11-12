@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { ShieldCheck } from "lucide-react";
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { SiteFooter } from "../components/layout/SiteFooter";
@@ -28,7 +29,8 @@ export default function AppLayout() {
         </div>
       )}
       <main id="noi-dung-chinh" tabIndex={-1} className="ui-shell__main">
-        <Outlet />
+        {/* Trang tải khi mở (lazy): giữ menu/khung trong lúc tải. */}
+        <Suspense fallback={null}><Outlet /></Suspense>
       </main>
       <SiteFooter />
     </div>
