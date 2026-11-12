@@ -1,6 +1,6 @@
 import { api } from "../../api/client";
 import type {
-  FoodUnit, PantryInput, PantryItem, PantryTransactionPage, PantryTransactionSource, PantryUpdateInput, StorageLocation,
+  FoodUnit, PantryInput, PantryItem, PantryRemovalReason, PantryTransactionPage, PantryTransactionSource, PantryUpdateInput, StorageLocation,
 } from "../../types";
 
 export type PantryFormValues = {
@@ -12,6 +12,8 @@ export type PantryFormValues = {
   expiryDate: string;
   minimumStock: number;
   note: string;
+  /** Đơn giá (đ / 1 đơn vị), tùy chọn; NaN = để trống. */
+  unitPrice: number;
 };
 
 export function toCreatePantryInput(form: PantryFormValues): PantryInput {
@@ -19,6 +21,7 @@ export function toCreatePantryInput(form: PantryFormValues): PantryInput {
     ...form,
     quantity: Number(form.quantity),
     expiryDate: form.expiryDate || null,
+    unitPrice: Number.isFinite(form.unitPrice) ? form.unitPrice : null,
   };
 }
 
@@ -32,6 +35,7 @@ export function toPantryFormValues(item: PantryItem): PantryFormValues {
     expiryDate: item.expiryDate?.slice(0, 10) ?? "",
     minimumStock: item.minimumStock,
     note: item.note ?? "",
+    unitPrice: item.unitPrice ?? Number.NaN,
   };
 }
 
@@ -47,8 +51,8 @@ export async function updatePantryItem(id: string, input: PantryUpdateInput) {
   return (await api.put<PantryItem>(`/pantry/${id}`, input)).data;
 }
 
-export async function deletePantryItem(id: string) {
-  await api.delete(`/pantry/${id}`);
+export async function deletePantryItem({ id, reason }: { id: string; reason: PantryRemovalReason }) {
+  await api.delete(`/pantry/${id}`, { params: { reason } });
 }
 
 export type PantryTransactionFilters = { source?: PantryTransactionSource; pantryItemId?: string; page: number; pageSize: number };

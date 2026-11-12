@@ -30,11 +30,11 @@ describe("userInitial", () => {
 
 describe("navigation data", () => {
   it("keeps Hồ sơ out of the main menu (it lives in the account menu)", () => {
-    expect(PRIMARY_NAV.map((link) => link.to)).toEqual(["/dashboard", "/pantry", "/meal-plans", "/recipes", "/community", "/assistant"]);
+    expect(PRIMARY_NAV.map((link) => link.to)).toEqual(["/dashboard", "/pantry", "/meal-plans", "/recipes", "/community", "/assistant", "/reports"]);
   });
 
   it("links the footer only to pages that exist", () => {
-    const routes = new Set(["/dashboard", "/pantry", "/meal-plans", "/recipes", "/community", "/assistant", "/profile", "/privacy", "/terms"]);
+    const routes = new Set(["/dashboard", "/pantry", "/meal-plans", "/recipes", "/community", "/assistant", "/reports", "/profile", "/privacy", "/terms"]);
     const links = FOOTER_GROUPS.flatMap((group) => group.links.map((link) => link.to));
     expect(links.filter((to) => !routes.has(to))).toEqual([]);
   });

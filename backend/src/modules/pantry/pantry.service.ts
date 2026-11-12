@@ -2,7 +2,7 @@ import { prisma } from "../../lib/prisma.js";
 import { syncPantryNotifications } from "../notifications/notifications.service.js";
 import { HttpError } from "../../utils/http-error.js";
 import { manualEditChange, recordPantryChange } from "./pantry-history.service.js";
-import type { CreatePantryInput, UpdatePantryInput } from "./pantry.schema.js";
+import type { CreatePantryInput, PantryRemovalReasonInput, UpdatePantryInput } from "./pantry.schema.js";
 
 const relatedNotificationTypes = ["PANTRY_EXPIRING", "PANTRY_EXPIRED", "PANTRY_LOW_STOCK"] as const;
 
@@ -75,12 +75,15 @@ export async function updatePantryItem(userId: string, id: string, input: Update
   return item;
 }
 
-export async function deletePantryItem(userId: string, id: string) {
+/** Xóa khỏi kho kèm lý do ("Đã dùng hết" / "Bỏ đi" / "Nhập nhầm"), lưu ở dòng lịch sử cho Báo cáo lãng phí. */
+export async function deletePantryItem(userId: string, id: string, reason: PantryRemovalReasonInput) {
   await prisma.$transaction(async (transaction) => {
     const current = await transaction.pantryItem.findFirst({ where: { id, userId } });
     if (!current) throw new HttpError(404, "Không tìm thấy thực phẩm.");
     // Ghi trước khi xóa (dòng lịch sử giữ tên, đơn vị; pantryItemId về null khi thực phẩm bị xóa).
-    await recordPantryChange(transaction, { item: { ...current, quantity: 0 }, delta: -current.quantity, source: "MANUAL_DELETE" });
+    await recordPantryChange(transaction, {
+      item: { ...current, quantity: 0 }, delta: -current.quantity, source: "MANUAL_DELETE", removalReason: reason,
+    });
     const result = await transaction.pantryItem.deleteMany({ where: { id, userId } });
     if (!result.count) throw new HttpError(404, "Không tìm thấy thực phẩm.");
     await transaction.notification.deleteMany({

@@ -3,13 +3,15 @@
 export type NavLinkItem = { to: string; label: string; end?: boolean };
 
 /** Liên kết chính trên menu (Hồ sơ nằm trong menu tài khoản). */
+// 7 mục phải vừa một hàng từ 1201px (dưới đó dùng menu gọn) kể cả khi tên tài khoản dài: nhãn ngắn "Kho" (tiêu đề trang vẫn đầy đủ).
 export const PRIMARY_NAV: NavLinkItem[] = [
   { to: "/dashboard", label: "Tổng quan", end: true },
-  { to: "/pantry", label: "Kho thực phẩm" },
+  { to: "/pantry", label: "Kho" },
   { to: "/meal-plans", label: "Thực đơn" },
   { to: "/recipes", label: "Công thức" },
   { to: "/community", label: "Cộng đồng" },
   { to: "/assistant", label: "Trợ lý AI" },
+  { to: "/reports", label: "Báo cáo" },
 ];
 
 /** Menu trái của khu Quản trị (AdminLayout); mỗi mục một route con của /admin. */
@@ -75,6 +77,7 @@ export const FOOTER_GROUPS: { title: string; links: NavLinkItem[] }[] = [
       { to: "/pantry", label: "Kho thực phẩm" },
       { to: "/meal-plans", label: "Thực đơn" },
       { to: "/recipes", label: "Công thức" },
+      { to: "/reports", label: "Báo cáo" },
     ],
   },
   {

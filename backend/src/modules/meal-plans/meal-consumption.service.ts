@@ -80,7 +80,10 @@ async function deductForMeal(
       }
       quantities.set(deduction.pantryItemId, Math.max(0, after));
       await recordPantryChange(tx, {
-        item: { id: deduction.pantryItemId, userId, name: deduction.name, quantity: Math.max(0, after), unit: deduction.unit },
+        item: {
+          ...pantry.find((pantryItem) => pantryItem.id === deduction.pantryItemId),
+          id: deduction.pantryItemId, userId, name: deduction.name, quantity: Math.max(0, after), unit: deduction.unit,
+        },
         delta: -deduction.quantity,
         source: "CONSUMPTION",
         mealPlanItemId: item.id,

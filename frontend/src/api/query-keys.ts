@@ -7,6 +7,11 @@ export const queryKeys = {
     list: (params: { context: string; recipeId?: string; pantryItemId?: string; limit: number }) => ["recommendations", params] as const,
   },
   pantry: ["pantry"],
+  // Báo cáo đọc lịch sử kho và bữa "Đã ăn": làm mới khi vào trang (staleTime ngắn).
+  reports: {
+    waste: (weeks: number) => ["reports", "waste", weeks] as const,
+    nutrition: (week: "current" | "previous") => ["reports", "nutrition", week] as const,
+  },
   // Cùng tiền tố "pantry": mọi chỗ làm mới kho cũng làm mới lịch sử kho.
   // Quét hóa đơn: tiền tố riêng để làm mới kho không hỏi lại trạng thái lần quét.
   receiptScans: {

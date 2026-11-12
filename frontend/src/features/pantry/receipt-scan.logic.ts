@@ -122,6 +122,8 @@ export type EditableLine = {
   storageLocation: StorageLocation;
   expiryDate: string;
   rawText: string;
+  /** Thành tiền đọc được trên hóa đơn (null nếu không có): gửi kèm để lưu đơn giá cho Báo cáo lãng phí. */
+  price: number | null;
   target: ReceiptLineTarget;
   warnings: ReceiptDraftLine["warnings"];
   flags: ReceiptLineFlag[];
@@ -132,7 +134,7 @@ export type EditableLine = {
 export function toEditableLines(items: ReceiptDraftLine[]): EditableLine[] {
   return items.map((item) => ({
     key: item.key, include: true, name: item.name, quantity: item.quantity, unit: item.unit, category: item.category,
-    storageLocation: item.storageLocation, expiryDate: item.expiryDate ?? "", rawText: item.rawText, target: item.target,
+    storageLocation: item.storageLocation, expiryDate: item.expiryDate ?? "", rawText: item.rawText, price: item.price, target: item.target,
     warnings: item.warnings, flags: item.flags,
     draft: { name: item.name, unit: item.unit, expiryDate: item.expiryDate ?? "", expiryEstimated: item.expiryEstimated },
     restored: false,
@@ -144,7 +146,7 @@ export function restoreSkippedLine(rawText: string, index: number): EditableLine
   const name = rawText.replace(/[\d\s.,:xX×*=đ-]+$/u, "").trim() || rawText.trim();
   return {
     key: `skipped-${index}`, include: true, name, quantity: 1, unit: "ITEM", category: "Khác", storageLocation: "REFRIGERATOR",
-    expiryDate: "", rawText, target: { kind: "create" }, warnings: [], flags: [],
+    expiryDate: "", rawText, price: null, target: { kind: "create" }, warnings: [], flags: [],
     draft: { name, unit: "ITEM", expiryDate: "", expiryEstimated: false }, restored: true,
   };
 }
@@ -191,7 +193,7 @@ export const MAX_COMMIT_LINES = 60;
 export function toCommitLines(lines: EditableLine[]): ReceiptCommitLine[] {
   return lines.filter((line) => line.include).map((line) => ({
     name: line.name.trim().replace(/\s+/g, " "), quantity: line.quantity, unit: line.unit, category: line.category,
-    storageLocation: line.storageLocation, expiryDate: line.expiryDate || null, expiryEstimated: isExpiryEstimated(line),
+    storageLocation: line.storageLocation, expiryDate: line.expiryDate || null, expiryEstimated: isExpiryEstimated(line), price: line.price,
   }));
 }
 

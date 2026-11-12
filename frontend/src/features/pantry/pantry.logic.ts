@@ -1,5 +1,5 @@
 import { differenceInCalendarDays } from "date-fns";
-import type { FoodUnit, PantryItem, StorageLocation } from "../../types";
+import type { FoodUnit, PantryItem, PantryRemovalReason, StorageLocation } from "../../types";
 import { formatDisplayDate } from "../../utils/date";
 import { FOOD_CATEGORIES } from "../../utils/food-categories";
 import { foodUnitLabel } from "../../utils/units";
@@ -23,7 +23,7 @@ export const PANTRY_PAGE_SIZE = 8;
 
 export const initialPantryForm: PantryFormValues = {
   name: "", category: "Rau củ", quantity: 1, unit: "ITEM" as FoodUnit,
-  storageLocation: "REFRIGERATOR" as StorageLocation, expiryDate: "", minimumStock: 0, note: "",
+  storageLocation: "REFRIGERATOR" as StorageLocation, expiryDate: "", minimumStock: 0, note: "", unitPrice: Number.NaN,
 };
 
 /** Bộ 8 nhóm chung với danh sách đi chợ; nhóm cũ của thực phẩm đã có vẫn giữ (pantryCategoryOptions). */
@@ -162,7 +162,7 @@ export function pantryItemPage(items: { id: string }[], itemId: string, pageSize
   return index < 0 ? null : Math.floor(index / pageSize) + 1;
 }
 
-export type PantryFormField = "name" | "expiryDate" | "quantity" | "minimumStock" | "note";
+export type PantryFormField = "name" | "expiryDate" | "quantity" | "minimumStock" | "note" | "unitPrice";
 export type PantryFormErrors = Partial<Record<PantryFormField, string>>;
 
 /** Lỗi theo từng trường, nói rõ cách sửa. Hạn sử dụng trống là hợp lệ (không có hạn). */
@@ -174,6 +174,8 @@ export function validatePantryForm(form: PantryFormValues, expiryDateInvalid: bo
   if (expiryDateInvalid) errors.expiryDate = "Ngày không hợp lệ. Nhập theo dạng dd/mm/yyyy, hoặc để trống nếu không có hạn.";
   if (!Number.isFinite(form.quantity) || form.quantity <= 0) errors.quantity = "Nhập số lượng lớn hơn 0.";
   if (!Number.isFinite(form.minimumStock) || form.minimumStock < 0) errors.minimumStock = "Nhập 0 hoặc một số dương.";
+  // Đơn giá không bắt buộc: để trống được; nhập thì phải là số không âm.
+  if (Number.isFinite(form.unitPrice) && (form.unitPrice < 0 || form.unitPrice > 1_000_000_000)) errors.unitPrice = "Nhập đơn giá từ 0 đồng, hoặc để trống.";
   if (form.note.length > 300) errors.note = `Rút ghi chú xuống tối đa 300 ký tự (hiện có ${form.note.length}).`;
   return errors;
 }
@@ -183,4 +185,15 @@ export function pantryDoneMessage(action: "create" | "update" | "delete", name: 
   if (action === "create") return `Đã lưu “${name}” vào kho.`;
   if (action === "update") return `Đã lưu thay đổi cho “${name}”.`;
   return `Đã xóa “${name}” khỏi kho.`;
+}
+
+export const REMOVAL_REASON_OPTIONS: ReadonlyArray<readonly [PantryRemovalReason, string]> = [
+  ["USED_UP", "Đã dùng hết"], ["DISCARDED", "Bỏ đi (hỏng, hết hạn)"], ["MISTAKE", "Nhập nhầm"],
+];
+
+/** Lý do gợi ý sẵn khi xóa: số lượng 0 → Đã dùng hết; đã hết hạn → Bỏ đi; còn lại để người dùng tự chọn (""). */
+export function suggestedRemovalReason(item: Pick<PantryItem, "expiryDate" | "quantity">, now = new Date()): PantryRemovalReason | "" {
+  const status = getPantryStatus(item, now);
+  if (status === "depleted") return "USED_UP";
+  return status === "expired" ? "DISCARDED" : "";
 }

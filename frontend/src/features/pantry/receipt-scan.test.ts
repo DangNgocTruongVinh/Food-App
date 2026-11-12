@@ -76,7 +76,9 @@ describe("receipt-scan.logic", () => {
   });
 
   it("khôi phục dòng bị bỏ: tên bỏ phần số cuối dòng", () => {
-    expect(restoreSkippedLine("Túi lọc trà 1 30.000", 2)).toMatchObject({ key: "skipped-2", name: "Túi lọc trà", quantity: 1, unit: "ITEM", restored: true });
+    expect(restoreSkippedLine("Túi lọc trà 1 30.000", 2)).toMatchObject({
+      key: "skipped-2", name: "Túi lọc trà", quantity: 1, unit: "ITEM", restored: true, price: null,
+    });
   });
 
   it("lỗi chỉ tính dòng đang chọn; gửi đi chỉ dòng đang chọn, hạn trống = null", () => {
@@ -87,8 +89,15 @@ describe("receipt-scan.logic", () => {
     const chosen = lines.map((line) => (line.key === "l2" ? { ...line, include: false } : line));
     expect(reviewErrors(chosen, new Set())).toEqual({});
     expect(toCommitLines(chosen)).toEqual([
-      { name: "Thịt heo xay", quantity: 0.5, unit: "KG", category: "Thịt & cá", storageLocation: "REFRIGERATOR", expiryDate: "2026-11-11", expiryEstimated: true },
-      { name: "Rau muống", quantity: 0.5, unit: "KG", category: "Thịt & cá", storageLocation: "REFRIGERATOR", expiryDate: null, expiryEstimated: false },
+      // price: thành tiền trên hóa đơn → backend lưu đơn giá (Báo cáo lãng phí).
+      {
+        name: "Thịt heo xay", quantity: 0.5, unit: "KG", category: "Thịt & cá", storageLocation: "REFRIGERATOR", expiryDate: "2026-11-11",
+        expiryEstimated: true, price: 65000,
+      },
+      {
+        name: "Rau muống", quantity: 0.5, unit: "KG", category: "Thịt & cá", storageLocation: "REFRIGERATOR", expiryDate: null,
+        expiryEstimated: false, price: 65000,
+      },
     ]);
   });
 

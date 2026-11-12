@@ -1,7 +1,9 @@
 import type { Request, Response } from "express";
 import type { AuthenticatedRequest, ValidatedRequest } from "../../types/http.js";
 import { listPantryTransactions } from "./pantry-history.service.js";
-import { listPantryTransactionsSchema, type CreatePantryInput, type PantryIdParams, type UpdatePantryInput } from "./pantry.schema.js";
+import {
+  deletePantrySchema, listPantryTransactionsSchema, type CreatePantryInput, type PantryIdParams, type UpdatePantryInput,
+} from "./pantry.schema.js";
 import { createPantryItem, deletePantryItem, listPantryItems, updatePantryItem } from "./pantry.service.js";
 
 const authenticatedUserId = (req: Request) => (req as AuthenticatedRequest).userId;
@@ -19,7 +21,8 @@ export async function updatePantryController(req: ValidatedRequest<UpdatePantryI
 }
 
 export async function deletePantryController(req: ValidatedRequest<unknown, PantryIdParams>, res: Response) {
-  await deletePantryItem(authenticatedUserId(req), req.params.id);
+  // validate() không ghi đè req.query: đọc lại lý do đã kiểm tra.
+  await deletePantryItem(authenticatedUserId(req), req.params.id, deletePantrySchema.shape.query.parse(req.query).reason);
   res.status(204).send();
 }
 

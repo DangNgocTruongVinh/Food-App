@@ -17,9 +17,9 @@ import {
 
 const form: PantryFormValues = {
   name: "Ức gà", category: "Thịt & cá", quantity: 500, unit: "G",
-  storageLocation: "FREEZER", expiryDate: "2026-09-20", minimumStock: 100, note: "Ngăn đông",
+  storageLocation: "FREEZER", expiryDate: "2026-09-20", minimumStock: 100, note: "Ngăn đông", unitPrice: Number.NaN,
 };
-const input: PantryInput = { ...form };
+const input: PantryInput = { ...form, unitPrice: null }; // đơn giá để trống → null
 const item: PantryItem = {
   id: "item-a", name: form.name, category: form.category, quantity: form.quantity,
   unit: form.unit, storageLocation: form.storageLocation,
@@ -41,8 +41,9 @@ afterEach(() => {
 
 describe("Pantry API adapters (no network)", () => {
   it("preserves the add form payload and converts an empty expiry date to null", () => {
-    expect(toCreatePantryInput(form)).toEqual(form);
-    expect(toCreatePantryInput({ ...form, expiryDate: "" })).toEqual({ ...form, expiryDate: null });
+    expect(toCreatePantryInput(form)).toEqual(input);
+    expect(toCreatePantryInput({ ...form, expiryDate: "" })).toEqual({ ...input, expiryDate: null });
+    expect(toCreatePantryInput({ ...form, unitPrice: 130 }).unitPrice).toBe(130);
   });
 
   it("maps persisted values into the edit form, including stock and storage", () => {
@@ -73,11 +74,11 @@ describe("Pantry API adapters (no network)", () => {
     expect(JSON.parse(adapter.mock.calls[0][0].data)).toEqual({ quantity: 250 });
   });
 
-  it("deletes a Pantry item with the same URL", async () => {
+  it("deletes a Pantry item with the same URL and the removal reason (Báo cáo lãng phí)", async () => {
     const adapter = vi.fn(async (config) => ({ config, data: undefined, status: 204, statusText: "No Content", headers: {} }));
     api.defaults.adapter = adapter;
-    await expect(deletePantryItem(item.id)).resolves.toBeUndefined();
-    expect(adapter.mock.calls[0][0]).toMatchObject({ method: "delete", url: `/pantry/${item.id}` });
+    await expect(deletePantryItem({ id: item.id, reason: "DISCARDED" })).resolves.toBeUndefined();
+    expect(adapter.mock.calls[0][0]).toMatchObject({ method: "delete", url: `/pantry/${item.id}`, params: { reason: "DISCARDED" } });
   });
 
   it.each(["create", "update", "delete"] as const)("propagates a failed %s request for the page error handler", async (operation) => {
@@ -87,7 +88,7 @@ describe("Pantry API adapters (no network)", () => {
       ? createPantryItem(input)
       : operation === "update"
         ? updatePantryItem(item.id, { minimumStock: 150, storageLocation: "DRY_STORAGE" })
-        : deletePantryItem(item.id);
+        : deletePantryItem({ id: item.id, reason: "MISTAKE" });
     await expect(request).rejects.toBe(failure);
   });
 });
@@ -126,7 +127,7 @@ describe("Pantry query and mutation definitions", () => {
     await new MutationObserver(client, pantryMutations.update()).mutate({
       id: item.id, form: { ...form, minimumStock: 150, storageLocation: "DRY_STORAGE" },
     });
-    await new MutationObserver(client, pantryMutations.remove()).mutate(item.id);
+    await new MutationObserver(client, pantryMutations.remove()).mutate({ id: item.id, reason: "USED_UP" });
     expect(adapter.mock.calls.map(([config]) => [config.method, config.url])).toEqual([
       ["post", "/pantry"], ["put", `/pantry/${item.id}`], ["delete", `/pantry/${item.id}`],
     ]);
@@ -292,5 +293,16 @@ describe("Depleted pantry items (quantity 0, GĐ3b decision 1)", () => {
   it("keeps depleted items out of \"Cần dùng sớm\"", () => {
     const soon = itemsToUseSoon(items, day);
     expect([...soon.expiring, ...soon.expired].map((item) => item.id)).toEqual(["b", "d"]);
+  });
+});
+
+describe("Xóa khỏi kho: lý do gợi ý", async () => {
+  const { suggestedRemovalReason, REMOVAL_REASON_OPTIONS } = await import("./pantry.logic");
+  const now = new Date("2026-11-13T03:00:00.000Z");
+  it("số lượng 0 → Đã dùng hết; đã hết hạn → Bỏ đi; còn tốt → để người dùng chọn", () => {
+    expect(suggestedRemovalReason({ quantity: 0, expiryDate: "2026-11-20" }, now)).toBe("USED_UP");
+    expect(suggestedRemovalReason({ quantity: 2, expiryDate: "2026-11-10" }, now)).toBe("DISCARDED");
+    expect(suggestedRemovalReason({ quantity: 2, expiryDate: "2026-11-20" }, now)).toBe("");
+    expect(REMOVAL_REASON_OPTIONS.map(([value]) => value)).toEqual(["USED_UP", "DISCARDED", "MISTAKE"]);
   });
 });

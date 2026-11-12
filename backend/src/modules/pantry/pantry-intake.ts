@@ -16,6 +16,8 @@ export type IntakeSkipReason = "DELETED" | "UNIT_MISMATCH" | "CHANGED" | "INSUFF
 export type IntakeInput = {
   name: string; quantity: number; unit: FoodUnit; category: string; storageLocation: StorageLocation;
   expiryDate: Date | null; expiryEstimated: boolean;
+  /** Thành tiền của dòng (hóa đơn có giá), tùy chọn: lưu thành đơn giá của thực phẩm. */
+  price?: number | null;
 };
 
 /** Nguồn của dòng lịch sử và ghi chú khi tạo mới/dùng lại (hoàn tác dựa vào ghi chú "tạo mới" để biết có được xóa hẳn không). */
@@ -48,6 +50,7 @@ export async function addToPantry(tx: Tx, userId: string, input: IntakeInput, li
       data: {
         userId, name: input.name, unit: input.unit, quantity: added, category: input.category, storageLocation: input.storageLocation,
         expiryDate: input.expiryDate, expiryEstimated: input.expiryDate ? input.expiryEstimated : false,
+        ...(input.price && added > 0 ? { unitPrice: input.price / added } : {}),
         purchasedAt: now, createdAt: now, updatedAt: now,
       },
     });
@@ -55,15 +58,17 @@ export async function addToPantry(tx: Tx, userId: string, input: IntakeInput, li
     action = target.kind === "merge" ? "MERGED" : "REUSED";
     added = roundQuantity(convertQuantity(input.quantity, input.unit, target.item.unit) ?? 0);
     const quantity = roundQuantity(target.item.quantity + added);
+    // Có giá thì cập nhật đơn giá theo lần mua mới nhất (quy theo đơn vị của thực phẩm trong kho).
+    const price = input.price && added > 0 ? { unitPrice: input.price / added } : {};
     const data = target.kind === "merge"
-      ? { quantity }
-      : { quantity, purchasedAt: now, expiryDate: input.expiryDate, expiryEstimated: input.expiryDate ? input.expiryEstimated : false };
+      ? { quantity, ...price }
+      : { quantity, ...price, purchasedAt: now, expiryDate: input.expiryDate, expiryEstimated: input.expiryDate ? input.expiryEstimated : false };
     const updated = await tx.pantryItem.updateMany({ where: { id: target.item.id, userId, quantity: target.item.quantity }, data });
     if (!updated.count) throw changedPantryError();
     item = { ...target.item, ...data };
   }
   await recordPantryChange(tx, {
-    item: { id: item.id, userId, name: item.name, quantity: item.quantity, unit: item.unit },
+    item: { ...item, userId },
     delta: added,
     source: link.source,
     shoppingItemId: link.shoppingItemId ?? null,
