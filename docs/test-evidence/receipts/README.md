@@ -1,6 +1,6 @@
 # Bộ hóa đơn đánh giá quét hóa đơn (GĐ3c)
 
-Khoảng 10 hóa đơn/nhãn thật để đo tỉ lệ đọc đúng của từng chế độ (Tesseract, sau này OpenAI).
+Khoảng 10 hóa đơn/nhãn thật để đo tỉ lệ đọc đúng của từng chế độ (Tesseract và OpenAI).
 
 ## Tệp trong thư mục
 
@@ -9,7 +9,7 @@ Khoảng 10 hóa đơn/nhãn thật để đo tỉ lệ đọc đúng của từ
 | `rNN.jpg` (hoặc `.png`, `.webp`) | Ảnh đã che thông tin cá nhân (`r01`, `r02`, …) |
 | `rNN.json` | Đáp án: các dòng hàng thật trên hóa đơn, theo mẫu `_mau-dap-an.json` |
 | `rNN.txt` (tùy chọn) | Chữ trên hóa đơn gõ lại từng dòng, để đo riêng bộ phân tích (`--parser-only`), mẫu `_mau-dap-an.txt` |
-| `ket-qua-<chế độ>.md` | Kết quả do script ghi ra |
+| `ket-qua.md` | Kết quả do script ghi ra (mọi chế độ đã chạy: tỉ lệ đúng, thời gian, token và chi phí OpenAI) |
 
 Tệp bắt đầu bằng `_` là mẫu, script bỏ qua.
 
@@ -20,9 +20,10 @@ Tệp bắt đầu bằng `_` là mẫu, script bỏ qua.
 - Nên có nhiều loại: siêu thị in không dấu, cửa hàng tiện lợi, chợ/tạp hóa viết tay (nếu có), 1–2 nhãn sản phẩm có HSD, 1 ảnh chụp nghiêng hoặc thiếu sáng.
 - Ảnh tối đa 5 MB (giới hạn của ứng dụng); ảnh điện thoại lớn hơn thì giảm độ phân giải khi xuất.
 
-## Che thông tin trước khi commit
+## Che thông tin
 
-Bắt buộc che (tô đen kín, không làm mờ) trước khi đưa ảnh vào repo:
+Ảnh (`*.jpg`, `*.jpeg`, `*.png`, `*.webp`) nằm trong `.gitignore`, chỉ để trên máy; chỉ commit đáp án `.json`, `.txt` và
+`ket-qua.md`. Nếu cần đưa ảnh vào quyển/repo, bắt buộc che (tô đen kín, không làm mờ) trước:
 
 - số thẻ ngân hàng (kể cả 4 số cuối), mã giao dịch thẻ/QR;
 - số điện thoại, mã thành viên/mã khách hàng, tên khách hàng, điểm tích lũy;

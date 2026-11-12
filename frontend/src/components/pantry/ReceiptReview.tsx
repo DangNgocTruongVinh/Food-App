@@ -67,7 +67,7 @@ export function ReceiptReview({ scan, onRescan, onManual, onSaved }: ReceiptRevi
   return (
     <div className="kho-scan">
       <p className={cx("ui-notice", scan.provider === "tesseract" && "ui-notice--error")}>
-        <span>{providerNotice(scan.provider)}</span>
+        <span>{providerNotice(scan.provider, scan.fallbackCode)}</span>
       </p>
 
       {lines.length ? (

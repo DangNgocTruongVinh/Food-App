@@ -36,7 +36,9 @@ export function createOpenAIService(client: OpenAI | null, model: string) {
   };
 }
 
-const client = env.OPENAI_API_KEY ? new OpenAI({ apiKey: env.OPENAI_API_KEY }) : null;
+/** Client dùng chung (chat, thực đơn, quét hóa đơn); null khi chưa cấu hình key. */
+export const openAIClient = env.OPENAI_API_KEY ? new OpenAI({ apiKey: env.OPENAI_API_KEY }) : null;
+const client = openAIClient;
 const openAIService = createOpenAIService(client, env.OPENAI_MODEL);
 
 /** Chỉ cho biết đã cấu hình OpenAI hay chưa; không bao giờ trả về key. */

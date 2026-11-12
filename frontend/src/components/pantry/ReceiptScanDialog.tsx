@@ -47,7 +47,7 @@ export function ReceiptScanDialog({ onClose, onManual, onSaved }: ReceiptScanDia
           status={status.data}
           statusError={status.isError}
           error={state.kind === "error" ? state : null}
-          onPick={(file, provider) => void scan.start(file, provider)}
+          onPick={(file, mode) => void scan.start(file, mode)}
           onManual={onManual}
         />
       )}

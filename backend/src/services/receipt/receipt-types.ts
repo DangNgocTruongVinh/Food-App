@@ -29,7 +29,7 @@ export type ParsedReceipt = { items: RawReceiptItem[]; skipped: SkippedReceiptLi
 
 export type OcrOutput =
   | { kind: "text"; lines: OcrLine[] }
-  | { kind: "items"; items: RawReceiptItem[]; rawLines: string[] };
+  | { kind: "items"; items: RawReceiptItem[]; rawLines: string[]; usage?: { inputTokens: number; outputTokens: number } };
 
 export interface ReceiptOcrProvider {
   readonly id: ReceiptProviderId;

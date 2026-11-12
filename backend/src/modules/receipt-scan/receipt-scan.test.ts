@@ -319,3 +319,74 @@ describe("POST /:id/undo", () => {
     expect(mocks.listHistory).not.toHaveBeenCalled();
   });
 });
+
+describe("POST / — chế độ Tự động / Đọc bằng AI / Chế độ dự phòng", () => {
+  const bothAvailable = () => mocks.providerOptions.mockReturnValue([
+    { id: "tesseract", available: true, reason: null }, { id: "openai", available: true, reason: null },
+  ]);
+  const openaiWith = (read: () => Promise<unknown>) => {
+    const openai = { id: "openai", isAvailable: () => true, canAccept: () => true, read: vi.fn((_image: Buffer) => read()) };
+    mocks.receiptProvider.mockImplementation((id: string) => (id === "openai" ? openai : provider));
+    return openai;
+  };
+  const usage = { inputTokens: 1500, outputTokens: 400 };
+
+  it("Tự động: OpenAI đọc được → không dùng Tesseract, ghi token vào/ra", async () => {
+    bothAvailable();
+    const openai = openaiWith(async () => ({
+      kind: "items", usage,
+      items: [{ rawText: "TRUNG GA 10", name: "Trứng gà", quantity: 10, unit: "ITEM", unitPrice: null, price: null, expiryDate: null, confidence: null, consistent: null }],
+      rawLines: ["TRUNG GA 10"],
+    }));
+    const response = await upload(await jpegWithGps());
+    expect(response.body).toEqual({ id: scanId, provider: "openai", phase: "queued" });
+    expect(mocks.createScan).toHaveBeenCalledWith({ data: { userId, provider: "OPENAI" }, select: { id: true } });
+    const done = await waitForScan();
+    expect(done.body).toMatchObject({ phase: "ready", provider: "openai", fallbackCode: null });
+    expect(openai.read).toHaveBeenCalledOnce();
+    expect(provider.read).not.toHaveBeenCalled();
+    expect(mocks.updateScans).toHaveBeenCalledWith({
+      where: { id: scanId, status: "PROCESSING" }, data: expect.objectContaining({ status: "READY", ...usage, fallbackCode: null }),
+    });
+    expect((await sharp(openai.read.mock.calls[0][0]).metadata()).format).toBe("jpeg");
+  });
+
+  it.each(["OPENAI_TIMEOUT", "OPENAI_FAILED", "OPENAI_INVALID_OUTPUT"] as const)(
+    "Tự động: OpenAI lỗi %s → tự đọc lại bằng Tesseract, màn duyệt biết lý do, DB ghi provider TESSERACT",
+    async (code) => {
+      bothAvailable();
+      const { VisionReadError } = await import("../../services/receipt/providers/openai-vision-provider.js");
+      openaiWith(async () => { throw new VisionReadError(code, code === "OPENAI_INVALID_OUTPUT" ? usage : null); });
+      await upload(await jpegWithGps(), { provider: "auto" });
+      const done = await waitForScan();
+      expect(done.body).toMatchObject({ phase: "ready", provider: "tesseract", fallbackCode: code });
+      expect(done.body.draft.items.length).toBe(3);
+      expect((await sharp(vi.mocked(provider.read).mock.calls[0][0]).metadata()).format).toBe("png"); // ảnh xử lý lại cho OCR
+      expect(mocks.updateScans).toHaveBeenCalledWith({
+        where: { id: scanId, status: "PROCESSING" },
+        data: expect.objectContaining({ status: "READY", provider: "TESSERACT", fallbackCode: code, ...(code === "OPENAI_INVALID_OUTPUT" ? usage : {}) }),
+      });
+    },
+  );
+
+  it("Đọc bằng AI (chọn hẳn): OpenAI lỗi → báo lỗi, không tự chuyển Tesseract", async () => {
+    bothAvailable();
+    const { VisionReadError } = await import("../../services/receipt/providers/openai-vision-provider.js");
+    openaiWith(async () => { throw new VisionReadError("OPENAI_TIMEOUT"); });
+    await upload(await jpegWithGps(), { provider: "openai" });
+    const done = await waitForScan();
+    expect(done.body.phase).toBe("failed");
+    expect(done.body.error).toContain("Chế độ dự phòng");
+    expect(provider.read).not.toHaveBeenCalled();
+    expect(mocks.updateScans).toHaveBeenCalledWith({
+      where: { id: scanId, status: "PROCESSING" }, data: expect.objectContaining({ status: "FAILED", errorCode: "OPENAI_TIMEOUT" }),
+    });
+  });
+
+  it("Tự động khi không có key → đọc bằng Tesseract; chế độ lạ bị từ chối", async () => {
+    await upload(await jpegWithGps(), { provider: "auto" });
+    expect(mocks.createScan).toHaveBeenCalledWith({ data: { userId, provider: "TESSERACT" }, select: { id: true } });
+    await waitForScan();
+    expect((await upload(await jpegWithGps(), { provider: "google" })).status).toBe(422);
+  });
+});

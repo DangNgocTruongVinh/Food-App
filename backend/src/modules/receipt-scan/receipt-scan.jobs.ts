@@ -7,7 +7,9 @@ import type { SkippedReceiptLine } from "../../services/receipt/receipt-types.js
 export type ReceiptScanPhase = "queued" | "reading" | "parsing" | "ready" | "failed";
 export type ReceiptDraft = { items: ReceiptDraftLine[]; skipped: SkippedReceiptLine[] };
 export type ReceiptJob = {
-  userId: string; phase: ReceiptScanPhase; progress: number; draft: ReceiptDraft | null; error: string | null; expiresAt: number;
+  userId: string;
+  /** Nhà cung cấp đang/đã đọc; đổi sang "tesseract" khi chế độ "Tự động" chuyển dự phòng (fallbackCode = lý do). */
+  provider: "tesseract" | "openai"; fallbackCode: string | null; phase: ReceiptScanPhase; progress: number; draft: ReceiptDraft | null; error: string | null; expiresAt: number;
   /** Người dùng bấm "Hủy": OCR vẫn chạy xong ở nền nhưng kết quả bị bỏ, không còn chặn lần quét mới. */
   cancelled: boolean;
 };
@@ -21,9 +23,9 @@ function sweep(now: number) {
 }
 
 export const receiptJobs = {
-  create(scanId: string, userId: string, now = Date.now()) {
+  create(scanId: string, userId: string, provider: ReceiptJob["provider"] = "tesseract", now = Date.now()) {
     sweep(now);
-    jobs.set(scanId, { userId, phase: "queued", progress: 0, draft: null, error: null, expiresAt: now + DRAFT_TTL_MS, cancelled: false });
+    jobs.set(scanId, { userId, provider, fallbackCode: null, phase: "queued", progress: 0, draft: null, error: null, expiresAt: now + DRAFT_TTL_MS, cancelled: false });
   },
   /** Chỉ trả lần quét của đúng người dùng. */
   get(scanId: string, userId: string, now = Date.now()) {

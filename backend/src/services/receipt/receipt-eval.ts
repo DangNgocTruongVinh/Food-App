@@ -79,3 +79,13 @@ export function summarizeScores(scores: ReceiptScore[]) {
     nameRate: ratio(total.nameExact, total.expected), unitRate: ratio(total.unitOk, total.expected), quantityRate: ratio(total.quantityOk, total.expected),
   };
 }
+
+/** Giá OpenAI (USD / 1 triệu token) và tỉ giá; mặc định theo bảng giá gpt-5-mini lúc viết, đổi bằng tham số của script. */
+export type TokenPrices = { inputPerMillion: number; outputPerMillion: number; vndPerUsd: number };
+export const DEFAULT_TOKEN_PRICES: TokenPrices = { inputPerMillion: 0.25, outputPerMillion: 2, vndPerUsd: 26_000 };
+
+/** Chi phí một lần quét từ số token vào/ra. */
+export function scanCost(usage: { inputTokens: number; outputTokens: number }, prices: TokenPrices = DEFAULT_TOKEN_PRICES) {
+  const usd = (usage.inputTokens * prices.inputPerMillion + usage.outputTokens * prices.outputPerMillion) / 1_000_000;
+  return { usd, vnd: usd * prices.vndPerUsd };
+}

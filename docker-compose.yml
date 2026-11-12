@@ -28,6 +28,7 @@ services:
       JWT_SECRET: ${JWT_SECRET:?Thiếu JWT_SECRET trong file .env ở thư mục gốc}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       OPENAI_MODEL: ${OPENAI_MODEL:-gpt-5-mini}
+      OPENAI_VISION_MODEL: ${OPENAI_VISION_MODEL:-gpt-5-mini}
       # Upload ảnh (tùy chọn): đủ cả ba hoặc để trống cả ba (khi đó API upload trả 503).
       CLOUDINARY_CLOUD_NAME: ${CLOUDINARY_CLOUD_NAME:-}
       CLOUDINARY_API_KEY: ${CLOUDINARY_API_KEY:-}

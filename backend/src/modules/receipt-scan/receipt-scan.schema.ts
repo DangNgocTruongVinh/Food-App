@@ -9,9 +9,9 @@ export const MAX_RECEIPT_LINES = 60;
 
 export const receiptStatusSchema = z.object({ body: empty, params: empty, query: empty });
 
-/** multipart: trường "image" (multer) + "provider" tùy chọn; không gửi thì dùng chế độ mặc định. */
+/** multipart: trường "image" (multer) + "provider" tùy chọn (auto | openai | tesseract); không gửi = "auto". */
 export const startReceiptScanSchema = z.object({
-  body: z.object({ provider: z.enum(["tesseract", "openai"]).optional() }),
+  body: z.object({ provider: z.enum(["auto", "tesseract", "openai"]).optional() }),
   params: empty,
   query: empty,
 });

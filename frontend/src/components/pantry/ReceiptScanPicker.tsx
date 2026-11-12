@@ -1,14 +1,14 @@
 import { Camera, ImageUp, PencilLine } from "lucide-react";
-import { useRef } from "react";
-import { PROVIDER_LABELS } from "../../features/pantry/receipt-scan.logic";
-import type { ReceiptProviderId, ReceiptScanStatus } from "../../types";
-import { Button, ErrorState, LoadingState } from "../ui";
+import { useRef, useState } from "react";
+import { AI_UPLOAD_NOTICE, PROVIDER_LABELS, scanModeOptions, sendsImageToAI } from "../../features/pantry/receipt-scan.logic";
+import type { ReceiptScanMode, ReceiptScanStatus } from "../../types";
+import { Button, ChoiceGroup, ErrorState, LoadingState } from "../ui";
 
 type ReceiptScanPickerProps = {
   status: ReceiptScanStatus | undefined;
   statusError: boolean;
   error: { message: string; quota: boolean } | null;
-  onPick: (file: File, provider: ReceiptProviderId | null) => void;
+  onPick: (file: File, mode: ReceiptScanMode) => void;
   onManual: () => void;
 };
 
@@ -16,6 +16,7 @@ type ReceiptScanPickerProps = {
 export function ReceiptScanPicker({ status, statusError, error, onPick, onManual }: ReceiptScanPickerProps) {
   const cameraRef = useRef<HTMLInputElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  const [mode, setMode] = useState<ReceiptScanMode>("auto");
   if (!status && !statusError) return <LoadingState label="Đang tải chế độ quét hóa đơn" count={2} />;
 
   const provider = status?.defaultProvider ?? null;
@@ -25,8 +26,9 @@ export function ReceiptScanPicker({ status, statusError, error, onPick, onManual
   const pick = (input: HTMLInputElement) => {
     const file = input.files?.[0];
     input.value = "";
-    if (file) onPick(file, provider);
+    if (file) onPick(file, mode);
   };
+  const modes = scanModeOptions(status);
   const manual = <Button icon={<PencilLine />} onClick={onManual}>Nhập tay</Button>;
 
   return (
@@ -48,9 +50,14 @@ export function ReceiptScanPicker({ status, statusError, error, onPick, onManual
         <li>Chụp thẳng, đủ sáng, cả tờ hóa đơn nằm trong khung.</li>
         <li>Ảnh JPG, PNG hoặc WEBP, tối đa 5 MB. Ảnh chỉ dùng để đọc rồi bỏ, không lưu lại.</li>
       </ul>
+      {modes && (
+        <ChoiceGroup legend="Chế độ đọc" name="receipt-mode" options={modes} value={mode} onChange={(value) => setMode(value as ReceiptScanMode)}
+          hint="Tự động: đọc bằng AI, lỗi thì tự chuyển sang chế độ dự phòng (đọc trên máy chủ)." />
+      )}
+      {sendsImageToAI(status, mode) && <p className="kho-sub">{AI_UPLOAD_NOTICE}</p>}
       {status && (
         <p className="kho-sub">
-          {provider && <>Chế độ đọc: {PROVIDER_LABELS[provider]}. </>}
+          {provider && !modes && <>Chế độ đọc: {PROVIDER_LABELS[provider]}. </>}
           Còn {status.remainingToday}/{status.dailyLimit} lần quét hôm nay.
         </p>
       )}
