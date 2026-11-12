@@ -85,7 +85,8 @@ describe("resetDemoAccount", () => {
   const client = { user: { findUnique: vi.fn() }, $transaction: vi.fn(async (operation: (db: typeof tx) => unknown) => operation(tx)) };
   const samples = { hashes: vi.fn(async () => ["h1"]), rebuild: vi.fn(async () => ({ accounts: 8, posts: 8, likes: 20 })) };
   const history = vi.fn(async () => ({ meals: 10, likes: 3 }));
-  const reset = () => resetDemoAccount(client as never, now, samples as never, history as never);
+  const report = vi.fn(async () => ({ transactions: 48, meals: 12 }));
+  const reset = () => resetDemoAccount(client as never, now, samples as never, history as never, report as never);
   beforeEach(() => {
     for (const model of Object.values(tx)) for (const fn of Object.values(model)) fn.mockReset().mockResolvedValue({ count: 2 });
     client.user.findUnique.mockReset().mockResolvedValue({ id: "demo-id" });
@@ -119,6 +120,13 @@ describe("resetDemoAccount", () => {
     expect(samples.rebuild.mock.invocationCallOrder.at(-1)!).toBeLessThan(history.mock.invocationCallOrder.at(-1)!);
     expect(tx.mealPlan.deleteMany.mock.invocationCallOrder.at(-1)!).toBeLessThan(history.mock.invocationCallOrder.at(-1)!);
     expect(result.demoHistory).toEqual({ meals: 10, likes: 3 });
+  });
+
+  it("tạo dữ liệu mẫu cho trang Báo cáo trong cùng transaction, sau khi đã xóa lịch sử kho và thực đơn cũ", async () => {
+    const result = await reset();
+    expect(report).toHaveBeenCalledWith(tx, "demo-id", now);
+    expect(tx.pantryTransaction.deleteMany.mock.invocationCallOrder.at(-1)!).toBeLessThan(report.mock.invocationCallOrder.at(-1)!);
+    expect(result.reportHistory).toEqual({ transactions: 48, meals: 12 });
   });
 
   it("recreates the sample profile and pantry, unlocks the account and resets name/password", async () => {

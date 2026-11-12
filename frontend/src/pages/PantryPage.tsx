@@ -11,6 +11,7 @@ import { PantryPager } from "../components/pantry/PantryPager";
 import { PantryCookIdeas, PantrySoonCard, PantrySuggestDialog } from "../components/pantry/PantrySide";
 import { PantrySkeleton } from "../components/pantry/PantrySkeleton";
 import { ReceiptScanDialog } from "../components/pantry/ReceiptScanDialog";
+import { RemovePantryItemDialog } from "../components/pantry/RemovePantryItemDialog";
 import { PantryStats } from "../components/pantry/PantryStats";
 import { Button, Card, EmptyState, ErrorState, Toast, useConfirm } from "../components/ui";
 import {
@@ -21,7 +22,7 @@ import { invalidatePantryQueries, pantryMutations, pantryQueries } from "../feat
 import { undoReceiptScan } from "../features/pantry/receipt-scan.api";
 import { commitMessage, undoMessage } from "../features/pantry/receipt-scan.logic";
 import { usePantryItemFocus } from "../features/pantry/usePantryItemFocus";
-import type { PantryItem, ReceiptCommitResult, StorageLocation } from "../types";
+import type { PantryItem, PantryRemovalReason, ReceiptCommitResult, StorageLocation } from "../types";
 
 type DialogState = { item: PantryItem | null } | null;
 
@@ -39,6 +40,7 @@ export default function PantryPage() {
   const [page, setPage] = useState(1);
   const [dialog, setDialog] = useState<DialogState>(null);
   const [suggestFor, setSuggestFor] = useState<PantryItem | null>(null);
+  const [removing, setRemoving] = useState<PantryItem | null>(null);
   const [toast, setToast] = useState("");
   const clearToast = useCallback(() => setToast(""), []);
   const [searchParams, setSearchParams] = useSearchParams();
@@ -92,16 +94,10 @@ export default function PantryPage() {
     if (confirmed) undoScan.mutate(scanId);
   };
 
-  const confirmRemove = async (item: PantryItem) => {
-    const confirmed = await confirm({
-      title: `Xóa “${item.name}” khỏi kho?`,
-      description: "Thực phẩm sẽ không còn trong danh sách và Nouri thôi nhắc hạn sử dụng của nó. Không hoàn tác được.",
-      confirmLabel: "Xóa thực phẩm",
-      tone: "danger",
-    });
-    if (!confirmed) return;
-    remove.mutate(item.id, { onSuccess: () => setToast(pantryDoneMessage("delete", item.name)) });
-  };
+  // Xóa kèm lý do (Báo cáo lãng phí): hộp RemovePantryItemDialog thay hộp xác nhận chung.
+  const removeWithReason = (item: PantryItem, reason: PantryRemovalReason) => remove.mutate({ id: item.id, reason }, {
+    onSuccess: () => { setRemoving(null); setToast(pantryDoneMessage("delete", item.name)); },
+  });
 
   if (list.isLoading) return <PantrySkeleton />;
   if (list.isError) {
@@ -119,9 +115,9 @@ export default function PantryPage() {
   const itemProps = {
     items: visibleItems,
     focusedItemId: focus.focusedItemId,
-    deletingId: remove.isPending ? remove.variables ?? null : null,
+    deletingId: remove.isPending ? remove.variables?.id ?? null : null,
     onEdit: (item: PantryItem) => setDialog({ item }),
-    onDelete: (item: PantryItem) => void confirmRemove(item),
+    onDelete: (item: PantryItem) => { remove.reset(); setRemoving(item); },
     onSuggest: (item: PantryItem) => setSuggestFor(item),
   };
 
@@ -202,6 +198,11 @@ export default function PantryPage() {
         />
       )}
       {suggestFor && <PantrySuggestDialog item={suggestFor} onClose={() => setSuggestFor(null)} />}
+      {removing && (
+        <RemovePantryItemDialog
+          item={removing} busy={remove.isPending} onCancel={() => setRemoving(null)} onConfirm={(reason) => removeWithReason(removing, reason)}
+        />
+      )}
       {scanOpen && (
         <ReceiptScanDialog
           onClose={() => setScanOpen(false)}

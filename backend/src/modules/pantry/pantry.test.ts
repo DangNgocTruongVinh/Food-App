@@ -173,7 +173,7 @@ describe("Pantry HTTP contract and ownership (no database)", () => {
   });
 
   it("deletes only an owned item and its related pantry notifications in one transaction", async () => {
-    const response = await request(app, `/api/pantry/${itemId}`, { method: "DELETE", token: token() });
+    const response = await request(app, `/api/pantry/${itemId}?reason=DISCARDED`, { method: "DELETE", token: token() });
     expect(response).toEqual({ status: 204, body: null });
     expect(mocks.deleteManyItems).toHaveBeenCalledWith({ where: { id: itemId, userId } });
     expect(mocks.deleteManyNotifications).toHaveBeenCalledWith({ where: notificationWhere });
@@ -182,7 +182,7 @@ describe("Pantry HTTP contract and ownership (no database)", () => {
 
   it("returns 404 without deleting anything or writing history when the item is not owned", async () => {
     mocks.findFirst.mockResolvedValue(null);
-    const response = await request(app, `/api/pantry/${itemId}`, { method: "DELETE", token: token(otherUserId) });
+    const response = await request(app, `/api/pantry/${itemId}?reason=USED_UP`, { method: "DELETE", token: token(otherUserId) });
     expect(response).toEqual({ status: 404, body: { message: "Không tìm thấy thực phẩm." } });
     expect(mocks.deleteManyItems).not.toHaveBeenCalled();
     expect(mocks.createHistory).not.toHaveBeenCalled();
@@ -212,6 +212,7 @@ describe("Pantry history is written with every stock change, in the same transac
     expect(historyData()).toEqual([{
       userId, pantryItemId: itemId, itemName: "Ức gà", unit: "G", delta: 500, quantityAfter: 500, source: "MANUAL_ADD",
       note: null, mealPlanItemId: null, shoppingItemId: null, receiptScanId: null, reversalOfId: null,
+      removalReason: null, category: expect.any(String), expiryDate: expect.anything(), unitPrice: null,
     }]);
     expect(tx.wasCalledInTransaction(mocks.transaction, mocks.create)).toBe(true);
     expect(tx.wasCalledInTransaction(mocks.transaction, mocks.createHistory)).toBe(true);
@@ -241,10 +242,19 @@ describe("Pantry history is written with every stock change, in the same transac
   });
 
   it("deleting writes MANUAL_DELETE with the removed quantity before the row is deleted", async () => {
-    await request(app, `/api/pantry/${itemId}`, { method: "DELETE", token: token() });
-    expect(historyData()).toMatchObject([{ source: "MANUAL_DELETE", delta: -500, quantityAfter: 0, itemName: "Ức gà", pantryItemId: itemId }]);
+    await request(app, `/api/pantry/${itemId}?reason=DISCARDED`, { method: "DELETE", token: token() });
+    expect(historyData()).toMatchObject([{
+      source: "MANUAL_DELETE", delta: -500, quantityAfter: 0, itemName: "Ức gà", pantryItemId: itemId, removalReason: "DISCARDED",
+    }]);
     expect(mocks.createHistory.mock.invocationCallOrder[0]).toBeLessThan(mocks.deleteManyItems.mock.invocationCallOrder[0]);
     expect(tx.wasCalledInTransaction(mocks.transaction, mocks.createHistory)).toBe(true);
+  });
+
+  it("xóa cần lý do (Đã dùng hết / Bỏ đi / Nhập nhầm); thiếu hoặc lạ → 422, không xóa", async () => {
+    for (const path of [`/api/pantry/${itemId}`, `/api/pantry/${itemId}?reason=LOST`]) {
+      expect((await request(app, path, { method: "DELETE", token: token() })).status).toBe(422);
+    }
+    expect(mocks.deleteManyItems).not.toHaveBeenCalled();
   });
 
   it("a history write failure fails the whole change (500), so no stock change goes unrecorded", async () => {

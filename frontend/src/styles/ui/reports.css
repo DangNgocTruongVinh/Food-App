@@ -1,0 +1,50 @@
+/*
+ * Trang Báo cáo (/reports): lãng phí thực phẩm và dinh dưỡng tuần. Chỉ dùng token. Tiền tố lớp: bc-.
+ * Màn hẹp: ô số liệu xếp 2 cột rồi 1 cột, bảng nằm trong khung cuộn riêng nên trang không cuộn ngang.
+ */
+.bc-view {
+  display: grid;
+  gap: var(--space-6);
+  width: 100%;
+  max-width: var(--content-max);
+  margin: 0 auto;
+  padding: var(--space-7) var(--gutter) var(--space-8);
+}
+.bc-hero { display: grid; gap: var(--space-3); }
+.bc-hero .ui-text { max-width: 64ch; }
+
+.bc-section { display: grid; gap: var(--space-5); min-width: 0; }
+.bc-section__head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: var(--space-4); }
+.bc-section__head > div { display: grid; gap: var(--space-2); max-width: 64ch; min-width: 0; }
+.bc-section__title { margin: 0; color: var(--ink); font-family: var(--font-serif); font-size: var(--fs-h2); font-weight: 500; line-height: var(--lh-h2); }
+
+.bc-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-4); margin: 0; }
+.bc-stat { display: grid; align-content: start; gap: var(--space-1); min-width: 0; padding: var(--space-4); border-radius: var(--radius-card); background: var(--surface-2); }
+.bc-stat__label { color: var(--ink-2); font-size: var(--fs-label); font-weight: 600; }
+.bc-stat__value { margin: 0; color: var(--ink); font-family: var(--font-serif); font-size: 1.5rem; line-height: 1.2; overflow-wrap: anywhere; }
+.bc-stat__note { margin: 0; color: var(--ink-2); font-size: var(--fs-label); line-height: var(--lh-label); }
+
+.bc-chart { display: grid; gap: var(--space-3); min-width: 0; margin: 0; }
+.bc-chart__caption { color: var(--ink-2); font-size: var(--fs-small); }
+.bc-chart__canvas { height: 300px; min-width: 0; }
+.bc-chart__legend-text { color: var(--ink); }
+.bc-chart .recharts-default-tooltip { box-shadow: var(--shadow-overlay); }
+
+.bc-table-wrap { min-width: 0; overflow-x: auto; }
+.bc-table { width: 100%; border-collapse: collapse; color: var(--ink); font-size: var(--fs-small); font-variant-numeric: tabular-nums; }
+.bc-table__caption { padding-bottom: var(--space-2); color: var(--ink); font-weight: 600; text-align: left; }
+.bc-table th, .bc-table td { padding: var(--space-2) var(--space-3); border-bottom: 1px solid var(--line); text-align: left; white-space: nowrap; }
+.bc-table thead th { color: var(--ink-2); font-size: var(--fs-label); font-weight: 600; }
+.bc-table tbody th { font-weight: 600; }
+.bc-table__muted td { color: var(--muted); }
+
+@media (max-width: 1024px) {
+  .bc-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 640px) {
+  .bc-view { gap: var(--space-5); padding-top: var(--space-6); }
+  .bc-stats { grid-template-columns: minmax(0, 1fr); }
+  .bc-chart__canvas { height: 240px; }
+  .bc-table th, .bc-table td { padding: var(--space-2); }
+}

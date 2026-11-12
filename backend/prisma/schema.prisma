@@ -61,6 +61,13 @@ enum PantryTransactionSource {
   RECEIPT_SCAN
 }
 
+// Lý do xóa thực phẩm khỏi kho (Báo cáo lãng phí). MISTAKE ("Nhập nhầm") không tính vào thống kê.
+enum PantryRemovalReason {
+  USED_UP
+  DISCARDED
+  MISTAKE
+}
+
 enum MealType {
   BREAKFAST
   LUNCH
@@ -301,6 +308,8 @@ model PantryItem {
   note         String?
   // Hạn do hệ thống gợi ý theo nhóm (đã mua, quét ảnh), chưa được người dùng xác nhận; người dùng sửa hạn thì về false.
   expiryEstimated Boolean @default(false)
+  // Đơn giá (đồng / 1 đơn vị của unit), tùy chọn: người dùng nhập hoặc lấy từ hóa đơn có giá. Dùng ước tính tiền lãng phí.
+  unitPrice    Float?
   transactions PantryTransaction[]
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
@@ -335,6 +344,11 @@ model PantryTransaction {
   // Lô quét hóa đơn (GĐ3c) đã thêm dòng này; hoàn tác lô trừ lại mọi dòng cùng receiptScanId.
   receiptScanId  String?
   receiptScan    ReceiptScan?            @relation(fields: [receiptScanId], references: [id], onDelete: SetNull)
+  // Báo cáo lãng phí: lý do khi xóa khỏi kho, và ảnh chụp nhóm, hạn, đơn giá lúc thay đổi (thực phẩm bị xóa thì vẫn thống kê được).
+  removalReason  PantryRemovalReason?
+  category       String?
+  expiryDate     DateTime?
+  unitPrice      Float?
   createdAt      DateTime                @default(now())
 
   @@index([userId, createdAt])

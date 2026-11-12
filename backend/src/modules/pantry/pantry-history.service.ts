@@ -1,10 +1,14 @@
-import type { FoodUnit, PantryTransactionSource, Prisma, PrismaClient } from "@prisma/client";
+import type { FoodUnit, PantryRemovalReason, PantryTransactionSource, Prisma, PrismaClient } from "@prisma/client";
 import { prisma } from "../../lib/prisma.js";
 import { convertQuantity, roundQuantity } from "../../utils/food-units.js";
 import type { PantryTransactionsQuery } from "./pantry.schema.js";
 
 type HistoryClient = Prisma.TransactionClient | PrismaClient;
-type ItemSnapshot = { id: string; userId: string; name: string; quantity: number; unit: FoodUnit };
+/** category/expiryDate/unitPrice: ảnh chụp cho Báo cáo lãng phí (truyền nguyên dòng PantryItem là có đủ). */
+type ItemSnapshot = {
+  id: string; userId: string; name: string; quantity: number; unit: FoodUnit;
+  category?: string; expiryDate?: Date | null; unitPrice?: number | null;
+};
 
 export type PantryChange = {
   item: ItemSnapshot;
@@ -15,6 +19,7 @@ export type PantryChange = {
   shoppingItemId?: string | null;
   receiptScanId?: string | null;
   reversalOfId?: string | null;
+  removalReason?: PantryRemovalReason | null;
 };
 
 /**
@@ -37,6 +42,10 @@ export function recordPantryChange(db: HistoryClient, change: PantryChange) {
       shoppingItemId: change.shoppingItemId ?? null,
       receiptScanId: change.receiptScanId ?? null,
       reversalOfId: change.reversalOfId ?? null,
+      removalReason: change.removalReason ?? null,
+      category: item.category ?? null,
+      expiryDate: item.expiryDate ?? null,
+      unitPrice: item.unitPrice ?? null,
     },
   });
 }

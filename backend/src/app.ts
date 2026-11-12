@@ -16,6 +16,7 @@ import pantryRoutes from "./modules/pantry/pantry.routes.js";
 import receiptScanRoutes from "./modules/receipt-scan/receipt-scan.routes.js";
 import profileRoutes from "./modules/profile/profile.routes.js";
 import recipeRoutes from "./modules/recipes/recipes.routes.js";
+import reportRoutes from "./modules/reports/reports.routes.js";
 import { isEmailConfigured } from "./services/email.service.js";
 
 export const app = express();
@@ -32,6 +33,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/community", communityRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/expiry-email", expiryEmailRoutes);
+app.use("/api/reports", reportRoutes);
 app.use("/api/profile", profileRoutes);
 app.use("/api/pantry/receipt-scans", receiptScanRoutes);
 app.use("/api/pantry", pantryRoutes);

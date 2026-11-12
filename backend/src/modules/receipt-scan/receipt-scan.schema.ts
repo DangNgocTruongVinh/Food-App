@@ -27,6 +27,8 @@ export const receiptLineSchema = z.object({
   storageLocation: z.enum(["REFRIGERATOR", "FREEZER", "DRY_STORAGE"]),
   expiryDate: z.string().date().nullable(),
   expiryEstimated: z.boolean().default(false),
+  /** Thành tiền đọc được trên hóa đơn (tùy chọn) → đơn giá của thực phẩm. */
+  price: z.number().nonnegative().max(1_000_000_000).nullable().optional(),
 });
 
 export const commitReceiptScanSchema = z.object({

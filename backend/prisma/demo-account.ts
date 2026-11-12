@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 import { nutritionTargetFields } from "../src/services/nutrition.service.js";
 import { vietnamToday } from "../src/utils/vietnam-date.js";
 import { createDemoHistory } from "./demo-history.js";
+import { createDemoReportHistory } from "./demo-report.js";
 import { rebuildSampleAccounts, samplePasswordHashes } from "./sample-accounts.js";
 
 // Tài khoản demo (demo@nouri.vn): hồ sơ và kho mẫu. Hạn sử dụng TƯƠNG ĐỐI theo ngày chạy (giờ Việt Nam) để dữ liệu demo
@@ -77,12 +78,12 @@ type ResetClient = Pick<PrismaClient, "user" | "$transaction">;
  * Đặt lại tài khoản demo về trạng thái chuẩn (chạy trước buổi demo). Chỉ xóa dữ liệu CỦA demo: thực đơn, bài viết (kèm
  * bình luận/lượt thích/ảnh), bình luận và lượt thích của demo trên bài người khác, tin nhắn, lịch sử kho, thông báo, kho;
  * rồi tạo lại hồ sơ và kho mẫu, mở khóa, đặt lại tên và mật khẩu demo. Tạo lại luôn các tài khoản mẫu minh họa (GĐ3b-R4,
- * `sample-accounts.ts`) rồi lịch sử mẫu 2 tuần của demo (`demo-history.ts`). Không đụng tới món ăn, Admin, nhật ký Admin.
+ * `sample-accounts.ts`) rồi lịch sử mẫu 2 tuần của demo (`demo-history.ts`) và dữ liệu mẫu 8 tuần cho trang Báo cáo (`demo-report.ts`). Không đụng tới món ăn, Admin, nhật ký Admin.
  * Trả về publicId ảnh bài viết đã xóa để xóa trên Cloudinary sau khi transaction thành công.
  */
 export async function resetDemoAccount(
   client: ResetClient, now = new Date(), samples = { hashes: samplePasswordHashes, rebuild: rebuildSampleAccounts },
-  history = createDemoHistory,
+  history = createDemoHistory, report = createDemoReportHistory,
 ) {
   const existing = await client.user.findUnique({ where: { email: DEMO_EMAIL }, select: { id: true } });
   const passwordHash = await bcrypt.hash(DEMO_PASSWORD, 12);
@@ -113,8 +114,9 @@ export async function resetDemoAccount(
     const pantry = await tx.pantryItem.createMany({ data: demoPantryItems(userId, now) });
     const sampleAccounts = await samples.rebuild(tx, sampleHashes, now);
     const demoHistory = await history(tx, userId, now);
+    const reportHistory = await report(tx, userId, now);
     return {
-      userId, removed, pantryItems: pantry.count, sampleAccounts, demoHistory,
+      userId, removed, pantryItems: pantry.count, sampleAccounts, demoHistory, reportHistory,
       imagePublicIds: posts.flatMap((post) => post.images.map((image) => image.publicId)),
     };
   }, { timeout: 30_000 });

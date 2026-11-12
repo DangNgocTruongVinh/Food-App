@@ -98,7 +98,12 @@ export interface PantryItem {
   storageLocation: StorageLocation; expiryDate: string | null; minimumStock: number; note?: string | null;
   /** Hạn do hệ thống gợi ý (đã mua, quét ảnh), chưa được người dùng xác nhận (GĐ3b). */
   expiryEstimated?: boolean;
+  /** Đơn giá (đồng / 1 đơn vị), tùy chọn. */
+  unitPrice?: number | null;
 }
+
+/** Lý do xóa khỏi kho (Báo cáo lãng phí); "Nhập nhầm" không tính vào thống kê. */
+export type PantryRemovalReason = "USED_UP" | "DISCARDED" | "MISTAKE";
 
 export type PantryTransactionSource = "MANUAL_ADD" | "MANUAL_EDIT" | "MANUAL_DELETE" | "CONSUMPTION" | "PURCHASE" | "RECEIPT_SCAN";
 /** Một dòng lịch sử kho (GET /api/pantry/transactions): `delta` theo `unit`, `quantityAfter` là số còn lại sau thay đổi. */
@@ -137,6 +142,8 @@ export interface ReceiptScan {
 }
 export interface ReceiptCommitLine {
   name: string; quantity: number; unit: FoodUnit; category: string; storageLocation: StorageLocation; expiryDate: string | null; expiryEstimated: boolean;
+  /** Thành tiền của dòng (tùy chọn) → đơn giá của thực phẩm. */
+  price?: number | null;
 }
 export interface ReceiptCommitResult { id: string; status: "COMMITTED"; added: Array<{ action: "MERGED" | "REUSED" | "CREATED"; name: string }> }
 export interface ReceiptUndoResult {
@@ -149,7 +156,7 @@ export interface PantryTransactionPage { items: PantryTransaction[]; total: numb
 
 export interface PantryInput {
   name: string; category: string; quantity: number; unit: FoodUnit;
-  storageLocation: StorageLocation; expiryDate?: string | null; minimumStock: number; note?: string | null;
+  storageLocation: StorageLocation; expiryDate?: string | null; minimumStock: number; note?: string | null; unitPrice?: number | null;
 }
 
 export type PantryUpdateInput = Partial<PantryInput>;

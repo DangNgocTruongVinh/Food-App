@@ -227,6 +227,14 @@ describe("GET /:id", () => {
 });
 
 describe("POST /:id/commit", () => {
+  it("dòng có thành tiền → lưu đơn giá (đ / đơn vị) vào thực phẩm và ảnh chụp ở lịch sử kho; không có giá thì để trống", async () => {
+    mocks.findScan.mockResolvedValue(scanRow("READY"));
+    await commit([line({ price: 65_000 }), line({ name: "Rau muống", quantity: 1, unit: "ITEM", category: "Rau củ", expiryDate: null })]);
+    expect(mocks.createPantry.mock.calls[0][0].data.unitPrice).toBe(130_000);
+    expect(mocks.createPantry.mock.calls[1][0].data).not.toHaveProperty("unitPrice");
+    expect(historyData()[0]).toMatchObject({ unitPrice: 130_000, category: "Thịt & cá" });
+  });
+
   it("lưu các dòng đã duyệt trong một transaction, nguồn RECEIPT_SCAN gắn receiptScanId", async () => {
     const eggs = { id: "cm61111111111111111111111", userId, name: "Trứng gà", quantity: 4, unit: "ITEM", expiryDate: day(10) };
     mocks.listPantry.mockResolvedValue([eggs]);

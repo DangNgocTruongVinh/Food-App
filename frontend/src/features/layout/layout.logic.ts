@@ -10,6 +10,7 @@ export const PRIMARY_NAV: NavLinkItem[] = [
   { to: "/recipes", label: "Công thức" },
   { to: "/community", label: "Cộng đồng" },
   { to: "/assistant", label: "Trợ lý AI" },
+  { to: "/reports", label: "Báo cáo" },
 ];
 
 /** Menu trái của khu Quản trị (AdminLayout); mỗi mục một route con của /admin. */
@@ -75,6 +76,7 @@ export const FOOTER_GROUPS: { title: string; links: NavLinkItem[] }[] = [
       { to: "/pantry", label: "Kho thực phẩm" },
       { to: "/meal-plans", label: "Thực đơn" },
       { to: "/recipes", label: "Công thức" },
+      { to: "/reports", label: "Báo cáo" },
     ],
   },
   {

@@ -26,6 +26,7 @@ async function main() {
     const samples = result.sampleAccounts;
     console.log(`Tài khoản mẫu minh họa: ${samples.accounts} tài khoản, ${samples.posts} bài viết, ${samples.likes} lượt thích (mật khẩu ngẫu nhiên, không in).`);
     console.log(`Lịch sử mẫu của demo: ${result.demoHistory.meals} bữa đã ăn, ${result.demoHistory.likes} lượt thích (dữ liệu mẫu, khoảng 2 tuần trước).`);
+    console.log(`Báo cáo mẫu: ${result.reportHistory.transactions} dòng lịch sử kho (8 tuần), ${result.reportHistory.meals} bữa đã ăn (6 ngày qua).`);
   } finally {
     await prisma.$disconnect();
   }

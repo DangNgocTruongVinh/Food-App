@@ -6,6 +6,7 @@ import {
   initialPantryForm, isExpiryEstimated, pantryCategoryOptions, pantryDoneMessage, storageLabel, validatePantryForm,
 } from "../../features/pantry/pantry.logic";
 import { invalidatePantryQueries, pantryMutations } from "../../features/pantry/pantry.queries";
+import { foodUnitLabel } from "../../utils/units";
 import type { FoodUnit, PantryItem, StorageLocation } from "../../types";
 import DateInput from "../DateInput";
 import { PantryItemHistory } from "./PantryHistory";
@@ -128,6 +129,22 @@ export function PantryItemDialog({ item, onClose, onSaved }: PantryItemDialogPro
               step="any"
               value={numberValue(form.minimumStock)}
               onChange={(event) => update("minimumStock", event.target.valueAsNumber)}
+            />
+          )}
+        </Field>
+        <Field
+          label={`Đơn giá (đ / ${foodUnitLabel[form.unit]}, không bắt buộc)`} error={errors.unitPrice} className="kho-form__wide"
+          hint="Dùng để ước tính tiền lãng phí ở trang Báo cáo."
+        >
+          {(control) => (
+            <input
+              {...control}
+              type="number"
+              inputMode="decimal"
+              min="0"
+              step="any"
+              value={numberValue(form.unitPrice)}
+              onChange={(event) => update("unitPrice", event.target.valueAsNumber)}
             />
           )}
         </Field>

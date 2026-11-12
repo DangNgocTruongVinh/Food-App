@@ -23,6 +23,8 @@ import { getAuthToken } from "./features/auth/auth.storage";
 
 // Trang mẫu thành phần giao diện: chỉ có ở môi trường dev (bản build production loại bỏ cả route lẫn mã của trang).
 // Trang Quản trị (kèm Recharts) chỉ Admin dùng: tải riêng để không làm nặng gói của người dùng thường.
+// Báo cáo dùng Recharts (nặng): tải riêng khi mở trang, không nằm trong gói chính.
+const ReportsPage = lazy(() => import("./pages/ReportsPage"));
 const AdminLayout = lazy(() => import("./layouts/AdminLayout"));
 const AdminStatsPage = lazy(() => import("./pages/admin/AdminStatsPage"));
 const AdminRecipesPage = lazy(() => import("./pages/admin/AdminRecipesPage"));
@@ -60,6 +62,7 @@ export default function App() {
           <Route path="community" element={<CommunityPage />} />
           <Route path="assistant" element={<AiAssistantPage />} />
           <Route path="profile" element={<ProfilePage />} />
+          <Route path="reports" element={<Suspense fallback={null}><ReportsPage /></Suspense>} />
         </Route>
         {/* Khu Quản trị tách riêng khung (AdminLayout), không dùng menu/footer của người dùng; USER vào /admin → Tổng quan. */}
         <Route element={<AdminRoute />}>
