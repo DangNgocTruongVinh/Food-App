@@ -1,7 +1,7 @@
 # Danh sách API
 
-Sinh tự động từ `backend/src/app.ts` và các file `*.routes.ts` bằng `node scripts/docs/gen-api.mjs` (2026-11-12).
-Tổng 82 endpoint: Công khai 10, Đăng nhập 53, Admin 19.
+Sinh tự động từ `backend/src/app.ts` và các file `*.routes.ts` bằng `node scripts/docs/gen-api.mjs` (2026-11-13).
+Tổng 83 endpoint: Công khai 10, Đăng nhập 54, Admin 19.
 
 Quy ước: "Đăng nhập" = `requireAuth` (JWT 15 phút, `userId` lấy từ token, đọc `role`/`lockedAt` từ DB mỗi request); "Admin" = thêm
 `requireAdmin`, mọi thao tác ghi `AdminAuditLog` trong cùng transaction. Dữ liệu vào được kiểm bằng Zod (`validate`); sai → 422.
@@ -72,22 +72,23 @@ Dữ liệu của người khác hoặc không tồn tại → 404 (không lộ 
 | 61 | POST | `/api/ai/chat` | Đăng nhập | Hỏi Nouri (hồ sơ, kho sắp hết hạn, thực đơn, 6 tin gần nhất); 30 câu/ngày; không key/lỗi → 503 | message 2–1000 | answer, allergyWarnings |
 | 62 | GET | `/api/dashboard` | Đăng nhập | Tổng quan: chỉ tiêu, kho sắp hết hạn, thực đơn đang áp dụng, dinh dưỡng hôm nay | — | dữ liệu tổng quan |
 | 63 | GET | `/api/recommendations` | Đăng nhập | Gợi ý món (lai 3 thuật toán + phổ biến, MMR, lọc an toàn) | context, recipeId, pantryItemId, mealType, limit ≤ 50 | coldStart, items[] (món, lý do, điểm thành phần) |
-| 64 | GET | `/api/admin/recipes` | Admin | Danh sách món cho Admin (kể cả món ẩn), mức sử dụng | search, status, page, pageSize | items, total |
-| 65 | POST | `/api/admin/recipes` | Admin | Tạo món (kiểm nhãn chay/thuần chay); "Chuyển thành công thức" khi có sourcePostId; ghi nhật ký | món + nguyên liệu, sourcePostId | món |
-| 66 | GET | `/api/admin/recipes/:id` | Admin | Chi tiết món cho Admin | — | món |
-| 67 | PUT | `/api/admin/recipes/:id` | Admin | Sửa món; ghi nhật ký (tên trường đã đổi) | món + nguyên liệu | món |
-| 68 | PATCH | `/api/admin/recipes/:id/visibility` | Admin | Ẩn / hiện món (món đã dùng chỉ ẩn, không xóa) | hidden | món |
-| 69 | PUT | `/api/admin/recipes/:id/image` | Admin; multipart: 1 ảnh | Thay ảnh món (Cloudinary, xóa ảnh cũ sau khi lưu DB) | image | món |
-| 70 | DELETE | `/api/admin/recipes/:id` | Admin | Xóa món: chưa được dùng → xóa hẳn (kèm ảnh), đã có trong thực đơn/bài viết → xóa mềm (deletedAt); ghi nhật ký | — | { id, mode: hard \| soft } |
-| 71 | POST | `/api/admin/recipes/:id/restore` | Admin | Khôi phục món đã xóa mềm (bộ lọc Đã xóa); ghi nhật ký RECIPE_RESTORE | — | { id, restored } |
-| 72 | GET | `/api/admin/users` | Admin | Danh sách người dùng | search, page, pageSize | items, total |
-| 73 | PATCH | `/api/admin/users/:id/lock` | Admin | Khóa / mở khóa (không khóa chính mình/Admin khác; khóa thu hồi refresh token) | locked | id, locked |
-| 74 | GET | `/api/admin/community/posts` | Admin | Bài cho kiểm duyệt; lọc "AI đánh dấu" | page, pageSize, filter = all \| ai | items, total |
-| 75 | GET | `/api/admin/community/posts/:postId` | Admin | Một bài (form "Chuyển thành công thức") | — | bài |
-| 76 | PATCH | `/api/admin/community/posts/:postId/visibility` | Admin | Ẩn / hiện bài; ghi nhật ký | hidden | bài |
-| 77 | PATCH | `/api/admin/community/posts/:postId/review` | Admin | Bài AI đánh dấu: Duyệt (POST_APPROVE) / Ẩn (POST_HIDE) | decision = approve \| hide | bài |
-| 78 | POST | `/api/admin/community/posts/:postId/recipe-estimate` | Admin | AI ước tính dinh dưỡng 1 khẩu phần + chuẩn hóa tên nguyên liệu (không lưu) | — | calories, proteinG, carbsG, fatG, ingredients[] |
-| 79 | DELETE | `/api/admin/community/posts/:postId` | Admin | Xóa bài vi phạm (service xóa dùng chung) | — | 204 |
-| 80 | DELETE | `/api/admin/community/comments/:commentId` | Admin | Xóa bình luận vi phạm | — | 204 |
-| 81 | GET | `/api/admin/stats` | Admin | Thống kê: tổng số và 12 tuần gần nhất (không tính tài khoản mẫu) | — | totals, weekly[] |
-| 82 | GET | `/api/admin/audit-logs` | Admin | Nhật ký thao tác Admin | action, targetType, targetId, actorId, page, pageSize | items, total |
+| 64 | GET | `/api/suggestions/foods` | Đăng nhập | Gợi ý tên thực phẩm cho ô nhập ở Kho (tối đa 8): kho của chính người dùng + nguyên liệu món đang hiện, kèm nhóm dị ứng; 120 lần/phút/người | q (1–60 ký tự) | [{ name, source, allergyGroups }] |
+| 65 | GET | `/api/admin/recipes` | Admin | Danh sách món cho Admin (kể cả món ẩn), mức sử dụng | search, status, page, pageSize | items, total |
+| 66 | POST | `/api/admin/recipes` | Admin | Tạo món (kiểm nhãn chay/thuần chay); "Chuyển thành công thức" khi có sourcePostId; ghi nhật ký | món + nguyên liệu, sourcePostId | món |
+| 67 | GET | `/api/admin/recipes/:id` | Admin | Chi tiết món cho Admin | — | món |
+| 68 | PUT | `/api/admin/recipes/:id` | Admin | Sửa món; ghi nhật ký (tên trường đã đổi) | món + nguyên liệu | món |
+| 69 | PATCH | `/api/admin/recipes/:id/visibility` | Admin | Ẩn / hiện món (món đã dùng chỉ ẩn, không xóa) | hidden | món |
+| 70 | PUT | `/api/admin/recipes/:id/image` | Admin; multipart: 1 ảnh | Thay ảnh món (Cloudinary, xóa ảnh cũ sau khi lưu DB) | image | món |
+| 71 | DELETE | `/api/admin/recipes/:id` | Admin | Xóa món: chưa được dùng → xóa hẳn (kèm ảnh), đã có trong thực đơn/bài viết → xóa mềm (deletedAt); ghi nhật ký | — | { id, mode: hard \| soft } |
+| 72 | POST | `/api/admin/recipes/:id/restore` | Admin | Khôi phục món đã xóa mềm (bộ lọc Đã xóa); ghi nhật ký RECIPE_RESTORE | — | { id, restored } |
+| 73 | GET | `/api/admin/users` | Admin | Danh sách người dùng | search, page, pageSize | items, total |
+| 74 | PATCH | `/api/admin/users/:id/lock` | Admin | Khóa / mở khóa (không khóa chính mình/Admin khác; khóa thu hồi refresh token) | locked | id, locked |
+| 75 | GET | `/api/admin/community/posts` | Admin | Bài cho kiểm duyệt; lọc "AI đánh dấu" | page, pageSize, filter = all \| ai | items, total |
+| 76 | GET | `/api/admin/community/posts/:postId` | Admin | Một bài (form "Chuyển thành công thức") | — | bài |
+| 77 | PATCH | `/api/admin/community/posts/:postId/visibility` | Admin | Ẩn / hiện bài; ghi nhật ký | hidden | bài |
+| 78 | PATCH | `/api/admin/community/posts/:postId/review` | Admin | Bài AI đánh dấu: Duyệt (POST_APPROVE) / Ẩn (POST_HIDE) | decision = approve \| hide | bài |
+| 79 | POST | `/api/admin/community/posts/:postId/recipe-estimate` | Admin | AI ước tính dinh dưỡng 1 khẩu phần + chuẩn hóa tên nguyên liệu (không lưu) | — | calories, proteinG, carbsG, fatG, ingredients[] |
+| 80 | DELETE | `/api/admin/community/posts/:postId` | Admin | Xóa bài vi phạm (service xóa dùng chung) | — | 204 |
+| 81 | DELETE | `/api/admin/community/comments/:commentId` | Admin | Xóa bình luận vi phạm | — | 204 |
+| 82 | GET | `/api/admin/stats` | Admin | Thống kê: tổng số và 12 tuần gần nhất (không tính tài khoản mẫu) | — | totals, weekly[] |
+| 83 | GET | `/api/admin/audit-logs` | Admin | Nhật ký thao tác Admin | action, targetType, targetId, actorId, page, pageSize | items, total |

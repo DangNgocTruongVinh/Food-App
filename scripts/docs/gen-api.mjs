@@ -85,6 +85,7 @@ const DESCRIPTIONS = {
   "GET /api/meal-plans": ["Danh sách thực đơn kèm ngày, bữa, đi chợ, gợi ý dinh dưỡng, cảnh báo bữa vi phạm", "—", "MealPlan[]"],
   "GET /api/meal-plans/:id": ["Chi tiết một thực đơn", "—", "MealPlan"],
   "POST /api/meal-plans/generate": ["Tạo thực đơn 7 ngày. Mặc định: scoredPlan (thuật toán 3 + 0,3 × thuật toán 1), trả ngay; mode ai: chạy nền OpenAI (kiểm lại qua safety, lỗi/quá 120 s → scoredPlan)", "startDate, mode?", "MealPlan + generation (201) / việc nền (202)"],
+  "GET /api/suggestions/foods": ["Gợi ý tên thực phẩm cho ô nhập ở Kho (tối đa 8): kho của chính người dùng + nguyên liệu món đang hiện, kèm nhóm dị ứng; 120 lần/phút/người", "q (1–60 ký tự)", "[{ name, source, allergyGroups }]"],
   "GET /api/meal-plans/generate/current": ["Việc \"Tạo bằng AI\" gần nhất của người dùng: RUNNING / DONE (planId, fallbackReason) / FAILED, hoặc null", "—", "việc nền | null"],
   "POST /api/meal-plans/:id/items": ["Thêm món thủ công vào ngày/bữa; cập nhật danh sách đi chợ phần của bữa", "dayId, mealType, recipeId, servings", "MealPlan"],
   "PATCH /api/meal-plans/:id/status": ["Đổi trạng thái thực đơn của mình", "status = DRAFT | ACTIVE | COMPLETED", "MealPlan"],
