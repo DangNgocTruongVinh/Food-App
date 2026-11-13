@@ -37,8 +37,35 @@ ngoại lệ ("Sữa đậu nành" thuộc Đậu nành, không thuộc Sữa).
 | Hiển thị | Thẻ món vi phạm ghi "Chứa: Trứng (Trứng)", "Gluten (Bánh mì)" |
 
 Cùng một hàm (`expandRestrictedTerms` / `findRestrictedTerms` trong `dietary.service.ts`) dùng ở gợi ý, thực đơn (cả kết quả AI qua
-`reconcileAIPlan`), danh sách/tìm công thức, chi tiết món, trợ lý AI, quét hóa đơn, công thức thành viên và email nhắc hạn. Hạn chế còn
-lại: thành phần ẩn không có trong tên (nước tương có lúa mì, tương ớt có đậu nành) chưa nhận ra (`docs/han-che.md`).
+`reconcileAIPlan`), danh sách/tìm công thức, chi tiết món, trợ lý AI, quét hóa đơn, công thức thành viên và email nhắc hạn.
+
+**Thành phần ẩn trong nguyên liệu chế biến (sửa lỗi 13/11/2026).** Lỗi cũ: "Bánh mì ốp la" có "Nước tương" vẫn được gợi ý cho người dị
+ứng đậu nành/gluten. Danh mục nay gán nguyên liệu chế biến vào nhóm, một nguyên liệu có thể thuộc nhiều nhóm (Nước tương → Đậu nành +
+Gluten). Chỗ tùy nhãn hàng gán theo hướng an toàn vào mục **"có thể chứa"** (`mayContain`): vẫn bị lọc khi dị ứng, thẻ món ghi
+"Có thể chứa: Gluten (Tương đen)" thay vì "Chứa: …"; "Món không thích" chỉ dùng nguyên liệu chắc chắn của nhóm.
+
+| Nguyên liệu chế biến | Nhóm (chắc chắn) | Có thể chứa | Trong 33 món seed |
+|---|---|---|---|
+| Nước tương, xì dầu | Đậu nành, Gluten | — | Có (Nước tương) |
+| Tương đen | Đậu nành | Gluten, Mè | Có |
+| Tương ớt Hàn Quốc (gochujang) | Đậu nành | Gluten | Có |
+| Tương bần, tương hột, miso, chao, tàu hũ ky, váng đậu | Đậu nành | Gluten (miso) | — |
+| Đậu hũ, sữa đậu nành | Đậu nành | — | Có |
+| Dầu hào | Nhuyễn thể (Hải sản) | Gluten, Đậu nành | — |
+| Nước mắm, mắm nêm, mắm cá | Cá (Hải sản) | — | Có (Nước mắm) |
+| Mắm tôm, mắm ruốc, ruốc, bánh phồng tôm | Giáp xác (Hải sản) | — | — |
+| Bánh mì, mì, mì Ý, bột mì, bột chiên giòn/xù, bánh bao, mì căn | Gluten | — | Có (Bánh mì, Mì Ý) |
+| Yến mạch, bún tàu | — | Gluten (dễ lẫn lúa mì) | Có (Yến mạch) |
+| Mayonnaise, sốt trứng | Trứng | — | — |
+| Bơ, phô mai, kem, kem tươi, sữa tươi/chua/đặc | Sữa | — | Có (Phô mai feta, Sữa tươi, Sữa chua, Sữa đặc) |
+| Dầu mè, muối mè, mè rang, tahini | Mè | — | Có (Dầu mè, Mè rang) |
+| Bơ đậu phộng, sốt đậu phộng | Đậu phộng | — | — |
+| Sa tế, tương đậu phộng | — | Đậu phộng | — |
+
+Ngoại lệ giữ đúng: bánh phở, bún gạo, bánh tráng không phải gluten; "mì chính" (bột ngọt), "mì Quảng" (bột gạo) không tính "mì";
+"Quả bơ", "Sinh tố bơ", "Bơ đậu phộng" không phải sữa; "cháo" ≠ "chao"; "Tương ớt" thường không tính đậu nành. Hệ quả trên dữ liệu
+seed: người thuần chay dị ứng gluten không còn món trưa/tối an toàn (món mặn chay đều có nước tương) — bộ tạo thực đơn lấy món an toàn
+khác bữa thay vì món vi phạm.
 
 ## 3. Thuật toán 1 — lọc theo nội dung
 

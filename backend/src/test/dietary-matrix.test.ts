@@ -27,7 +27,8 @@ const ALLERGY_ORACLE: Record<string, (name: string) => boolean> = {
   "Sữa": startsWithAny(["sữa tươi", "sữa chua", "sữa đặc", "phô mai"]),
   "Trứng": startsWithAny(["trứng"]),
   "Đậu phộng": startsWithAny(["đậu phộng"]),
-  "Gluten": startsWithAny(["bánh mì", "mì ý"]),
+  // Nước tương có lúa mì; tương đen, tương ớt Hàn Quốc, yến mạch "có thể chứa" (vẫn lọc khi dị ứng).
+  "Gluten": startsWithAny(["bánh mì", "mì ý", "nước tương", "tương đen", "tương ớt hàn quốc", "yến mạch"]),
 };
 const MEAT_OR_FISH = startsWithAny(["thịt", "sườn", "xương", "đùi gà", "ức gà", "cá", "tôm", "nước mắm"]);
 const ANIMAL_PRODUCT = (name: string) => MEAT_OR_FISH(name) || startsWithAny(["trứng", "sữa tươi", "sữa chua", "sữa đặc", "phô mai", "mật ong"])(name);
@@ -179,13 +180,15 @@ const GROUP_ORACLE: Record<string, (name: string) => boolean> = {
   ...ALLERGY_ORACLE,
   "Cá": startsWithAny(["cá", "nước mắm"]),
   "Giáp xác": startsWithAny(["tôm"]),
-  "Đậu nành": startsWithAny(["đậu hũ", "nước tương", "tương đen", "đậu nành"]),
-  "Mè": startsWithAny(["dầu mè", "mè rang"]),
+  "Đậu nành": startsWithAny(["đậu hũ", "nước tương", "tương đen", "tương ớt hàn quốc", "đậu nành"]),
+  "Mè": startsWithAny(["dầu mè", "mè rang", "tương đen"]),
 };
 const TYPED_ALLERGIES: Array<[string, string]> = [
   ["trứng gà", "Trứng"], ["Trứng Gà", "Trứng"], ["trung ga", "Trứng"], ["dị ứng trứng", "Trứng"], ["egg", "Trứng"], ["lòng đỏ", "Trứng"],
   ["cá hồi", "Cá"], ["tôm sú", "Giáp xác"], ["lạc", "Đậu phộng"], ["đậu phộng", "Đậu phộng"], ["sữa bò", "Sữa"],
   ["sữa đậu nành", "Đậu nành"], ["mè", "Mè"], ["vừng", "Mè"],
+  // Thành phần ẩn (13/11/2026): nước tương = Đậu nành + Gluten, tương đen có thể chứa Gluten và Mè, dầu mè = Mè.
+  ["Đậu nành", "Đậu nành"], ["gluten", "Gluten"], ["Mè", "Mè"],
 ];
 
 describe("Dị ứng gõ theo nhiều cách: cùng kết quả với nhóm chuẩn ở mọi nơi lọc", () => {
@@ -197,6 +200,13 @@ describe("Dị ứng gõ theo nhiều cách: cùng kết quả với nhóm chu�
     for (const recipe of visible.filter((item) => names(item).some(GROUP_ORACLE[group]))) {
       expect(recipeFit(recipe, profile).allergens.join(" ")).toContain(`${group} (`); // nhãn "Chứa: <nhóm> (<nguyên liệu>)"
     }
+  });
+
+  it("thành phần ẩn: Bánh mì ốp la (có Nước tương) bị loại với dị ứng Đậu nành; nhãn ghi rõ nguồn", () => {
+    const banhMi = visible.find((recipe) => recipe.name.startsWith("Bánh mì ốp la"))!;
+    expect(recipeFit(banhMi, { allergies: ["Đậu nành"] })).toMatchObject({ safe: false, allergens: ["Đậu nành (Nước tương)"] });
+    expect(recipeFit(banhMi, { allergies: ["Gluten"] }).allergens).toEqual(["Gluten (Bánh mì, Nước tương)"]);
+    expect(safeRecipes(visible, { allergies: ["Đậu nành"] }).map((recipe) => recipe.slug)).not.toContain(banhMi.slug);
   });
 
   it("bánh mì ốp la bị lọc với hồ sơ \"trứng gà\" (lỗi người dùng báo)", () => {

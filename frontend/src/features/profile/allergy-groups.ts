@@ -15,11 +15,19 @@ export type AllergyGroup = {
   aliases: string[];
   /** Nguyên liệu thuộc nhóm (so nguyên từ với tên nguyên liệu và tên món). */
   terms: string[];
+  /**
+   * Nguyên liệu chế biến "có thể chứa" (tùy nhãn hàng, vd. tương đen thường có bột mì). Vẫn bị lọc khi dị ứng (an toàn trước),
+   * nhưng thẻ món ghi "Có thể chứa: …" thay vì "Chứa: …". Không dùng cho "Món không thích".
+   */
+  mayContain?: string[];
   /** Tên chứa cụm này thì KHÔNG thuộc nhóm dù có từ của nhóm ("sữa đậu nành" không phải sữa bò). */
   excludes?: string[];
   /** Nhóm gộp: chọn nhóm này = chọn các nhóm con (Hải sản = Cá + Giáp xác + Nhuyễn thể). */
   covers?: string[];
 };
+
+/** Tiền tố nhãn của nhóm "có thể chứa" (backend dựng nhãn, frontend tách ra để ghi "Có thể chứa: …"). */
+export const MAY_CONTAIN_PREFIX = "Có thể chứa ";
 
 const PLANT_MILKS = ["sữa đậu nành", "sữa hạnh nhân", "sữa óc chó", "sữa hạt", "sữa dừa", "sữa yến mạch", "sữa gạo", "sữa bắp"];
 
@@ -27,13 +35,17 @@ export const ALLERGY_GROUPS: AllergyGroup[] = [
   {
     id: "EGG", label: "Trứng",
     aliases: ["trứng", "trứng gà", "trứng vịt", "trứng cút", "trứng gà ta", "lòng đỏ", "lòng trắng", "egg", "eggs"],
-    terms: ["trứng", "lòng đỏ", "lòng trắng", "mayonnaise", "sốt mayonnaise", "sốt mayo"],
+    terms: ["trứng", "lòng đỏ", "lòng trắng", "mayonnaise", "sốt mayonnaise", "sốt mayo", "mayo", "sốt trứng"],
   },
   {
     id: "MILK", label: "Sữa",
     aliases: ["sữa", "sữa bò", "sản phẩm từ sữa", "lactose", "đạm sữa", "milk", "dairy"],
-    terms: ["sữa", "sữa tươi", "sữa chua", "sữa đặc", "sữa bột", "phô mai", "pho mát", "bơ lạt", "bơ nhạt", "bơ động vật", "kem tươi", "whey", "cheese"],
-    excludes: [...PLANT_MILKS, "sữa chua đậu nành"],
+    terms: [
+      "sữa", "sữa tươi", "sữa chua", "sữa đặc", "sữa bột", "phô mai", "pho mát", "bơ", "bơ lạt", "bơ nhạt", "bơ động vật", "kem", "kem tươi",
+      "kem sữa", "váng sữa", "whey", "cheese", "butter",
+    ],
+    // "Bơ" một mình là bơ sữa; "quả bơ"/"trái bơ"/"sinh tố bơ" là trái cây, "bơ đậu phộng" thuộc Đậu phộng.
+    excludes: [...PLANT_MILKS, "sữa chua đậu nành", "quả bơ", "trái bơ", "sinh tố bơ", "bơ đậu phộng", "bơ thực vật", "kem dừa"],
   },
   {
     id: "SEAFOOD", label: "Hải sản",
@@ -42,22 +54,26 @@ export const ALLERGY_GROUPS: AllergyGroup[] = [
   {
     id: "FISH", label: "Cá",
     aliases: ["cá", "fish", "cá biển", "cá sông"],
-    terms: ["cá", "cá hồi", "cá lóc", "cá basa", "cá thu", "cá ngừ", "cá rô", "cá diêu hồng", "cá cơm", "nước mắm", "mắm", "mắm nêm", "dầu cá"],
+    terms: [
+      "cá", "cá hồi", "cá lóc", "cá basa", "cá thu", "cá ngừ", "cá rô", "cá diêu hồng", "cá cơm", "nước mắm", "mắm", "mắm nêm", "dầu cá",
+      "mắm cá", "mắm cá linh", "mắm thái",
+    ],
   },
   {
     id: "CRUSTACEAN", label: "Giáp xác",
     aliases: ["giáp xác", "tôm cua", "shrimp", "crab", "shellfish"],
-    terms: ["tôm", "tôm sú", "tôm thẻ", "tôm khô", "tép", "cua", "ghẹ", "mắm tôm", "ruốc", "tôm hùm"],
+    terms: ["tôm", "tôm sú", "tôm thẻ", "tôm khô", "tép", "cua", "ghẹ", "mắm tôm", "ruốc", "mắm ruốc", "tôm hùm", "gạch cua", "bánh phồng tôm"],
   },
   {
     id: "MOLLUSC", label: "Nhuyễn thể",
     aliases: ["nhuyễn thể", "thân mềm", "squid", "clam", "oyster"],
-    terms: ["mực", "bạch tuộc", "nghêu", "ngao", "sò", "hến", "ốc", "hàu", "sò điệp", "vẹm", "dầu hào"],
+    terms: ["mực", "bạch tuộc", "nghêu", "ngao", "sò", "hến", "ốc", "hàu", "sò điệp", "vẹm", "dầu hào", "sốt dầu hào"],
   },
   {
     id: "PEANUT", label: "Đậu phộng",
     aliases: ["đậu phộng", "lạc", "peanut", "peanuts"],
-    terms: ["đậu phộng", "lạc", "lạc rang", "bơ đậu phộng", "dầu đậu phộng", "dầu lạc"],
+    terms: ["đậu phộng", "lạc", "lạc rang", "bơ đậu phộng", "dầu đậu phộng", "dầu lạc", "sốt đậu phộng", "muối đậu phộng"],
+    mayContain: ["sa tế", "tương đậu phộng", "nước chấm gỏi cuốn"],
   },
   {
     id: "TREE_NUT", label: "Hạt cây",
@@ -67,17 +83,29 @@ export const ALLERGY_GROUPS: AllergyGroup[] = [
   {
     id: "GLUTEN", label: "Gluten",
     aliases: ["gluten", "lúa mì", "bột mì", "wheat"],
-    terms: ["bột mì", "bánh mì", "mì ý", "mì trứng", "mì gói", "bột chiên giòn", "bột chiên xù", "lúa mì", "lúa mạch", "pasta"],
+    terms: [
+      "bột mì", "bánh mì", "mì", "mì ý", "mì trứng", "mì gói", "bột chiên giòn", "bột chiên xù", "lúa mì", "lúa mạch", "pasta",
+      "nước tương", "xì dầu", "vỏ bánh bao", "bánh bao", "mì căn", "seitan",
+    ],
+    // Tùy nhãn hàng: tương đen (hoisin), tương ớt Hàn Quốc (gochujang), dầu hào thường có bột mì; yến mạch, bún tàu dễ lẫn lúa mì.
+    mayContain: ["tương đen", "tương ớt hàn quốc", "gochujang", "dầu hào", "sốt dầu hào", "miso", "yến mạch", "bún tàu", "bột năng trộn"],
+    // "Mì" là lúa mì, trừ mì chính (bột ngọt) và mì Quảng (bột gạo).
+    excludes: ["mì chính", "mì quảng"],
   },
   {
     id: "SOY", label: "Đậu nành",
     aliases: ["đậu nành", "đỗ tương", "đậu tương", "soy", "soya"],
-    terms: ["đậu nành", "đỗ tương", "đậu tương", "sữa đậu nành", "đậu hũ", "đậu phụ", "tàu hũ", "tào phớ", "nước tương", "xì dầu", "tương đen", "tương bần", "tương hột", "miso", "chao", "tempeh", "edamame"],
+    terms: [
+      "đậu nành", "đỗ tương", "đậu tương", "sữa đậu nành", "đậu hũ", "đậu phụ", "tàu hũ", "tào phớ", "tàu hũ ky", "váng đậu", "nước tương",
+      "xì dầu", "tương đen", "tương bần", "tương hột", "tương ớt hàn quốc", "gochujang", "miso", "chao", "tempeh", "edamame",
+    ],
+    mayContain: ["dầu hào", "sốt dầu hào", "hạt nêm chay"],
   },
   {
     id: "SESAME", label: "Mè",
     aliases: ["mè", "vừng", "sesame"],
-    terms: ["mè", "vừng", "mè rang", "dầu mè", "dầu vừng", "muối mè", "tahini"],
+    terms: ["mè", "vừng", "mè rang", "dầu mè", "dầu vừng", "muối mè", "tahini", "sốt mè"],
+    mayContain: ["tương đen", "sốt mè rang"],
   },
 ];
 
@@ -124,7 +152,7 @@ export function resolveRestriction(raw: string, { strict = true } = {}): Resolve
 
 // Bộ nhớ đệm nhỏ: bộ gợi ý kiểm hàng nghìn món với cùng hồ sơ và cùng tên nguyên liệu.
 const resolveCache = new Map<string, ResolvedRestriction>();
-const groupsCache = new Map<string, AllergyGroup[]>();
+const matchesCache = new Map<string, FoodAllergyMatch[]>();
 function remember<T>(cache: Map<string, T>, key: string, compute: () => T) {
   const hit = cache.get(key);
   if (hit) return hit;
@@ -156,11 +184,25 @@ export function containsTerm(text: string, term: string, { exact = false } = {})
   return (folded ? paddedFolded(text) : padded(text)).includes(folded ? paddedFolded(term) : padded(term));
 }
 
-/** Tên nguyên liệu/món thuộc nhóm nào (có tính ngoại lệ: "Sữa đậu nành" thuộc Đậu nành, không thuộc Sữa). */
+export type FoodAllergyMatch = { group: AllergyGroup; certain: boolean };
+
+/**
+ * Tên nguyên liệu/món thuộc nhóm nào, kèm độ chắc chắn: certain = chứa chắc chắn (terms), false = "có thể chứa" (mayContain).
+ * Có tính ngoại lệ ("Sữa đậu nành" thuộc Đậu nành, không thuộc Sữa). Một nguyên liệu có thể thuộc nhiều nhóm (Nước tương:
+ * Đậu nành + Gluten).
+ */
+export function allergyMatchesOfFoodName(name: string): FoodAllergyMatch[] {
+  return remember(matchesCache, name, () => ALLERGY_GROUPS.flatMap((group): FoodAllergyMatch[] => {
+    if (group.covers || (group.excludes ?? []).some((phrase) => containsTerm(name, phrase, { exact: true }))) return [];
+    if (group.terms.some((term) => containsTerm(name, term, { exact: true }))) return [{ group, certain: true }];
+    if ((group.mayContain ?? []).some((term) => containsTerm(name, term, { exact: true }))) return [{ group, certain: false }];
+    return [];
+  }));
+}
+
+/** Các nhóm của một tên (cả "chứa" lẫn "có thể chứa"). */
 export function groupsOfFoodName(name: string) {
-  return remember(groupsCache, name, () => ALLERGY_GROUPS.filter((group) => !group.covers
-    && !(group.excludes ?? []).some((phrase) => containsTerm(name, phrase, { exact: true }))
-    && group.terms.some((term) => containsTerm(name, term, { exact: true }))));
+  return allergyMatchesOfFoodName(name).map((match) => match.group);
 }
 
 /** Khoảng cách sửa (Levenshtein) giữa hai chuỗi ngắn. */

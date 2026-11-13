@@ -2,6 +2,7 @@ import { AlertTriangle, BookCheck, Clock3, Users } from "lucide-react";
 import { Link } from "react-router-dom";
 import { memberIngredientLabel } from "../../features/community/member-recipe.logic";
 import type { MemberRecipe } from "../../types";
+import { allergenWarningTexts } from "../../features/recipes/recipe-for-you.logic";
 
 type MemberRecipeCardProps = {
   recipe: MemberRecipe;
@@ -29,7 +30,7 @@ export default function MemberRecipeCard({ recipe, allergens = [], promoted, pro
       {allergens.length > 0 && (
         <p className="cm-member-recipe__allergy" role="note">
           <AlertTriangle aria-hidden="true" />
-          Chứa: {allergens.join(", ")}. Kiểm tra kỹ nguyên liệu trước khi nấu.
+          {allergenWarningTexts(allergens).join(". ")}. Kiểm tra kỹ nguyên liệu trước khi nấu.
         </p>
       )}
       <p className="cm-member-recipe__note">Chưa được kiểm duyệt dinh dưỡng. Cảnh báo dị ứng chỉ dựa trên tên nguyên liệu.</p>
