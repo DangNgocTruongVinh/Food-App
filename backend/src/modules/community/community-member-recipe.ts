@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { expandRestrictedTerms, findRestrictedTerms } from "../../services/dietary.service.js";
+import { allergenLabels, expandRestrictedTerms, findRestrictedTerms } from "../../services/dietary.service.js";
 
 /**
  * Công thức tự viết trong bài cộng đồng (lưu JSON ở CommunityPost.memberRecipe). Không phải Recipe: không vào thực đơn,
@@ -56,5 +56,6 @@ export function readMemberRecipe(value: unknown): MemberRecipe | null {
  */
 export function memberRecipeAllergens(recipe: MemberRecipe | null, allergies: string[]) {
   if (!recipe || !allergies.length) return [];
-  return findRestrictedTerms({ name: recipe.name, ingredients: recipe.ingredients.map(({ name }) => ({ name })) }, expandRestrictedTerms(allergies));
+  const food = { name: recipe.name, ingredients: recipe.ingredients.map(({ name }) => ({ name })) };
+  return findRestrictedTerms(food, expandRestrictedTerms(allergies)).length ? allergenLabels(food, allergies) : [];
 }

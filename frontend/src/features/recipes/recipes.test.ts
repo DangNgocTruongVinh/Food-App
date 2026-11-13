@@ -58,7 +58,7 @@ const forYou: RecipeForYou = {
     unitMismatches: [{ name: "Ức gà", recipeUnit: "G", pantryUnits: ["ITEM"] }],
   },
   calories: { recipeCalories: 520, dailyTarget: 2000, percentOfDailyTarget: 26 },
-  warnings: { allergens: ["cá", "nước mắm"], dislikedFoods: ["hành tím"], dietConflict: "VEGETARIAN" },
+  warnings: { allergens: ["Cá (Cá basa, Nước mắm)"], dislikedFoods: ["hành tím"], dietConflict: "VEGETARIAN" },
 };
 
 const originalAdapter = api.defaults.adapter;
@@ -203,7 +203,7 @@ describe("Recipes hidden by profile (GĐ3b-R2)", () => {
   const fit = (overrides: Partial<NonNullable<Recipe["fit"]>> = {}) => ({ allergens: [], dislikedFoods: [], dietConflict: null, safe: true, ...overrides });
   const withFit = [
     recipe({ id: "safe", fit: fit() }),
-    recipe({ id: "allergen", fit: fit({ allergens: ["tôm"], safe: false }) }),
+    recipe({ id: "allergen", fit: fit({ allergens: ["Giáp xác (Tôm)"], safe: false }) }),
     recipe({ id: "diet", fit: fit({ dietConflict: "VEGETARIAN", safe: false }) }),
     recipe({ id: "disliked", fit: fit({ dislikedFoods: ["hành tím"], safe: false }) }),
     recipe({ id: "no-fit" }),
@@ -223,7 +223,7 @@ describe("Recipes hidden by profile (GĐ3b-R2)", () => {
   });
 
   it("names the allergen in the warning label of a violating recipe", () => {
-    expect(forYouWarnings(withFit[1].fit!)).toEqual([{ kind: "allergen", text: "Có thành phần bạn dị ứng: tôm" }]);
+    expect(forYouWarnings(withFit[1].fit!)).toEqual([{ kind: "allergen", text: "Chứa: Giáp xác (Tôm)" }]);
   });
 });
 
@@ -279,7 +279,7 @@ describe("Recipe \"Dành cho bạn\" helpers", () => {
   });
   it("turns profile conflicts into warnings and returns none when everything fits", () => {
     expect(forYouWarnings(forYou.warnings)).toEqual([
-      { kind: "allergen", text: "Có thành phần bạn dị ứng: cá, nước mắm" },
+      { kind: "allergen", text: "Chứa: Cá (Cá basa, Nước mắm)" },
       { kind: "disliked", text: "Có món bạn không thích: hành tím" },
       { kind: "diet", text: "Không hợp chế độ ăn chay của bạn" },
     ]);

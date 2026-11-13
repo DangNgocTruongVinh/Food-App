@@ -79,7 +79,7 @@ describe("recipeWarnings", () => {
   it("reports allergy groups, disliked foods and a vegetarian conflict", () => {
     const recipe = dish("Cá kho tộ", ["Cá basa", "Nước mắm", "Hành tím"]);
     const warnings = recipeWarnings(recipe, { dietType: "VEGETARIAN", allergies: ["Hải sản"], dislikedFoods: ["hành  TÍM"] });
-    expect(warnings.allergens).toEqual(["cá", "nước mắm"]); // "mắm" đã nằm trong "nước mắm" nên không lặp lại
+    expect(warnings.allergens).toEqual(["Cá (Cá basa, Nước mắm)"]); // nhãn nhóm (nguyên liệu); "Hải sản" = Cá + Giáp xác + Nhuyễn thể
     expect(warnings.dislikedFoods).toEqual(["hành tím"]);
     expect(warnings.dietConflict).toBe("VEGETARIAN");
   });

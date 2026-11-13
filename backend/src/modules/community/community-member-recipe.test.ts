@@ -89,7 +89,7 @@ describe("member recipe validation (Zod)", () => {
   });
 
   it("warns about the viewer's allergies by keyword, using the recommender's allergy groups", () => {
-    expect(memberRecipeAllergens(memberRecipe, ["Hải sản"])).toContain("tôm");
+    expect(memberRecipeAllergens(memberRecipe, ["Hải sản"]).join(" ")).toMatch(/Giáp xác \(.*Tôm/i);
     expect(memberRecipeAllergens(memberRecipe, ["Đậu phộng"])).toEqual([]);
     expect(memberRecipeAllergens(null, ["Hải sản"])).toEqual([]);
   });
@@ -118,7 +118,7 @@ describe("posting and editing a member recipe", () => {
     mocks.findProfile.mockResolvedValue({ allergies: ["Hải sản"] });
     mocks.findPosts.mockResolvedValue([feedRow()]);
     const response = await request(community, "/api/community", { token: token() });
-    expect(response.body[0].memberRecipeAllergens).toContain("tôm");
+    expect(response.body[0].memberRecipeAllergens).toEqual(["Giáp xác (Tôm)"]);
     expect(mocks.findPosts.mock.calls[0][0].where).toEqual({ OR: [{ hiddenAt: null, pendingReviewAt: null }, { authorId: userId }] });
   });
 

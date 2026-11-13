@@ -177,7 +177,7 @@ describe("Recipe \"Dành cho bạn\" for the signed-in user", () => {
         unitMismatches: [{ name: "Trứng", recipeUnit: "G", pantryUnits: ["ITEM"] }],
       },
       calories: { recipeCalories: 500, dailyTarget: 2000, percentOfDailyTarget: 25 },
-      warnings: { allergens: ["cá"], dislikedFoods: [], dietConflict: "VEGETARIAN" },
+      warnings: { allergens: ["Cá (Cá basa)"], dislikedFoods: [], dietConflict: "VEGETARIAN" },
     });
     expect(mocks.findUnique).toHaveBeenCalledWith({ where: { id: recipeId }, include: { ingredients: true } });
     expect(mocks.findProfile).toHaveBeenCalledWith({ where: { userId } });

@@ -107,7 +107,7 @@ describe("chatHistoryTurns, chatPantryContext", () => {
   });
 
   it("answerAllergyWarnings: khớp nguyên từ theo nhóm dị ứng ('cá' không khớp 'các')", () => {
-    expect(answerAllergyWarnings("Các món: canh cá lóc, gỏi tôm.", ["Hải sản"])).toEqual(["tôm", "cá"]);
+    expect(answerAllergyWarnings("Các món: canh cá lóc, gỏi tôm.", ["Hải sản"])).toEqual(["cá lóc", "tôm"]);
     expect(answerAllergyWarnings("Các món rau luộc.", ["Hải sản"])).toEqual([]);
   });
 });

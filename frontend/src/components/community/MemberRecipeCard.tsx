@@ -29,7 +29,7 @@ export default function MemberRecipeCard({ recipe, allergens = [], promoted, pro
       {allergens.length > 0 && (
         <p className="cm-member-recipe__allergy" role="note">
           <AlertTriangle aria-hidden="true" />
-          Có thể chứa thứ bạn dị ứng: {allergens.join(", ")}. Kiểm tra kỹ nguyên liệu trước khi nấu.
+          Chứa: {allergens.join(", ")}. Kiểm tra kỹ nguyên liệu trước khi nấu.
         </p>
       )}
       <p className="cm-member-recipe__note">Chưa được kiểm duyệt dinh dưỡng. Cảnh báo dị ứng chỉ dựa trên tên nguyên liệu.</p>

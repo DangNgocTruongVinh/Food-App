@@ -1,5 +1,5 @@
 import type { MealType } from "@prisma/client";
-import { expandRestrictedTerms, findRestrictedTerms } from "../../services/dietary.service.js";
+import { expandRestrictedTerms, findRestrictedTerms, withoutNestedTerms } from "../../services/dietary.service.js";
 
 // Ngữ cảnh gửi cho trợ lý AI: chỉ những trường cần cho câu trả lời, không có id, email, mật khẩu hay token.
 
@@ -42,7 +42,7 @@ export function chatSafetyContext(profile: Pick<ProfileInput, "dietType" | "alle
   const strictDiet = profile?.dietType === "VEGAN" || profile?.dietType === "VEGETARIAN" ? profile.dietType : null;
   return {
     avoidForAllergy: expandRestrictedTerms(profile?.allergies ?? []),
-    avoidDisliked: expandRestrictedTerms(profile?.dislikedFoods ?? []),
+    avoidDisliked: expandRestrictedTerms(profile?.dislikedFoods ?? [], { strict: false }),
     requiredDiet: strictDiet === "VEGAN" ? "thuần chay" : strictDiet === "VEGETARIAN" ? "chay" : null,
   };
 }
@@ -121,5 +121,5 @@ export function chatHistoryTurns(messages: Array<{ role: string; content: string
 
 /** Kiểm câu trả lời sau khi nhận: các thành phần dị ứng (đã mở rộng theo nhóm) có xuất hiện trong nội dung không. */
 export function answerAllergyWarnings(answer: string, allergies: string[]) {
-  return findRestrictedTerms({ name: answer, ingredients: [] }, expandRestrictedTerms(allergies));
+  return withoutNestedTerms(findRestrictedTerms({ name: answer, ingredients: [] }, expandRestrictedTerms(allergies)));
 }
