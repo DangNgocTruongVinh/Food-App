@@ -187,7 +187,7 @@ nginx:1.27-alpine (gzip, chuyển `/api`). Biến môi trường khai báo trong
 
 **38. Hướng phát triển chính?**
 Theo dõi thành viên, lưu lượng nước vào tài khoản, đăng nhập Google, chế độ tối, đánh giá OCR trên hóa đơn thật, nhận diện dị ứng
-theo thành phần ẩn, Redis cho trạng thái dùng chung, thông báo đẩy. Nguồn: `docs/han-che.md` mục 3.
+theo thành phần thật của nhãn hàng, Redis cho trạng thái dùng chung, thông báo đẩy. Nguồn: `docs/han-che.md` mục 3.
 
 **40. Người dùng gõ sai tên dị ứng thì sao?**
 Không bị bỏ qua. Nouri chuẩn hóa (bỏ dấu khi gõ không dấu, bỏ "dị ứng", "bị", "với"), so với danh mục 11 nhóm (tên nhóm, tên gọi khác hai

@@ -2,7 +2,7 @@ import { ArrowDown, ArrowUp, Plus, X } from "lucide-react";
 import {
   emptyIngredient, emptyStep, moveRow, RECIPE_LIMITS, UNIT_OPTIONS, type IngredientRow, type RecipeFormErrors, type StepRow,
 } from "../../features/admin/admin-recipes.logic";
-import { groupsOfFoodName } from "../../features/profile/allergy-groups";
+import { allergyMatchesOfFoodName } from "../../features/profile/allergy-groups";
 import type { FoodUnit } from "../../types";
 import { Button, IconButton } from "../ui";
 
@@ -106,9 +106,10 @@ export function AdminIngredientsEditor({ rows, errors, dietErrors, listError, on
 
 /** Nhóm dị ứng Nouri tự nhận ra từ tên nguyên liệu (cùng danh mục với bộ lọc) để Admin kiểm lại trước khi lưu. */
 function AllergyGroupNote({ name }: { name: string }) {
-  const groups = name.trim() ? groupsOfFoodName(name) : [];
-  if (!groups.length) return null;
-  return <p className="ad-ingredient__allergy">Nhóm dị ứng tự nhận ra: {groups.map((group) => group.label).join(", ")}</p>;
+  const matches = name.trim() ? allergyMatchesOfFoodName(name) : [];
+  if (!matches.length) return null;
+  const labels = matches.map(({ group, certain }) => (certain ? group.label : `${group.label} (có thể chứa)`));
+  return <p className="ad-ingredient__allergy">Nhóm dị ứng tự nhận ra: {labels.join(", ")}</p>;
 }
 
 type StepsProps = { rows: StepRow[]; errors: RecipeFormErrors["steps"]; listError?: string; onChange: (rows: StepRow[]) => void };

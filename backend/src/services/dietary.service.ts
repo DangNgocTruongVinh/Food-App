@@ -1,5 +1,7 @@
 import type { DietType } from "@prisma/client";
-import { ALLERGY_GROUPS, foldAllergyText, groupsOfFoodName, normalizeAllergyText, resolveRestriction } from "./allergy-groups.js";
+import {
+  ALLERGY_GROUPS, allergyMatchesOfFoodName, foldAllergyText, MAY_CONTAIN_PREFIX, normalizeAllergyText, resolveRestriction,
+} from "./allergy-groups.js";
 
 type DietaryRecipe = {
   name: string;
@@ -27,7 +29,9 @@ export function expandRestrictedTerms(items: string[], { strict = true } = {}) {
   const terms = new Set<string>();
   for (const raw of items) {
     const resolved = resolveRestriction(raw, { strict });
-    resolved.groups.forEach((group) => group.terms.forEach((term) => terms.add(normalizeAllergyText(term))));
+    // Dị ứng lọc cả nguyên liệu "có thể chứa" (an toàn trước); món không thích chỉ lọc nguyên liệu chắc chắn của nhóm.
+    resolved.groups.forEach((group) => [...group.terms, ...(strict ? group.mayContain ?? [] : [])]
+      .forEach((term) => terms.add(normalizeAllergyText(term))));
     if (resolved.text) terms.add(resolved.text);
   }
   const result = [...terms];
@@ -40,7 +44,7 @@ const expandCache = new Map<string, string[]>();
 // Cụm của danh mục → ngoại lệ của nhóm chứa nó ("sữa" không khớp "sữa đậu nành"). Cụm không có ở đây là chữ người dùng tự gõ.
 const CATALOG_EXCLUDES = new Map<string, string[]>();
 for (const group of ALLERGY_GROUPS) {
-  for (const term of group.terms) {
+  for (const term of [...group.terms, ...(group.mayContain ?? [])]) {
     const key = normalizeAllergyText(term);
     CATALOG_EXCLUDES.set(key, [...(CATALOG_EXCLUDES.get(key) ?? []), ...(group.excludes ?? []).map(normalizeAllergyText)]);
   }
@@ -119,7 +123,13 @@ export function allergenLabels(recipe: Pick<DietaryRecipe, "name" | "ingredients
   };
   for (const raw of allergies) {
     const resolved = resolveRestriction(raw);
-    for (const group of resolved.groups) addHits(group.label, names.filter((name) => groupsOfFoodName(name).includes(group)));
+    for (const group of resolved.groups) {
+      const matches = names.map((name) => ({ name, match: allergyMatchesOfFoodName(name).find((item) => item.group === group) }));
+      const certain = matches.filter(({ match }) => match?.certain).map(({ name }) => name);
+      const maybe = matches.filter(({ match }) => match && !match.certain).map(({ name }) => name);
+      addHits(group.label, certain);
+      addHits(`${MAY_CONTAIN_PREFIX}${group.label}`, maybe.filter((name) => !certain.includes(name)));
+    }
     if (resolved.text) {
       const [needle] = needlesOf([resolved.text]);
       addHits(resolved.text, names.filter((name) => needleMatches(needle, foodText(name))));

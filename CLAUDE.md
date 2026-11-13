@@ -215,7 +215,7 @@ Kế hoạch chi tiết: `docs/ke-hoach-gd3c.md`. Phần 1 (Tesseract trên serv
 - [ ] Mục 3: bổ sung route `*` (redirect về `/`) vào danh sách route.
 - [x] ~~Hướng phát triển: người dùng tự tạo công thức riêng để chia sẻ~~: đã làm dạng công thức tự viết trong bài cộng đồng (quyết định #16); hạn chế: cảnh báo dị ứng chỉ theo tên nguyên liệu, công thức tự viết chưa kiểm duyệt dinh dưỡng.
 - [ ] Hạn chế: dinh dưỡng của bộ món seed là **số liệu ước tính**, tham khảo *Bảng thành phần thực phẩm Việt Nam* (Viện Dinh dưỡng, NXB Y học, 2007).
-- [ ] Hạn chế: so khớp dị ứng dựa trên tên nguyên liệu và bảng nhóm dị ứng cố định; nguyên liệu có thành phần ẩn (vd. nước tương có lúa mì) có thể không bị phát hiện.
+- [x] Hạn chế dị ứng ghi ở `docs/han-che.md` mục 2.2: nguyên liệu chế biến phổ biến đã gán nhóm (nhánh `sua-loi-thanh-phan-an`, "có thể chứa" khi tùy nhãn hàng); còn lại: thành phần tùy nhãn hàng, nguyên liệu chưa có trong danh mục.
 - [ ] Hạn chế: ngày từ server (hạn sử dụng, ngày thực đơn) hiển thị theo múi giờ máy người dùng; ở múi giờ âm (vd. châu Mỹ) có thể lệch về ngày hôm trước.
 - [ ] Hạn chế: Admin sửa một món đã có trong thực đơn cũ thì thực đơn cũ giữ calo đã lưu ở `MealPlanItem`, nhưng tên, ảnh và nguyên liệu hiển thị theo bản đã sửa.
 - [ ] Hạn chế: kiểm tra nhãn chay/thuần chay dựa trên tên nguyên liệu và bộ từ khóa cố định (`dietary.service.ts`).

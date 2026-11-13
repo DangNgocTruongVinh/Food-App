@@ -58,8 +58,12 @@ Chi tiết cách kiểm: `docs/test-evidence/bao-mat.md`. Hướng xử lý: nâ
 
 ### 2.2. An toàn thực phẩm (dị ứng, chế độ ăn)
 
-- So khớp dị ứng dựa trên **tên** nguyên liệu và bảng nhóm dị ứng cố định (`dietary.service.ts`, vd. "Hải sản" → tôm, cua, cá, nước mắm…);
-  nguyên liệu có thành phần ẩn (vd. nước tương có lúa mì) có thể không bị phát hiện.
+- So khớp dị ứng dựa trên **tên** nguyên liệu và danh mục nhóm cố định (`allergy-groups.ts`), đã gồm nguyên liệu chế biến phổ biến
+  (nước tương → Đậu nành + Gluten, dầu hào → Hải sản…). Thành phần thật **tùy nhãn hàng** (nước tương không gluten, tương ớt có đậu
+  nành…) không biết được: chỗ không chắc gán "có thể chứa" và vẫn lọc (có thể lọc dư); nguyên liệu chế biến chưa có trong danh mục,
+  hoặc Admin đặt tên lạ, có thể không bị phát hiện. Người dị ứng nặng cần đọc nhãn sản phẩm.
+- Bộ 33 món ít món cho vài hồ sơ hẹp (vd. thuần chay + dị ứng gluten: không còn món trưa/tối an toàn); thực đơn khi đó dùng món an toàn
+  khác bữa hoặc lặp món.
 - Kiểm nhãn chay/thuần chay dựa trên tên nguyên liệu và bộ từ khóa cố định.
 - Công thức tự viết của thành viên chỉ được cảnh báo dị ứng theo tên nguyên liệu, chưa được kiểm duyệt dinh dưỡng.
 
@@ -116,6 +120,7 @@ Chi tiết cách kiểm: `docs/test-evidence/bao-mat.md`. Hướng xử lý: nâ
   `contrast.test.ts` cho cả hai bộ, chụp so sánh mọi trang ở cả hai chế độ.
 - Các chức năng đã gỡ khỏi giao diện vì chưa có xử lý thật: giọng nói, đính kèm tệp trong chat AI, bình chọn (poll) trong bài viết.
 - Đánh giá OCR trên ≥ 10 hóa đơn thật, so sánh Tesseract và OpenAI (độ đúng, thời gian, chi phí); đọc nhãn sản phẩm có HSD.
-- Nhận diện dị ứng theo thành phần (cơ sở dữ liệu nguyên liệu có thành phần ẩn) thay vì chỉ theo tên.
+- Nhận diện dị ứng theo thành phần thật của sản phẩm (mã vạch / cơ sở dữ liệu nhãn hàng) thay vì danh mục theo tên; thêm món thuần
+  chay không gluten (dùng tamari thay nước tương).
 - Nâng các gói phụ thuộc bản lớn (mục 1.1) trên nhánh riêng; chuyển trạng thái trong bộ nhớ sang Redis để chạy nhiều tiến trình.
 - Thông báo đẩy (web push) cho nhắc hạn, thay hoặc bổ sung email.

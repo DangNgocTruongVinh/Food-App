@@ -1,4 +1,5 @@
 import type { RecipeForYou, RecipeWarnings } from "../../types";
+import { MAY_CONTAIN_PREFIX } from "../profile/allergy-groups";
 
 // Nội dung hiển thị của khối "Dành cho bạn" ở trang chi tiết công thức (dữ liệu từ GET /api/recipes/:id/for-you).
 
@@ -36,10 +37,19 @@ export function calorieShareLabel(calories: RecipeForYou["calories"]) {
   return `${numberFormat.format(calories.recipeCalories)} / ${numberFormat.format(calories.dailyTarget)} kcal mục tiêu ngày`;
 }
 
+/**
+ * allergens do backend dựng sẵn: "Đậu nành (Nước tương)" (chắc chắn) và "Có thể chứa Gluten (Tương đen)" (tùy nhãn hàng).
+ * → ["Chứa: Đậu nành (Nước tương)", "Có thể chứa: Gluten (Tương đen)"].
+ */
+export function allergenWarningTexts(allergens: string[]) {
+  const certain = allergens.filter((item) => !item.startsWith(MAY_CONTAIN_PREFIX));
+  const maybe = allergens.filter((item) => item.startsWith(MAY_CONTAIN_PREFIX)).map((item) => item.slice(MAY_CONTAIN_PREFIX.length));
+  return [certain.length ? `Chứa: ${certain.join(", ")}` : "", maybe.length ? `Có thể chứa: ${maybe.join(", ")}` : ""].filter(Boolean);
+}
+
 export function forYouWarnings(warnings: RecipeWarnings) {
   const items: Array<{ kind: "allergen" | "disliked" | "diet"; text: string }> = [];
-  // allergens do backend dựng sẵn dạng "Trứng (Trứng gà)" (nhóm dị ứng + nguyên liệu của món).
-  if (warnings.allergens.length) items.push({ kind: "allergen", text: `Chứa: ${warnings.allergens.join(", ")}` });
+  for (const text of allergenWarningTexts(warnings.allergens)) items.push({ kind: "allergen", text });
   if (warnings.dislikedFoods.length) items.push({ kind: "disliked", text: `Có món bạn không thích: ${warnings.dislikedFoods.join(", ")}` });
   if (warnings.dietConflict) {
     items.push({ kind: "diet", text: `Không hợp chế độ ${dietConflictLabels[warnings.dietConflict] ?? warnings.dietConflict} của bạn` });

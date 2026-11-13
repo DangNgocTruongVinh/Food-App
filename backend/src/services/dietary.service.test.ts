@@ -88,6 +88,36 @@ describe("dị ứng theo nhóm: mọi cách gõ, ngoại lệ, chữ không nh�
   });
 });
 
+describe("thành phần ẩn trong nguyên liệu chế biến (13/11/2026)", () => {
+  const hits = (allergy: string, ingredients: string[], name = "Món thử") =>
+    findRestrictedTerms(recipe(name, ingredients), expandRestrictedTerms([allergy])).length > 0;
+
+  it.each([
+    ["Đậu nành", "Nước tương"], ["Gluten", "Nước tương"], ["Gluten", "Xì dầu"], ["Đậu nành", "Tương đen"], ["Đậu nành", "Miso"],
+    ["Đậu nành", "Tàu hũ ky"], ["Đậu nành", "Chao"], ["Hải sản", "Dầu hào"], ["Nhuyễn thể", "Dầu hào"], ["Giáp xác", "Mắm ruốc"],
+    ["Giáp xác", "Mắm tôm"], ["Gluten", "Bột chiên giòn"], ["Gluten", "Mì"], ["Trứng", "Mayonnaise"], ["Sữa", "Bơ"], ["Sữa", "Kem"],
+    ["Sữa", "Phô mai"], ["Mè", "Dầu mè"], ["Mè", "Muối mè"], ["Đậu phộng", "Bơ đậu phộng"],
+    // "Có thể chứa" (tùy nhãn hàng) vẫn bị lọc khi dị ứng:
+    ["Gluten", "Tương đen"], ["Gluten", "Dầu hào"], ["Gluten", "Tương ớt Hàn Quốc"], ["Mè", "Tương đen"], ["Đậu phộng", "Sa tế"],
+  ])("dị ứng %s lọc %s", (allergy, ingredient) => expect(hits(allergy, [ingredient])).toBe(true));
+
+  it.each([
+    ["Gluten", "Bánh phở"], ["Gluten", "Bún tươi"], ["Gluten", "Bún gạo"], ["Gluten", "Mì chính"], ["Sữa", "Quả bơ"], ["Sữa", "Sinh tố bơ"],
+    ["Sữa", "Bơ đậu phộng"], ["Sữa", "Sữa đậu nành"], ["Đậu nành", "Cháo gà"], ["Đậu nành", "Tương ớt"],
+  ])("ngoại lệ giữ đúng: %s không lọc %s", (allergy, ingredient) => expect(hits(allergy, [ingredient], ingredient)).toBe(false));
+
+  it("món không thích chỉ tránh nguyên liệu chắc chắn của nhóm, không tính \"có thể chứa\"", () => {
+    expect(findRestrictedTerms(recipe("Gà xào", ["Tương đen"]), expandRestrictedTerms(["Gluten"], { strict: false }))).toEqual([]);
+    expect(findRestrictedTerms(recipe("Gà xào", ["Nước tương"]), expandRestrictedTerms(["Gluten"], { strict: false }))).not.toEqual([]);
+  });
+
+  it("nhãn ghi nguồn: \"Đậu nành (Nước tương)\"; nhóm có thể chứa ghi tiền tố \"Có thể chứa\"", () => {
+    expect(allergenLabels(recipe("Bò xào", ["Thịt bò", "Nước tương", "Tương đen"]), ["Đậu nành", "Gluten"]))
+      .toEqual(["Đậu nành (Nước tương, Tương đen)", "Gluten (Nước tương)", "Có thể chứa Gluten (Tương đen)"]);
+    expect(allergenLabels(recipe("Rau xào", ["Cải ngọt", "Dầu hào"]), ["Gluten"])).toEqual(["Có thể chứa Gluten (Dầu hào)"]);
+  });
+});
+
 describe("diet rules", () => {
   it("requires vegetarian and vegan tags, and treats vegan dishes as vegetarian", () => {
     expect(matchesRequiredDiet(recipe("Gà", [], ["BALANCED"]), "VEGETARIAN")).toBe(false);

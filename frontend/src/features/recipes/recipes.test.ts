@@ -5,7 +5,7 @@ import { createAppQueryClient, retryUnlessClientError } from "../../api/query-cl
 import { queryKeys } from "../../api/query-keys";
 import type { Recipe, RecipeForYou } from "../../types";
 import {
-  calorieShareLabel, expiringHint, forYouWarnings, missingIngredientItems, pantryCoverage, unitMismatchNote,
+  allergenWarningTexts, calorieShareLabel, expiringHint, forYouWarnings, missingIngredientItems, pantryCoverage, unitMismatchNote,
 } from "./recipe-for-you.logic";
 import { getRecipe, getRecipeForYou, listRecipes, normalizeRecipeListParams } from "./recipes.api";
 import {
@@ -277,6 +277,13 @@ describe("Recipe \"Dành cho bạn\" helpers", () => {
   it("formats the calorie share", () => {
     expect(calorieShareLabel(forYou.calories)).toBe("520 / 2.000 kcal mục tiêu ngày");
   });
+  it("tách nhãn dị ứng chắc chắn và \"có thể chứa\" (tùy nhãn hàng)", () => {
+    expect(allergenWarningTexts(["Đậu nành (Nước tương)", "Có thể chứa Gluten (Tương đen)"]))
+      .toEqual(["Chứa: Đậu nành (Nước tương)", "Có thể chứa: Gluten (Tương đen)"]);
+    expect(allergenWarningTexts(["Có thể chứa Gluten (Dầu hào)"])).toEqual(["Có thể chứa: Gluten (Dầu hào)"]);
+    expect(allergenWarningTexts([])).toEqual([]);
+  });
+
   it("turns profile conflicts into warnings and returns none when everything fits", () => {
     expect(forYouWarnings(forYou.warnings)).toEqual([
       { kind: "allergen", text: "Chứa: Cá (Cá basa, Nước mắm)" },
