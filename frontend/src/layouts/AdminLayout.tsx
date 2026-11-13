@@ -1,11 +1,12 @@
 import { Suspense } from "react";
 import { BookOpen, LayoutDashboard, LogOut, Menu, ScrollText, ShieldCheck, Users, X, type LucideIcon } from "lucide-react";
-import { Link, NavLink, Outlet } from "react-router-dom";
+import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
 import { Button, NouriWordmark } from "../components/ui";
 import { useAuth } from "../contexts/AuthContext";
 import { ADMIN_NAV, userInitial } from "../features/layout/layout.logic";
 import { useDisclosure } from "../features/layout/useDisclosure";
 import { cx } from "../features/ui/ui.logic";
+import { ErrorBoundary } from "../components/ErrorBoundary";
 
 const ICONS: Record<string, LucideIcon> = {
   "/admin": LayoutDashboard,
@@ -21,6 +22,7 @@ const ICONS: Record<string, LucideIcon> = {
  * Mục menu dùng lại kiểu liên kết chữ phẳng của menu người dùng (.site-nav__link); chỉ dùng token.
  */
 export default function AdminLayout() {
+  const { pathname } = useLocation();
   const { user, logout } = useAuth();
   const drawer = useDisclosure<HTMLDivElement>();
 
@@ -74,7 +76,7 @@ export default function AdminLayout() {
       <main id="noi-dung-chinh" tabIndex={-1} className="ad-main">
         <div className="ad-view">
           <h1 className="ui-visually-hidden">Quản trị Nouri</h1>
-          <Suspense fallback={null}><Outlet /></Suspense>
+          <ErrorBoundary key={pathname}><Suspense fallback={null}><Outlet /></Suspense></ErrorBoundary>
         </div>
       </main>
     </div>

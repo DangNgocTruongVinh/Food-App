@@ -6,6 +6,7 @@ import { SiteHeader } from "../components/layout/SiteHeader";
 import { ButtonLink } from "../components/ui";
 import { useAuth } from "../contexts/AuthContext";
 import { adminRedirect, isAdmin } from "../features/layout/layout.logic";
+import { ErrorBoundary } from "../components/ErrorBoundary";
 
 /**
  * Khung các trang trong ứng dụng (DESIGN.md mục 13): menu trên, nội dung, footer.
@@ -30,7 +31,7 @@ export default function AppLayout() {
       )}
       <main id="noi-dung-chinh" tabIndex={-1} className="ui-shell__main">
         {/* Trang tải khi mở (lazy): giữ menu/khung trong lúc tải. */}
-        <Suspense fallback={null}><Outlet /></Suspense>
+        <ErrorBoundary key={pathname}><Suspense fallback={null}><Outlet /></Suspense></ErrorBoundary>
       </main>
       <SiteFooter />
     </div>
