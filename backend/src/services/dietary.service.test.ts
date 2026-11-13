@@ -106,9 +106,18 @@ describe("thành phần ẩn trong nguyên liệu chế biến (13/11/2026)", ()
     ["Sữa", "Bơ đậu phộng"], ["Sữa", "Sữa đậu nành"], ["Đậu nành", "Cháo gà"], ["Đậu nành", "Tương ớt"],
   ])("ngoại lệ giữ đúng: %s không lọc %s", (allergy, ingredient) => expect(hits(allergy, [ingredient], ingredient)).toBe(false));
 
-  it("món không thích chỉ tránh nguyên liệu chắc chắn của nhóm, không tính \"có thể chứa\"", () => {
-    expect(findRestrictedTerms(recipe("Gà xào", ["Tương đen"]), expandRestrictedTerms(["Gluten"], { strict: false }))).toEqual([]);
-    expect(findRestrictedTerms(recipe("Gà xào", ["Nước tương"]), expandRestrictedTerms(["Gluten"], { strict: false }))).not.toEqual([]);
+  it("món không thích chỉ tránh nguyên liệu chính, không tính gia vị/thành phần ẩn hay \"có thể chứa\"", () => {
+    const dislike = (item: string) => expandRestrictedTerms([item], { strict: false });
+    expect(findRestrictedTerms(recipe("Gà xào", ["Tương đen"]), dislike("Gluten"))).toEqual([]);
+    expect(findRestrictedTerms(recipe("Gà xào", ["Nước tương"]), dislike("Gluten"))).toEqual([]);
+    expect(findRestrictedTerms(recipe("Bánh mì ốp la", ["Bánh mì"]), dislike("Gluten"))).not.toEqual([]);
+    expect(findRestrictedTerms(recipe("Bún chả", ["Bún tươi", "Nước mắm"]), dislike("cá"))).toEqual([]);
+    expect(findRestrictedTerms(recipe("Canh chua", ["Cá lóc"]), dislike("cá"))).not.toEqual([]);
+    expect(findRestrictedTerms(recipe("Bún chả", ["Nước mắm"]), dislike("nước mắm"))).not.toEqual([]);
+    expect(findRestrictedTerms(recipe("Phở", ["Thịt bò"]), dislike("bò"))).not.toEqual([]);
+    expect(findRestrictedTerms(recipe("Phở", ["Thịt bò"]), dislike("bo"))).not.toEqual([]); // không dấu
+    // Dị ứng không đổi: "cá" vẫn tránh nước mắm.
+    expect(findRestrictedTerms(recipe("Bún chả", ["Nước mắm"]), expandRestrictedTerms(["cá"]))).not.toEqual([]);
   });
 
   it("nhãn ghi nguồn: \"Đậu nành (Nước tương)\"; nhóm có thể chứa ghi tiền tố \"Có thể chứa\"", () => {

@@ -30,7 +30,8 @@ ngoại lệ ("Sữa đậu nành" thuộc Đậu nành, không thuộc Sữa).
 | Bước | Quy tắc |
 |---|---|
 | Chuẩn hóa mục người dùng nhập | Bỏ từ thừa ("dị ứng", "bị", "với", "món"); gõ không dấu so không dấu, gõ có dấu so có dấu |
-| Nhận nhóm | Dị ứng: trùng tên nhóm, tên gọi khác hoặc một nguyên liệu của nhóm → cả nhóm ("trứng gà", "trung ga", "egg", "lòng đỏ" → Trứng; "cá hồi" → Cá). Món không thích: chỉ tên nhóm/tên gọi khác mới thành cả nhóm, tên một nguyên liệu giữ đúng chữ |
+| Nhận nhóm | Dị ứng: trùng tên nhóm, tên gọi khác hoặc một nguyên liệu của nhóm → cả nhóm ("trứng gà", "trung ga", "egg", "lòng đỏ" → Trứng; "cá hồi" → Cá). Món không thích: chỉ tên nhóm/tên gọi khác mới thành nhóm, tên một nguyên liệu giữ đúng chữ |
+| Dị ứng ≠ món không thích (13/11/2026) | Dị ứng (an toàn): mọi nguyên liệu của nhóm, cả chế biến/gia vị/thành phần ẩn (nước mắm, dầu hào, nước tương…) và "có thể chứa". Món không thích (khẩu vị): chỉ nguyên liệu chính (`mainTermsOf`, bỏ `PROCESSED_FOOD_TERMS`), không "có thể chứa" — không thích "cá" vẫn được Bún chả, Bún bò (chỉ có nước mắm), tránh Canh chua cá lóc; ghi đích danh "nước mắm" thì mới tránh nước mắm. Nhãn: "Chứa: Cá (Nước mắm)" / "Có thành phần bạn không thích: Cá lóc" |
 | Không nhận ra | Vẫn lọc theo đúng chữ đó, nguyên từ, hai chiều ("thịt bò xay" ↔ "Thịt bò") — không bao giờ im lặng bỏ qua |
 | Gần đúng | Sai 1–2 ký tự chỉ để gợi ý ("Có phải bạn muốn: Trứng?"), không tự áp |
 | So với món | Nguyên từ trên tên món và tên nguyên liệu; cụm của danh mục luôn so đúng dấu ("chao" ≠ "cháo", "cá" ≠ "cà chua"); trừ ngoại lệ của nhóm |

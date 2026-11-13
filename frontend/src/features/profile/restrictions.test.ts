@@ -35,5 +35,8 @@ describe("Hồ sơ: ô Dị ứng / Món không thích", () => {
   it("dòng \"Sẽ tránh\" nêu nhóm kèm ví dụ nguyên liệu và chữ tự do; dữ liệu cũ (\"trứng gà\") vẫn hiểu đúng", () => {
     expect(avoidSummary(["trứng gà", "cần tây"], "allergy")).toBe("Sẽ tránh: Trứng (trứng, lòng đỏ, lòng trắng…), “cần tây”");
     expect(avoidSummary([], "allergy")).toBeNull();
+    // Món không thích chỉ nêu nguyên liệu chính, không gia vị (nước mắm) — dị ứng thì có.
+    expect(avoidSummary(["cá"], "dislike")).not.toContain("nước mắm");
+    expect(avoidSummary(["cá"], "dislike")).toContain("cá hồi");
   });
 });

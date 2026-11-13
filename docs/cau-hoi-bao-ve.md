@@ -196,6 +196,12 @@ theo đúng chữ đó (nguyên từ, hai chiều) và ô nhập báo "Nouri ch�
 nếu sai 1–2 ký tự; hệ thống không tự đoán. Dưới ô luôn hiện "Sẽ tránh: …" để người dùng kiểm lại. Kiểm bằng ma trận an toàn với 14 cách
 gõ. Nguồn: `allergy-groups.ts`, `docs/thuat-toan-goi-y.md` mục 2.
 
+**41. Dị ứng khác món không thích thế nào?**
+Dị ứng là an toàn nên lọc rộng: cả nhóm, tên gọi khác, nguyên liệu chế biến và thành phần ẩn (dị ứng cá → tránh cả nước mắm), kể cả
+"có thể chứa" tùy nhãn hàng; thẻ món ghi "Chứa: Cá (Nước mắm)". Món không thích là khẩu vị nên chỉ tránh nguyên liệu chính: không thích
+"cá" thì tránh Canh chua cá lóc nhưng vẫn gợi ý Bún chả có nước mắm; muốn tránh gia vị thì ghi đích danh ("nước mắm"). Thẻ món ghi
+"Có thành phần bạn không thích: Cá lóc". Nguồn: `expandRestrictedTerms(…, { strict })`, `PROCESSED_FOOD_TERMS` trong `allergy-groups.ts`.
+
 **39. Sao không có chế độ tối?**
 Đã có bản chế độ tối nhưng bỏ (12/11/2026) để tập trung chất lượng: mỗi màn hình, trạng thái, biểu đồ và trang chủ (bộ màu riêng) phải
 kiểm tương phản và chụp so sánh hai lần, dễ sót lỗi trước hạn nộp. Giữ một giao diện sáng đã kiểm WCAG AA bằng test

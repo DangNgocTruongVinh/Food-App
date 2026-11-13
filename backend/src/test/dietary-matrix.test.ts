@@ -34,7 +34,8 @@ const MEAT_OR_FISH = startsWithAny(["thịt", "sườn", "xương", "đùi gà",
 const ANIMAL_PRODUCT = (name: string) => MEAT_OR_FISH(name) || startsWithAny(["trứng", "sữa tươi", "sữa chua", "sữa đặc", "phô mai", "mật ong"])(name);
 const DISLIKE_ORACLE: Record<string, (name: string) => boolean> = {
   "Hành tây": startsWithAny(["hành tây"]),
-  "Hải sản": ALLERGY_ORACLE["Hải sản"],
+  // Món không thích là khẩu vị: chỉ nguyên liệu chính (cá, tôm), không tính gia vị như nước mắm.
+  "Hải sản": startsWithAny(["cá", "tôm"]),
 };
 
 type Profile = { dietType: DietType; allergies: string[]; dislikedFoods: string[] };
@@ -207,6 +208,18 @@ describe("Dị ứng gõ theo nhiều cách: cùng kết quả với nhóm chu�
     expect(recipeFit(banhMi, { allergies: ["Đậu nành"] })).toMatchObject({ safe: false, allergens: ["Đậu nành (Nước tương)"] });
     expect(recipeFit(banhMi, { allergies: ["Gluten"] }).allergens).toEqual(["Gluten (Bánh mì, Nước tương)"]);
     expect(safeRecipes(visible, { allergies: ["Đậu nành"] }).map((recipe) => recipe.slug)).not.toContain(banhMi.slug);
+  });
+
+  it("món không thích \"cá\": Bún chả, Bún bò KHÔNG bị loại (chỉ có nước mắm), Canh chua cá lóc bị loại; dị ứng cá thì vẫn loại", () => {
+    const slug = (prefix: string) => visible.find((recipe) => recipe.name.startsWith(prefix))!;
+    const [bunCha, bunBo, canhChua] = [slug("Bún chả"), slug("Bún bò"), slug("Canh chua cá lóc")];
+    const dislikeFish = { allergies: [], dislikedFoods: ["cá"] };
+    expect(recipeFit(bunCha, dislikeFish).safe).toBe(true);
+    expect(recipeFit(bunBo, dislikeFish).safe).toBe(true);
+    expect(recipeFit(canhChua, dislikeFish)).toMatchObject({ safe: false, dislikedFoods: ["Cá lóc"] });
+    // Ghi đích danh gia vị thì mới lọc gia vị đó.
+    expect(recipeFit(bunCha, { dislikedFoods: ["nước mắm"] })).toMatchObject({ safe: false, dislikedFoods: ["Nước mắm"] });
+    expect(recipeFit(bunCha, { allergies: ["cá"] })).toMatchObject({ safe: false, allergens: ["Cá (Nước mắm)"] });
   });
 
   it("bánh mì ốp la bị lọc với hồ sơ \"trứng gà\" (lỗi người dùng báo)", () => {

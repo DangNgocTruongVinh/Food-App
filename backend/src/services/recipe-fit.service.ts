@@ -1,5 +1,5 @@
 import type { DietType, FoodUnit } from "@prisma/client";
-import { allergenLabels, expandRestrictedTerms, findRestrictedTerms, matchesRequiredDiet, withoutNestedTerms } from "./dietary.service.js";
+import { allergenLabels, expandRestrictedTerms, findRestrictedTerms, matchesRequiredDiet, restrictedFoodNames } from "./dietary.service.js";
 import { calculateNutritionTargets } from "./nutrition.service.js";
 import { groupPantryByName, pantryMatchesFor } from "./pantry-match.js";
 
@@ -83,7 +83,8 @@ export function recipeWarnings(
     allergens: findRestrictedTerms(recipe, expandRestrictedTerms(profile?.allergies ?? [])).length
       ? allergenLabels(recipe, profile?.allergies ?? [])
       : [],
-    dislikedFoods: withoutNestedTerms(findRestrictedTerms(recipe, expandRestrictedTerms(profile?.dislikedFoods ?? [], { strict: false }))),
+    // Món không thích (khẩu vị): tên nguyên liệu chính bị tránh, không tính gia vị/thành phần ẩn.
+    dislikedFoods: restrictedFoodNames(recipe, expandRestrictedTerms(profile?.dislikedFoods ?? [], { strict: false })),
     dietConflict: matchesRequiredDiet(recipe, dietType) ? null : dietType,
   };
 }

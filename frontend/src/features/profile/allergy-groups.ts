@@ -109,6 +109,21 @@ export const ALLERGY_GROUPS: AllergyGroup[] = [
   },
 ];
 
+/**
+ * Nguyên liệu chế biến / gia vị / thành phần ẩn của các nhóm. DỊ ỨNG tính cả những thứ này (an toàn trước); MÓN KHÔNG THÍCH
+ * (khẩu vị) thì không: không thích "cá" vẫn ăn được món có nước mắm. Ghi đích danh ("nước mắm") thì mới lọc gia vị đó.
+ */
+export const PROCESSED_FOOD_TERMS = new Set([
+  "nước mắm", "mắm", "mắm nêm", "dầu cá", "mắm cá", "mắm cá linh", "mắm thái", "mắm tôm", "ruốc", "mắm ruốc", "bánh phồng tôm", "gạch cua",
+  "dầu hào", "sốt dầu hào", "mayonnaise", "sốt mayonnaise", "sốt mayo", "mayo", "sốt trứng", "whey", "nước tương", "xì dầu", "tương đen",
+  "tương bần", "tương hột", "tương ớt hàn quốc", "gochujang", "miso", "chao", "bột chiên giòn", "bột chiên xù", "vỏ bánh bao",
+  "dầu đậu phộng", "dầu lạc", "sốt đậu phộng", "muối đậu phộng", "bơ đậu phộng", "dầu mè", "dầu vừng", "muối mè", "tahini", "sốt mè",
+  "sữa hạnh nhân", "sữa óc chó", "sữa đậu nành",
+]);
+
+/** Nguyên liệu chính của nhóm (bỏ chế biến/gia vị) — dùng cho "Món không thích". */
+export const mainTermsOf = (group: AllergyGroup) => group.terms.filter((term) => !PROCESSED_FOOD_TERMS.has(term));
+
 const BY_ID = new Map(ALLERGY_GROUPS.map((group) => [group.id, group]));
 // Từ thừa người dùng hay gõ kèm ("dị ứng trứng", "bị dị ứng với tôm"): bỏ trước khi so.
 const FILLER_WORDS = new Set(["di", "ung", "bi", "voi", "mon", "toi", "allergy", "allergic"]);

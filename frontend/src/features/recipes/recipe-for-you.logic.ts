@@ -50,7 +50,7 @@ export function allergenWarningTexts(allergens: string[]) {
 export function forYouWarnings(warnings: RecipeWarnings) {
   const items: Array<{ kind: "allergen" | "disliked" | "diet"; text: string }> = [];
   for (const text of allergenWarningTexts(warnings.allergens)) items.push({ kind: "allergen", text });
-  if (warnings.dislikedFoods.length) items.push({ kind: "disliked", text: `Có món bạn không thích: ${warnings.dislikedFoods.join(", ")}` });
+  if (warnings.dislikedFoods.length) items.push({ kind: "disliked", text: `Có thành phần bạn không thích: ${warnings.dislikedFoods.join(", ")}` });
   if (warnings.dietConflict) {
     items.push({ kind: "diet", text: `Không hợp chế độ ${dietConflictLabels[warnings.dietConflict] ?? warnings.dietConflict} của bạn` });
   }
