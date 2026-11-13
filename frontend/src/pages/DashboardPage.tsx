@@ -45,6 +45,8 @@ export default function DashboardPage() {
 
   const greeting = greetingForHour(new Date().getHours());
 
+  // Hook phải gọi trước mọi lệnh return sớm (đặt sau return từng làm trang trắng: React #310).
+  const searchOptions = useMemo(() => recipeSuggestionOptions(allRecipes.data ?? []), [allRecipes.data]);
   if (overview.isLoading) return <DashboardSkeleton />;
   if (overview.isError || !overview.data) {
     return (
@@ -64,7 +66,6 @@ export default function DashboardPage() {
   const summary = targets ? buildNutritionSummary(meals, targets, planId ? planItems : []) : null;
   const macrosStatus = !planId || plan.isSuccess ? "ready" : plan.isError ? "error" : "loading";
 
-  const searchOptions = useMemo(() => recipeSuggestionOptions(allRecipes.data ?? []), [allRecipes.data]);
   const submitSearch = (event: FormEvent) => {
     event.preventDefault();
     const path = dashboardRecipeSearchPath(search);

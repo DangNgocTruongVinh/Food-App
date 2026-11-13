@@ -1,5 +1,5 @@
 import { lazy, Suspense } from "react";
-import { Navigate, Outlet, Route, Routes } from "react-router-dom";
+import { Navigate, Outlet, Route, Routes, useLocation } from "react-router-dom";
 import { AdminRoute } from "./components/layout/AdminRoute";
 import ScrollToTop from "./components/ScrollToTop";
 import AppLayout from "./layouts/AppLayout";
@@ -7,6 +7,7 @@ import PublicLayout from "./layouts/PublicLayout";
 import LandingPage from "./pages/LandingPage";
 import LoginPage from "./pages/LoginPage";
 import { getAuthToken } from "./features/auth/auth.storage";
+import { ErrorBoundary } from "./components/ErrorBoundary";
 
 // Tách gói theo route (ra-soat-cuoi): chỉ Trang chủ và Đăng nhập nằm trong gói chính (trang vào đầu tiên, không nháy);
 // mọi trang khác tải khi mở. Suspense đặt quanh <Routes> (fallback rỗng như các trang lazy trước đây).
@@ -43,8 +44,10 @@ function ProtectedRoute() {
 }
 
 export default function App() {
+  const { pathname } = useLocation();
   return <>
     <ScrollToTop />
+    <ErrorBoundary key={pathname}>
     <Suspense fallback={null}>
     <Routes>
       <Route index element={<LandingPage />} />
@@ -87,5 +90,6 @@ export default function App() {
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
     </Suspense>
+    </ErrorBoundary>
   </>;
 }
