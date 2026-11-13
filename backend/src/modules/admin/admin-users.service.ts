@@ -1,31 +1,44 @@
 import type { Prisma } from "@prisma/client";
 import { revokeUserRefreshTokens } from "../auth/refresh-token.service.js";
 import { prisma } from "../../lib/prisma.js";
+import { foldSearchText } from "../../services/recipe-search.js";
 import { HttpError } from "../../utils/http-error.js";
 import { recordAdminAction } from "./admin-audit.service.js";
 import type { AdminUserListQuery } from "./admin-users.schema.js";
 
+const userListSelect = {
+  id: true, name: true, email: true, role: true, lockedAt: true, isSample: true, createdAt: true,
+  _count: { select: { communityPosts: true, mealPlans: true } },
+} as const;
+
+/** Tên hoặc email khớp câu tìm không dấu: mọi từ khớp đầu một từ của tên, hoặc email chứa câu tìm ("nguyen" ra "Nguyễn"). */
+function userMatches(user: { name: string; email: string }, search: string) {
+  const query = foldSearchText(search);
+  const nameWords = foldSearchText(user.name).split(" ");
+  return user.email.toLowerCase().includes(search.trim().toLowerCase())
+    || query.split(" ").every((word) => nameWords.some((nameWord) => nameWord.startsWith(word)));
+}
+
 export async function listUsersForAdmin(query: AdminUserListQuery) {
-  const where: Prisma.UserWhereInput = query.search
-    ? { OR: [{ name: { contains: query.search, mode: "insensitive" } }, { email: { contains: query.search, mode: "insensitive" } }] }
-    : {};
+  const skip = (query.page - 1) * query.pageSize;
+  if (query.search) {
+    // shortcut: lọc không dấu ở ứng dụng trên toàn bộ tài khoản (đồ án vài trăm tài khoản); nhiều hơn thì dùng unaccent của PostgreSQL.
+    const all = await prisma.user.findMany({ orderBy: { createdAt: "desc" }, select: { id: true, name: true, email: true } });
+    const matched = all.filter((user) => userMatches(user, query.search!));
+    const ids = matched.slice(skip, skip + query.pageSize).map((user) => user.id);
+    const rows = await prisma.user.findMany({ where: { id: { in: ids } }, select: userListSelect });
+    const users = ids.map((id) => rows.find((row) => row.id === id)!).filter(Boolean);
+    return { items: users.map(toListItem), total: matched.length, page: query.page, pageSize: query.pageSize };
+  }
   const [total, users] = await Promise.all([
-    prisma.user.count({ where }),
-    prisma.user.findMany({
-      where,
-      orderBy: { createdAt: "desc" },
-      skip: (query.page - 1) * query.pageSize,
-      take: query.pageSize,
-      select: {
-        id: true, name: true, email: true, role: true, lockedAt: true, isSample: true, createdAt: true,
-        _count: { select: { communityPosts: true, mealPlans: true } },
-      },
-    }),
+    prisma.user.count(),
+    prisma.user.findMany({ orderBy: { createdAt: "desc" }, skip, take: query.pageSize, select: userListSelect }),
   ]);
-  const items = users.map(({ _count, ...user }) => ({
-    ...user, locked: user.lockedAt !== null, postCount: _count.communityPosts, mealPlanCount: _count.mealPlans,
-  }));
-  return { items, total, page: query.page, pageSize: query.pageSize };
+  return { items: users.map(toListItem), total, page: query.page, pageSize: query.pageSize };
+}
+
+function toListItem({ _count, ...user }: Prisma.UserGetPayload<{ select: typeof userListSelect }>) {
+  return { ...user, locked: user.lockedAt !== null, postCount: _count.communityPosts, mealPlanCount: _count.mealPlans };
 }
 
 /**

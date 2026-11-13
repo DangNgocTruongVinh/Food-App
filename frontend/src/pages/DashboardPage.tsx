@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { useState, type FormEvent } from "react";
+import { useState, type FormEvent, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { DashboardFigures } from "../components/dashboard/DashboardFigures";
 import { DashboardHero } from "../components/dashboard/DashboardHero";
@@ -22,6 +22,8 @@ import { mealPlanQueries } from "../features/meal-plans/meal-plans.queries";
 import { recommendationQueries } from "../features/recommendations/recommendations.api";
 import { useMealConsumption } from "../features/meal-plans/useMealConsumption";
 import { greetingForHour } from "../features/ui/ui.logic";
+import { recipeSuggestionOptions } from "../features/recipes/recipes.logic";
+import { recipeQueries } from "../features/recipes/recipes.queries";
 
 export default function DashboardPage() {
   const { user } = useAuth();
@@ -30,6 +32,8 @@ export default function DashboardPage() {
   const [waterGlasses, setWaterGlasses] = useState(0);
 
   const overview = useQuery(dashboardQueries.overview());
+  // Gợi ý cho ô tìm món (cùng danh sách với trang Công thức, dùng chung bộ nhớ đệm).
+  const allRecipes = useQuery(recipeQueries.list());
   const planId = overview.data?.activePlan?.id ?? null;
   // Đạm/tinh bột/béo và ảnh món của các bữa hôm nay lấy từ chi tiết thực đơn đang dùng (API có sẵn).
   const plan = useQuery({ ...mealPlanQueries.detail(planId ?? ""), enabled: Boolean(planId) });
@@ -60,6 +64,7 @@ export default function DashboardPage() {
   const summary = targets ? buildNutritionSummary(meals, targets, planId ? planItems : []) : null;
   const macrosStatus = !planId || plan.isSuccess ? "ready" : plan.isError ? "error" : "loading";
 
+  const searchOptions = useMemo(() => recipeSuggestionOptions(allRecipes.data ?? []), [allRecipes.data]);
   const submitSearch = (event: FormEvent) => {
     event.preventDefault();
     const path = dashboardRecipeSearchPath(search);
@@ -104,7 +109,14 @@ export default function DashboardPage() {
 
         <PantrySnapshot pantryCount={data.pantryCount} expiringItems={data.expiringItems} expiredCount={data.expiredCount} />
 
-        <RecommendedRecipes recipes={data.recommendedRecipes} search={search} onSearchChange={setSearch} onSearchSubmit={submitSearch} />
+        <RecommendedRecipes
+          recipes={data.recommendedRecipes}
+          search={search}
+          onSearchChange={setSearch}
+          onSearchSubmit={submitSearch}
+          searchOptions={searchOptions}
+          onSearchPick={(value) => { const path = dashboardRecipeSearchPath(value); if (path) navigate(path); }}
+        />
       </div>
       {consumption.target && (
         <ConsumeMealDialog

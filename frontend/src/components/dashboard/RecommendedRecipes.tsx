@@ -3,11 +3,15 @@ import type { FormEvent } from "react";
 import { Link } from "react-router-dom";
 import type { DashboardRecommendedRecipe } from "../../types";
 import { RecommendationList } from "../recommendations/RecommendationList";
-import { Button, ButtonLink, EmptyState } from "../ui";
+import { Button, ButtonLink, EmptyState, Combobox } from "../ui";
+import type { ComboOption } from "../../features/ui/combobox.logic";
 
 type RecommendedRecipesProps = {
   recipes: DashboardRecommendedRecipe[];
   search: string;
+  /** Gợi ý của ô tìm (tên món, nguyên liệu, ẩm thực); chọn một gợi ý thì mở trang Công thức với từ đó. */
+  searchOptions: ComboOption[];
+  onSearchPick: (value: string) => void;
   onSearchChange: (value: string) => void;
   onSearchSubmit: (event: FormEvent) => void;
 };
@@ -16,7 +20,7 @@ type RecommendedRecipesProps = {
  * "Gợi ý cho bạn" (bộ gợi ý, ngữ cảnh hôm nay; đã lọc theo chế độ ăn, dị ứng, món không thích): các thẻ đều nhau, mỗi món có lý do.
  * Món đầu đã là "Món của hôm nay" ở đầu trang nên không làm thẻ lớn nữa.
  */
-export function RecommendedRecipes({ recipes, search, onSearchChange, onSearchSubmit }: RecommendedRecipesProps) {
+export function RecommendedRecipes({ recipes, search, onSearchChange, onSearchSubmit, searchOptions, onSearchPick }: RecommendedRecipesProps) {
   return (
     <section className="dash-recs" aria-labelledby="dash-recs-title">
       <header className="dash-recs__header">
@@ -26,12 +30,14 @@ export function RecommendedRecipes({ recipes, search, onSearchChange, onSearchSu
         </div>
         <form className="dash-search" role="search" onSubmit={onSearchSubmit}>
           <label className="ui-visually-hidden" htmlFor="dash-search">Tìm công thức theo tên món hoặc nguyên liệu</label>
-          <input
+          <Combobox
             id="dash-search"
             className="ui-input"
             type="search"
             value={search}
-            onChange={(event) => onSearchChange(event.target.value)}
+            onValueChange={onSearchChange}
+            options={searchOptions}
+            onPick={(option) => onSearchPick(option.label)}
             placeholder="Tìm món hoặc nguyên liệu"
           />
           <Button type="submit" icon={<Search />}>Tìm</Button>

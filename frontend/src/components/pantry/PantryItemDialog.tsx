@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { type FormEvent, useRef, useState } from "react";
 import { getApiError } from "../../api/client";
-import { toPantryFormValues, type PantryFormValues } from "../../features/pantry/pantry.api";
+import { suggestFoodNames, toPantryFormValues, type PantryFormValues } from "../../features/pantry/pantry.api";
 import {
   initialPantryForm, isExpiryEstimated, pantryCategoryOptions, pantryDoneMessage, storageLabel, validatePantryForm,
 } from "../../features/pantry/pantry.logic";
@@ -10,7 +10,9 @@ import { foodUnitLabel } from "../../utils/units";
 import type { FoodUnit, PantryItem, StorageLocation } from "../../types";
 import DateInput from "../DateInput";
 import { PantryItemHistory } from "./PantryHistory";
-import { Button, Dialog, ErrorState, Field } from "../ui";
+import { Button, Dialog, ErrorState, Field, Combobox } from "../ui";
+import { foodNameOption } from "../../features/pantry/pantry.logic";
+import { useRemoteOptions } from "../../features/ui/useRemoteOptions";
 
 type PantryItemDialogProps = {
   /** null: thêm mới. */
@@ -61,6 +63,8 @@ export function PantryItemDialog({ item, onClose, onSaved }: PantryItemDialogPro
     else create.mutate();
   };
 
+  // Gợi ý tên: kho của mình + nguyên liệu các món (kèm nhóm dị ứng), từ GET /api/suggestions/foods.
+  const nameSuggestions = useRemoteOptions(["suggestions", "foods"], form.name, suggestFoodNames, foodNameOption);
   return (
     <Dialog
       title={editing ? "Sửa thực phẩm" : "Thêm thực phẩm"}
@@ -71,13 +75,15 @@ export function PantryItemDialog({ item, onClose, onSaved }: PantryItemDialogPro
       <form ref={formRef} className="kho-form" noValidate onSubmit={submit}>
         <Field label="Tên thực phẩm" error={errors.name} className="kho-form__wide">
           {(control) => (
-            <input
+            <Combobox
               {...control}
               autoFocus
-              autoComplete="off"
               value={form.name}
               placeholder="Ví dụ: Ức gà"
-              onChange={(event) => update("name", event.target.value)}
+              onValueChange={(value) => update("name", value)}
+              options={nameSuggestions.options}
+              loading={nameSuggestions.loading}
+              onPick={(option) => update("name", option.label)}
             />
           )}
         </Field>

@@ -65,6 +65,18 @@
 .hs-tags__remove svg { width: 18px; height: 18px; stroke-width: 2; }
 .hs-tags__entry { display: flex; gap: var(--space-2); }
 .hs-tags__entry .ui-input { flex: 1 1 auto; min-width: 0; }
+.hs-tags__combobox { flex: 1 1 auto; }
+.hs-tags__notice { color: var(--ink-2); }
+.hs-tags__suggest {
+  padding: 0;
+  border: 0;
+  color: var(--action-text);
+  background: none;
+  font: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+}
 .hs-tags__suggestions { display: flex; flex-wrap: wrap; gap: var(--space-2); }
 .hs-tags__suggestion {
   min-height: var(--control-h);

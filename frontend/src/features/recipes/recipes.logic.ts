@@ -1,6 +1,7 @@
 import type { FoodUnit, Ingredient, Recipe } from "../../types";
 import { IMAGE_WIDTHS, isUploadedImageUrl, optimizedImageUrl } from "../../utils/images";
 import { foodUnitLabel } from "../../utils/units";
+import type { ComboOption } from "../ui/combobox.logic";
 import { searchRecipes } from "./recipe-search";
 
 export type RecipeCategory = "all" | "vietnamese" | "international" | "breakfast" | "healthy" | "low-carb" | "vegetarian";
@@ -150,4 +151,25 @@ export const RECIPE_DIET_LABELS: Record<string, string> = {
 
 export function recipeDietLabel(tag: string) {
   return RECIPE_DIET_LABELS[tag] ?? tag.replaceAll("_", " ");
+}
+
+/**
+ * Gợi ý cho ô tìm công thức: tên món (món vi phạm hồ sơ đang bị ẩn ghi "ẩn theo hồ sơ"; tìm cả theo nguyên liệu, ẩm thực),
+ * rồi nguyên liệu và nền ẩm thực (bỏ trùng). Combobox tự lọc không dấu và lấy tối đa 8.
+ */
+export function recipeSuggestionOptions(recipes: Recipe[], showAll = true): ComboOption[] {
+  const ingredients = new Set<string>();
+  const cuisines = new Set<string>();
+  const dishes = recipes.map((recipe) => {
+    recipe.ingredients.forEach((ingredient) => ingredients.add(ingredient.name));
+    if (recipe.cuisine) cuisines.add(recipe.cuisine);
+    const hidden = !showAll && violatesProfile(recipe);
+    const keywords = [recipe.cuisine, ...recipe.ingredients.map((item) => item.name)];
+    return { id: `r:${recipe.id}`, label: recipe.name, detail: hidden ? "ẩn theo hồ sơ" : "Món", keywords };
+  });
+  return [
+    ...dishes,
+    ...[...ingredients].map((name) => ({ id: `i:${name}`, label: name, detail: "Nguyên liệu" })),
+    ...[...cuisines].map((name) => ({ id: `c:${name}`, label: name, detail: "Ẩm thực" })),
+  ];
 }

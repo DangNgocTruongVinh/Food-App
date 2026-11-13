@@ -1,10 +1,11 @@
 import { Search, X } from "lucide-react";
+import { useMemo } from "react";
 import { formatNumber } from "../../features/dashboard/dashboard.logic";
 import { filterAttachableRecipes } from "../../features/community/community.logic";
-import { recipeTotalMinutes } from "../../features/recipes/recipes.logic";
+import { recipeSuggestionOptions, recipeTotalMinutes } from "../../features/recipes/recipes.logic";
 import type { Recipe } from "../../types";
 import { IMAGE_WIDTHS } from "../../utils/images";
-import { IconButton, RecipeImage } from "../ui";
+import { Combobox, IconButton, RecipeImage } from "../ui";
 
 type RecipePickerProps = {
   recipes?: Recipe[];
@@ -19,15 +20,24 @@ type RecipePickerProps = {
 /** Ô chọn công thức có sẵn để gắn vào bài viết, tìm theo tên (không phân biệt dấu). */
 export default function RecipePicker({ recipes, isLoading, isError, query, onQueryChange, onSelect, onClose }: RecipePickerProps) {
   const results = filterAttachableRecipes(recipes ?? [], query);
+  // Chọn gợi ý tên món là gắn món đó luôn; gợi ý nguyên liệu/ẩm thực thì điền vào ô tìm.
+  const options = useMemo(() => recipeSuggestionOptions(recipes ?? []), [recipes]);
   return (
     <div className="cm-picker" role="group" aria-label="Chọn công thức đính kèm">
       <div className="cm-picker__search">
         <Search className="cm-picker__icon" aria-hidden="true" />
-        <input
+        <Combobox
           autoFocus
+          wrapperClassName="cm-picker__combobox"
           className="ui-input cm-picker__input"
           value={query}
-          onChange={(event) => onQueryChange(event.target.value)}
+          onValueChange={onQueryChange}
+          options={options}
+          onPick={(option) => {
+            const picked = recipes?.find((recipe) => `r:${recipe.id}` === option.id);
+            if (picked) onSelect(picked);
+            else onQueryChange(option.label);
+          }}
           placeholder="Tìm món hoặc nguyên liệu"
           aria-label="Tìm công thức theo tên hoặc nguyên liệu"
         />

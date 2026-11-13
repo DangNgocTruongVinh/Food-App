@@ -4,7 +4,12 @@ import {
   ACTIVITY_OPTIONS, CUISINE_SUGGESTIONS, DIET_OPTIONS, GENDER_OPTIONS, GOAL_OPTIONS, MEALS_OPTIONS, PROFILE_LIMITS, type ProfileFormErrors,
 } from "../../features/profile/profile.logic";
 import { Button, ChoiceGroup, ErrorState, Field } from "../ui";
+import { addRestrictionTag, avoidSummary, restrictionOptions } from "../../features/profile/restrictions.logic";
 import { TagField } from "./TagField";
+
+// Gợi ý ô Dị ứng / Món không thích (danh mục nhóm dị ứng dùng chung) và ô Ẩm thực: tính một lần.
+const RESTRICTION_OPTIONS = restrictionOptions();
+const CUISINE_OPTIONS = CUISINE_SUGGESTIONS.map((label) => ({ id: label, label, detail: "Ẩm thực" }));
 
 type ProfileFormProps = {
   form: ProfileFormValues;
@@ -98,8 +103,11 @@ export function ProfileForm({ form, email, errors, dirty, saving, saveError, onC
           itemName="dị ứng"
           tags={form.allergies}
           max={PROFILE_LIMITS.allergies}
-          placeholder="Ví dụ: tôm, đậu phộng"
-          hint="Gõ rồi bấm Enter để thêm từng mục. Nouri so khớp theo nhóm: Hải sản, Sữa, Trứng, Đậu phộng, Gluten."
+          placeholder="Ví dụ: tôm, trứng gà, đậu phộng"
+          options={RESTRICTION_OPTIONS}
+          adder={(tags, raw, max) => addRestrictionTag(tags, raw, max, "allergy")}
+          summary={avoidSummary(form.allergies, "allergy")}
+          hint="Gõ rồi chọn gợi ý hoặc bấm Enter. Nếu dị ứng nặng, hãy kiểm tra lại nguyên liệu trước khi nấu."
           onChange={(tags) => onChange("allergies", tags)}
         />
         <TagField
@@ -109,6 +117,9 @@ export function ProfileForm({ form, email, errors, dirty, saving, saveError, onC
           tags={form.dislikedFoods}
           max={PROFILE_LIMITS.dislikedFoods}
           placeholder="Ví dụ: cần tây"
+          options={RESTRICTION_OPTIONS}
+          adder={(tags, raw, max) => addRestrictionTag(tags, raw, max, "dislike")}
+          summary={avoidSummary(form.dislikedFoods, "dislike")}
           onChange={(tags) => onChange("dislikedFoods", tags)}
         />
       </Section>
@@ -122,6 +133,7 @@ export function ProfileForm({ form, email, errors, dirty, saving, saveError, onC
           max={PROFILE_LIMITS.preferredCuisines}
           placeholder="Ví dụ: Việt Nam"
           suggestions={CUISINE_SUGGESTIONS}
+          options={CUISINE_OPTIONS}
           onChange={(tags) => onChange("preferredCuisines", tags)}
         />
       </Section>

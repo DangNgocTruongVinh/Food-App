@@ -23,6 +23,7 @@ import { undoReceiptScan } from "../features/pantry/receipt-scan.api";
 import { commitMessage, undoMessage } from "../features/pantry/receipt-scan.logic";
 import { usePantryItemFocus } from "../features/pantry/usePantryItemFocus";
 import type { PantryItem, PantryRemovalReason, ReceiptCommitResult, StorageLocation } from "../types";
+import { pantrySearchOptions } from "../features/pantry/pantry.logic";
 
 type DialogState = { item: PantryItem | null } | null;
 
@@ -54,6 +55,7 @@ export default function PantryPage() {
   }, [searchParams, setSearchParams]);
 
   const list = useQuery(pantryQueries.list());
+  const searchOptions = useMemo(() => pantrySearchOptions(list.data ?? []), [list.data]);
   const data = useMemo(() => list.data ?? [], [list.data]);
   const counts = useMemo(() => pantryCounts(data), [data]);
   const categories = useMemo(() => pantryCategories(data), [data]);
@@ -123,7 +125,13 @@ export default function PantryPage() {
 
   return (
     <div className="kho-view">
-      <PantryHero search={search} onSearchChange={setSearch} onAdd={() => setDialog({ item: null })} onScan={() => setScanOpen(true)} />
+      <PantryHero
+        search={search}
+        onSearchChange={setSearch}
+        searchOptions={searchOptions}
+        onAdd={() => setDialog({ item: null })}
+        onScan={() => setScanOpen(true)}
+      />
 
       {savedScan && (
         <div className="ui-notice" role="status">

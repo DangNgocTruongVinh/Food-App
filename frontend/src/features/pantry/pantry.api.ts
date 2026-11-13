@@ -62,3 +62,10 @@ export async function listPantryTransactions({ source, pantryItemId, page, pageS
   const params = { page, pageSize, ...(source ? { source } : {}), ...(pantryItemId ? { pantryItemId } : {}) };
   return (await api.get<PantryTransactionPage>("/pantry/transactions", { params })).data;
 }
+
+export type FoodNameSuggestion = { name: string; source: "PANTRY" | "RECIPE"; allergyGroups: string[] };
+
+/** Gợi ý tên thực phẩm (kho của chính mình + nguyên liệu các món), tối đa 8; máy chủ giới hạn 120 lần/phút. */
+export async function suggestFoodNames(query: string) {
+  return (await api.get<FoodNameSuggestion[]>("/suggestions/foods", { params: { q: query } })).data;
+}
