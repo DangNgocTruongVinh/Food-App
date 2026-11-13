@@ -172,3 +172,35 @@ describe(`Dietary safety matrix: ${profiles.length} profiles × every suggestion
     for (const recipe of hidden) expect(isRecipeSafe(recipe, null)).toBe(false);
   });
 });
+
+// Sửa lỗi dị ứng theo nhóm (13/11/2026): hồ sơ "trứng gà" từng không lọc "Bánh mì ốp la" (nguyên liệu "Trứng"). Mọi cách gõ phải ra
+// đúng tập món như tên nhóm chuẩn, qua lọc an toàn (gợi ý, thực đơn) lẫn danh sách công thức. Đáp án vẫn viết tay theo tên nguyên liệu.
+const GROUP_ORACLE: Record<string, (name: string) => boolean> = {
+  ...ALLERGY_ORACLE,
+  "Cá": startsWithAny(["cá", "nước mắm"]),
+  "Giáp xác": startsWithAny(["tôm"]),
+  "Đậu nành": startsWithAny(["đậu hũ", "nước tương", "tương đen", "đậu nành"]),
+  "Mè": startsWithAny(["dầu mè", "mè rang"]),
+};
+const TYPED_ALLERGIES: Array<[string, string]> = [
+  ["trứng gà", "Trứng"], ["Trứng Gà", "Trứng"], ["trung ga", "Trứng"], ["dị ứng trứng", "Trứng"], ["egg", "Trứng"], ["lòng đỏ", "Trứng"],
+  ["cá hồi", "Cá"], ["tôm sú", "Giáp xác"], ["lạc", "Đậu phộng"], ["đậu phộng", "Đậu phộng"], ["sữa bò", "Sữa"],
+  ["sữa đậu nành", "Đậu nành"], ["mè", "Mè"], ["vừng", "Mè"],
+];
+
+describe("Dị ứng gõ theo nhiều cách: cùng kết quả với nhóm chuẩn ở mọi nơi lọc", () => {
+  it.each(TYPED_ALLERGIES)("%s → nhóm %s", (typed, group) => {
+    const expected = recipes.filter((recipe) => !recipe.hiddenAt && !names(recipe).some(GROUP_ORACLE[group])).map((recipe) => recipe.slug).sort();
+    const profile = { dietType: "BALANCED" as DietType, allergies: [typed], dislikedFoods: [] };
+    expect(safeRecipes(visible, profile).map((recipe) => recipe.slug).sort()).toEqual(expected);
+    expect(filterRecipesForProfile(visible, profile).map((recipe) => recipe.slug).sort()).toEqual(expected);
+    for (const recipe of visible.filter((item) => names(item).some(GROUP_ORACLE[group]))) {
+      expect(recipeFit(recipe, profile).allergens.join(" ")).toContain(`${group} (`); // nhãn "Chứa: <nhóm> (<nguyên liệu>)"
+    }
+  });
+
+  it("bánh mì ốp la bị lọc với hồ sơ \"trứng gà\" (lỗi người dùng báo)", () => {
+    const banhMi = visible.find((recipe) => recipe.name.startsWith("Bánh mì ốp la"))!;
+    expect(recipeFit(banhMi, { allergies: ["trứng gà"] })).toMatchObject({ safe: false, allergens: ["Trứng (Trứng)"] });
+  });
+});

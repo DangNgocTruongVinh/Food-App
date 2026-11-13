@@ -4,6 +4,7 @@ import { formatDisplayDate } from "../../utils/date";
 import { FOOD_CATEGORIES } from "../../utils/food-categories";
 import { foodUnitLabel } from "../../utils/units";
 import type { PantryFormValues } from "./pantry.api";
+import type { ComboOption } from "../ui/combobox.logic";
 
 /** depleted: số lượng 0 (giữ lại trong kho sau khi trừ hết, GĐ3b quyết định 1). */
 export type PantryItemStatus = "good" | "expiring" | "expired" | "depleted";
@@ -196,4 +197,19 @@ export function suggestedRemovalReason(item: Pick<PantryItem, "expiryDate" | "qu
   const status = getPantryStatus(item, now);
   if (status === "depleted") return "USED_UP";
   return status === "expired" ? "DISCARDED" : "";
+}
+
+/** Gợi ý cho ô tìm trong Kho: tên thực phẩm đang có (bên phải ghi nhóm) và các nhóm thực phẩm. */
+export function pantrySearchOptions(items: Array<{ id: string; name: string; category: string }>): ComboOption[] {
+  const categories = [...new Set(items.map((item) => item.category).filter(Boolean))];
+  return [
+    ...items.map((item) => ({ id: `p:${item.id}`, label: item.name, detail: item.category })),
+    ...categories.map((name) => ({ id: `g:${name}`, label: name, detail: "Nhóm" })),
+  ];
+}
+
+/** Gợi ý tên khi thêm thực phẩm (GET /api/suggestions/foods): bên phải ghi nhóm dị ứng, hoặc nguồn của tên. */
+export function foodNameOption(item: { name: string; source: "PANTRY" | "RECIPE"; allergyGroups: string[] }): ComboOption {
+  const detail = item.allergyGroups.length ? `nhóm ${item.allergyGroups.join(", ")}` : item.source === "PANTRY" ? "Đã có trong kho" : "Nguyên liệu món";
+  return { id: `${item.source}:${item.name}`, label: item.name, detail };
 }

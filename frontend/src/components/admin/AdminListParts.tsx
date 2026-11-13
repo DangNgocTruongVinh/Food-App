@@ -1,13 +1,30 @@
 import { ChevronLeft, ChevronRight, Search } from "lucide-react";
-import { IconButton } from "../ui";
+import type { ComboOption } from "../../features/ui/combobox.logic";
+import { Combobox, IconButton } from "../ui";
 
-/** Ô tìm kiếm của các bảng Admin. */
-export function AdminSearch({ id, label, value, onChange }: { id: string; label: string; value: string; onChange: (value: string) => void }) {
+type AdminSearchProps = {
+  id: string; label: string; value: string; onChange: (value: string) => void;
+  /** Gợi ý tự động (lấy từ máy chủ theo câu đang gõ); chọn một gợi ý thì tìm đúng chữ đó. */
+  options?: ComboOption[]; loading?: boolean;
+};
+
+/** Ô tìm kiếm của các bảng Admin (có gợi ý tự động). */
+export function AdminSearch({ id, label, value, onChange, options = [], loading }: AdminSearchProps) {
   return (
     <div className="ad-search" role="search">
       <label className="ui-visually-hidden" htmlFor={id}>{label}</label>
       <Search className="ad-search__icon" aria-hidden="true" />
-      <input id={id} className="ui-input ad-search__input" type="search" value={value} placeholder={label} onChange={(event) => onChange(event.target.value)} />
+      <Combobox
+        id={id}
+        className="ui-input ad-search__input"
+        type="search"
+        value={value}
+        placeholder={label}
+        onValueChange={onChange}
+        options={options}
+        loading={loading}
+        onPick={(option) => onChange(option.value ?? option.label)}
+      />
     </div>
   );
 }

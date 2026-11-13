@@ -130,6 +130,10 @@ Kiến trúc, công thức và quyết định: `docs/thuat-toan-goi-y.md` và `
 - [ ] R9 — Cộng đồng: tab "Dành cho bạn" (backend + frontend) (trung bình). Làm dưới tên C4.
 - [ ] R10 — `docs/han-che.md`, `docs/cau-hoi-bao-ve.md`, cập nhật CLAUDE.md (dễ).
 
+### Sửa lỗi dị ứng + gợi ý tự động (nhánh `sua-loi-di-ung`, 13/11/2026)
+- [x] Dị ứng theo nhóm: danh mục chung `backend/src/services/allergy-groups.ts` (frontend `features/profile/allergy-groups.ts` chép y nguyên, test so hai file); `expandRestrictedTerms(items, { strict })` (dị ứng strict: nguyên liệu → cả nhóm; món không thích: chỉ tên nhóm), chữ không nhận ra vẫn lọc (hai chiều, nguyên từ), cụm danh mục so đúng dấu, ngoại lệ nhóm; nhãn `allergenLabels` "Chứa: nhóm (nguyên liệu)". Nguồn gợi ý mới vẫn phải vào `dietary-matrix.test.ts`.
+- [x] Gợi ý tự động: `components/ui/Combobox.tsx` (logic `features/ui/combobox.logic.ts`, gợi ý từ máy chủ `useRemoteOptions`), `GET /api/suggestions/foods` (120 lần/phút/người). Ô mới có danh sách chọn phải dùng Combobox.
+
 ### Sửa lỗi đóng băng (nhánh `sua-loi-dong-bang`, 12/11/2026)
 - [x] Tạo thực đơn mặc định bằng bộ tạo thuật toán (`scoredPlan`, có ngay); "Tạo bằng AI (1–2 phút)" chạy nền (`meal-plan-jobs.ts`, trong bộ nhớ: `POST /generate` mode `ai` → 202, `GET /generate/current`), rời trang được, xong có thông báo `MEAL_PLAN_CREATED`; lỗi/quá 120 giây/không hợp lệ → thuật toán kèm lý do (`fallbackReason`).
 - [x] Ảnh màn hình quyển sang WebP q90 (22,6 → 8,3 MB; `e2e/acceptance/lib/to-webp.cjs`, ảnh > 16.383 px cắt phần).

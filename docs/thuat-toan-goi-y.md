@@ -17,9 +17,28 @@ Nouri dùng ba thuật toán và một bộ trộn:
 
 ## 2. Lọc an toàn
 
-Một món chỉ được gợi ý khi: chưa bị Admin ẩn; không chứa thành phần dị ứng (so theo nhóm, ví dụ "Hải sản" gồm tôm, cá, nước mắm…);
-không chứa món người dùng không thích; đúng chế độ chay/thuần chay; đúng bữa (nếu ngữ cảnh có bữa). Bộ test ma trận
-(`src/test/dietary-matrix.test.ts`, 105 hồ sơ) kiểm mọi nguồn gợi ý với một bảng đáp án viết tay.
+Một món chỉ được gợi ý khi: chưa bị Admin ẩn/xóa; không chứa thành phần dị ứng (theo nhóm); không chứa món người dùng không thích;
+đúng chế độ chay/thuần chay; đúng bữa (nếu ngữ cảnh có bữa). Bộ test ma trận (`src/test/dietary-matrix.test.ts`, 105 hồ sơ + 14 cách
+gõ dị ứng) kiểm mọi nguồn gợi ý với một bảng đáp án viết tay.
+
+**Dị ứng theo nhóm (sửa lỗi 13/11/2026).** Lỗi cũ: hồ sơ ghi "trứng gà" không lọc "Bánh mì ốp la" (nguyên liệu "Trứng") vì chỉ
+nhận đúng tên nhóm và so khớp một chiều theo chữ. Nay dùng một danh mục chung cho backend và frontend
+(`backend/src/services/allergy-groups.ts`, frontend chép y nguyên, test so hai file): 11 nhóm — Trứng, Sữa, Hải sản (= Cá + Giáp xác +
+Nhuyễn thể), Đậu phộng, Hạt cây, Gluten, Đậu nành, Mè — mỗi nhóm có tên gọi khác (hai miền, tiếng Anh), nguyên liệu thuộc nhóm và
+ngoại lệ ("Sữa đậu nành" thuộc Đậu nành, không thuộc Sữa).
+
+| Bước | Quy tắc |
+|---|---|
+| Chuẩn hóa mục người dùng nhập | Bỏ từ thừa ("dị ứng", "bị", "với", "món"); gõ không dấu so không dấu, gõ có dấu so có dấu |
+| Nhận nhóm | Dị ứng: trùng tên nhóm, tên gọi khác hoặc một nguyên liệu của nhóm → cả nhóm ("trứng gà", "trung ga", "egg", "lòng đỏ" → Trứng; "cá hồi" → Cá). Món không thích: chỉ tên nhóm/tên gọi khác mới thành cả nhóm, tên một nguyên liệu giữ đúng chữ |
+| Không nhận ra | Vẫn lọc theo đúng chữ đó, nguyên từ, hai chiều ("thịt bò xay" ↔ "Thịt bò") — không bao giờ im lặng bỏ qua |
+| Gần đúng | Sai 1–2 ký tự chỉ để gợi ý ("Có phải bạn muốn: Trứng?"), không tự áp |
+| So với món | Nguyên từ trên tên món và tên nguyên liệu; cụm của danh mục luôn so đúng dấu ("chao" ≠ "cháo", "cá" ≠ "cà chua"); trừ ngoại lệ của nhóm |
+| Hiển thị | Thẻ món vi phạm ghi "Chứa: Trứng (Trứng)", "Gluten (Bánh mì)" |
+
+Cùng một hàm (`expandRestrictedTerms` / `findRestrictedTerms` trong `dietary.service.ts`) dùng ở gợi ý, thực đơn (cả kết quả AI qua
+`reconcileAIPlan`), danh sách/tìm công thức, chi tiết món, trợ lý AI, quét hóa đơn, công thức thành viên và email nhắc hạn. Hạn chế còn
+lại: thành phần ẩn không có trong tên (nước tương có lúa mì, tương ớt có đậu nành) chưa nhận ra (`docs/han-che.md`).
 
 ## 3. Thuật toán 1 — lọc theo nội dung
 

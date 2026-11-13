@@ -92,7 +92,7 @@ describe("AI chat HTTP contract (no database or OpenAI request)", () => {
     const [context, question, history] = mocks.requestNutritionAnswer.mock.calls[0];
     expect(context).toMatchObject({
       profile: { dietType: "BALANCED", allergies: ["Tôm"] },
-      safety: { avoidForAllergy: ["tôm"], avoidDisliked: [], requiredDiet: null },
+      safety: { avoidForAllergy: expect.arrayContaining(["tôm", "tôm sú", "cua"]), avoidDisliked: [], requiredDiet: null },
       mealPlan: { status: "chưa có thực đơn" },
     });
     expect(context.pantry.items.map((item: { name: string }) => item.name)).toEqual(["Đậu hũ", "Ức gà"]); // hạn gần trước
@@ -109,7 +109,7 @@ describe("AI chat HTTP contract (no database or OpenAI request)", () => {
     mocks.requestNutritionAnswer.mockResolvedValue("Bạn thử canh chua tôm và cá lóc nhé.");
     mocks.findProfile.mockResolvedValue({ ...profile, allergies: ["Hải sản"] });
     const response = await request(app, "/api/ai/chat", { method: "POST", token: token(), body: { message: "Tối nay ăn gì?" } });
-    expect(response.body.allergyWarnings).toEqual(["tôm", "cá"]);
+    expect(response.body.allergyWarnings).toEqual(["cá lóc", "tôm"]);
   });
 
   it("no OpenAI key → 503 AI_NOT_CONFIGURED, nothing stored, OpenAI not called", async () => {

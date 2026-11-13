@@ -1,4 +1,5 @@
 import type { DietType } from "@prisma/client";
+import { ALLERGY_GROUPS, foldAllergyText, groupsOfFoodName, normalizeAllergyText, resolveRestriction } from "./allergy-groups.js";
 
 type DietaryRecipe = {
   name: string;
@@ -11,68 +12,120 @@ export function normalizeFoodText(value: string) {
   return value.trim().replace(/\s+/g, " ").toLocaleLowerCase("vi");
 }
 
-// Nhóm dị ứng → các tên nguyên liệu thuộc nhóm. Người dùng nhập tên nhóm (hoặc tên gọi khác) thì loại cả nhóm.
-// "Sữa" không loại "Sữa đậu nành"; "Bơ lạt" là sữa còn "Quả bơ" thì không.
-const allergyGroups: Array<{ names: string[]; ingredients: string[] }> = [
-  {
-    names: ["hải sản", "thủy sản", "đồ biển", "seafood"],
-    ingredients: ["tôm", "cua", "ghẹ", "mực", "bạch tuộc", "cá", "nghêu", "sò", "hến", "ốc", "nước mắm", "mắm"],
-  },
-  {
-    names: ["sữa", "sản phẩm từ sữa", "lactose", "đạm sữa"],
-    ingredients: ["sữa tươi", "sữa chua", "sữa đặc", "sữa bột", "phô mai", "bơ lạt", "kem tươi", "whey"],
-  },
-  { names: ["trứng"], ingredients: ["trứng"] },
-  { names: ["đậu phộng", "lạc"], ingredients: ["đậu phộng", "lạc rang", "bơ đậu phộng"] },
-  {
-    names: ["gluten", "lúa mì", "bột mì"],
-    ingredients: ["bột mì", "bánh mì", "mì ý", "mì trứng", "mì gói", "bột chiên giòn", "lúa mì"],
-  },
-];
+// Nhóm dị ứng: danh mục dùng chung ở allergy-groups.ts (cùng bản với frontend). Ở đây chỉ còn phần lọc món nhanh (cache).
 
-/** Danh sách dị ứng/không thích của người dùng → các cụm từ cần tránh trong tên món và nguyên liệu. */
-export function expandRestrictedTerms(items: string[]) {
+/**
+ * Danh sách dị ứng/không thích của người dùng → các cụm từ cần tránh trong tên món và nguyên liệu.
+ * strict (mặc định, dị ứng): tên nhóm, tên gọi khác hoặc một nguyên liệu của nhóm ("trứng gà", "trung ga", "egg", "dị ứng trứng")
+ * → mọi nguyên liệu của nhóm. strict = false (món không thích): chỉ tên nhóm/tên gọi khác mới thành cả nhóm.
+ * Mục không nhận ra vẫn được giữ làm cụm chữ (không bao giờ bỏ qua).
+ */
+export function expandRestrictedTerms(items: string[], { strict = true } = {}) {
+  const key = `${strict ? 1 : 0}\u0001${items.join("\u0001")}`;
+  const cached = expandCache.get(key);
+  if (cached) return cached;
   const terms = new Set<string>();
   for (const raw of items) {
-    const item = normalizeFoodText(raw);
-    if (!item) continue;
-    const group = allergyGroups.find((entry) => entry.names.includes(item));
-    if (group) group.ingredients.forEach((term) => terms.add(term));
-    else terms.add(item);
+    const resolved = resolveRestriction(raw, { strict });
+    resolved.groups.forEach((group) => group.terms.forEach((term) => terms.add(normalizeAllergyText(term))));
+    if (resolved.text) terms.add(resolved.text);
   }
-  return [...terms];
+  const result = [...terms];
+  if (expandCache.size > 500) expandCache.clear(); // shortcut: cache đơn giản theo danh sách hồ sơ; đủ cho vài nghìn người dùng
+  expandCache.set(key, result);
+  return result;
+}
+const expandCache = new Map<string, string[]>();
+
+// Cụm của danh mục → ngoại lệ của nhóm chứa nó ("sữa" không khớp "sữa đậu nành"). Cụm không có ở đây là chữ người dùng tự gõ.
+const CATALOG_EXCLUDES = new Map<string, string[]>();
+for (const group of ALLERGY_GROUPS) {
+  for (const term of group.terms) {
+    const key = normalizeAllergyText(term);
+    CATALOG_EXCLUDES.set(key, [...(CATALOG_EXCLUDES.get(key) ?? []), ...(group.excludes ?? []).map(normalizeAllergyText)]);
+  }
 }
 
-// So khớp theo nguyên từ: "ốc" không khớp "quốc", "cá" khớp "cá lóc" nhưng không khớp "cà chua".
-const asWords = (value: string) => ` ${normalizeFoodText(value).replace(/[^\p{L}\p{N}]+/gu, " ").trim()} `;
+type Needle = { term: string; folded: boolean; text: string; catalog: boolean; excludes: string[] };
+const needleCache = new WeakMap<string[], Needle[]>();
+const needlesOf = (terms: string[]) => {
+  const cached = needleCache.get(terms);
+  if (cached) return cached;
+  const needles = terms.map((term) => {
+    const key = normalizeAllergyText(term);
+    // Cụm của danh mục luôn so đúng dấu ("chao" ≠ "cháo"); chữ người dùng gõ không dấu thì so không dấu.
+    const folded = !CATALOG_EXCLUDES.has(key) && key === foldAllergyText(term);
+    return { term, folded, text: ` ${folded ? foldAllergyText(term) : key} `, catalog: CATALOG_EXCLUDES.has(key), excludes: CATALOG_EXCLUDES.get(key) ?? [] };
+  });
+  needleCache.set(terms, needles);
+  return needles;
+};
 
-// Tên món + tên nguyên liệu đã chuẩn hóa, nhớ theo đối tượng món (một lần gợi ý kiểm dị ứng và món không thích trên cùng món).
-const wordsCache = new WeakMap<object, string[]>();
+// Tên món + tên nguyên liệu đã chuẩn hóa (có dấu và không dấu), nhớ theo đối tượng món (bộ gợi ý kiểm nhiều lần trên cùng món).
+type FoodText = { plain: string; folded: string };
+const wordsCache = new WeakMap<object, FoodText[]>();
+const foodText = (value: string): FoodText => ({ plain: ` ${normalizeAllergyText(value)} `, folded: ` ${foldAllergyText(value)} ` });
 const recipeWords = (recipe: Pick<DietaryRecipe, "name" | "ingredients">) => {
   const cached = wordsCache.get(recipe);
   if (cached) return cached;
-  const words = [recipe.name, ...recipe.ingredients.map((ingredient) => ingredient.name)].map(asWords);
+  const words = [recipe.name, ...recipe.ingredients.map((ingredient) => ingredient.name)].filter((name) => name.trim()).map(foodText);
   wordsCache.set(recipe, words);
   return words;
 };
 
 /**
+ * Một cụm có khớp một tên (nguyên từ). Cụm của danh mục: một chiều + ngoại lệ của nhóm. Chữ người dùng tự gõ: hai chiều
+ * ("thịt bò xay" ↔ nguyên liệu "Thịt bò"). Cụm không dấu thì so không dấu.
+ */
+function needleMatches(needle: Needle, text: FoodText) {
+  const haystack = needle.folded ? text.folded : text.plain;
+  if (needle.catalog) return haystack.includes(needle.text) && !needle.excludes.some((phrase) => text.plain.includes(` ${phrase} `));
+  return haystack.includes(needle.text) || needle.text.includes(haystack);
+}
+
+/**
  * Hai danh sách cụm từ có chạm nhau theo nguyên từ, chiều nào cũng được ("cá" ↔ "cá hồi", "Hải sản" ↔ "hải sản").
- * Dùng cho câu gợi ý không gắn với món (vd. gợi ý dinh dưỡng của thực đơn) khi so với dị ứng/món không thích.
+ * Dùng cho câu gợi ý không gắn với món (vd. gợi ý dinh dưỡng của thực đơn, dòng hóa đơn) khi so với dị ứng/món không thích.
  */
 export function overlapsFoodTerms(left: string[], right: string[]) {
-  const a = left.map(asWords).filter((item) => item.trim());
-  const b = right.map(asWords).filter((item) => item.trim());
+  const a = left.map((item) => normalizeAllergyText(item)).filter(Boolean).map((item) => ` ${item} `);
+  const b = right.map((item) => normalizeAllergyText(item)).filter(Boolean).map((item) => ` ${item} `);
   return a.some((x) => b.some((y) => x.includes(y) || y.includes(x)));
 }
 
 /** Các cụm từ bị tránh xuất hiện trong tên món hoặc tên nguyên liệu. */
 export function findRestrictedTerms(recipe: Pick<DietaryRecipe, "name" | "ingredients">, restrictedTerms: string[]) {
   if (!restrictedTerms.length) return [];
-  // Chuẩn hóa mỗi cụm từ một lần (trước đây chuẩn hóa lại cho từng tên nguyên liệu; bộ gợi ý gọi hàm này cho mọi món).
-  const terms = restrictedTerms.map((term) => ({ term, words: asWords(term) }));
   const texts = recipeWords(recipe);
-  return terms.filter(({ words }) => texts.some((text) => text.includes(words))).map(({ term }) => term);
+  return needlesOf(restrictedTerms).filter((needle) => texts.some((text) => needleMatches(needle, text))).map(({ term }) => term);
+}
+
+/** Bỏ cụm từ đã nằm trong một cụm khác cũng khớp (vd. "mắm" khi đã có "nước mắm", "sữa" khi đã có "sữa tươi"). */
+export const withoutNestedTerms = (terms: string[]) =>
+  terms.filter((term) => !terms.some((other) => other !== term && ` ${other} `.includes(` ${term} `)));
+
+/**
+ * Nhãn "nhóm (nguyên liệu)" cho các dị ứng món vi phạm, vd. ["Trứng (Trứng)", "Gluten (Bánh mì)"]; mục không thuộc nhóm ghi
+ * chính chữ đó. Chỉ gọi khi findRestrictedTerms đã thấy vi phạm (chậm hơn, dùng cho phần hiển thị "Chứa: …").
+ */
+export function allergenLabels(recipe: Pick<DietaryRecipe, "name" | "ingredients">, allergies: string[]) {
+  const names = [...recipe.ingredients.map((ingredient) => ingredient.name), recipe.name].filter((name) => name.trim());
+  const labels = new Map<string, Set<string>>();
+  const add = (label: string, name: string) => labels.set(label, (labels.get(label) ?? new Set()).add(name));
+  // Ưu tiên nêu nguyên liệu; chỉ nêu tên món khi không nguyên liệu nào khớp.
+  const addHits = (label: string, hits: string[]) => {
+    const ingredientHits = hits.filter((name) => name !== recipe.name);
+    (ingredientHits.length ? ingredientHits : hits).forEach((name) => add(label, name));
+  };
+  for (const raw of allergies) {
+    const resolved = resolveRestriction(raw);
+    for (const group of resolved.groups) addHits(group.label, names.filter((name) => groupsOfFoodName(name).includes(group)));
+    if (resolved.text) {
+      const [needle] = needlesOf([resolved.text]);
+      addHits(resolved.text, names.filter((name) => needleMatches(needle, foodText(name))));
+    }
+  }
+  return [...labels].map(([label, hits]) => `${label} (${[...hits].join(", ")})`);
 }
 
 // Nguyên liệu động vật trái với nhãn chay/thuần chay. Dùng chung cho kiểm tra dữ liệu seed và API Admin công thức.
@@ -118,6 +171,9 @@ export function filterRecipesForProfile<T extends DietaryRecipe>(
   profile: { dietType?: DietType | null; allergies?: string[]; dislikedFoods?: string[] } | null | undefined,
 ) {
   const dietType = profile?.dietType ?? "BALANCED";
-  const restricted = expandRestrictedTerms([...(profile?.allergies ?? []), ...(profile?.dislikedFoods ?? [])]);
+  const restricted = [
+    ...expandRestrictedTerms(profile?.allergies ?? []),
+    ...expandRestrictedTerms(profile?.dislikedFoods ?? [], { strict: false }),
+  ];
   return recipes.filter((recipe) => matchesRequiredDiet(recipe, dietType) && !findRestrictedTerms(recipe, restricted).length);
 }

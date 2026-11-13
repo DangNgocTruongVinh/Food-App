@@ -5,9 +5,10 @@ import { getApiError } from "../../api/client";
 import { AdminPager, AdminSearch } from "../../components/admin/AdminListParts";
 import { Button, Card, EmptyState, ErrorState, LoadingState, Skeleton, Tag, Toast, useConfirm } from "../../components/ui";
 import { useAuth } from "../../contexts/AuthContext";
-import type { AdminUser } from "../../features/admin/admin.api";
+import { type AdminUser, listAdminUsers } from "../../features/admin/admin.api";
 import { lockBlockedReason, lockConfirm, vietnamDate, vietnamTime } from "../../features/admin/admin-people.logic";
 import { adminMutations, adminQueries, invalidateAdminQueries } from "../../features/admin/admin.queries";
+import { useRemoteOptions } from "../../features/ui/useRemoteOptions";
 
 const PAGE_SIZE = 20;
 
@@ -30,6 +31,12 @@ export default function AdminUsersPage() {
   }, [search]);
 
   const list = useQuery(adminQueries.users({ search: query, page, pageSize: PAGE_SIZE }));
+  // Gợi ý khi gõ (chỉ Admin gọi được API này): tên kèm email; chọn thì tìm theo email (đúng một người).
+  const suggestions = useRemoteOptions(
+    ["admin", "user-suggestions"], search,
+    async (text) => (await listAdminUsers({ search: text, page: 1, pageSize: 8 })).items,
+    (user) => ({ id: user.id, label: user.name, detail: user.email, keywords: [user.email], value: user.email }),
+  );
   const lock = useMutation({ ...adminMutations.setUserLock(), onSuccess: () => invalidateAdminQueries(queryClient) });
 
   const toggleLock = async (user: AdminUser) => {
@@ -47,7 +54,14 @@ export default function AdminUsersPage() {
     <section className="ad-section" aria-labelledby="ad-users-title">
       <h2 id="ad-users-title" className="ad-section__title">Người dùng</h2>
       <div className="ad-toolbar">
-        <AdminSearch id="ad-user-search" label="Tìm theo tên hoặc email" value={search} onChange={setSearch} />
+        <AdminSearch
+          id="ad-user-search"
+          label="Tìm theo tên hoặc email"
+          value={search}
+          onChange={setSearch}
+          options={suggestions.options}
+          loading={suggestions.loading}
+        />
       </div>
       {actionError && <ErrorState message={actionError} />}
       <Card variant="flush" className="ad-panel">

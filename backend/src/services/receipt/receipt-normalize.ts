@@ -1,5 +1,5 @@
 import type { FoodUnit, StorageLocation } from "@prisma/client";
-import { expandRestrictedTerms, overlapsFoodTerms } from "../dietary.service.js";
+import { expandRestrictedTerms, findRestrictedTerms, withoutNestedTerms } from "../dietary.service.js";
 import { foodCategoryOf, type FoodCategory } from "../food-category.js";
 import { choosePurchaseTarget, suggestedPantryDefaults, type PurchasePantryItem } from "../pantry-purchase.js";
 import { RECEIPT_ALIASES } from "./receipt-aliases.js";
@@ -91,9 +91,11 @@ export function canonicalFoodName(name: string, index: NameIndex) {
 const isoDate = (date: Date | null) => (date ? date.toISOString().slice(0, 10) : null);
 
 function warningsFor(name: string, allergyTerms: string[], dislikedTerms: string[]) {
+  // Cùng hàm lọc món (có ngoại lệ: "Sữa đậu nành" không phải sữa bò); bỏ cụm lồng nhau ("sữa" khi đã có "sữa tươi").
+  const hits = (terms: string[]) => withoutNestedTerms(findRestrictedTerms({ name, ingredients: [] }, terms));
   return [
-    ...allergyTerms.filter((term) => overlapsFoodTerms([name], [term])).map((term) => ({ kind: "ALLERGY" as const, term })),
-    ...dislikedTerms.filter((term) => overlapsFoodTerms([name], [term])).map((term) => ({ kind: "DISLIKED" as const, term })),
+    ...hits(allergyTerms).map((term) => ({ kind: "ALLERGY" as const, term })),
+    ...hits(dislikedTerms).map((term) => ({ kind: "DISLIKED" as const, term })),
   ];
 }
 
@@ -101,7 +103,7 @@ function warningsFor(name: string, allergyTerms: string[], dislikedTerms: string
 export function normalizeReceiptItems(items: RawReceiptItem[], context: NormalizeContext): ReceiptDraftLine[] {
   const index = buildNameIndex(context.pantry.map((item) => item.name), context.knownNames);
   const allergyTerms = expandRestrictedTerms(context.allergies);
-  const dislikedTerms = expandRestrictedTerms(context.dislikedFoods);
+  const dislikedTerms = expandRestrictedTerms(context.dislikedFoods, { strict: false });
   return items.map((item, position) => {
     const flags: ReceiptLineFlag[] = [];
     const canonical = canonicalFoodName(item.name, index);

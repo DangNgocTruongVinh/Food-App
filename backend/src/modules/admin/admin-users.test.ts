@@ -106,14 +106,28 @@ describe("Admin user management", () => {
       id: userId, name: "Minh Anh", email: "demo@nouri.vn", role: "USER", lockedAt: null, createdAt: new Date("2026-10-01T00:00:00.000Z"),
       _count: { communityPosts: 4, mealPlans: 2 },
     }]);
-    const response = await request(app, "/api/admin/users?search=minh&page=2&pageSize=50", { token: token() });
+    const response = await request(app, "/api/admin/users?page=2&pageSize=50", { token: token() });
     expect(response.body).toMatchObject({ total: 61, page: 2, pageSize: 50 });
     expect(response.body.items[0]).toMatchObject({ email: "demo@nouri.vn", locked: false, postCount: 4, mealPlanCount: 2 });
     expect(response.body.items[0]).not.toHaveProperty("_count");
     expect(response.body.items[0]).not.toHaveProperty("passwordHash");
-    const where = { OR: [{ name: { contains: "minh", mode: "insensitive" } }, { email: { contains: "minh", mode: "insensitive" } }] };
-    expect(mocks.userFindMany).toHaveBeenCalledWith(expect.objectContaining({ where, skip: 50, take: 50 }));
+    expect(mocks.userFindMany).toHaveBeenCalledWith(expect.objectContaining({ skip: 50, take: 50 }));
     expect((await request(app, "/api/admin/users?pageSize=51", { token: token() })).status).toBe(422);
+  });
+
+  it("tìm tên/email không dấu (\"nguyen\" ra \"Nguyễn\"), đếm và phân trang trên kết quả", async () => {
+    const people = [
+      { id: "u1", name: "Nguyễn Minh Anh", email: "minhanh@nouri.vn" }, { id: "u2", name: "Trần Bình", email: "binh.nguyen@nouri.vn" },
+      { id: "u3", name: "Lê Châu", email: "chau@nouri.vn" },
+    ];
+    mocks.userFindMany.mockImplementation(async (args: { where?: { id?: { in: string[] } } }) => (args.where?.id
+      ? people.filter((person) => args.where!.id!.in.includes(person.id)).map((person) => ({ ...person, role: "USER", lockedAt: null, createdAt: new Date(0), _count: { communityPosts: 0, mealPlans: 0 } }))
+      : people));
+    const response = await request(app, "/api/admin/users?search=nguyen&pageSize=1", { token: token() });
+    expect(response.body).toMatchObject({ total: 2, page: 1, pageSize: 1 });
+    expect(response.body.items.map((item: { id: string }) => item.id)).toEqual(["u1"]);
+    const minh = await request(app, "/api/admin/users?search=minh%20nguyen", { token: token() });
+    expect(minh.body.items.map((item: { id: string }) => item.id)).toEqual(["u1"]);
   });
 
   it("locks and unlocks a USER account", async () => {

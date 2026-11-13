@@ -189,6 +189,13 @@ nginx:1.27-alpine (gzip, chuyển `/api`). Biến môi trường khai báo trong
 Theo dõi thành viên, lưu lượng nước vào tài khoản, đăng nhập Google, chế độ tối, đánh giá OCR trên hóa đơn thật, nhận diện dị ứng
 theo thành phần ẩn, Redis cho trạng thái dùng chung, thông báo đẩy. Nguồn: `docs/han-che.md` mục 3.
 
+**40. Người dùng gõ sai tên dị ứng thì sao?**
+Không bị bỏ qua. Nouri chuẩn hóa (bỏ dấu khi gõ không dấu, bỏ "dị ứng", "bị", "với"), so với danh mục 11 nhóm (tên nhóm, tên gọi khác hai
+miền và tiếng Anh, nguyên liệu thuộc nhóm): "trứng gà", "trung ga", "egg", "lòng đỏ" đều thành nhóm Trứng. Không nhận ra thì vẫn lọc
+theo đúng chữ đó (nguyên từ, hai chiều) và ô nhập báo "Nouri chưa nhận ra … — sẽ lọc theo đúng chữ này", kèm "Có phải bạn muốn: Trứng?"
+nếu sai 1–2 ký tự; hệ thống không tự đoán. Dưới ô luôn hiện "Sẽ tránh: …" để người dùng kiểm lại. Kiểm bằng ma trận an toàn với 14 cách
+gõ. Nguồn: `allergy-groups.ts`, `docs/thuat-toan-goi-y.md` mục 2.
+
 **39. Sao không có chế độ tối?**
 Đã có bản chế độ tối nhưng bỏ (12/11/2026) để tập trung chất lượng: mỗi màn hình, trạng thái, biểu đồ và trang chủ (bộ màu riêng) phải
 kiểm tương phản và chụp so sánh hai lần, dễ sót lỗi trước hạn nộp. Giữ một giao diện sáng đã kiểm WCAG AA bằng test

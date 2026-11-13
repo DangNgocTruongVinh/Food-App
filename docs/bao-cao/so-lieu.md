@@ -172,7 +172,7 @@ Hiện chỉ có test với dữ liệu giả lập (`backend/src/services/recei
 
 | Mục | Số lượng | Nguồn |
 |---|---|---|
-| Endpoint API | 81 (công khai 10, đăng nhập 52, Admin 19) | `docs/bao-cao/api.md` (sinh từ routes) |
+| Endpoint API | 83 (công khai 10, đăng nhập 54, Admin 19) | `docs/bao-cao/api.md` (sinh từ routes) |
 | Bảng CSDL / enum / quan hệ khóa ngoại | 23 / 16 / 33 | `docs/bao-cao/erd.md` (sinh từ `schema.prisma`) |
 | Migration | 24 | `backend/prisma/migrations/` |
 | Món trong bộ seed | 33 | `backend/prisma/seed-data.ts` |

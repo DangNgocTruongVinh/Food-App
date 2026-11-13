@@ -428,7 +428,7 @@ describe("Old plans after the profile changes: fit and swap (GĐ3b-R2)", () => {
 
   it("marks each recipe of an existing plan with the current profile's violations", async () => {
     const response = await request(app, `/api/meal-plans/${planId}`, { token: token() });
-    expect(response.body.days[0].items[0].recipe.fit).toEqual({ allergens: ["ức gà"], dislikedFoods: [], dietConflict: null, safe: false });
+    expect(response.body.days[0].items[0].recipe.fit).toEqual({ allergens: ["ức gà (Ức gà)"], dislikedFoods: [], dietConflict: null, safe: false });
     expect(mocks.findProfile).toHaveBeenCalledWith({ where: { userId } });
   });
 

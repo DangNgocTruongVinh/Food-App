@@ -2,7 +2,9 @@ import { useId } from "react";
 import {
   CUISINE_OPTIONS, DIET_TAG_OPTIONS, MEAL_TYPE_OPTIONS, type NumberField, type RecipeFormErrors, type RecipeFormValues,
 } from "../../features/admin/admin-recipes.logic";
-import { Chip, Field } from "../ui";
+import { Chip, Field, Combobox } from "../ui";
+
+const CUISINE_COMBO_OPTIONS = CUISINE_OPTIONS.map((label) => ({ id: label, label, detail: "Ẩm thực" }));
 
 type ChangeFn = <K extends keyof RecipeFormValues>(key: K, value: RecipeFormValues[K]) => void;
 type BasicsProps = { form: RecipeFormValues; errors: RecipeFormErrors["fields"]; onChange: ChangeFn };
@@ -61,8 +63,13 @@ export function AdminRecipeBasics({ form, errors, onChange }: BasicsProps) {
           <Field label="Ẩm thực" error={errors.cuisine} hint="Dùng đúng tên nhóm có sẵn để lọc theo hồ sơ.">
             {(control) => (
               <>
-                <input {...control} list="ad-cuisines" value={form.cuisine} onChange={(event) => onChange("cuisine", event.target.value)} />
-                <datalist id="ad-cuisines">{CUISINE_OPTIONS.map((item) => <option key={item} value={item} />)}</datalist>
+                <Combobox
+                  {...control}
+                  value={form.cuisine}
+                  onValueChange={(value) => onChange("cuisine", value)}
+                  options={CUISINE_COMBO_OPTIONS}
+                  onPick={(option) => onChange("cuisine", option.label)}
+                />
               </>
             )}
           </Field>

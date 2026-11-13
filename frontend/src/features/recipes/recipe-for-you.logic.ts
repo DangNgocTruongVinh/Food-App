@@ -38,7 +38,8 @@ export function calorieShareLabel(calories: RecipeForYou["calories"]) {
 
 export function forYouWarnings(warnings: RecipeWarnings) {
   const items: Array<{ kind: "allergen" | "disliked" | "diet"; text: string }> = [];
-  if (warnings.allergens.length) items.push({ kind: "allergen", text: `Có thành phần bạn dị ứng: ${warnings.allergens.join(", ")}` });
+  // allergens do backend dựng sẵn dạng "Trứng (Trứng gà)" (nhóm dị ứng + nguyên liệu của món).
+  if (warnings.allergens.length) items.push({ kind: "allergen", text: `Chứa: ${warnings.allergens.join(", ")}` });
   if (warnings.dislikedFoods.length) items.push({ kind: "disliked", text: `Có món bạn không thích: ${warnings.dislikedFoods.join(", ")}` });
   if (warnings.dietConflict) {
     items.push({ kind: "diet", text: `Không hợp chế độ ${dietConflictLabels[warnings.dietConflict] ?? warnings.dietConflict} của bạn` });

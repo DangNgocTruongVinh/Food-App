@@ -218,6 +218,7 @@ body:has(.ad-shell) { background: var(--bg); }
 .ad-ingredient__optional { display: inline-flex; align-items: center; gap: var(--space-2); min-height: var(--control-h-lg); color: var(--ink); font-size: var(--fs-small); cursor: pointer; }
 .ad-ingredient__optional input { width: 20px; height: 20px; margin: 0; accent-color: var(--action); }
 .ad-ingredient__optional input:focus-visible { outline: 2px solid var(--action-text); outline-offset: 3px; }
+.ad-ingredient__allergy { margin: 0; color: var(--muted); font-size: var(--fs-small); line-height: var(--lh-small); }
 .ad-ingredient__diet { margin: 0; color: var(--warn); font-size: var(--fs-small); font-weight: 600; line-height: var(--lh-small); }
 .ad-step { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: var(--space-2) var(--space-3); }
 .ad-step__field { display: grid; gap: var(--space-1); }

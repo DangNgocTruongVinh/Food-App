@@ -5,8 +5,9 @@ import { addableRecipes } from "../../features/meal-plans/add-meal.logic";
 import { recipeDietLabel } from "../../features/recipes/recipes.logic";
 import { recipeQueries } from "../../features/recipes/recipes.queries";
 import type { MealType } from "../../types";
-import { Button, Dialog, EmptyState, ErrorState, LoadingState, Skeleton } from "../ui";
+import { Button, Dialog, EmptyState, ErrorState, LoadingState, Skeleton, Combobox } from "../ui";
 import { MealSlotFields } from "./MealSlotFields";
+import { recipeSuggestionOptions } from "../../features/recipes/recipes.logic";
 
 type AddMealDialogProps = {
   /** Bữa chọn sẵn (bữa đầu tiên còn trống của ngày); người dùng đổi được, kể cả bữa phụ. */
@@ -25,6 +26,8 @@ export function AddMealDialog({ initialMealType, busy, error, onClose, onSubmit 
   const [selectedId, setSelectedId] = useState("");
   const [servings, setServings] = useState("1");
   const recipes = useMemo(() => addableRecipes(recipesQuery.data ?? [], mealType, search), [mealType, recipesQuery.data, search]);
+  // Gợi ý chỉ gồm món thêm được vào bữa đang chọn (đã lọc theo hồ sơ và bữa).
+  const searchOptions = useMemo(() => recipeSuggestionOptions(addableRecipes(recipesQuery.data ?? [], mealType, "")), [mealType, recipesQuery.data]);
   const selected = recipes.find((recipe) => recipe.id === selectedId);
   const save = () => {
     const value = Number(servings);
@@ -51,7 +54,15 @@ export function AddMealDialog({ initialMealType, busy, error, onClose, onSubmit 
         <span>Tìm công thức</span>
         <span className="td-add-meal__search-input">
           <Search aria-hidden="true" />
-          <input id="td-add-meal-search" className="ui-input" value={search} onChange={(event) => setSearch(event.target.value)} autoFocus />
+          <Combobox
+            id="td-add-meal-search"
+            className="ui-input"
+            value={search}
+            onValueChange={setSearch}
+            options={searchOptions}
+            onPick={(option) => setSearch(option.label)}
+            autoFocus
+          />
         </span>
       </label>
       {recipesQuery.isLoading ? (

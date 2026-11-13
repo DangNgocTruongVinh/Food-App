@@ -6,9 +6,10 @@ import { getApiError } from "../../api/client";
 import { AdminPager, AdminSearch } from "../../components/admin/AdminListParts";
 import { AdminRecipeTable } from "../../components/admin/AdminRecipeTable";
 import { ButtonLink, Card, Chip, EmptyState, ErrorState, LoadingState, Skeleton, Toast, useConfirm } from "../../components/ui";
-import type { AdminRecipeStatus, AdminRecipeSummary } from "../../features/admin/admin.api";
+import { type AdminRecipeStatus, type AdminRecipeSummary, listAdminRecipes } from "../../features/admin/admin.api";
 import { adminMutations, adminQueries, invalidateAdminRecipeQueries } from "../../features/admin/admin.queries";
 import { deleteRecipeConfirmText } from "../../features/admin/admin-recipes.logic";
+import { useRemoteOptions } from "../../features/ui/useRemoteOptions";
 
 const PAGE_SIZE = 20;
 const STATUS_OPTIONS: Array<[AdminRecipeStatus, string]> = [["all", "Tất cả"], ["visible", "Đang hiện"], ["hidden", "Đã ẩn"], ["deleted", "Đã xóa"]];
@@ -39,6 +40,12 @@ export default function AdminRecipesPage() {
   }, [search]);
 
   const list = useQuery(adminQueries.recipes({ search: query, status, page, pageSize: PAGE_SIZE }));
+  // Gợi ý khi gõ: 8 món đầu của cùng bộ lọc trạng thái (tìm không dấu ở máy chủ, searchRecipes).
+  const suggestions = useRemoteOptions(
+    ["admin", "recipe-suggestions", status], search,
+    async (text) => (await listAdminRecipes({ search: text, status, page: 1, pageSize: 8 })).items,
+    (recipe) => ({ id: recipe.id, label: recipe.name, detail: recipe.deletedAt ? "Đã xóa" : recipe.hidden ? "Đã ẩn" : recipe.cuisine }),
+  );
   const visibility = useMutation({ ...adminMutations.setVisibility(), onSuccess: () => invalidateAdminRecipeQueries(queryClient) });
   const remove = useMutation({ ...adminMutations.deleteRecipe(), onSuccess: () => invalidateAdminRecipeQueries(queryClient) });
   const restore = useMutation({ ...adminMutations.restoreRecipe(), onSuccess: () => invalidateAdminRecipeQueries(queryClient) });
@@ -89,7 +96,14 @@ export default function AdminRecipesPage() {
         <ButtonLink variant="primary" icon={<Plus />} to="/admin/recipes/new">Tạo món</ButtonLink>
       </div>
       <div className="ad-toolbar">
-        <AdminSearch id="ad-recipe-search" label="Tìm món, nguyên liệu, ẩm thực" value={search} onChange={setSearch} />
+        <AdminSearch
+          id="ad-recipe-search"
+          label="Tìm món, nguyên liệu, ẩm thực"
+          value={search}
+          onChange={setSearch}
+          options={suggestions.options}
+          loading={suggestions.loading}
+        />
         <div className="ad-filter" role="group" aria-label="Lọc theo trạng thái">
           {STATUS_OPTIONS.map(([value, label]) => (
             <Chip key={value} selected={status === value} onClick={() => { setStatus(value); setPage(1); }}>{label}</Chip>

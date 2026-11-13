@@ -13,3 +13,4 @@ export { PageHeader } from "./PageHeader";
 export { RecipeImage } from "./RecipeImage";
 export { EmptyState, ErrorState, LoadingState, Skeleton } from "./States";
 export { Toast } from "./Toast";
+export { Combobox } from "./Combobox";

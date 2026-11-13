@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  expandRestrictedTerms, filterRecipesForProfile, findDietViolations, findRestrictedTerms, matchesRequiredDiet, normalizeDietTags,
+  allergenLabels, expandRestrictedTerms, filterRecipesForProfile, findDietViolations, findRestrictedTerms, matchesRequiredDiet, normalizeDietTags,
   normalizeFoodText, prefersDiet,
 } from "./dietary.service.js";
 
@@ -48,6 +48,43 @@ describe("allergy groups", () => {
     expect(findRestrictedTerms(recipe("Canh cần tây", ["Thịt bò"]), terms)).toEqual(["cần tây"]);
     expect(findRestrictedTerms(recipe("Canh bí đỏ nấu tôm", ["Bí đỏ"]), terms)).toEqual(["tôm"]);
     expect(findRestrictedTerms(recipe("Gà xào", ["Đùi gà"]), terms)).toEqual([]);
+  });
+});
+
+describe("dị ứng theo nhóm: mọi cách gõ, ngoại lệ, chữ không nhận ra (sửa lỗi 13/11/2026)", () => {
+  const hits = (allergy: string, ingredients: string[], name = "Món thử") =>
+    findRestrictedTerms(recipe(name, ingredients), expandRestrictedTerms([allergy])).length > 0;
+
+  it.each([
+    ["trứng gà", "Trứng"], ["Trứng Gà", "Trứng"], ["trung ga", "Trứng"], ["dị ứng trứng", "Trứng"], ["egg", "Trứng"],
+    ["lòng đỏ", "Trứng"], ["cá hồi", "Cá basa"], ["tôm sú", "Tôm"], ["lạc", "Đậu phộng"], ["đậu phộng", "Lạc rang"],
+    ["sữa bò", "Sữa tươi"], ["sữa bò", "Phô mai feta"], ["sữa đậu nành", "Đậu hũ"], ["mè", "Dầu mè"], ["vừng", "Mè rang"],
+  ])("hồ sơ %s lọc nguyên liệu %s", (allergy, ingredient) => expect(hits(allergy, [ingredient])).toBe(true));
+
+  it("lọc cả theo tên món: \"trứng gà\" lọc Bánh mì ốp la (nguyên liệu Trứng)", () => {
+    expect(hits("trứng gà", ["Bánh mì", "Trứng"], "Bánh mì ốp la")).toBe(true);
+  });
+
+  it.each([
+    ["sữa bò", "Sữa đậu nành"], ["Sữa", "Sữa hạnh nhân"], ["Sữa", "Quả bơ"], ["Hải sản", "Cà chua"], ["cá", "Cà tím"],
+    ["sữa đậu nành", "Sữa tươi"], ["đậu phộng", "Đậu hũ"], ["Đậu nành", "Cháo gà"],
+  ])("ngoại lệ: %s không lọc %s", (allergy, ingredient) => expect(hits(allergy, [ingredient], ingredient)).toBe(false));
+
+  it("\"Bơ lạt\" thuộc Sữa còn \"Quả bơ\" thì không", () => {
+    expect(hits("Sữa", ["Bơ lạt"])).toBe(true);
+    expect(hits("Sữa", ["Quả bơ"])).toBe(false);
+  });
+
+  it("chữ không thuộc nhóm nào vẫn lọc theo nguyên từ, hai chiều, gõ không dấu cũng được", () => {
+    expect(hits("thịt bò xay", ["Thịt bò"])).toBe(true); // nguyên liệu nằm trong chữ người dùng gõ
+    expect(hits("nấm", ["Nấm rơm"])).toBe(true);
+    expect(hits("nam", ["Nấm rơm"])).toBe(true); // gõ không dấu → so không dấu
+    expect(hits("nấm", ["Nam việt quất"])).toBe(false);
+  });
+
+  it("nhãn hiển thị \"nhóm (nguyên liệu)\" cho thẻ \"Chứa: …\"", () => {
+    expect(allergenLabels(recipe("Bánh mì ốp la", ["Bánh mì", "Trứng", "Hành tây"]), ["trứng gà", "gluten"])).toEqual(["Trứng (Trứng)", "Gluten (Bánh mì)"]);
+    expect(allergenLabels(recipe("Canh nấm", ["Nấm rơm"]), ["nấm"])).toEqual(["nấm (Nấm rơm)"]);
   });
 });
 

@@ -1,10 +1,11 @@
 import { Heart, Search } from "lucide-react";
-import { ButtonLink } from "../ui";
+import type { ComboOption } from "../../features/ui/combobox.logic";
+import { ButtonLink, Combobox } from "../ui";
 
-type RecipesHeroProps = { totalText: string; search: string; onSearchChange: (value: string) => void };
+type RecipesHeroProps = { totalText: string; search: string; onSearchChange: (value: string) => void; options: ComboOption[] };
 
 /** Đầu trang Công thức (gọn, không ảnh): H1 + mô tả có số món thật + ô tìm kiếm. */
-export function RecipesHero({ totalText, search, onSearchChange }: RecipesHeroProps) {
+export function RecipesHero({ totalText, search, onSearchChange, options }: RecipesHeroProps) {
   return (
     <section className="recipes-hero" aria-labelledby="recipes-title">
       <div className="recipes-hero__inner">
@@ -14,12 +15,14 @@ export function RecipesHero({ totalText, search, onSearchChange }: RecipesHeroPr
         <div className="recipes-search" role="search">
           <label className="ui-visually-hidden" htmlFor="recipes-search">Tìm món ăn hoặc nguyên liệu</label>
           <Search className="recipes-search__icon" aria-hidden="true" />
-          <input
+          <Combobox
             id="recipes-search"
             className="ui-input recipes-search__input"
             type="search"
             value={search}
-            onChange={(event) => onSearchChange(event.target.value)}
+            onValueChange={onSearchChange}
+            options={options}
+            onPick={(option) => onSearchChange(option.label)}
             placeholder="Tìm món, nguyên liệu, ẩm thực (vd. com tron, đậu hũ)"
           />
         </div>
