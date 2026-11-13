@@ -287,7 +287,7 @@ describe("Recipe \"Dành cho bạn\" helpers", () => {
   it("turns profile conflicts into warnings and returns none when everything fits", () => {
     expect(forYouWarnings(forYou.warnings)).toEqual([
       { kind: "allergen", text: "Chứa: Cá (Cá basa, Nước mắm)" },
-      { kind: "disliked", text: "Có món bạn không thích: hành tím" },
+      { kind: "disliked", text: "Có thành phần bạn không thích: hành tím" },
       { kind: "diet", text: "Không hợp chế độ ăn chay của bạn" },
     ]);
     expect(forYouWarnings({ allergens: [], dislikedFoods: [], dietConflict: "VEGAN" })).toEqual([

@@ -1,5 +1,5 @@
 import type { ComboOption } from "../ui/combobox.logic";
-import { ALLERGY_GROUPS, foldAllergyText, resolveRestriction, suggestAllergyGroup } from "./allergy-groups";
+import { ALLERGY_GROUPS, foldAllergyText, mainTermsOf, resolveRestriction, suggestAllergyGroup } from "./allergy-groups";
 import { addTag } from "./profile.logic";
 
 // Ô "Dị ứng" và "Món không thích" ở Hồ sơ: gợi ý từ danh mục nhóm dị ứng dùng chung (cùng bản với bộ lọc ở backend).
@@ -61,8 +61,9 @@ export function avoidSummary(tags: string[], kind: RestrictionKind) {
   for (const tag of tags) {
     const resolved = resolveRestriction(tag, { strict: strictOf(kind) });
     for (const group of resolved.groups) {
-      const examples = group.terms.slice(0, 3).join(", ");
-      parts.set(group.id, `${group.label} (${examples}${group.terms.length > 3 ? "…" : ""})`);
+      // Món không thích chỉ nêu nguyên liệu chính (không gia vị/thành phần ẩn như nước mắm).
+      const list = kind === "allergy" ? group.terms : mainTermsOf(group);
+      parts.set(group.id, `${group.label} (${list.slice(0, 3).join(", ")}${list.length > 3 ? "…" : ""})`);
     }
     if (resolved.text) parts.set(`text:${resolved.text}`, `“${resolved.text}”`);
   }

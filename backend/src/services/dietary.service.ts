@@ -1,6 +1,6 @@
 import type { DietType } from "@prisma/client";
 import {
-  ALLERGY_GROUPS, allergyMatchesOfFoodName, foldAllergyText, MAY_CONTAIN_PREFIX, normalizeAllergyText, resolveRestriction,
+  ALLERGY_GROUPS, allergyMatchesOfFoodName, foldAllergyText, mainTermsOf, MAY_CONTAIN_PREFIX, normalizeAllergyText, resolveRestriction,
 } from "./allergy-groups.js";
 
 type DietaryRecipe = {
@@ -29,8 +29,9 @@ export function expandRestrictedTerms(items: string[], { strict = true } = {}) {
   const terms = new Set<string>();
   for (const raw of items) {
     const resolved = resolveRestriction(raw, { strict });
-    // Dị ứng lọc cả nguyên liệu "có thể chứa" (an toàn trước); món không thích chỉ lọc nguyên liệu chắc chắn của nhóm.
-    resolved.groups.forEach((group) => [...group.terms, ...(strict ? group.mayContain ?? [] : [])]
+    // Dị ứng: mọi nguyên liệu của nhóm, cả chế biến/gia vị và "có thể chứa" (an toàn trước). Món không thích (khẩu vị): chỉ nguyên
+    // liệu chính ("cá" → cá lóc, cá hồi…; không nước mắm, dầu hào, nước tương).
+    resolved.groups.forEach((group) => (strict ? [...group.terms, ...(group.mayContain ?? [])] : mainTermsOf(group))
       .forEach((term) => terms.add(normalizeAllergyText(term))));
     if (resolved.text) terms.add(resolved.text);
   }
@@ -102,6 +103,15 @@ export function findRestrictedTerms(recipe: Pick<DietaryRecipe, "name" | "ingred
   if (!restrictedTerms.length) return [];
   const texts = recipeWords(recipe);
   return needlesOf(restrictedTerms).filter((needle) => texts.some((text) => needleMatches(needle, text))).map(({ term }) => term);
+}
+
+/** Tên nguyên liệu (ưu tiên) hoặc tên món khớp các cụm bị tránh — cho nhãn "Có thành phần bạn không thích: Cá lóc". */
+export function restrictedFoodNames(recipe: Pick<DietaryRecipe, "name" | "ingredients">, restrictedTerms: string[]) {
+  if (!restrictedTerms.length) return [];
+  const needles = needlesOf(restrictedTerms);
+  const hit = (name: string) => needles.some((needle) => needleMatches(needle, foodText(name)));
+  const ingredients = recipe.ingredients.map((ingredient) => ingredient.name).filter((name) => name.trim() && hit(name));
+  return ingredients.length ? [...new Set(ingredients)] : hit(recipe.name) ? [recipe.name] : [];
 }
 
 /** Bỏ cụm từ đã nằm trong một cụm khác cũng khớp (vd. "mắm" khi đã có "nước mắm", "sữa" khi đã có "sữa tươi"). */
