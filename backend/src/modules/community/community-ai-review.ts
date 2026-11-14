@@ -3,6 +3,7 @@ import { zodTextFormat } from "openai/helpers/zod";
 import { z } from "zod";
 import { env } from "../../config/env.js";
 import { openAIClient } from "../ai/openai.service.js";
+import { reasoningOption } from "../../services/openai-options.js";
 
 // AI kiểm duyệt bài cộng đồng: (1) OpenAI Moderation API (chữ + ảnh), (2) model mini kiểm tra "có liên quan ăn uống không".
 // Kết quả chỉ là đánh dấu "chờ duyệt" cho Admin; AI không bao giờ tự xóa bài. Không có key, hoặc Moderation API lỗi/hết giờ
@@ -50,7 +51,7 @@ export function createPostReviewer(client: ReviewClient | null, model: string) {
       }, options),
       client.responses.create({
         model,
-        ...(model.startsWith("gpt-5") ? { reasoning: { effort: "minimal" as const } } : {}),
+        ...reasoningOption(model, "minimal"),
         input: [
           { role: "system", content: TOPIC_PROMPT },
           {

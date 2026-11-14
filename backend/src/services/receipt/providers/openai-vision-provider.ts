@@ -2,6 +2,7 @@ import OpenAI, { APIConnectionTimeoutError } from "openai";
 import { zodTextFormat } from "openai/helpers/zod";
 import { z } from "zod";
 import type { OcrOutput, RawReceiptItem, ReceiptOcrProvider } from "../receipt-types.js";
+import { reasoningOption } from "../../openai-options.js";
 
 // Đọc hóa đơn/nhãn bằng OpenAI Vision (GĐ3c phần 2): Responses API, ảnh JPEG đã qua sharp (receipt-image.ts "vision"),
 // structured output theo đúng dạng RawReceiptItem của bộ phân tích. Ảnh chỉ gửi đi trong request, không lưu.
@@ -83,7 +84,7 @@ export class OpenAIVisionProvider implements ReceiptOcrProvider {
       const response = await this.client.responses.create({
         model: this.model,
         // Model suy luận (gpt-5*): mức thấp đủ cho việc chép chữ, nhanh và rẻ hơn mặc định.
-        ...(this.model.startsWith("gpt-5") ? { reasoning: { effort: "low" as const } } : {}),
+        ...reasoningOption(this.model, "low"),
         input: [
           { role: "system", content: VISION_SYSTEM_PROMPT },
           {

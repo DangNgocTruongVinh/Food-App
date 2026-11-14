@@ -2,8 +2,9 @@ import nodemailer, { type Transporter } from "nodemailer";
 import { DEMO_EMAIL } from "../config/demo.js";
 import { env } from "../config/env.js";
 
-// Dịch vụ gửi email dùng chung (quên mật khẩu, báo đổi mật khẩu). Cấu hình SMTP từ .env; chưa cấu hình thì chỉ ghi email ra
-// log (môi trường dev/demo không có SMTP vẫn thử được luồng). Không bao giờ ghi SMTP_PASS ra log.
+// Dịch vụ gửi email dùng chung (quên mật khẩu, báo đổi mật khẩu). Cấu hình SMTP từ .env; chưa cấu hình thì chỉ ghi người nhận
+// và tiêu đề ra log. Nội dung thư (có liên kết/token đặt lại mật khẩu) CHỈ được ghi khi NODE_ENV=development, kèm cảnh báo;
+// production/test không bao giờ ghi (ai đọc được log container là đổi được mật khẩu người khác). Không bao giờ ghi SMTP_PASS.
 
 export type MailMessage = { to: string; subject: string; html: string; text: string };
 type MailTransport = Pick<Transporter, "sendMail">;
@@ -31,12 +32,16 @@ export function redirectDemoMail(message: MailMessage, demoInbox: string | undef
   return { ...message, to: demoInbox, subject: `[Demo ${DEMO_EMAIL}] ${message.subject}` };
 }
 
-export function createMailer(transport: MailTransport | null, from: string | undefined, demoInbox?: string) {
+export function createMailer(transport: MailTransport | null, from: string | undefined, demoInbox?: string, nodeEnv: string = env.NODE_ENV) {
   return async function sendMail(original: MailMessage) {
     const message = redirectDemoMail(original, demoInbox);
     if (!transport || !from) {
-      // shortcut: chưa có SMTP thì ghi cả nội dung (kể cả liên kết đặt lại mật khẩu) ra log để thử ở máy dev; production phải cấu hình SMTP.
-      console.info(`[email chưa cấu hình] Tới: ${message.to} | Tiêu đề: ${message.subject}\n${message.text}`);
+      if (nodeEnv === "development") {
+        console.warn("[email chưa cấu hình] CẢNH BÁO: chỉ máy dev — nội dung thư (có thể chứa liên kết đặt lại mật khẩu) được ghi ra log.");
+        console.info(`[email chưa cấu hình] Tới: ${message.to} | Tiêu đề: ${message.subject}\n${message.text}`);
+      } else {
+        console.info(`[email chưa cấu hình] Tới: ${message.to} | Tiêu đề: ${message.subject} (không ghi nội dung; cấu hình SMTP để gửi)`);
+      }
       return;
     }
     await transport.sendMail({ from, ...message });

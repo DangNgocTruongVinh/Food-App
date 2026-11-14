@@ -2,6 +2,7 @@ import type OpenAI from "openai";
 import { zodTextFormat } from "openai/helpers/zod";
 import { z } from "zod";
 import { normalizeFoodText } from "../../services/dietary.service.js";
+import { reasoningOption } from "../../services/openai-options.js";
 
 // "Chuyển thành công thức" (Admin): AI ước tính calo/đạm/tinh bột/béo cho MỘT khẩu phần và chuẩn hóa tên nguyên liệu theo
 // danh sách tên đã có trong thư viện. Chỉ để điền sẵn form; Admin kiểm tra rồi bấm lưu mới ghi DB.
@@ -35,7 +36,7 @@ export function createRecipeEstimator(client: Pick<OpenAI, "responses"> | null, 
     if (!client) return null;
     const response = await client.responses.create({
       model,
-      ...(model.startsWith("gpt-5") ? { reasoning: { effort: "low" as const } } : {}),
+      ...reasoningOption(model, "low"),
       input: [
         { role: "system", content: ESTIMATE_PROMPT },
         { role: "user", content: JSON.stringify({ recipe: { ...recipe, ingredients: recipe.ingredients.map((item, index) => ({ index, ...item })) }, knownNames }) },

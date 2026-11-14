@@ -13,6 +13,25 @@ describe("email.service (transport giả lập, không gửi thật)", () => {
     expect(transport.sendMail).toHaveBeenCalledWith({ from: "Nouri <no-reply@nouri.vn>", ...message });
   });
 
+  it.each(["production", "test"])("chưa cấu hình SMTP, NODE_ENV=%s: KHÔNG ghi nội dung thư (liên kết/token đặt lại mật khẩu) ra log", async (nodeEnv) => {
+    const info = vi.spyOn(console, "info").mockImplementation(() => undefined);
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const reset = { ...message, text: "Đặt lại: http://x/reset-password?token=bi-mat-123", html: "<a href='?token=bi-mat-123'>x</a>" };
+    await createMailer(null, undefined, undefined, nodeEnv)(reset);
+    const logged = [...info.mock.calls, ...warn.mock.calls].flat().join(" ");
+    expect(logged).toContain("Tới: demo@nouri.vn");
+    expect(logged).not.toContain("bi-mat-123");
+    expect(logged).not.toContain("reset-password");
+  });
+
+  it("chưa cấu hình SMTP, NODE_ENV=development: ghi nội dung kèm cảnh báo (để thử ở máy dev)", async () => {
+    const info = vi.spyOn(console, "info").mockImplementation(() => undefined);
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    await createMailer(null, undefined, undefined, "development")({ ...message, text: "token=abc" });
+    expect(warn.mock.calls[0][0]).toContain("CẢNH BÁO");
+    expect(info.mock.calls[0][0]).toContain("token=abc");
+  });
+
   it("chưa cấu hình SMTP: chỉ ghi email ra log", async () => {
     const info = vi.spyOn(console, "info").mockImplementation(() => undefined);
     await createMailer(null, undefined)(message);
