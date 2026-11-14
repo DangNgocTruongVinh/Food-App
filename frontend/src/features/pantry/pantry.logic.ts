@@ -1,7 +1,6 @@
 import { differenceInCalendarDays } from "date-fns";
 import type { FoodUnit, PantryItem, PantryRemovalReason, StorageLocation } from "../../types";
 import { formatDisplayDate } from "../../utils/date";
-import { FOOD_CATEGORIES } from "../../utils/food-categories";
 import { foodUnitLabel } from "../../utils/units";
 import type { PantryFormValues } from "./pantry.api";
 import type { ComboOption } from "../ui/combobox.logic";
@@ -27,12 +26,9 @@ export const initialPantryForm: PantryFormValues = {
   storageLocation: "REFRIGERATOR" as StorageLocation, expiryDate: "", minimumStock: 0, note: "", unitPrice: Number.NaN,
 };
 
-/** Bộ 8 nhóm chung với danh sách đi chợ; nhóm cũ của thực phẩm đã có vẫn giữ (pantryCategoryOptions). */
-export const PANTRY_CATEGORIES: string[] = [...FOOD_CATEGORIES];
-
-/** Nhóm của thực phẩm đang sửa không có trong danh sách cố định thì vẫn giữ làm một lựa chọn. */
-export function pantryCategoryOptions(current: string) {
-  return !current || PANTRY_CATEGORIES.includes(current) ? PANTRY_CATEGORIES : [current, ...PANTRY_CATEGORIES];
+/** Nhóm thực phẩm lấy từ danh mục (useFoodCategoryNames); nhóm cũ của thực phẩm đang sửa không còn trong danh mục thì vẫn giữ. */
+export function pantryCategoryOptions(current: string, categories: string[]) {
+  return !current || categories.includes(current) ? categories : [current, ...categories];
 }
 
 export const storageLabel: Record<StorageLocation, string> = {

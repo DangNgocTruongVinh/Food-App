@@ -1,5 +1,5 @@
 import type { ComboOption } from "../ui/combobox.logic";
-import { ALLERGY_GROUPS, foldAllergyText, mainTermsOf, resolveRestriction, suggestAllergyGroup } from "./allergy-groups";
+import { allergyGroups, foldAllergyText, mainTermsOf, resolveRestriction, suggestAllergyGroup } from "./allergy-groups";
 import { addTag } from "./profile.logic";
 
 // Ô "Dị ứng" và "Món không thích" ở Hồ sơ: gợi ý từ danh mục nhóm dị ứng dùng chung (cùng bản với bộ lọc ở backend).
@@ -11,7 +11,7 @@ const capitalize = (value: string) => value.charAt(0).toLocaleUpperCase("vi") + 
 /** Gợi ý: tên nhóm, tên gọi khác, nguyên liệu thuộc nhóm; bên phải ghi "nhóm <tên nhóm>". */
 export function restrictionOptions(): ComboOption[] {
   const seen = new Set<string>();
-  return ALLERGY_GROUPS.flatMap((group) => [group.label, ...group.aliases, ...group.terms].map((name) => ({ name, group })))
+  return allergyGroups().flatMap((group) => [group.label, ...group.aliases, ...group.terms].map((name) => ({ name, group })))
     .filter(({ name }) => {
       const key = foldAllergyText(name);
       if (seen.has(key)) return false;

@@ -78,7 +78,7 @@ describe("separate Admin area", () => {
 
 describe("Admin side menu", () => {
   it("lists the five Admin sections in order, each a route under /admin", () => {
-    expect(ADMIN_NAV.map((item) => item.label)).toEqual(["Tổng quan", "Công thức", "Người dùng", "Kiểm duyệt", "Nhật ký"]);
+    expect(ADMIN_NAV.map((item) => item.label)).toEqual(["Tổng quan", "Công thức", "Người dùng", "Kiểm duyệt", "Danh mục dữ liệu", "Nhật ký"]);
     expect(ADMIN_NAV.every((item) => item.to === "/admin" || item.to.startsWith("/admin/"))).toBe(true);
     expect(ADMIN_NAV[0].end).toBe(true);
   });

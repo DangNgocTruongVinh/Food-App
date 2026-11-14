@@ -2,6 +2,7 @@ import { ArrowDown, ArrowUp, Plus, X } from "lucide-react";
 import {
   emptyIngredient, emptyStep, moveRow, RECIPE_LIMITS, UNIT_OPTIONS, type IngredientRow, type RecipeFormErrors, type StepRow,
 } from "../../features/admin/admin-recipes.logic";
+import { useCatalog } from "../../features/catalog/catalog.queries";
 import { allergyMatchesOfFoodName } from "../../features/profile/allergy-groups";
 import type { FoodUnit } from "../../types";
 import { Button, IconButton } from "../ui";
@@ -106,7 +107,8 @@ export function AdminIngredientsEditor({ rows, errors, dietErrors, listError, on
 
 /** Nhóm dị ứng Nouri tự nhận ra từ tên nguyên liệu (cùng danh mục với bộ lọc) để Admin kiểm lại trước khi lưu. */
 function AllergyGroupNote({ name }: { name: string }) {
-  const matches = name.trim() ? allergyMatchesOfFoodName(name) : [];
+  const ready = Boolean(useCatalog().data);
+  const matches = ready && name.trim() ? allergyMatchesOfFoodName(name) : [];
   if (!matches.length) return null;
   const labels = matches.map(({ group, certain }) => (certain ? group.label : `${group.label} (có thể chứa)`));
   return <p className="ad-ingredient__allergy">Nhóm dị ứng tự nhận ra: {labels.join(", ")}</p>;

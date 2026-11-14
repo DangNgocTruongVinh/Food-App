@@ -20,6 +20,7 @@ export const ADMIN_NAV: NavLinkItem[] = [
   { to: "/admin/recipes", label: "Công thức" },
   { to: "/admin/users", label: "Người dùng" },
   { to: "/admin/moderation", label: "Kiểm duyệt" },
+  { to: "/admin/catalog", label: "Danh mục dữ liệu" },
   { to: "/admin/audit-logs", label: "Nhật ký" },
 ];
 

@@ -5,11 +5,12 @@ import {
   createAdminRecipe, deleteAdminRecipe, getAdminRecipe, getAdminStats, listAdminRecipes, restoreAdminRecipe, setAdminRecipeVisibility, updateAdminRecipe,
   uploadAdminRecipeImage, type AdminRecipeListQuery, listAdminUsers, listAuditLogs, listModerationPosts, moderateDeleteComment,
   moderateDeletePost, setAdminUserLock, type AuditLogQuery, getModerationPost, setModerationPostVisibility, reviewModerationPost,
-  estimatePostRecipe, type ModerationQuery,
+  estimatePostRecipe, type ModerationQuery, getAdminCatalog, saveCatalogEntry,
 } from "./admin.api";
 
 export const adminQueries = {
   stats: () => queryOptions({ queryKey: queryKeys.admin.stats, queryFn: getAdminStats }),
+  catalog: () => queryOptions({ queryKey: ["admin", "catalog"] as const, queryFn: getAdminCatalog }),
   recipes: (query: AdminRecipeListQuery) => queryOptions({
     queryKey: queryKeys.admin.recipes(query), queryFn: () => listAdminRecipes(query), placeholderData: keepPreviousData,
   }),
@@ -55,6 +56,7 @@ async function loadExisting() {
 
 export const adminMutations = {
   createRecipe: () => mutationOptions({ mutationFn: createAdminRecipe }),
+  saveCatalogEntry: () => mutationOptions({ mutationFn: saveCatalogEntry }),
   updateRecipe: () => mutationOptions({ mutationFn: updateAdminRecipe }),
   setVisibility: () => mutationOptions({ mutationFn: setAdminRecipeVisibility }),
   uploadImage: () => mutationOptions({ mutationFn: uploadAdminRecipeImage }),

@@ -1,4 +1,8 @@
 import { vi } from "vitest";
+import { useSeedCatalog } from "../services/catalog/catalog-build.js";
+
+// Test đọc danh mục qua cùng hàm dựng như khi chạy thật, nguồn là dữ liệu seed cố định (không cần database).
+useSeedCatalog();
 
 /**
  * requireAuth đọc quyền và trạng thái khóa từ DB ở mỗi request. Các test route giả lập Prisma riêng theo module,

@@ -1,46 +1,70 @@
+import type { StorageLocation } from "@prisma/client";
 import { normalizeFoodText } from "./dietary.service.js";
 
-// Bộ 8 nhóm thực phẩm dùng chung cho Kho và danh sách đi chợ (GĐ3b, quyết định 4). "Ngũ cốc" gồm gạo, bún, bánh.
-export const FOOD_CATEGORIES = ["Rau củ", "Thịt & cá", "Trứng & sữa", "Đậu & hạt", "Ngũ cốc", "Trái cây", "Gia vị", "Khác"] as const;
-export type FoodCategory = (typeof FOOD_CATEGORIES)[number];
+/**
+ * Nhóm thực phẩm (Kho, danh sách đi chợ) và hạn ước tính khi "Đã mua"/quét hóa đơn. Chỉ có LOGIC: danh mục (8 nhóm, từ đầu tên
+ * → nhóm, hạn theo loại con) nằm trong database (FoodCategory, FoodCategoryTerm, FoodShelfLifeRule), nạp bằng setFoodCatalog
+ * (services/catalog/catalog.service.ts). Chưa nạp thì báo lỗi, không đoán nhóm.
+ */
+export type FoodTextMatch = "PREFIX" | "PREFIX_WORD" | "CONTAINS_WORD";
+export type ShelfLifeRule = { pattern: string; matchMode: FoodTextMatch; shelfLifeDays: number | null; storage: StorageLocation };
+export type FoodCategoryEntry = {
+  name: string;
+  defaultStorage: StorageLocation;
+  defaultShelfLifeDays: number | null;
+  isFallback: boolean;
+  /** Theo thứ tự ưu tiên; quy tắc đầu tiên khớp tên thắng. */
+  shelfLifeRules: ShelfLifeRule[];
+};
+export type FoodCatalog = {
+  /** Theo thứ tự hiển thị. */
+  categories: FoodCategoryEntry[];
+  /** Từ đầu tên → nhóm, theo thứ tự ưu tiên (ngoại lệ trước: "đậu bắp" là Rau củ). */
+  terms: Array<{ prefix: string; category: string }>;
+};
 
-// Xét theo từ đầu tên nguyên liệu, theo thứ tự: ngoại lệ trước ("đậu bắp", "đậu hà lan" là rau; "cà" khác "cá").
-// Chuyển từ frontend (trước đây chỉ để trình bày) về đây để danh sách đi chợ và "đã mua → kho" dùng chung một nguồn.
-const RULES: Array<[FoodCategory, RegExp]> = [
-  ["Rau củ", /^(đậu bắp|đậu hà lan|đậu que|bắp ngọt|đu đủ xanh|ớt chuông)/],
-  ["Gia vị", /^(muối|đường|tiêu|nước mắm|nước tương|tương|giấm|dầu|mật ong|quế|hoa hồi|lá oregano|mè|hạt nêm|bột ngọt|ô liu)/],
-  ["Thịt & cá", /^(thịt|sườn|xương|đùi gà|ức gà|cánh gà|gà|bò|heo|cá|tôm|mực|cua|nghêu)/],
-  ["Trứng & sữa", /^(trứng|sữa|phô mai|bơ lạt)/],
-  ["Đậu & hạt", /^(đậu|hạt|lạc)/],
-  ["Ngũ cốc", /^(gạo|nếp|bún|bánh|mì|miến|yến mạch|bột)/],
-  ["Trái cây", /^(chuối|chanh|thơm|dứa|quả|táo|cam|xoài|nước dừa|nước cốt dừa|dừa|me)/],
-  ["Rau củ", /^(rau|cải|cà|bí|hành|tỏi|gừng|sả|ớt|nấm|giá|xà lách|dưa|khoai|bông cải|hẹ|ngò|bạc hà|lá|su|măng|đu đủ)/],
-];
+let catalog: FoodCatalog | null = null;
+
+export function setFoodCatalog(next: FoodCatalog) {
+  catalog = next;
+}
+
+function foodCatalog() {
+  if (!catalog) throw new Error("Chưa nạp danh mục nhóm thực phẩm (setFoodCatalog).");
+  return catalog;
+}
+
+/** Nhóm đang dùng (đã bỏ nhóm ẩn), theo thứ tự hiển thị. */
+export const foodCategories = () => foodCatalog().categories;
+export const foodCategoryNames = () => foodCatalog().categories.map((category) => category.name);
+export const isFoodCategory = (name: string) => foodCategoryNames().includes(name);
+const fallbackCategory = () => {
+  const { categories } = foodCatalog();
+  return categories.find((category) => category.isFallback) ?? categories[categories.length - 1];
+};
 
 const key = (name: string) => normalizeFoodText(name.normalize("NFC"));
 
-/** Nhóm của một nguyên liệu/thực phẩm theo tên; không khớp quy tắc nào thì "Khác". */
-export function foodCategoryOf(name: string): FoodCategory {
+const matches = (text: string, pattern: string, mode: FoodTextMatch) =>
+  mode === "PREFIX" ? text.startsWith(pattern)
+    : mode === "PREFIX_WORD" ? text === pattern || text.startsWith(`${pattern} `)
+      : ` ${text} `.includes(` ${pattern} `);
+
+/** Nhóm của một nguyên liệu/thực phẩm theo từ đầu tên (khớp đầu tiên theo thứ tự ưu tiên); không khớp → nhóm mặc định ("Khác"). */
+export function foodCategoryOf(name: string): string {
   const text = key(name);
-  return RULES.find(([, pattern]) => pattern.test(text))?.[0] ?? "Khác";
+  return foodCatalog().terms.find((term) => text.startsWith(term.prefix))?.category ?? fallbackCategory().name;
 }
 
-// "Đậu & hạt" gồm hai loại bảo quản rất khác nhau (dùng cho hạn gợi ý khi "đã mua → kho", GĐ3b lượt 6):
-// hạt khô (đậu phộng, mè, đậu xanh/đen/đỏ/nành khô, các loại hạt) để lâu ở nơi khô ráo; đậu hũ, đậu tươi để ngăn mát vài ngày.
-const DRY_LEGUMES = /^(đậu (phộng|xanh|đen|đỏ|nành|trắng|gà|lăng)|lạc|hạt|mè|vừng)/;
-
-/** Chỉ có nghĩa với nhóm "Đậu & hạt": "dry" = hạt khô, "fresh" = đậu hũ/đậu tươi (mặc định khi không chắc: hạn ngắn hơn, an toàn hơn). */
-export function legumeKind(name: string): "dry" | "fresh" {
-  return DRY_LEGUMES.test(key(name)) ? "dry" : "fresh";
-}
-
-// "Ngũ cốc" cũng có hai loại: đồ khô (gạo, nếp, mì/bún/phở khô, mì gói, miến, nui, yến mạch, bột, bánh tráng) để lâu ở nơi
-// khô ráo; đồ tươi (bánh mì, bún tươi, bánh phở, bánh cuốn, mì tươi…) chỉ vài ngày. Tên có chữ "khô" luôn là đồ khô.
-const DRY_GRAINS = /^(gạo|nếp|yến mạch|bột|miến|nui|mì ý|mì gói|mì tôm|bánh tráng|ngũ cốc)|(^| )khô( |$)/;
-
-/** Chỉ có nghĩa với nhóm "Ngũ cốc": "dry" = đồ khô, "fresh" = đồ tươi (mặc định khi không chắc: hạn ngắn hơn, an toàn hơn). */
-export function grainKind(name: string): "dry" | "fresh" {
-  return DRY_GRAINS.test(key(name)) ? "dry" : "fresh";
+/**
+ * Hạn (số ngày, null = không đặt hạn) và nơi bảo quản gợi ý: quy tắc loại con của nhóm (hạt khô, đồ khô, bánh mì…) theo thứ tự,
+ * không khớp thì theo mặc định của nhóm. Nhóm không còn trong danh mục (nhóm cũ của thực phẩm) → nhóm mặc định.
+ */
+export function shelfLifeFor(name: string, category: string): { days: number | null; storage: StorageLocation } {
+  const entry = foodCatalog().categories.find((item) => item.name === category) ?? fallbackCategory();
+  const text = key(name);
+  const rule = entry.shelfLifeRules.find((item) => matches(text, item.pattern, item.matchMode));
+  return rule ? { days: rule.shelfLifeDays, storage: rule.storage } : { days: entry.defaultShelfLifeDays, storage: entry.defaultStorage };
 }
 
 /** Dòng đi chợ cũ (tạo trước GĐ3b lượt 5) chưa có `category`: tính khi đọc, không cần migration dữ liệu. */

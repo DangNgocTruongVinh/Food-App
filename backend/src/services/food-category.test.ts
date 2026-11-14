@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { seedRecipes } from "../../prisma/seed-data.js";
-import { FOOD_CATEGORIES, foodCategoryOf, grainKind, legumeKind, withFoodCategory } from "./food-category.js";
+import { foodCategoryNames, foodCategoryOf, shelfLifeFor, withFoodCategory } from "./food-category.js";
 
 // Nhóm mong đợi của từng tên nguyên liệu trong bộ món seed (rà bằng tay).
 const EXPECTED: Record<string, string> = {
@@ -32,8 +32,8 @@ describe("Food categories (8 shared groups)", () => {
   });
 
   it("uses only the 8 shared groups and ignores case, extra spaces and decomposed accents", () => {
-    expect(new Set(Object.values(EXPECTED)).size).toBeLessThanOrEqual(FOOD_CATEGORIES.length);
-    expect(Object.values(EXPECTED).every((category) => (FOOD_CATEGORIES as readonly string[]).includes(category))).toBe(true);
+    expect(foodCategoryNames()).toEqual(["Rau củ", "Thịt & cá", "Trứng & sữa", "Đậu & hạt", "Ngũ cốc", "Trái cây", "Gia vị", "Khác"]);
+    expect(Object.values(EXPECTED).every((category) => foodCategoryNames().includes(category))).toBe(true);
     expect(foodCategoryOf("  ĐẬU   HŨ ")).toBe("Đậu & hạt");
     expect(foodCategoryOf("Cá lóc".normalize("NFD"))).toBe("Thịt & cá");
     expect(foodCategoryOf("Cà tím")).toBe("Rau củ");
@@ -43,15 +43,19 @@ describe("Food categories (8 shared groups)", () => {
   });
 
   it("tells fresh tofu/beans from dry legumes and nuts (for suggested expiry)", () => {
-    for (const name of ["Đậu phộng", "Đậu xanh", "Đậu đen", "Đậu đỏ", "Đậu nành", "Lạc rang", "Hạt điều", "Mè đen"]) expect(legumeKind(name)).toBe("dry");
-    for (const name of ["Đậu hũ", "Đậu phụ", "Đậu hũ non", "Tàu hũ ky"]) expect(legumeKind(name)).toBe("fresh");
+    const dry = { days: 90, storage: "DRY_STORAGE" }, fresh = { days: 3, storage: "REFRIGERATOR" };
+    for (const name of ["Đậu phộng", "Đậu xanh", "Đậu đen", "Đậu đỏ", "Đậu nành", "Lạc rang", "Hạt điều", "Mè đen"]) expect(shelfLifeFor(name, "Đậu & hạt"), name).toEqual(dry);
+    for (const name of ["Đậu hũ", "Đậu phụ", "Đậu hũ non", "Tàu hũ ky"]) expect(shelfLifeFor(name, "Đậu & hạt"), name).toEqual(fresh);
   });
 
   it("tells fresh grain products from dry ones (unknown → fresh, shorter expiry)", () => {
     for (const name of ["Gạo", "Gạo nếp", "Gạo tấm", "Nếp cẩm", "Yến mạch", "Mì Ý", "Bánh tráng", "Bún khô", "Mì khô", "Phở khô", "Miến", "Bột năng", "Mì gói"]) {
-      expect(grainKind(name), name).toBe("dry");
+      expect(shelfLifeFor(name, "Ngũ cốc"), name).toEqual({ days: 180, storage: "DRY_STORAGE" });
     }
-    for (const name of ["Bánh mì", "Bún tươi", "Bánh phở", "Bánh cuốn", "Mì tươi", "Bánh hỏi", "Bánh bao"]) expect(grainKind(name), name).toBe("fresh");
+    for (const name of ["Bún tươi", "Bánh phở", "Bánh cuốn", "Mì tươi", "Bánh hỏi", "Bánh bao"]) expect(shelfLifeFor(name, "Ngũ cốc"), name).toEqual({ days: 2, storage: "REFRIGERATOR" });
+    expect(shelfLifeFor("Bánh mì", "Ngũ cốc")).toEqual({ days: 2, storage: "DRY_STORAGE" });
+    expect(shelfLifeFor("Muối", "Gia vị")).toEqual({ days: 180, storage: "DRY_STORAGE" });
+    expect(shelfLifeFor("Khăn giấy", "Nhóm đã xóa")).toEqual({ days: null, storage: "REFRIGERATOR" });
   });
 
   it("fills a missing category of an old shopping line when reading, keeps an existing one", () => {

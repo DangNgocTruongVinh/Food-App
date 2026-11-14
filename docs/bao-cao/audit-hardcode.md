@@ -13,7 +13,7 @@
 |---|---|---|---|---|---|
 | A | Bắt buộc giữ (chỉ kiểm tên hằng, tài liệu) | 9 | 0 | 0 | 9 |
 | B | Nên chuyển thành config / constants dùng chung | 8 | 0 | 3 | 5 |
-| C | Nên chuyển vào Database | 4 | 0 | 1 | 3 |
+| C | Nên chuyển vào Database (**đã chuyển cả 4**, nhánh `hardcode-2`) | 4 | 0 | 1 | 3 |
 | D | Mock / dữ liệu giả cần loại bỏ | 1 | 0 | 0 | 1 |
 | E | Business logic cần tái cấu trúc | 5 | 0 | 3 | 2 |
 | F | Bảo mật | 3 | 0 | 2 | 1 |
@@ -63,6 +63,21 @@ commit, kể cả trong lịch sử git (xem mục "Đã kiểm, không có vấ
 | 12 file backend (vd. recipe-fit.service.ts:9, knowledge-based.ts:26, reports.logic.ts:6, refresh-token.service.ts:14…) | `const DAY_MS = 86_400_000` | Cùng một hằng khai báo lại 12 lần | thấp | Gom vào `backend/src/utils/vietnam-date.ts` (làm cùng E2) | S |
 
 ## C. Nên chuyển vào Database
+
+> **Đã chuyển hết (nhánh `hardcode-2`, 14/11/2026)** theo yêu cầu của giảng viên: dữ liệu nghiệp vụ lưu trong database và truy vấn ra.
+> - Bảng mới (migration `20261114100000_catalog_tables`): `AllergenGroup` (nhóm cha – nhóm con), `AllergenAlias`, `AllergenTerm`
+>   (mức `CONTAINS`/`MAY_CONTAIN`, cờ `processed`), `AllergenExclusion`, `FoodCategory` (nơi bảo quản, hạn mặc định), `FoodCategoryTerm`,
+>   `FoodShelfLifeRule` (hạn riêng: đậu khô, đồ khô, bánh mì), `ReceiptAbbreviation`, `ReceiptSkipKeyword`.
+> - Dữ liệu ban đầu chép nguyên văn sang `backend/prisma/catalog-data.ts`; backend tự tạo khi bảng trống lúc khởi động (và `db:seed`).
+> - Code chạy thật chỉ còn logic: `services/catalog/catalog.service.ts` đọc database, giữ trong bộ nhớ, nạp lại sau mỗi lần Admin sửa;
+>   danh mục chưa nạp thì báo lỗi (không bao giờ lọc với danh mục rỗng). Frontend lấy qua `GET /api/catalog` (bỏ bản chép tay).
+> - Danh sách ẩm thực: lấy từ các giá trị `Recipe.cuisine` đang có (bỏ 2 mảng ở frontend; `seed-data.ts` vẫn là dữ liệu seed).
+> - Admin: trang "Danh mục dữ liệu" (`/admin/catalog`, UC40). Từ khóa dòng không phải hàng (`ReceiptSkipKeyword`) chỉ seed, chưa có màn Admin.
+> - Kiểm chứng: test và `eval:*` nạp danh mục từ seed qua cùng hàm dựng (`useSeedCatalog`); ma trận an toàn đạt nguyên vẹn;
+>   `eval:recommend`/`eval:mealplan` ra đúng từng số như code trước khi chuyển; test tích hợp seed → Admin thêm tên gọi khác → lọc nhận ra.
+> - Câu SQL demo: `docs/bao-cao/sql-mau.md`.
+>
+> Bảng dưới đây giữ nguyên như lúc audit (số dòng theo commit `00e9cac`).
 
 | file:dòng | Giá trị / đoạn ngắn | Vì sao nhóm C (lợi / hại) | Rủi ro | Đề xuất | Công sức |
 |---|---|---|---|---|---|
@@ -155,8 +170,7 @@ Ba lượt nhỏ, mỗi lượt một nhánh, không đổi giá trị nào (ch�
 
 | Mục | Lý do để sau |
 |---|---|
-| C — danh mục nhóm dị ứng vào DB | Đụng an toàn thực phẩm: mất kiểm chứng bằng test/ma trận an toàn với danh mục cố định, cần màn Admin + nhật ký + kiểm duyệt; công sức L |
-| C — hạn gợi ý theo nhóm, tên viết tắt hóa đơn, danh sách ẩm thực vào DB | Chỉ là gợi ý (người dùng vẫn sửa được); cần màn Admin; đổi `eval:receipt` |
+| ~~C — danh mục nhóm dị ứng, hạn gợi ý, viết tắt hóa đơn, danh sách ẩm thực vào DB~~ | **Đã làm** ở nhánh `hardcode-2` (xem mục C) |
 | E — gộp 5 hàm chuẩn hóa chữ | Các hàm cố ý khác nghĩa; gộp đổi kết quả so khớp, ảnh hưởng ma trận an toàn và số liệu đánh giá; công sức L |
 | E — chuyển `useQuery` khỏi 10 component | Chỉ là quy ước tổ chức, không lỗi người dùng thấy; đụng nhiều màn, cần so ảnh trước/sau |
 | D — lưu lượng nước theo ngày | Chức năng mới (cần migration, API), trái quy tắc đóng băng; đã ghi hạn chế |

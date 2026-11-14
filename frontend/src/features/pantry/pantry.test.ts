@@ -1,6 +1,7 @@
 import { MutationObserver, type QueryClient } from "@tanstack/react-query";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { api } from "../../api/client";
+import { SEED_FOOD_CATEGORIES } from "../../test/seed-catalog";
 import { createAppQueryClient } from "../../api/query-client";
 import { queryKeys } from "../../api/query-keys";
 import type { PantryInput, PantryItem } from "../../types";
@@ -255,8 +256,8 @@ describe("Pantry page logic", () => {
 
   it("keeps the default form, category options and done messages", () => {
     expect(initialPantryForm).toMatchObject({ category: "Rau củ", quantity: 1, unit: "ITEM", storageLocation: "REFRIGERATOR", expiryDate: "" });
-    expect(pantryCategoryOptions("Rau củ")).toEqual(["Rau củ", "Thịt & cá", "Trứng & sữa", "Đậu & hạt", "Ngũ cốc", "Trái cây", "Gia vị", "Khác"]);
-    expect(pantryCategoryOptions("Đồ hộp")[0]).toBe("Đồ hộp");
+    expect(pantryCategoryOptions("Rau củ", SEED_FOOD_CATEGORIES)).toEqual(["Rau củ", "Thịt & cá", "Trứng & sữa", "Đậu & hạt", "Ngũ cốc", "Trái cây", "Gia vị", "Khác"]);
+    expect(pantryCategoryOptions("Đồ hộp", SEED_FOOD_CATEGORIES)[0]).toBe("Đồ hộp");
     expect(pantryDoneMessage("create", "Ức gà")).toBe("Đã lưu “Ức gà” vào kho.");
     expect(pantryDoneMessage("update", "Ức gà")).toBe("Đã lưu thay đổi cho “Ức gà”.");
     expect(pantryDoneMessage("delete", "Ức gà")).toBe("Đã xóa “Ức gà” khỏi kho.");

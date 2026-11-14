@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { BookOpen, LayoutDashboard, LogOut, Menu, ScrollText, ShieldCheck, Users, X, type LucideIcon } from "lucide-react";
+import { BookOpen, Database, LayoutDashboard, LogOut, Menu, ScrollText, ShieldCheck, Users, X, type LucideIcon } from "lucide-react";
 import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
 import { Button, NouriWordmark } from "../components/ui";
 import { useAuth } from "../contexts/AuthContext";
@@ -13,6 +13,7 @@ const ICONS: Record<string, LucideIcon> = {
   "/admin/recipes": BookOpen,
   "/admin/users": Users,
   "/admin/moderation": ShieldCheck,
+  "/admin/catalog": Database,
   "/admin/audit-logs": ScrollText,
 };
 

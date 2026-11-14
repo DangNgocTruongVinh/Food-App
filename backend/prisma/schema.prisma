@@ -104,36 +104,36 @@ enum Role {
 }
 
 model User {
-  id                String             @id @default(cuid())
-  email             String             @unique
-  passwordHash      String
-  name              String
-  role              Role               @default(USER)
+  id                  String               @id @default(cuid())
+  email               String               @unique
+  passwordHash        String
+  name                String
+  role                Role                 @default(USER)
   // Khác null: tài khoản đang bị khóa (không đăng nhập, không gọi API được); lưu thời điểm khóa.
-  lockedAt          DateTime?
+  lockedAt            DateTime?
   // Tài khoản mẫu minh họa (seed, "Người dùng mẫu N", mauN@nouri.vn): có tương tác thật để thuật toán gợi ý cộng tác chạy khi
   // demo; không tính vào thống kê Admin, danh sách người dùng Admin gắn nhãn "Tài khoản mẫu".
-  isSample          Boolean            @default(false)
+  isSample            Boolean              @default(false)
   // Lần đổi mật khẩu gần nhất (GĐ4): access token phát trước thời điểm này bị từ chối.
-  passwordChangedAt DateTime?
-  refreshTokens     RefreshToken[]
+  passwordChangedAt   DateTime?
+  refreshTokens       RefreshToken[]
   passwordResetTokens PasswordResetToken[]
-  expiryEmailLogs   ExpiryEmailLog[]
-  favoriteRecipes   FavoriteRecipe[]
-  savedPosts        SavedPost[]
-  profile           NutritionProfile?
-  pantryItems       PantryItem[]
-  pantryTransactions PantryTransaction[]
-  receiptScans      ReceiptScan[]
-  mealPlans         MealPlan[]
-  chatMessages      ChatMessage[]
-  communityPosts    CommunityPost[]
-  communityLikes    CommunityLike[]
-  communityComments CommunityComment[]
-  notifications     Notification[]
-  adminAuditLogs    AdminAuditLog[]
-  createdAt         DateTime           @default(now())
-  updatedAt         DateTime           @updatedAt
+  expiryEmailLogs     ExpiryEmailLog[]
+  favoriteRecipes     FavoriteRecipe[]
+  savedPosts          SavedPost[]
+  profile             NutritionProfile?
+  pantryItems         PantryItem[]
+  pantryTransactions  PantryTransaction[]
+  receiptScans        ReceiptScan[]
+  mealPlans           MealPlan[]
+  chatMessages        ChatMessage[]
+  communityPosts      CommunityPost[]
+  communityLikes      CommunityLike[]
+  communityComments   CommunityComment[]
+  notifications       Notification[]
+  adminAuditLogs      AdminAuditLog[]
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
 }
 
 enum AdminAuditAction {
@@ -143,6 +143,8 @@ enum AdminAuditAction {
   RECIPE_SHOW
   RECIPE_DELETE
   RECIPE_RESTORE
+  CATALOG_CREATE
+  CATALOG_UPDATE
   RECIPE_IMAGE_REPLACE
   USER_LOCK
   USER_UNLOCK
@@ -156,6 +158,7 @@ enum AdminAuditAction {
 
 enum AdminAuditTargetType {
   RECIPE
+  CATALOG
   USER
   COMMUNITY_POST
   COMMUNITY_COMMENT
@@ -183,31 +186,31 @@ model AdminAuditLog {
 }
 
 model CommunityPost {
-  id        String             @id @default(cuid())
-  authorId  String
-  author    User               @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  content   String
+  id               String               @id @default(cuid())
+  authorId         String
+  author           User                 @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  content          String
   // Công thức có sẵn được gắn kèm (tùy chọn). Restrict: công thức đã được bài viết gắn thì không xóa hẳn, Admin xóa thì chuyển thành xóa mềm (`Recipe.deletedAt`).
-  recipeId  String?
-  recipe    Recipe?            @relation("CommunityPostRecipe", fields: [recipeId], references: [id], onDelete: Restrict)
+  recipeId         String?
+  recipe           Recipe?              @relation("CommunityPostRecipe", fields: [recipeId], references: [id], onDelete: Restrict)
   // Công thức tự viết của thành viên (JSON: tên, khẩu phần, phút, nguyên liệu {tên, số lượng, đơn vị} nhập tự do, các bước).
   // Không phải Recipe: không vào thực đơn, gợi ý, kho. Không đồng thời với recipeId. Kiểm tra bằng Zod (community-member-recipe.ts).
-  memberRecipe Json?
+  memberRecipe     Json?
   // Khác null: Admin ẩn bài (không hiện ở bảng tin của người khác; tác giả vẫn thấy kèm ghi chú).
-  hiddenAt  DateTime?
+  hiddenAt         DateTime?
   // AI kiểm duyệt (Moderation API + kiểm tra "có liên quan ăn uống"): nghi vấn → khác null, bài chờ Admin duyệt, chỉ tác giả thấy.
   // AI không bao giờ tự xóa bài; không có key/API lỗi thì đăng như thường. aiReviewReason: lý do AI (giữ lại sau khi duyệt).
-  pendingReviewAt DateTime?
-  aiReviewReason  String?
+  pendingReviewAt  DateTime?
+  aiReviewReason   String?
   // Admin "Chuyển thành công thức": món mới tạo từ công thức tự viết. SetNull: xóa món thì bài chỉ mất liên kết.
   promotedRecipeId String?
-  promotedRecipe   Recipe?         @relation("CommunityPostPromotedRecipe", fields: [promotedRecipeId], references: [id], onDelete: SetNull)
-  images    CommunityPostImage[]
-  likes     CommunityLike[]
-  comments  CommunityComment[]
-  savedBy   SavedPost[]
-  createdAt DateTime           @default(now())
-  updatedAt DateTime           @updatedAt
+  promotedRecipe   Recipe?              @relation("CommunityPostPromotedRecipe", fields: [promotedRecipeId], references: [id], onDelete: SetNull)
+  images           CommunityPostImage[]
+  likes            CommunityLike[]
+  comments         CommunityComment[]
+  savedBy          SavedPost[]
+  createdAt        DateTime             @default(now())
+  updatedAt        DateTime             @updatedAt
 
   @@index([createdAt])
   @@index([authorId, createdAt])
@@ -298,25 +301,25 @@ model NutritionProfile {
 }
 
 model PantryItem {
-  id           String    @id @default(cuid())
-  userId       String
-  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  name         String
-  category     String
-  quantity     Float
-  unit         FoodUnit
-  storageLocation StorageLocation @default(REFRIGERATOR)
-  expiryDate   DateTime?
-  purchasedAt  DateTime  @default(now())
-  minimumStock Float     @default(0)
-  note         String?
+  id              String              @id @default(cuid())
+  userId          String
+  user            User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name            String
+  category        String
+  quantity        Float
+  unit            FoodUnit
+  storageLocation StorageLocation     @default(REFRIGERATOR)
+  expiryDate      DateTime?
+  purchasedAt     DateTime            @default(now())
+  minimumStock    Float               @default(0)
+  note            String?
   // Hạn do hệ thống gợi ý theo nhóm (đã mua, quét ảnh), chưa được người dùng xác nhận; người dùng sửa hạn thì về false.
-  expiryEstimated Boolean @default(false)
+  expiryEstimated Boolean             @default(false)
   // Đơn giá (đồng / 1 đơn vị của unit), tùy chọn: người dùng nhập hoặc lấy từ hóa đơn có giá. Dùng ước tính tiền lãng phí.
-  unitPrice    Float?
-  transactions PantryTransaction[]
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  unitPrice       Float?
+  transactions    PantryTransaction[]
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
 
   @@index([userId, expiryDate])
   @@index([userId, category])
@@ -401,41 +404,41 @@ model ReceiptScan {
 }
 
 model Recipe {
-  id           String             @id @default(cuid())
-  slug         String             @unique
-  name         String
-  description  String
-  instructions String[]
-  prepMinutes  Int
-  cookMinutes  Int
-  servings     Int                @default(1)
-  calories     Int
-  proteinG     Float
-  carbsG       Float
-  fatG         Float
-  fiberG       Float              @default(0)
-  dietTags     DietType[]
-  mealTypes    MealType[]         @default([])
-  cuisine      String
-  imageUrl     String?
+  id                String             @id @default(cuid())
+  slug              String             @unique
+  name              String
+  description       String
+  instructions      String[]
+  prepMinutes       Int
+  cookMinutes       Int
+  servings          Int                @default(1)
+  calories          Int
+  proteinG          Float
+  carbsG            Float
+  fatG              Float
+  fiberG            Float              @default(0)
+  dietTags          DietType[]
+  mealTypes         MealType[]         @default([])
+  cuisine           String
+  imageUrl          String?
   // publicId trên Cloudinary của ảnh do Admin tải lên (null với ảnh nhóm món /assets); dùng để xóa ảnh cũ khi thay.
-  imagePublicId String?
+  imagePublicId     String?
   // Khác null: món đã ngừng sử dụng (Admin ẩn thay vì xóa món đã được dùng). Không hiện ở danh sách, không chọn được
   // khi tạo thực đơn/đăng bài; trang chi tiết, thực đơn cũ và bài viết cũ vẫn hiển thị.
-  hiddenAt     DateTime?
+  hiddenAt          DateTime?
   // Admin xóa món đã được tham chiếu (thực đơn, bài viết): xóa mềm — ẩn khỏi mọi danh sách/gợi ý/chọn mới,
   // thực đơn và bài cũ vẫn hiện tên kèm "món đã bị xóa". Món chưa được tham chiếu thì xóa hẳn.
-  deletedAt    DateTime?
-  ingredients  RecipeIngredient[]
-  mealItems    MealPlanItem[]
-  communityPosts CommunityPost[] @relation("CommunityPostRecipe")
-  promotedFromPosts CommunityPost[] @relation("CommunityPostPromotedRecipe")
-  createdAt    DateTime           @default(now())
-  updatedAt    DateTime           @updatedAt
+  deletedAt         DateTime?
+  ingredients       RecipeIngredient[]
+  mealItems         MealPlanItem[]
+  communityPosts    CommunityPost[]    @relation("CommunityPostRecipe")
+  promotedFromPosts CommunityPost[]    @relation("CommunityPostPromotedRecipe")
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  favoritedBy       FavoriteRecipe[]
 
   @@index([cuisine])
   @@index([hiddenAt])
-  favoritedBy  FavoriteRecipe[]
 }
 
 model RecipeIngredient {
@@ -481,29 +484,29 @@ model MealPlanDay {
 }
 
 model MealPlanItem {
-  id        String      @id @default(cuid())
-  dayId     String
-  day       MealPlanDay @relation(fields: [dayId], references: [id], onDelete: Cascade)
-  recipeId  String
-  recipe    Recipe      @relation(fields: [recipeId], references: [id])
-  mealType  MealType
-  servings  Float       @default(1)
-  completed Boolean     @default(false)
-  calories  Int
+  id                 String              @id @default(cuid())
+  dayId              String
+  day                MealPlanDay         @relation(fields: [dayId], references: [id], onDelete: Cascade)
+  recipeId           String
+  recipe             Recipe              @relation(fields: [recipeId], references: [id])
+  mealType           MealType
+  servings           Float               @default(1)
+  completed          Boolean             @default(false)
+  calories           Int
   pantryTransactions PantryTransaction[]
 
   @@index([dayId, mealType])
 }
 
 model ShoppingItem {
-  id         String   @id @default(cuid())
-  mealPlanId String
-  mealPlan   MealPlan @relation(fields: [mealPlanId], references: [id], onDelete: Cascade)
-  name       String
-  quantity   Float
-  unit       FoodUnit
-  purchased  Boolean  @default(false)
-  category   String?
+  id                 String              @id @default(cuid())
+  mealPlanId         String
+  mealPlan           MealPlan            @relation(fields: [mealPlanId], references: [id], onDelete: Cascade)
+  name               String
+  quantity           Float
+  unit               FoodUnit
+  purchased          Boolean             @default(false)
+  category           String?
   pantryTransactions PantryTransaction[]
 
   @@index([mealPlanId, purchased])
@@ -596,4 +599,148 @@ model SavedPost {
   @@unique([userId, postId])
   @@index([userId, createdAt])
   @@index([postId])
+}
+
+// ===== Danh mục dữ liệu nghiệp vụ (trước đây viết cứng trong code; seed ban đầu: prisma/catalog-data.ts) =====
+// Code đọc qua services/catalog/catalog.service.ts (cache trong bộ nhớ, làm mới khi Admin sửa). Ẩn (hiddenAt) = không dùng nữa,
+// giữ dòng để nhật ký và dữ liệu cũ còn tham chiếu được.
+
+enum AllergenTermLevel {
+  CONTAINS // chắc chắn chứa (vd. Nước tương → Đậu nành)
+  MAY_CONTAIN // có thể chứa, tùy nhãn hàng (vd. Tương đen → Gluten); vẫn bị lọc khi dị ứng, nhãn ghi "Có thể chứa"
+}
+
+// Nhóm dị ứng. Nhóm có con (Hải sản → Cá, Giáp xác, Nhuyễn thể) là nhóm gộp: chọn nhóm cha = chọn mọi nhóm con.
+model AllergenGroup {
+  id         String              @id @default(cuid())
+  code       String              @unique
+  label      String              @unique
+  parentId   String?
+  parent     AllergenGroup?      @relation("AllergenGroupParent", fields: [parentId], references: [id], onDelete: Restrict)
+  children   AllergenGroup[]     @relation("AllergenGroupParent")
+  sortOrder  Int                 @default(0)
+  hiddenAt   DateTime?
+  createdAt  DateTime            @default(now())
+  updatedAt  DateTime            @updatedAt
+  aliases    AllergenAlias[]
+  terms      AllergenTerm[]
+  exclusions AllergenExclusion[]
+}
+
+// Tên gọi khác của nhóm (hai miền, tiếng Anh): gõ tên này ở Hồ sơ = chọn cả nhóm.
+model AllergenAlias {
+  id        String        @id @default(cuid())
+  groupId   String
+  group     AllergenGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  name      String
+  sortOrder Int           @default(0)
+  hiddenAt  DateTime?
+  createdAt DateTime      @default(now())
+
+  @@unique([groupId, name])
+}
+
+// Nguyên liệu thuộc nhóm. processed = chế biến/gia vị/thành phần ẩn (nước mắm, dầu hào…): dị ứng tính, "Món không thích" bỏ qua.
+model AllergenTerm {
+  id        String            @id @default(cuid())
+  groupId   String
+  group     AllergenGroup     @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  name      String
+  level     AllergenTermLevel @default(CONTAINS)
+  processed Boolean           @default(false)
+  sortOrder Int               @default(0)
+  hiddenAt  DateTime?
+  createdAt DateTime          @default(now())
+
+  @@unique([groupId, name, level])
+  @@index([groupId, sortOrder])
+}
+
+// Ngoại lệ: tên chứa cụm này thì không thuộc nhóm dù có từ của nhóm ("sữa đậu nành" không thuộc Sữa, "mì chính" không thuộc Gluten).
+model AllergenExclusion {
+  id      String        @id @default(cuid())
+  groupId String
+  group   AllergenGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  phrase  String
+
+  @@unique([groupId, phrase])
+}
+
+enum FoodTextMatch {
+  PREFIX // tên bắt đầu bằng cụm ("đậu" → "đậu hũ", "đậu xanh")
+  PREFIX_WORD // tên bắt đầu bằng nguyên cụm từ ("bánh mì" → "bánh mì sandwich", không khớp "bánh mìx")
+  CONTAINS_WORD // tên có nguyên từ này ở bất kỳ đâu ("khô" → "mì khô")
+}
+
+// 8 nhóm thực phẩm của Kho và danh sách đi chợ; hạn dùng ước tính khi "Đã mua"/quét hóa đơn (null = không đặt hạn).
+model FoodCategory {
+  id                   String              @id @default(cuid())
+  name                 String              @unique
+  sortOrder            Int                 @default(0)
+  defaultStorage       StorageLocation     @default(REFRIGERATOR)
+  defaultShelfLifeDays Int?
+  // Nhóm nhận các tên không khớp từ nào (đúng một nhóm, "Khác").
+  isFallback           Boolean             @default(false)
+  hiddenAt             DateTime?
+  createdAt            DateTime            @default(now())
+  updatedAt            DateTime            @updatedAt
+  terms                FoodCategoryTerm[]
+  shelfLifeRules       FoodShelfLifeRule[]
+}
+
+// Từ đầu tên → nhóm. Xét theo priority tăng dần, khớp đầu tiên thắng (ngoại lệ trước: "đậu bắp" là Rau củ, không phải Đậu & hạt).
+model FoodCategoryTerm {
+  id         String       @id @default(cuid())
+  categoryId String
+  category   FoodCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  prefix     String
+  priority   Int          @default(0)
+
+  @@unique([categoryId, prefix])
+  @@index([priority])
+}
+
+// Hạn dùng riêng cho loại con trong nhóm (hạt khô 90 ngày, đồ khô 180 ngày, bánh mì 2 ngày nơi khô ráo); không khớp thì theo nhóm.
+model FoodShelfLifeRule {
+  id            String          @id @default(cuid())
+  categoryId    String
+  category      FoodCategory    @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  pattern       String
+  matchMode     FoodTextMatch   @default(PREFIX)
+  shelfLifeDays Int?
+  storage       StorageLocation
+  priority      Int             @default(0)
+
+  @@unique([categoryId, pattern, matchMode])
+}
+
+// Tên viết tắt / tên thường gặp trên hóa đơn (đã bỏ dấu, chữ thường) → tên thực phẩm có dấu.
+model ReceiptAbbreviation {
+  id           String    @id @default(cuid())
+  abbreviation String    @unique
+  fullName     String
+  sortOrder    Int       @default(0)
+  hiddenAt     DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+}
+
+enum ReceiptKeywordMatch {
+  WORD // có nguyên từ ở bất kỳ đâu ("vat", "giam gia")
+  PREFIX // dòng bắt đầu bằng ("tong", "tien mat")
+  LINE // cả dòng đúng bằng từ này, có thể kèm các từ LINE_SUFFIX cùng lý do ("tui", "tui nilon nho")
+  LINE_SUFFIX // từ đi kèm được phép sau từ LINE ("nilon", "giay")
+}
+
+// Từ khóa nhận dòng không phải hàng trên hóa đơn (thuế, giảm giá, tổng tiền, thanh toán, túi, phí, điểm, đầu/cuối hóa đơn).
+// reasonOrder: thứ tự xét lý do (thuế, giảm giá trước tổng tiền: "Tổng giảm giá" là giảm giá).
+model ReceiptSkipKeyword {
+  id          String              @id @default(cuid())
+  reason      String
+  reasonOrder Int
+  keyword     String
+  matchMode   ReceiptKeywordMatch
+  sortOrder   Int                 @default(0)
+
+  @@unique([reason, keyword, matchMode])
 }

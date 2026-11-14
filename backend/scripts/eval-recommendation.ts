@@ -12,6 +12,10 @@ import { recipeFit, safeRecipes } from "../src/modules/recommendation/safety.js"
 import { normalizeFoodText } from "../src/services/dietary.service.js";
 import type { FitPantryItem } from "../src/services/recipe-fit.service.js";
 import { seedRecipesAsRecords } from "../src/test/seed-recipes.js";
+import { useSeedCatalog } from "../src/services/catalog/catalog-build.js";
+
+// Mô phỏng không có database: nạp danh mục từ dữ liệu seed (cùng hàm dựng như khi chạy thật).
+useSeedCatalog();
 
 // Đánh giá các thuật toán gợi ý (GĐ3b-R6) trên DỮ LIỆU MÔ PHỎNG, chỉ trong bộ nhớ: không đọc/ghi cơ sở dữ liệu, không tạo tài khoản.
 // Chạy: npm run eval:recommend -w backend. Kết quả ghi vào docs/thuat-toan-goi-y.md (giữa hai dấu EVAL).

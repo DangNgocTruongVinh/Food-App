@@ -5,6 +5,8 @@ import { validate } from "../../middleware/validate.js";
 import { asyncHandler } from "../../utils/async-handler.js";
 import { listAdminAuditLogsController } from "./admin-audit.controller.js";
 import { listAdminAuditLogsSchema } from "./admin-audit.schema.js";
+import { createCatalogController, listCatalogController, updateCatalogController } from "./admin-catalog.controller.js";
+import { createCatalogSchema, listCatalogSchema, updateCatalogSchema } from "./admin-catalog.schema.js";
 import {
   createAdminRecipeController,
   deleteAdminRecipeController, restoreAdminRecipeController,
@@ -69,6 +71,10 @@ router.delete("/community/posts/:postId", validate(moderatePostSchema), asyncHan
 router.delete("/community/comments/:commentId", validate(moderateCommentSchema), asyncHandler(moderateDeleteCommentController));
 
 router.get("/stats", validate(adminStatsSchema), asyncHandler(adminStatsController));
+
+router.get("/catalog", validate(listCatalogSchema), asyncHandler(listCatalogController));
+router.post("/catalog/:kind", validate(createCatalogSchema), asyncHandler(createCatalogController));
+router.patch("/catalog/:kind/:id", validate(updateCatalogSchema), asyncHandler(updateCatalogController));
 
 router.get("/audit-logs", validate(listAdminAuditLogsSchema), asyncHandler(listAdminAuditLogsController));
 

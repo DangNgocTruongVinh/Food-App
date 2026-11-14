@@ -162,6 +162,23 @@ Nguồn: `services/image-file.ts`, `image-sanitize.ts`, `docs/test-evidence/2026
 `npm audit` còn 9 (chỉ sửa được bằng nâng bản lớn prisma 7, zod 4, openai 7, sharp 0.35, vitest 5); quyết định không nâng trước hạn đóng
 băng, rủi ro thực tế thấp (giải thích từng gói). `nodemailer` chọn bản 10.3.1 vì các bản ≤ 10.1.3 có cảnh báo. Nguồn: `docs/han-che.md` 1.1.
 
+**42. Vì sao trước đây danh mục dị ứng, nhóm thực phẩm… viết cứng trong code, giờ xử lý thế nào?**
+Trước đây là chọn an toàn: danh mục nằm trong một file dùng chung backend/frontend, test so hai bản và ma trận an toàn kiểm trên danh
+mục cố định, sửa sai một dòng là lọt dị ứng nên không muốn ai sửa được lúc chạy. Nhược điểm: dữ liệu nghiệp vụ lẫn trong code, thêm một
+tên gọi khác cũng phải sửa code và deploy. Nay (nhánh `hardcode-2`) chuyển hết vào database: nhóm dị ứng (nhóm cha – con, tên gọi khác,
+nguyên liệu mức "chứa"/"có thể chứa", ngoại lệ), nhóm thực phẩm + hạn dùng, viết tắt và từ khóa hóa đơn (9 bảng, migration riêng).
+Backend đọc một lần khi khởi động, giữ trong bộ nhớ (bộ lọc gọi hàng nghìn lần mỗi lượt gợi ý), nạp lại ngay sau mỗi lần Admin sửa ở
+trang "Danh mục dữ liệu" (Zod, nhật ký Admin, chỉ ẩn không xóa, ẩn mục dị ứng phải xác nhận). Danh mục chưa nạp thì báo lỗi chứ không lọc
+với danh mục rỗng. Giữ được kiểm chứng: dữ liệu ban đầu chép nguyên văn sang `prisma/catalog-data.ts`, test nạp đúng bộ đó qua cùng hàm
+dựng; ma trận an toàn đạt nguyên vẹn, số đánh giá giống hệt; test tích hợp "Admin thêm tên gọi khác → lọc nhận ra ngay". Câu SQL demo:
+`docs/bao-cao/sql-mau.md`. Nguồn: `services/catalog/`, `modules/admin/admin-catalog.*`.
+
+**43. Vì sao tham số thuật toán (trọng số, ngưỡng) vẫn để trong code?**
+Vì đó không phải dữ liệu nghiệp vụ mà là một phần của thuật toán: trọng số theo ngữ cảnh (vd. "Dành cho bạn" 0,6/0,2/0,2), số láng giềng 20, ngưỡng "sắp hết hạn" được chọn
+bằng thí nghiệm (`eval:recommend`, `eval:mealplan`) và mô tả trong `docs/thuat-toan-goi-y.md`; đổi chúng là đổi thuật toán, phải chạy
+lại đánh giá và cập nhật tài liệu, không nên cho Admin chỉnh lúc chạy. Để trong code thì có review, có test, có lịch sử git và kết quả
+đánh giá tái lập được. Danh mục (dị ứng, nhóm thực phẩm…) thì khác: là dữ liệu thay đổi theo thực tế, không cần đổi logic, nên ở database.
+
 ## G. Dữ liệu mẫu, kiểm thử, triển khai
 
 **33. Số liệu trên trang Báo cáo khi demo có thật không?**
@@ -200,7 +217,7 @@ gõ. Nguồn: `allergy-groups.ts`, `docs/thuat-toan-goi-y.md` mục 2.
 Dị ứng là an toàn nên lọc rộng: cả nhóm, tên gọi khác, nguyên liệu chế biến và thành phần ẩn (dị ứng cá → tránh cả nước mắm), kể cả
 "có thể chứa" tùy nhãn hàng; thẻ món ghi "Chứa: Cá (Nước mắm)". Món không thích là khẩu vị nên chỉ tránh nguyên liệu chính: không thích
 "cá" thì tránh Canh chua cá lóc nhưng vẫn gợi ý Bún chả có nước mắm; muốn tránh gia vị thì ghi đích danh ("nước mắm"). Thẻ món ghi
-"Có thành phần bạn không thích: Cá lóc". Nguồn: `expandRestrictedTerms(…, { strict })`, `PROCESSED_FOOD_TERMS` trong `allergy-groups.ts`.
+"Có thành phần bạn không thích: Cá lóc". Nguồn: `expandRestrictedTerms(…, { strict })`, cột `AllergenTerm.processed` (danh mục trong database, `mainTermsOf` trong `allergy-groups.ts`).
 
 **39. Sao không có chế độ tối?**
 Đã có bản chế độ tối nhưng bỏ (12/11/2026) để tập trung chất lượng: mỗi màn hình, trạng thái, biểu đồ và trang chủ (bộ màu riêng) phải

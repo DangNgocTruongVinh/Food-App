@@ -1,15 +1,13 @@
-import type { FormEvent, ReactNode } from "react";
+import { type FormEvent, type ReactNode, useMemo } from "react";
+import { useCatalog, useCuisineOptions } from "../../features/catalog/catalog.queries";
 import type { ProfileFormValues } from "../../features/profile/profile.api";
 import {
-  ACTIVITY_OPTIONS, CUISINE_SUGGESTIONS, DIET_OPTIONS, GENDER_OPTIONS, GOAL_OPTIONS, MEALS_OPTIONS, PROFILE_LIMITS, type ProfileFormErrors,
+  ACTIVITY_OPTIONS, DIET_OPTIONS, GENDER_OPTIONS, GOAL_OPTIONS, MEALS_OPTIONS, PROFILE_LIMITS, type ProfileFormErrors,
 } from "../../features/profile/profile.logic";
 import { Button, ChoiceGroup, ErrorState, Field } from "../ui";
 import { addRestrictionTag, avoidSummary, restrictionOptions } from "../../features/profile/restrictions.logic";
 import { TagField } from "./TagField";
 
-// Gợi ý ô Dị ứng / Món không thích (danh mục nhóm dị ứng dùng chung) và ô Ẩm thực: tính một lần.
-const RESTRICTION_OPTIONS = restrictionOptions();
-const CUISINE_OPTIONS = CUISINE_SUGGESTIONS.map((label) => ({ id: label, label, detail: "Ẩm thực" }));
 
 type ProfileFormProps = {
   form: ProfileFormValues;
@@ -36,6 +34,10 @@ function Section({ id, title, description, children }: { id: string; title: stri
 
 /** Form hồ sơ chia 4 nhóm; một nút "Lưu hồ sơ" ở cuối form. Lỗi hiện dưới từng trường. */
 export function ProfileForm({ form, email, errors, dirty, saving, saveError, onChange, onSubmit }: ProfileFormProps) {
+  // Gợi ý ô Dị ứng / Món không thích / Ẩm thực lấy từ danh mục (GET /api/catalog).
+  const catalog = useCatalog();
+  const cuisines = useCuisineOptions();
+  const restrictionChoices = useMemo(() => (catalog.data ? restrictionOptions() : []), [catalog.data]);
   const numberInput = (key: "age" | "heightCm" | "weightKg" | "targetWeightKg", label: string, unit: string, hint?: string) => (
     <Field label={label} error={errors[key]} hint={hint}>
       {(control) => (
@@ -97,31 +99,39 @@ export function ProfileForm({ form, email, errors, dirty, saving, saveError, onC
           error={errors.mealsPerDay}
           onChange={(value) => onChange("mealsPerDay", value)}
         />
-        <TagField
-          className="hs-wide"
-          label="Dị ứng"
-          itemName="dị ứng"
-          tags={form.allergies}
-          max={PROFILE_LIMITS.allergies}
-          placeholder="Ví dụ: tôm, trứng gà, đậu phộng"
-          options={RESTRICTION_OPTIONS}
-          adder={(tags, raw, max) => addRestrictionTag(tags, raw, max, "allergy")}
-          summary={avoidSummary(form.allergies, "allergy")}
-          hint="Gõ rồi chọn gợi ý hoặc bấm Enter. Nếu dị ứng nặng, hãy kiểm tra lại nguyên liệu trước khi nấu."
-          onChange={(tags) => onChange("allergies", tags)}
-        />
-        <TagField
-          className="hs-wide"
-          label="Món không thích"
-          itemName="món không thích"
-          tags={form.dislikedFoods}
-          max={PROFILE_LIMITS.dislikedFoods}
-          placeholder="Ví dụ: cần tây"
-          options={RESTRICTION_OPTIONS}
-          adder={(tags, raw, max) => addRestrictionTag(tags, raw, max, "dislike")}
-          summary={avoidSummary(form.dislikedFoods, "dislike")}
-          onChange={(tags) => onChange("dislikedFoods", tags)}
-        />
+        {!catalog.data ? (
+          catalog.isError
+            ? <div className="hs-wide"><ErrorState message="Chưa tải được danh mục dị ứng. Tải lại trang để nhập Dị ứng và Món không thích." onRetry={() => catalog.refetch()} /></div>
+            : <p className="hs-wide ui-small">Đang tải danh mục dị ứng…</p>
+        ) : (
+          <>
+          <TagField
+            className="hs-wide"
+            label="Dị ứng"
+            itemName="dị ứng"
+            tags={form.allergies}
+            max={PROFILE_LIMITS.allergies}
+            placeholder="Ví dụ: tôm, trứng gà, đậu phộng"
+            options={restrictionChoices}
+            adder={(tags, raw, max) => addRestrictionTag(tags, raw, max, "allergy")}
+            summary={avoidSummary(form.allergies, "allergy")}
+            hint="Gõ rồi chọn gợi ý hoặc bấm Enter. Nếu dị ứng nặng, hãy kiểm tra lại nguyên liệu trước khi nấu."
+            onChange={(tags) => onChange("allergies", tags)}
+          />
+          <TagField
+            className="hs-wide"
+            label="Món không thích"
+            itemName="món không thích"
+            tags={form.dislikedFoods}
+            max={PROFILE_LIMITS.dislikedFoods}
+            placeholder="Ví dụ: cần tây"
+            options={restrictionChoices}
+            adder={(tags, raw, max) => addRestrictionTag(tags, raw, max, "dislike")}
+            summary={avoidSummary(form.dislikedFoods, "dislike")}
+            onChange={(tags) => onChange("dislikedFoods", tags)}
+          />
+          </>
+        )}
       </Section>
 
       <Section id="hs-taste" title="Khẩu vị" description="Nền ẩm thực bạn hay nấu, dùng khi gợi ý món và tạo thực đơn.">
@@ -132,8 +142,8 @@ export function ProfileForm({ form, email, errors, dirty, saving, saveError, onC
           tags={form.preferredCuisines}
           max={PROFILE_LIMITS.preferredCuisines}
           placeholder="Ví dụ: Việt Nam"
-          suggestions={CUISINE_SUGGESTIONS}
-          options={CUISINE_OPTIONS}
+          suggestions={cuisines.names}
+          options={cuisines.options}
           onChange={(tags) => onChange("preferredCuisines", tags)}
         />
       </Section>

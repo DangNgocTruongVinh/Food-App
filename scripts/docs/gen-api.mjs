@@ -118,6 +118,10 @@ const DESCRIPTIONS = {
   "DELETE /api/admin/community/posts/:postId": ["Xóa bài vi phạm (service xóa dùng chung)", "—", "204"],
   "DELETE /api/admin/community/comments/:commentId": ["Xóa bình luận vi phạm", "—", "204"],
   "GET /api/admin/stats": ["Thống kê: tổng số và 12 tuần gần nhất (không tính tài khoản mẫu)", "—", "totals, weekly[]"],
+  "GET /api/catalog": ["Danh mục dữ liệu từ database: nhóm dị ứng (tên gọi khác, nguyên liệu, có thể chứa, ngoại lệ), nhóm thực phẩm + hạn mặc định, nền ẩm thực đang có; không cần đăng nhập", "—", "allergenGroups, foodCategories, cuisines"],
+  "GET /api/admin/catalog": ["Toàn bộ danh mục kể cả mục đã ẩn (trang Danh mục dữ liệu)", "—", "allergenGroups, foodCategories, receiptAbbreviations"],
+  "POST /api/admin/catalog/:kind": ["Thêm nhóm dị ứng / tên gọi khác / nguyên liệu thuộc nhóm / nhóm thực phẩm / viết tắt hóa đơn; ghi nhật ký, nạp lại danh mục ngay; trùng → 409", "kind + trường theo loại (Zod)", "id, label"],
+  "PATCH /api/admin/catalog/:kind/:id": ["Sửa hoặc ẩn/hiện (hidden) một mục; đổi tên nhóm dị ứng giữ tên cũ làm tên gọi khác; đổi tên nhóm thực phẩm đổi theo trong Kho", "trường cần đổi, hidden", "id, label, changedFields"],
   "GET /api/admin/audit-logs": ["Nhật ký thao tác Admin", "action, targetType, targetId, actorId, page, pageSize", "items, total"],
 };
 

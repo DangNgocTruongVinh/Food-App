@@ -11,6 +11,10 @@ import { filterRecipesForProfile, normalizeFoodText } from "../src/services/diet
 import { calculateNutritionTargets } from "../src/services/nutrition.service.js";
 import { type ConsumptionPantryItem, planConsumption } from "../src/services/pantry-consumption.js";
 import { seedRecipesAsRecords } from "../src/test/seed-recipes.js";
+import { useSeedCatalog } from "../src/services/catalog/catalog-build.js";
+
+// Mô phỏng không có database: nạp danh mục từ dữ liệu seed (cùng hàm dựng như khi chạy thật).
+useSeedCatalog();
 
 // Đánh giá bộ tạo thực đơn (GĐ3b-R8) trên DỮ LIỆU MÔ PHỎNG, chỉ trong bộ nhớ: không đọc/ghi cơ sở dữ liệu.
 // Chạy: npm run eval:mealplan -w backend. Kết quả ghi vào docs/thuat-toan-goi-y.md (giữa hai dấu EVAL-MEALPLAN).
