@@ -1,6 +1,7 @@
 import type { FoodUnit } from "@prisma/client";
 import { foldText } from "./receipt-text.js";
 import type { OcrLine, OcrOutput, ParsedReceipt, RawReceiptItem, ReceiptSkipReason, SkippedReceiptLine } from "./receipt-types.js";
+import { skipRules } from "./receipt-catalog.js";
 
 // Bộ phân tích dòng hóa đơn theo quy tắc (GĐ3c), dùng chung cho mọi nhà cung cấp OCR. Đầu vào là các dòng chữ; đầu ra là
 // dòng hàng (tên, số lượng, đơn vị, đơn giá, thành tiền, hạn đọc được) và các dòng bị bỏ kèm lý do (vẫn hiện ở màn duyệt).
@@ -20,22 +21,6 @@ const UNIT_WORDS: Record<string, FoodUnit> = {
 };
 const MEASURED: FoodUnit[] = ["G", "KG", "ML", "L"];
 
-// Áp dụng trên chữ đã bỏ dấu và bỏ số. Thứ tự: thuế, giảm giá trước tổng tiền ("Tổng giảm giá" là giảm giá).
-// Tránh từ ngắn trùng tên thực phẩm khi bỏ dấu: "giấm" = "giam", "giò" = "gio", "cá" = "ca", "phi lê" = "phi le", "quẩy" = "quay".
-const SKIP_RULES: Array<[ReceiptSkipReason, RegExp]> = [
-  ["TAX", /\b(vat|gtgt|thue)\b/],
-  ["DISCOUNT", /^(km|ck|voucher|coupon|uu dai|discount|promotion)\b|\b(giam gia|khuyen mai|chiet khau)\b/],
-  ["TOTAL", /^(tong|tam tinh|cong tien|thanh tien|phai tra|can thanh toan|so tien|grand total|sub ?total|total|amount)\b/],
-  ["PAYMENT", /^(tien mat|tien khach|khach dua|khach tra|khach thanh toan|tien thoi|tien thua|tra lai|thoi lai|chuyen khoan|the|visa|master|mastercard|atm|qr|momo|zalo ?pay|vnpay|shopee ?pay|thanh toan|hinh thuc|cash|change|card)\b/],
-  ["BAG", /^(tui|bao bi)( (nilon|ni lon|nylon|giay|xop|sinh hoc|tu huy|tu phan huy|dung hang|mua hang|nho|vua|lon|to))*$/],
-  ["FEE", /^(phi|phu thu|ship)$|^(phi|phu thu) (giao|van chuyen|dich vu|ship|phuc vu|dong goi)|^ship\b/],
-  ["POINTS", /\b(diem|tich luy|tich diem|hang thanh vien|ma thanh vien|the thanh vien|member|ma kh)\b/],
-  ["HEADER", new RegExp(
-    "\\b(mst|ma so thue|dia chi|hotline|dien thoai|sdt|tel|website|www|http|https|email|hoa don|phieu thanh toan|phieu tinh tien|"
-    + "so hd|so ct|so phieu|chung tu|ma hd|ma don|ma giao dich|thu ngan|nhan vien|khach hang|cam on|hen gap lai|doi tra|"
-    + "ten hang|don gia|mat hang|chi nhanh|sieu thi|cua hang|store|branch|receipt|invoice|cashier|ngay)\\b|^(dc|dt|nv|bill)\\b|^(quay|quay so|ban so)$",
-  )],
-];
 const EXPIRY_KEYWORD = /\b(hsd|han su dung|han dung|han sd|exp|expiry|exp date|best before|bbd|use by)\b/;
 const PRODUCTION_KEYWORD = /\b(nsx|ngay san xuat|mfg|mfd)\b/;
 const NET_KEYWORD = /\b(khoi luong tinh|kl tinh|klt|trong luong tinh|khoi luong|net wt|netwt|net weight|dung tich|the tich)\b/;
@@ -224,7 +209,7 @@ export function parseReceiptDate(text: string): string | null {
 /** Lý do bỏ một dòng không phải hàng (tổng tiền, thuế, thanh toán, đầu/cuối hóa đơn…); null nếu có thể là dòng hàng. */
 export function skipReasonOf(text: string): ReceiptSkipReason | null {
   const words = foldText(text).replace(/\d+/g, " ").replace(/\s+/g, " ").trim();
-  const rule = SKIP_RULES.find(([, pattern]) => pattern.test(words));
+  const rule = skipRules().find(([, pattern]) => pattern.test(words));
   if (rule) return rule[0];
   if (TIME.test(text) || DATE.test(text)) return "HEADER";
   if (/(^|\s)-\s?\d[\d.,]{2,}/.test(text)) return "DISCOUNT";

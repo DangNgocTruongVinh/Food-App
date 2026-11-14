@@ -1,5 +1,5 @@
 import { api } from "../../api/client";
-import type { DietTag, FoodUnit, MealType, MemberRecipe } from "../../types";
+import type { DietTag, FoodUnit, MealType, MemberRecipe, StorageLocation } from "../../types";
 
 export type AdminStats = {
   totals: { users: number; lockedUsers: number; mealPlans: number; posts: number; recipes: number; hiddenRecipes: number };
@@ -105,9 +105,10 @@ export type ModerationPost = {
 export const AUDIT_ACTIONS = [
   "RECIPE_CREATE", "RECIPE_UPDATE", "RECIPE_HIDE", "RECIPE_SHOW", "RECIPE_DELETE", "RECIPE_RESTORE", "RECIPE_IMAGE_REPLACE",
   "USER_LOCK", "USER_UNLOCK", "POST_DELETE", "COMMENT_DELETE", "POST_HIDE", "POST_SHOW", "POST_PROMOTE", "POST_APPROVE",
+  "CATALOG_CREATE", "CATALOG_UPDATE",
 ] as const;
 export type AuditAction = (typeof AUDIT_ACTIONS)[number];
-export type AuditTargetType = "RECIPE" | "USER" | "COMMUNITY_POST" | "COMMUNITY_COMMENT";
+export type AuditTargetType = "RECIPE" | "USER" | "COMMUNITY_POST" | "COMMUNITY_COMMENT" | "CATALOG";
 export type AuditLog = {
   id: string; action: AuditAction; targetType: AuditTargetType; targetId: string; targetLabel: string | null;
   details: Record<string, unknown> | null; createdAt: string; actor: ModerationPerson;
@@ -163,4 +164,33 @@ export async function moderateDeleteComment(commentId: string) {
 
 export async function listAuditLogs(query: AuditLogQuery) {
   return (await api.get<AdminPage<AuditLog>>("/admin/audit-logs", { params: query })).data;
+}
+
+// ---------- Danh mục dữ liệu (dị ứng, nhóm thực phẩm, viết tắt hóa đơn) ----------
+
+export type CatalogKind = "allergen-groups" | "allergen-aliases" | "allergen-terms" | "food-categories" | "receipt-abbreviations";
+type CatalogRow = { id: string; sortOrder: number; hiddenAt: string | null };
+export type AllergenTermLevel = "CONTAINS" | "MAY_CONTAIN";
+export type AdminAllergenGroup = CatalogRow & {
+  code: string; label: string; parentId: string | null;
+  aliases: Array<CatalogRow & { name: string }>;
+  terms: Array<CatalogRow & { name: string; level: AllergenTermLevel; processed: boolean }>;
+  exclusions: Array<{ id: string; phrase: string }>;
+};
+export type AdminFoodCategory = CatalogRow & {
+  name: string; defaultStorage: StorageLocation; defaultShelfLifeDays: number | null; isFallback: boolean;
+  shelfLifeRules: Array<{ id: string; pattern: string; matchMode: string; shelfLifeDays: number | null; storage: StorageLocation }>;
+};
+export type AdminReceiptAbbreviation = CatalogRow & { abbreviation: string; fullName: string };
+export type AdminCatalog = { allergenGroups: AdminAllergenGroup[]; foodCategories: AdminFoodCategory[]; receiptAbbreviations: AdminReceiptAbbreviation[] };
+export type CatalogSaveInput = { kind: CatalogKind; id?: string; body: Record<string, unknown> };
+
+export async function getAdminCatalog() {
+  return (await api.get<AdminCatalog>("/admin/catalog")).data;
+}
+
+/** Có id: sửa (PATCH, gồm ẩn/hiện bằng `hidden`); không có: thêm mới (POST). */
+export async function saveCatalogEntry({ kind, id, body }: CatalogSaveInput) {
+  const path = id ? `/admin/catalog/${kind}/${id}` : `/admin/catalog/${kind}`;
+  return (await (id ? api.patch<{ id: string; label: string }>(path, body) : api.post<{ id: string; label: string }>(path, body))).data;
 }

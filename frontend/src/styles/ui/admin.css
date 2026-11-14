@@ -299,6 +299,29 @@ body:has(.ad-shell) { background: var(--bg); }
 .ad-preview-bar__text { display: inline-flex; align-items: center; gap: var(--space-2); margin: 0; color: var(--ink-2); font-size: var(--fs-small); }
 .ad-preview-bar__text svg { width: 18px; height: 18px; color: var(--action-text); stroke-width: 1.75; }
 
+/* Danh mục dữ liệu (/admin/catalog): mỗi nhóm một thẻ; ô nhập xếp hàng ngang, xuống dòng trên điện thoại. */
+.ad-catalog { display: grid; gap: var(--space-4); min-width: 0; }
+.ad-catalog__card { display: grid; gap: var(--space-4); padding: var(--space-5); min-width: 0; }
+.ad-catalog__head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-3); }
+.ad-catalog__title { margin: 0; color: var(--ink); font-size: var(--fs-h3); font-weight: 600; }
+.ad-catalog__label { margin: 0 0 var(--space-2); color: var(--ink-2); font-size: var(--fs-small); font-weight: 600; }
+.ad-catalog__form { display: flex; flex-wrap: wrap; align-items: flex-end; gap: var(--space-3); }
+.ad-catalog__form > .ui-field { flex: 1 1 200px; min-width: 0; }
+.ad-catalog__check { display: inline-flex; align-items: center; gap: var(--space-2); min-height: var(--control-h); color: var(--ink-2); font-size: var(--fs-small); }
+.ad-catalog__items { display: flex; flex-wrap: wrap; gap: var(--space-2); margin: 0; padding: 0; list-style: none; }
+.ad-catalog__item {
+  display: inline-flex; align-items: center; gap: var(--space-2); max-width: 100%; padding: var(--space-1) var(--space-1) var(--space-1) var(--space-3);
+  border: 1px solid var(--line); border-radius: var(--radius-pill); color: var(--ink); background: var(--surface); font-size: var(--fs-small);
+  overflow-wrap: anywhere;
+}
+.ad-catalog__item[data-hidden] { color: var(--muted); background: var(--surface-2); text-decoration: line-through; }
+.ad-catalog__toggle {
+  min-height: 32px; padding: 0 var(--space-3); border: 0; border-radius: var(--radius-pill); color: var(--action-text); background: transparent;
+  font: inherit; font-weight: 600; cursor: pointer;
+}
+.ad-catalog__toggle:hover:not(:disabled) { background: var(--surface-2); }
+.ad-catalog__toggle:disabled { cursor: not-allowed; opacity: 0.6; }
+
 /*
  * Đồng bộ trang người dùng (11/11/2026) — kiểu chung + Tổng quan: tiêu đề trang lớn Fraunces, khung bảng/biểu đồ bo 24px,
  * 4 số liệu thành dải ngăn bằng đường mảnh (như dải số liệu của Tổng quan người dùng), không thẻ viền.

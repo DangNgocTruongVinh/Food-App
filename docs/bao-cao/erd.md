@@ -1,7 +1,7 @@
 # Sơ đồ dữ liệu (ERD)
 
-Sinh tự động từ `backend/prisma/schema.prisma` bằng `node scripts/docs/gen-erd.mjs` (2026-11-12).
-23 bảng, 16 kiểu enum, 33 quan hệ khóa ngoại. CSDL: PostgreSQL qua Prisma; mọi thay đổi schema có migration
+Sinh tự động từ `backend/prisma/schema.prisma` bằng `node scripts/docs/gen-erd.mjs` (2026-11-14).
+32 bảng, 19 kiểu enum, 39 quan hệ khóa ngoại. CSDL: PostgreSQL qua Prisma; mọi thay đổi schema có migration
 riêng trong `backend/prisma/migrations/`.
 
 Ký hiệu: `||--o{` một – nhiều, `||--o|` một – một (khóa ngoại duy nhất), `|o--o{` khóa ngoại có thể rỗng. Nhãn trên đường là tên quan hệ
@@ -44,6 +44,12 @@ erDiagram
   Recipe ||--o{ FavoriteRecipe : "recipe"
   User ||--o{ SavedPost : "user"
   CommunityPost ||--o{ SavedPost : "post"
+  AllergenGroup |o--o{ AllergenGroup : "parent"
+  AllergenGroup ||--o{ AllergenAlias : "group"
+  AllergenGroup ||--o{ AllergenTerm : "group"
+  AllergenGroup ||--o{ AllergenExclusion : "group"
+  FoodCategory ||--o{ FoodCategoryTerm : "category"
+  FoodCategory ||--o{ FoodShelfLifeRule : "category"
   User {
     String id PK
     String email UK
@@ -304,6 +310,82 @@ erDiagram
     String postId FK
     DateTime createdAt
   }
+  AllergenGroup {
+    String id PK
+    String code UK
+    String label UK
+    String parentId FK
+    Int sortOrder
+    DateTime hiddenAt
+    DateTime createdAt
+    DateTime updatedAt
+  }
+  AllergenAlias {
+    String id PK
+    String groupId FK
+    String name
+    Int sortOrder
+    DateTime hiddenAt
+    DateTime createdAt
+  }
+  AllergenTerm {
+    String id PK
+    String groupId FK
+    String name
+    AllergenTermLevel level
+    Boolean processed
+    Int sortOrder
+    DateTime hiddenAt
+    DateTime createdAt
+  }
+  AllergenExclusion {
+    String id PK
+    String groupId FK
+    String phrase
+  }
+  FoodCategory {
+    String id PK
+    String name UK
+    Int sortOrder
+    StorageLocation defaultStorage
+    Int defaultShelfLifeDays
+    Boolean isFallback
+    DateTime hiddenAt
+    DateTime createdAt
+    DateTime updatedAt
+  }
+  FoodCategoryTerm {
+    String id PK
+    String categoryId FK
+    String prefix
+    Int priority
+  }
+  FoodShelfLifeRule {
+    String id PK
+    String categoryId FK
+    String pattern
+    FoodTextMatch matchMode
+    Int shelfLifeDays
+    StorageLocation storage
+    Int priority
+  }
+  ReceiptAbbreviation {
+    String id PK
+    String abbreviation UK
+    String fullName
+    Int sortOrder
+    DateTime hiddenAt
+    DateTime createdAt
+    DateTime updatedAt
+  }
+  ReceiptSkipKeyword {
+    String id PK
+    String reason
+    Int reasonOrder
+    String keyword
+    ReceiptKeywordMatch matchMode
+    Int sortOrder
+  }
 ```
 
 ## Tóm tắt các bảng
@@ -333,6 +415,15 @@ erDiagram
 | ExpiryEmailLog | Email nhắc đồ sắp hết hạn đã gửi. Dòng được tạo TRƯỚC khi gửi và làm khóa: unique (userId, dayKey, slot) → chạy lịch nhiều lần hay nhiều tiến trình cũng chỉ một email/ngày ("daily"); "test-1..3" là các lần "Gửi thử ngay". itemKeys: "pantryItemId:yyyy-MM-dd" (id + hạn) của món đã nhắc, để không nhắc lại cùng món trừ khi hạn còn 1 ngày. | id | userId → User (xóa: Cascade); duy nhất: (userId, dayKey, slot) | — |
 | FavoriteRecipe | UC24 Yêu thích công thức: một người một món một lần. Cũng là tín hiệu "LIKED" cho bộ gợi ý (interaction-loader.ts, cùng trọng số với thích bài gắn món). Xóa người dùng / món → xóa theo. | id | userId → User (xóa: Cascade); recipeId → Recipe (xóa: Cascade); duy nhất: (userId, recipeId) | — |
 | SavedPost | UC25 Lưu bài viết (chỉ chủ tài khoản thấy). Bài bị xóa → dòng lưu xóa theo; bài bị ẩn / chờ duyệt → không hiện trong "Bài đã lưu". | id | userId → User (xóa: Cascade); postId → CommunityPost (xóa: Cascade); duy nhất: (userId, postId) | — |
+| AllergenGroup | Nhóm dị ứng. Nhóm có con (Hải sản → Cá, Giáp xác, Nhuyễn thể) là nhóm gộp: chọn nhóm cha = chọn mọi nhóm con. | id | parentId → AllergenGroup (xóa: Restrict); duy nhất: code, label | AllergenGroup.parentId, AllergenAlias.groupId, AllergenTerm.groupId, AllergenExclusion.groupId |
+| AllergenAlias | Tên gọi khác của nhóm (hai miền, tiếng Anh): gõ tên này ở Hồ sơ = chọn cả nhóm. | id | groupId → AllergenGroup (xóa: Cascade); duy nhất: (groupId, name) | — |
+| AllergenTerm | Nguyên liệu thuộc nhóm. processed = chế biến/gia vị/thành phần ẩn (nước mắm, dầu hào…): dị ứng tính, "Món không thích" bỏ qua. | id | groupId → AllergenGroup (xóa: Cascade); duy nhất: (groupId, name, level) | — |
+| AllergenExclusion | Ngoại lệ: tên chứa cụm này thì không thuộc nhóm dù có từ của nhóm ("sữa đậu nành" không thuộc Sữa, "mì chính" không thuộc Gluten). | id | groupId → AllergenGroup (xóa: Cascade); duy nhất: (groupId, phrase) | — |
+| FoodCategory | 8 nhóm thực phẩm của Kho và danh sách đi chợ; hạn dùng ước tính khi "Đã mua"/quét hóa đơn (null = không đặt hạn). | id | duy nhất: name | FoodCategoryTerm.categoryId, FoodShelfLifeRule.categoryId |
+| FoodCategoryTerm | Từ đầu tên → nhóm. Xét theo priority tăng dần, khớp đầu tiên thắng (ngoại lệ trước: "đậu bắp" là Rau củ, không phải Đậu & hạt). | id | categoryId → FoodCategory (xóa: Cascade); duy nhất: (categoryId, prefix) | — |
+| FoodShelfLifeRule | Hạn dùng riêng cho loại con trong nhóm (hạt khô 90 ngày, đồ khô 180 ngày, bánh mì 2 ngày nơi khô ráo); không khớp thì theo nhóm. | id | categoryId → FoodCategory (xóa: Cascade); duy nhất: (categoryId, pattern, matchMode) | — |
+| ReceiptAbbreviation | Tên viết tắt / tên thường gặp trên hóa đơn (đã bỏ dấu, chữ thường) → tên thực phẩm có dấu. | id | duy nhất: abbreviation | — |
+| ReceiptSkipKeyword | Từ khóa nhận dòng không phải hàng trên hóa đơn (thuế, giảm giá, tổng tiền, thanh toán, túi, phí, điểm, đầu/cuối hóa đơn). reasonOrder: thứ tự xét lý do (thuế, giảm giá trước tổng tiền: "Tổng giảm giá" là giảm giá). | id | duy nhất: (reason, keyword, matchMode) | — |
 
 ## Kiểu enum
 
@@ -350,10 +441,13 @@ erDiagram
 | PlanStatus | DRAFT, ACTIVE, COMPLETED |
 | NotificationType | PANTRY_EXPIRING, PANTRY_EXPIRED, PANTRY_LOW_STOCK, MEAL_REMINDER, MEAL_PLAN_CREATED, MEAL_PREP_REMINDER, COMMUNITY_LIKE, COMMUNITY_COMMENT, COMMUNITY_REPLY, COMMUNITY_FOLLOW, AI_RECIPE_SUGGESTION, AI_EXPIRY_SUGGESTION, AI_NUTRITION_SUGGESTION |
 | Role | USER, ADMIN |
-| AdminAuditAction | RECIPE_CREATE, RECIPE_UPDATE, RECIPE_HIDE, RECIPE_SHOW, RECIPE_DELETE, RECIPE_RESTORE, RECIPE_IMAGE_REPLACE, USER_LOCK, USER_UNLOCK, POST_DELETE, COMMENT_DELETE, POST_HIDE, POST_SHOW, POST_PROMOTE, POST_APPROVE |
-| AdminAuditTargetType | RECIPE, USER, COMMUNITY_POST, COMMUNITY_COMMENT |
+| AdminAuditAction | RECIPE_CREATE, RECIPE_UPDATE, RECIPE_HIDE, RECIPE_SHOW, RECIPE_DELETE, RECIPE_RESTORE, CATALOG_CREATE, CATALOG_UPDATE, RECIPE_IMAGE_REPLACE, USER_LOCK, USER_UNLOCK, POST_DELETE, COMMENT_DELETE, POST_HIDE, POST_SHOW, POST_PROMOTE, POST_APPROVE |
+| AdminAuditTargetType | RECIPE, CATALOG, USER, COMMUNITY_POST, COMMUNITY_COMMENT |
 | ReceiptOcrProvider | TESSERACT, OPENAI, MOCK |
 | ReceiptScanStatus | PROCESSING, READY, COMMITTED, REVERSED, FAILED |
+| AllergenTermLevel | CONTAINS // chắc chắn chứa (vd. Nước tương → Đậu nành), MAY_CONTAIN // có thể chứa, tùy nhãn hàng (vd. Tương đen → Gluten); vẫn bị lọc khi dị ứng, nhãn ghi "Có thể chứa" |
+| FoodTextMatch | PREFIX // tên bắt đầu bằng cụm ("đậu" → "đậu hũ", "đậu xanh"), PREFIX_WORD // tên bắt đầu bằng nguyên cụm từ ("bánh mì" → "bánh mì sandwich", không khớp "bánh mìx"), CONTAINS_WORD // tên có nguyên từ này ở bất kỳ đâu ("khô" → "mì khô") |
+| ReceiptKeywordMatch | WORD // có nguyên từ ở bất kỳ đâu ("vat", "giam gia"), PREFIX // dòng bắt đầu bằng ("tong", "tien mat"), LINE // cả dòng đúng bằng từ này, có thể kèm các từ LINE_SUFFIX cùng lý do ("tui", "tui nilon nho"), LINE_SUFFIX // từ đi kèm được phép sau từ LINE ("nilon", "giay") |
 
 ## Cột của từng bảng
 
@@ -773,3 +867,136 @@ UC25 Lưu bài viết (chỉ chủ tài khoản thấy). Bài bị xóa → dòn
 | createdAt | DateTime | có | — | — |
 
 Chỉ mục / ràng buộc: `@@unique([userId, postId])`, `@@index([userId, createdAt])`, `@@index([postId])`.
+
+### AllergenGroup
+
+Nhóm dị ứng. Nhóm có con (Hải sản → Cá, Giáp xác, Nhuyễn thể) là nhóm gộp: chọn nhóm cha = chọn mọi nhóm con.
+
+| Cột | Kiểu | Bắt buộc | Khóa | Ghi chú |
+|---|---|---|---|---|
+| id | String | có | PK | — |
+| code | String | có | UK | — |
+| label | String | có | UK | — |
+| parentId | String | không | FK | — |
+| sortOrder | Int | có | — | — |
+| hiddenAt | DateTime | không | — | — |
+| createdAt | DateTime | có | — | — |
+| updatedAt | DateTime | có | — | — |
+
+### AllergenAlias
+
+Tên gọi khác của nhóm (hai miền, tiếng Anh): gõ tên này ở Hồ sơ = chọn cả nhóm.
+
+| Cột | Kiểu | Bắt buộc | Khóa | Ghi chú |
+|---|---|---|---|---|
+| id | String | có | PK | — |
+| groupId | String | có | FK | — |
+| name | String | có | — | — |
+| sortOrder | Int | có | — | — |
+| hiddenAt | DateTime | không | — | — |
+| createdAt | DateTime | có | — | — |
+
+Chỉ mục / ràng buộc: `@@unique([groupId, name])`.
+
+### AllergenTerm
+
+Nguyên liệu thuộc nhóm. processed = chế biến/gia vị/thành phần ẩn (nước mắm, dầu hào…): dị ứng tính, "Món không thích" bỏ qua.
+
+| Cột | Kiểu | Bắt buộc | Khóa | Ghi chú |
+|---|---|---|---|---|
+| id | String | có | PK | — |
+| groupId | String | có | FK | — |
+| name | String | có | — | — |
+| level | AllergenTermLevel (enum) | có | — | — |
+| processed | Boolean | có | — | — |
+| sortOrder | Int | có | — | — |
+| hiddenAt | DateTime | không | — | — |
+| createdAt | DateTime | có | — | — |
+
+Chỉ mục / ràng buộc: `@@unique([groupId, name, level])`, `@@index([groupId, sortOrder])`.
+
+### AllergenExclusion
+
+Ngoại lệ: tên chứa cụm này thì không thuộc nhóm dù có từ của nhóm ("sữa đậu nành" không thuộc Sữa, "mì chính" không thuộc Gluten).
+
+| Cột | Kiểu | Bắt buộc | Khóa | Ghi chú |
+|---|---|---|---|---|
+| id | String | có | PK | — |
+| groupId | String | có | FK | — |
+| phrase | String | có | — | — |
+
+Chỉ mục / ràng buộc: `@@unique([groupId, phrase])`.
+
+### FoodCategory
+
+8 nhóm thực phẩm của Kho và danh sách đi chợ; hạn dùng ước tính khi "Đã mua"/quét hóa đơn (null = không đặt hạn).
+
+| Cột | Kiểu | Bắt buộc | Khóa | Ghi chú |
+|---|---|---|---|---|
+| id | String | có | PK | — |
+| name | String | có | UK | — |
+| sortOrder | Int | có | — | — |
+| defaultStorage | StorageLocation (enum) | có | — | — |
+| defaultShelfLifeDays | Int | không | — | — |
+| isFallback | Boolean | có | — | Nhóm nhận các tên không khớp từ nào (đúng một nhóm, "Khác"). |
+| hiddenAt | DateTime | không | — | — |
+| createdAt | DateTime | có | — | — |
+| updatedAt | DateTime | có | — | — |
+
+### FoodCategoryTerm
+
+Từ đầu tên → nhóm. Xét theo priority tăng dần, khớp đầu tiên thắng (ngoại lệ trước: "đậu bắp" là Rau củ, không phải Đậu & hạt).
+
+| Cột | Kiểu | Bắt buộc | Khóa | Ghi chú |
+|---|---|---|---|---|
+| id | String | có | PK | — |
+| categoryId | String | có | FK | — |
+| prefix | String | có | — | — |
+| priority | Int | có | — | — |
+
+Chỉ mục / ràng buộc: `@@unique([categoryId, prefix])`, `@@index([priority])`.
+
+### FoodShelfLifeRule
+
+Hạn dùng riêng cho loại con trong nhóm (hạt khô 90 ngày, đồ khô 180 ngày, bánh mì 2 ngày nơi khô ráo); không khớp thì theo nhóm.
+
+| Cột | Kiểu | Bắt buộc | Khóa | Ghi chú |
+|---|---|---|---|---|
+| id | String | có | PK | — |
+| categoryId | String | có | FK | — |
+| pattern | String | có | — | — |
+| matchMode | FoodTextMatch (enum) | có | — | — |
+| shelfLifeDays | Int | không | — | — |
+| storage | StorageLocation (enum) | có | — | — |
+| priority | Int | có | — | — |
+
+Chỉ mục / ràng buộc: `@@unique([categoryId, pattern, matchMode])`.
+
+### ReceiptAbbreviation
+
+Tên viết tắt / tên thường gặp trên hóa đơn (đã bỏ dấu, chữ thường) → tên thực phẩm có dấu.
+
+| Cột | Kiểu | Bắt buộc | Khóa | Ghi chú |
+|---|---|---|---|---|
+| id | String | có | PK | — |
+| abbreviation | String | có | UK | — |
+| fullName | String | có | — | — |
+| sortOrder | Int | có | — | — |
+| hiddenAt | DateTime | không | — | — |
+| createdAt | DateTime | có | — | — |
+| updatedAt | DateTime | có | — | — |
+
+### ReceiptSkipKeyword
+
+Từ khóa nhận dòng không phải hàng trên hóa đơn (thuế, giảm giá, tổng tiền, thanh toán, túi, phí, điểm, đầu/cuối hóa đơn). reasonOrder: thứ tự xét lý do (thuế, giảm giá trước tổng tiền: "Tổng giảm giá" là giảm giá).
+
+| Cột | Kiểu | Bắt buộc | Khóa | Ghi chú |
+|---|---|---|---|---|
+| id | String | có | PK | — |
+| reason | String | có | — | — |
+| reasonOrder | Int | có | — | — |
+| keyword | String | có | — | — |
+| matchMode | ReceiptKeywordMatch (enum) | có | — | — |
+| sortOrder | Int | có | — | — |
+
+Chỉ mục / ràng buộc: `@@unique([reason, keyword, matchMode])`.

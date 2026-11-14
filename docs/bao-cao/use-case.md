@@ -142,3 +142,17 @@ Mẫu giống mục 12 `REPORT_NOURI.md`. Mọi thao tác của Người dùng c
 - Luồng chính: (1) thêm món vào ngày/bữa (kể cả ngày trống, bữa phụ) từ thực đơn hoặc từ chi tiết món; (2) xóa một bữa; (3) bữa vi phạm hồ sơ (sau khi đổi dị ứng/chế độ ăn) có nút "Đổi món": server chọn món thay qua lọc an toàn.
 - Luồng phụ: danh sách đi chợ chỉ đổi theo phần của bữa đó.
 - Bằng chứng: `backend/src/modules/meal-plans/meal-plan-items.service.ts` (`addMealPlanItem`, `shoppingChangesForMeal`), `meal-swap.service.ts` (`swapMealItem`).
+
+### UC40 — Admin quản lý danh mục dữ liệu
+
+- Tác nhân chính: Admin.
+- Luồng chính: (1) khu `/admin` → Danh mục dữ liệu, chọn loại: Nhóm dị ứng / Nhóm thực phẩm / Viết tắt hóa đơn; (2) nhóm dị ứng: thêm nhóm
+  (có thể thuộc nhóm cha, như Hải sản → Cá), đổi tên, thêm tên gọi khác, thêm nguyên liệu thuộc nhóm với mức "Chứa" hoặc "Có thể chứa"
+  và cờ chế biến/gia vị; (3) nhóm thực phẩm: thêm, đổi tên, nơi bảo quản và hạn dùng mặc định; (4) viết tắt hóa đơn: thêm (lưu dạng bỏ
+  dấu), ẩn/hiện; (5) mọi mục chỉ ẩn/hiện, không xóa. Mỗi thao tác kiểm bằng Zod, ghi `AdminAuditLog` (`CATALOG_CREATE`/`CATALOG_UPDATE`)
+  cùng transaction; lưu xong backend nạp lại danh mục vào bộ nhớ nên bộ lọc dị ứng, nhóm Kho, đọc hóa đơn dùng bản mới ngay.
+- Luồng phụ: ẩn nhóm hoặc nguyên liệu dị ứng phải xác nhận (bộ lọc sẽ thôi nhận); đổi tên nhóm dị ứng giữ tên cũ làm tên gọi khác (hồ sơ
+  cũ vẫn nhận ra); đổi tên nhóm thực phẩm đổi theo trong Kho và danh sách đi chợ; trùng tên → 409; không ẩn được nhóm thực phẩm mặc định
+  ("Khác").
+- Bằng chứng: `backend/src/modules/admin/admin-catalog.*`, `backend/src/services/catalog/`, `backend/prisma/catalog-data.ts`,
+  `frontend/src/pages/admin/AdminCatalogPage.tsx`, test `admin-catalog.test.ts` (thêm tên gọi khác → lọc nhận ra ngay).

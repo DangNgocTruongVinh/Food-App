@@ -1,6 +1,5 @@
 import type { MealPlanJob, PlanFallbackReason } from "./meal-plans.api";
 import type { MealPlan, MealPlanDay, MealPlanItem, MealPlanStatus, MealType, NutritionProfile, ShoppingItem } from "../../types";
-import { FOOD_CATEGORIES } from "../../utils/food-categories";
 
 export const mealLabels: Record<MealType, string> = {
   BREAKFAST: "Bữa sáng", LUNCH: "Bữa trưa", DINNER: "Bữa tối", SNACK: "Bữa phụ",
@@ -153,17 +152,17 @@ export function mealPlanDeleteConfirm(plan: Pick<MealPlan, "name" | "status">) {
 
 // ---------- Danh sách đi chợ ----------
 
-/** Danh sách đi chợ theo nhóm (thứ tự 8 nhóm chung), trong nhóm: chưa mua trước, rồi theo tên. */
-export function groupShoppingItems<T extends Pick<ShoppingItem, "name" | "purchased"> & { category?: string | null }>(items: T[]) {
+/** Danh sách đi chợ theo nhóm (thứ tự nhóm của danh mục, nhóm lạ xếp cuối), trong nhóm: chưa mua trước, rồi theo tên. */
+export function groupShoppingItems<T extends Pick<ShoppingItem, "name" | "purchased"> & { category?: string | null }>(items: T[], categories: string[]) {
   const groups = new Map<string, T[]>();
   items.forEach((item) => {
-    // Nhóm do backend gán (services/food-category.ts); thiếu thì "Khác".
-    const group = item.category?.trim() || "Khác";
+    // Nhóm do backend gán (services/food-category.ts, luôn có); thiếu thì nhóm cuối của danh mục (nhóm mặc định).
+    const group = item.category?.trim() || categories[categories.length - 1] || "";
     groups.set(group, [...(groups.get(group) ?? []), item]);
   });
   const rank = (group: string) => {
-    const index = (FOOD_CATEGORIES as readonly string[]).indexOf(group);
-    return index < 0 ? FOOD_CATEGORIES.length - 1 : index;
+    const index = categories.indexOf(group);
+    return index < 0 ? categories.length : index;
   };
   return [...groups.entries()]
     .sort(([a], [b]) => rank(a) - rank(b) || a.localeCompare(b, "vi"))

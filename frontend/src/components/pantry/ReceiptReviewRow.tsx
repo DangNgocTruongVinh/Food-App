@@ -1,3 +1,4 @@
+import { useFoodCategoryNames } from "../../features/catalog/catalog.queries";
 import { CircleAlert } from "lucide-react";
 import { FLAG_LABELS, isExpiryEstimated, targetText, warningText, type EditableLine, type LineErrors } from "../../features/pantry/receipt-scan.logic";
 import { pantryCategoryOptions } from "../../features/pantry/pantry.logic";
@@ -20,6 +21,7 @@ type ReceiptReviewRowProps = {
 
 /** Một dòng trên màn duyệt: chọn/bỏ, sửa tên, số lượng, đơn vị, nhóm, hạn; nơi sẽ vào trong kho; cờ đọc chưa chắc; cảnh báo dị ứng. */
 export function ReceiptReviewRow({ line, index, errors, onChange, onExpiryStatus }: ReceiptReviewRowProps) {
+  const categories = useFoodCategoryNames();
   const estimated = isExpiryEstimated(line);
   const disabled = !line.include;
   return (
@@ -60,7 +62,7 @@ export function ReceiptReviewRow({ line, index, errors, onChange, onExpiryStatus
         <Field label="Nhóm" className="kho-scan-row__half">
           {(control) => (
             <select {...control} value={line.category} onChange={(event) => onChange({ category: event.target.value })}>
-              {pantryCategoryOptions(line.category).map((category) => <option key={category}>{category}</option>)}
+              {pantryCategoryOptions(line.category, categories).map((category) => <option key={category}>{category}</option>)}
             </select>
           )}
         </Field>

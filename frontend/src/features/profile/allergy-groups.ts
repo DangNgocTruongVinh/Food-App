@@ -1,5 +1,6 @@
 /**
- * Danh mục nhóm dị ứng dùng chung (dị ứng, món không thích, nhãn chay, gợi ý ô nhập, Admin nhận nhóm nguyên liệu).
+ * Logic nhóm dị ứng dùng chung (dị ứng, món không thích, nhãn chay, gợi ý ô nhập, Admin nhận nhóm nguyên liệu). Chỉ có LOGIC;
+ * danh mục (nhóm, tên gọi khác, nguyên liệu, ngoại lệ) nằm trong database, nạp vào bằng setAllergyCatalog.
  * BẢN GỐC: backend/src/services/allergy-groups.ts; frontend/src/features/profile/allergy-groups.ts là bản chép y nguyên
  * (test frontend so hai file, sửa ở đây rồi chép sang). Không import gì để hai phía dùng được.
  *
@@ -24,107 +25,41 @@ export type AllergyGroup = {
   excludes?: string[];
   /** Nhóm gộp: chọn nhóm này = chọn các nhóm con (Hải sản = Cá + Giáp xác + Nhuyễn thể). */
   covers?: string[];
+  /** Nguyên liệu chế biến/gia vị/thành phần ẩn trong `terms` (nước mắm, dầu hào…): dị ứng tính, "Món không thích" bỏ qua. */
+  processed?: string[];
 };
 
 /** Tiền tố nhãn của nhóm "có thể chứa" (backend dựng nhãn, frontend tách ra để ghi "Có thể chứa: …"). */
 export const MAY_CONTAIN_PREFIX = "Có thể chứa ";
 
-const PLANT_MILKS = ["sữa đậu nành", "sữa hạnh nhân", "sữa óc chó", "sữa hạt", "sữa dừa", "sữa yến mạch", "sữa gạo", "sữa bắp"];
-
-export const ALLERGY_GROUPS: AllergyGroup[] = [
-  {
-    id: "EGG", label: "Trứng",
-    aliases: ["trứng", "trứng gà", "trứng vịt", "trứng cút", "trứng gà ta", "lòng đỏ", "lòng trắng", "egg", "eggs"],
-    terms: ["trứng", "lòng đỏ", "lòng trắng", "mayonnaise", "sốt mayonnaise", "sốt mayo", "mayo", "sốt trứng"],
-  },
-  {
-    id: "MILK", label: "Sữa",
-    aliases: ["sữa", "sữa bò", "sản phẩm từ sữa", "lactose", "đạm sữa", "milk", "dairy"],
-    terms: [
-      "sữa", "sữa tươi", "sữa chua", "sữa đặc", "sữa bột", "phô mai", "pho mát", "bơ", "bơ lạt", "bơ nhạt", "bơ động vật", "kem", "kem tươi",
-      "kem sữa", "váng sữa", "whey", "cheese", "butter",
-    ],
-    // "Bơ" một mình là bơ sữa; "quả bơ"/"trái bơ"/"sinh tố bơ" là trái cây, "bơ đậu phộng" thuộc Đậu phộng.
-    excludes: [...PLANT_MILKS, "sữa chua đậu nành", "quả bơ", "trái bơ", "sinh tố bơ", "bơ đậu phộng", "bơ thực vật", "kem dừa"],
-  },
-  {
-    id: "SEAFOOD", label: "Hải sản",
-    aliases: ["hải sản", "thủy sản", "đồ biển", "seafood"], terms: [], covers: ["FISH", "CRUSTACEAN", "MOLLUSC"],
-  },
-  {
-    id: "FISH", label: "Cá",
-    aliases: ["cá", "fish", "cá biển", "cá sông"],
-    terms: [
-      "cá", "cá hồi", "cá lóc", "cá basa", "cá thu", "cá ngừ", "cá rô", "cá diêu hồng", "cá cơm", "nước mắm", "mắm", "mắm nêm", "dầu cá",
-      "mắm cá", "mắm cá linh", "mắm thái",
-    ],
-  },
-  {
-    id: "CRUSTACEAN", label: "Giáp xác",
-    aliases: ["giáp xác", "tôm cua", "shrimp", "crab", "shellfish"],
-    terms: ["tôm", "tôm sú", "tôm thẻ", "tôm khô", "tép", "cua", "ghẹ", "mắm tôm", "ruốc", "mắm ruốc", "tôm hùm", "gạch cua", "bánh phồng tôm"],
-  },
-  {
-    id: "MOLLUSC", label: "Nhuyễn thể",
-    aliases: ["nhuyễn thể", "thân mềm", "squid", "clam", "oyster"],
-    terms: ["mực", "bạch tuộc", "nghêu", "ngao", "sò", "hến", "ốc", "hàu", "sò điệp", "vẹm", "dầu hào", "sốt dầu hào"],
-  },
-  {
-    id: "PEANUT", label: "Đậu phộng",
-    aliases: ["đậu phộng", "lạc", "peanut", "peanuts"],
-    terms: ["đậu phộng", "lạc", "lạc rang", "bơ đậu phộng", "dầu đậu phộng", "dầu lạc", "sốt đậu phộng", "muối đậu phộng"],
-    mayContain: ["sa tế", "tương đậu phộng", "nước chấm gỏi cuốn"],
-  },
-  {
-    id: "TREE_NUT", label: "Hạt cây",
-    aliases: ["hạt cây", "các loại hạt", "hạt", "tree nut", "tree nuts", "nuts"],
-    terms: ["óc chó", "hạnh nhân", "hạt điều", "hạt dẻ", "hạt phỉ", "hồ đào", "mắc ca", "macca", "hạt thông", "hạt dẻ cười", "sữa hạnh nhân", "sữa óc chó"],
-  },
-  {
-    id: "GLUTEN", label: "Gluten",
-    aliases: ["gluten", "lúa mì", "bột mì", "wheat"],
-    terms: [
-      "bột mì", "bánh mì", "mì", "mì ý", "mì trứng", "mì gói", "bột chiên giòn", "bột chiên xù", "lúa mì", "lúa mạch", "pasta",
-      "nước tương", "xì dầu", "vỏ bánh bao", "bánh bao", "mì căn", "seitan",
-    ],
-    // Tùy nhãn hàng: tương đen (hoisin), tương ớt Hàn Quốc (gochujang), dầu hào thường có bột mì; yến mạch, bún tàu dễ lẫn lúa mì.
-    mayContain: ["tương đen", "tương ớt hàn quốc", "gochujang", "dầu hào", "sốt dầu hào", "miso", "yến mạch", "bún tàu", "bột năng trộn"],
-    // "Mì" là lúa mì, trừ mì chính (bột ngọt) và mì Quảng (bột gạo).
-    excludes: ["mì chính", "mì quảng"],
-  },
-  {
-    id: "SOY", label: "Đậu nành",
-    aliases: ["đậu nành", "đỗ tương", "đậu tương", "soy", "soya"],
-    terms: [
-      "đậu nành", "đỗ tương", "đậu tương", "sữa đậu nành", "đậu hũ", "đậu phụ", "tàu hũ", "tào phớ", "tàu hũ ky", "váng đậu", "nước tương",
-      "xì dầu", "tương đen", "tương bần", "tương hột", "tương ớt hàn quốc", "gochujang", "miso", "chao", "tempeh", "edamame",
-    ],
-    mayContain: ["dầu hào", "sốt dầu hào", "hạt nêm chay"],
-  },
-  {
-    id: "SESAME", label: "Mè",
-    aliases: ["mè", "vừng", "sesame"],
-    terms: ["mè", "vừng", "mè rang", "dầu mè", "dầu vừng", "muối mè", "tahini", "sốt mè"],
-    mayContain: ["tương đen", "sốt mè rang"],
-  },
-];
-
 /**
- * Nguyên liệu chế biến / gia vị / thành phần ẩn của các nhóm. DỊ ỨNG tính cả những thứ này (an toàn trước); MÓN KHÔNG THÍCH
- * (khẩu vị) thì không: không thích "cá" vẫn ăn được món có nước mắm. Ghi đích danh ("nước mắm") thì mới lọc gia vị đó.
+ * Kho danh mục trong bộ nhớ. DỮ LIỆU KHÔNG VIẾT TRONG CODE: backend nạp từ database (services/catalog/catalog.service.ts, các bảng
+ * AllergenGroup/Alias/Term/Exclusion), frontend nạp từ GET /api/catalog. Chưa nạp thì mọi hàm lọc báo lỗi (không bao giờ lọc
+ * im lặng với danh mục rỗng — như vậy sẽ bỏ sót dị ứng).
  */
-export const PROCESSED_FOOD_TERMS = new Set([
-  "nước mắm", "mắm", "mắm nêm", "dầu cá", "mắm cá", "mắm cá linh", "mắm thái", "mắm tôm", "ruốc", "mắm ruốc", "bánh phồng tôm", "gạch cua",
-  "dầu hào", "sốt dầu hào", "mayonnaise", "sốt mayonnaise", "sốt mayo", "mayo", "sốt trứng", "whey", "nước tương", "xì dầu", "tương đen",
-  "tương bần", "tương hột", "tương ớt hàn quốc", "gochujang", "miso", "chao", "bột chiên giòn", "bột chiên xù", "vỏ bánh bao",
-  "dầu đậu phộng", "dầu lạc", "sốt đậu phộng", "muối đậu phộng", "bơ đậu phộng", "dầu mè", "dầu vừng", "muối mè", "tahini", "sốt mè",
-  "sữa hạnh nhân", "sữa óc chó", "sữa đậu nành",
-]);
+let groups: AllergyGroup[] | null = null;
+let byId = new Map<string, AllergyGroup>();
+let version = 0;
 
-/** Nguyên liệu chính của nhóm (bỏ chế biến/gia vị) — dùng cho "Món không thích". */
-export const mainTermsOf = (group: AllergyGroup) => group.terms.filter((term) => !PROCESSED_FOOD_TERMS.has(term));
+export function setAllergyCatalog(list: AllergyGroup[]) {
+  groups = list;
+  byId = new Map(list.map((group) => [group.id, group]));
+  resolveCache.clear();
+  matchesCache.clear();
+  version += 1;
+}
 
-const BY_ID = new Map(ALLERGY_GROUPS.map((group) => [group.id, group]));
+export const isAllergyCatalogLoaded = () => groups !== null;
+/** Tăng mỗi lần nạp lại danh mục (nơi khác dựng bộ nhớ đệm từ danh mục thì so số này để dựng lại). */
+export const allergyCatalogVersion = () => version;
+
+export function allergyGroups(): AllergyGroup[] {
+  if (!groups) throw new Error("Chưa nạp danh mục dị ứng (setAllergyCatalog).");
+  return groups;
+}
+
+/** Nguyên liệu chính của nhóm (bỏ chế biến/gia vị/thành phần ẩn) — dùng cho "Món không thích". */
+export const mainTermsOf = (group: AllergyGroup) => group.terms.filter((term) => !(group.processed ?? []).includes(term));
 // Từ thừa người dùng hay gõ kèm ("dị ứng trứng", "bị dị ứng với tôm"): bỏ trước khi so.
 const FILLER_WORDS = new Set(["di", "ung", "bi", "voi", "mon", "toi", "allergy", "allergic"]);
 
@@ -147,7 +82,7 @@ export function stripFillerWords(value: string) {
 
 /** Nhóm thật (mở nhóm gộp thành nhóm con). */
 export function expandGroups(groups: AllergyGroup[]) {
-  return [...new Set(groups.flatMap((group) => (group.covers ? group.covers.map((id) => BY_ID.get(id)!) : [group])))];
+  return [...new Set(groups.flatMap((group) => (group.covers ? group.covers.map((id) => byId.get(id)!).filter(Boolean) : [group])))];
 }
 
 /** So một cụm của danh mục (có dấu) với cụm người dùng gõ: có dấu thì so có dấu, không dấu thì so không dấu. */
@@ -180,8 +115,8 @@ function remember<T>(cache: Map<string, T>, key: string, compute: () => T) {
 function resolveUncached(raw: string, strict: boolean): ResolvedRestriction {
   const typed = stripFillerWords(raw) || normalizeAllergyText(raw);
   if (!typed) return { input: raw, groups: [], text: null };
-  const byName = ALLERGY_GROUPS.filter((group) => [group.label, ...group.aliases].some((name) => sameTerm(typed, name)));
-  const byTerm = strict && !byName.length ? ALLERGY_GROUPS.filter((group) => group.terms.some((term) => sameTerm(typed, term))) : [];
+  const byName = allergyGroups().filter((group) => [group.label, ...group.aliases].some((name) => sameTerm(typed, name)));
+  const byTerm = strict && !byName.length ? allergyGroups().filter((group) => group.terms.some((term) => sameTerm(typed, term))) : [];
   const groups = expandGroups(byName.length ? byName : byTerm);
   return { input: raw, groups, text: groups.length ? null : typed };
 }
@@ -207,7 +142,7 @@ export type FoodAllergyMatch = { group: AllergyGroup; certain: boolean };
  * Đậu nành + Gluten).
  */
 export function allergyMatchesOfFoodName(name: string): FoodAllergyMatch[] {
-  return remember(matchesCache, name, () => ALLERGY_GROUPS.flatMap((group): FoodAllergyMatch[] => {
+  return remember(matchesCache, name, () => allergyGroups().flatMap((group): FoodAllergyMatch[] => {
     if (group.covers || (group.excludes ?? []).some((phrase) => containsTerm(name, phrase, { exact: true }))) return [];
     if (group.terms.some((term) => containsTerm(name, term, { exact: true }))) return [{ group, certain: true }];
     if ((group.mayContain ?? []).some((term) => containsTerm(name, term, { exact: true }))) return [{ group, certain: false }];
@@ -239,7 +174,7 @@ export function suggestAllergyGroup(raw: string): AllergyGroup | null {
   if (typed.length < 2 || resolveRestriction(raw).groups.length) return null;
   const limit = typed.length <= 6 ? 1 : 2;
   let best: { group: AllergyGroup; distance: number } | null = null;
-  for (const group of ALLERGY_GROUPS) {
+  for (const group of allergyGroups()) {
     for (const name of [group.label, ...group.aliases, ...group.terms]) {
       const candidate = foldAllergyText(name);
       if (candidate.length < 3) continue; // "cá", "mè", "sò": quá ngắn, sai 1 ký tự là thành từ khác

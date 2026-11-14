@@ -66,7 +66,16 @@ export const AUDIT_ACTION_LABELS: Record<AuditAction, string> = {
   RECIPE_CREATE: "Tạo món", RECIPE_UPDATE: "Sửa món", RECIPE_HIDE: "Ẩn món", RECIPE_SHOW: "Hiện lại món", RECIPE_DELETE: "Xóa món", RECIPE_RESTORE: "Khôi phục món",
   RECIPE_IMAGE_REPLACE: "Đổi ảnh món", USER_LOCK: "Khóa tài khoản", USER_UNLOCK: "Mở khóa tài khoản", POST_DELETE: "Xóa bài viết",
   COMMENT_DELETE: "Xóa bình luận", POST_HIDE: "Ẩn bài viết", POST_SHOW: "Hiện lại bài viết", POST_PROMOTE: "Chuyển thành công thức",
-  POST_APPROVE: "Duyệt bài AI đánh dấu",
+  POST_APPROVE: "Duyệt bài AI đánh dấu", CATALOG_CREATE: "Thêm vào danh mục", CATALOG_UPDATE: "Sửa danh mục",
+};
+
+const CATALOG_KIND_LABELS: Record<string, string> = {
+  "allergen-groups": "nhóm dị ứng", "allergen-aliases": "tên gọi khác", "allergen-terms": "nguyên liệu thuộc nhóm",
+  "food-categories": "nhóm thực phẩm", "receipt-abbreviations": "viết tắt hóa đơn",
+};
+const CATALOG_FIELD_LABELS: Record<string, string> = {
+  label: "tên", name: "tên", parentId: "nhóm cha", hidden: "ẩn/hiện", level: "mức", processed: "chế biến/gia vị",
+  defaultStorage: "nơi bảo quản", defaultShelfLifeDays: "hạn dùng", abbreviation: "chữ viết tắt", fullName: "tên đầy đủ",
 };
 
 const RECIPE_FIELD_LABELS: Record<string, string> = {
@@ -105,6 +114,12 @@ export function auditDetails(log: Pick<AuditLog, "action" | "details">) {
       return `${count("imageCount")} ảnh, ${count("commentCount")} bình luận, ${count("likeCount")} lượt thích${details.hasRecipe ? ", có công thức đính kèm" : ""}`;
     case "COMMENT_DELETE":
       return "Xóa một bình luận trong bài";
+    case "CATALOG_CREATE":
+      return `Thêm ${CATALOG_KIND_LABELS[String(details.kind)] ?? "mục"}`;
+    case "CATALOG_UPDATE": {
+      const fields = ((details.changedFields as string[] | undefined) ?? []).map((field) => CATALOG_FIELD_LABELS[field] ?? field);
+      return `${CATALOG_KIND_LABELS[String(details.kind)] ?? "Mục"}: đổi ${fields.join(", ")}`;
+    }
     case "POST_PROMOTE":
       return details.recipeName ? `Thêm vào thư viện: ${String(details.recipeName)}` : "Thêm công thức tự viết vào thư viện";
     default:
@@ -116,5 +131,6 @@ export function auditDetails(log: Pick<AuditLog, "action" | "details">) {
 export function auditTargetLink(log: Pick<AuditLog, "targetType" | "targetId" | "targetLabel">, existing: { recipes: Set<string>; users: Set<string> }) {
   if (log.targetType === "RECIPE" && existing.recipes.has(log.targetId)) return `/admin/recipes/${log.targetId}/edit`;
   if (log.targetType === "USER" && existing.users.has(log.targetId)) return `/admin/users?search=${encodeURIComponent(log.targetLabel ?? "")}`;
+  if (log.targetType === "CATALOG") return "/admin/catalog";
   return null;
 }

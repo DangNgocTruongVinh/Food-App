@@ -14,6 +14,10 @@ import { prepareReceiptImage } from "../src/services/receipt/receipt-image.js";
 import { normalizeReceiptItems } from "../src/services/receipt/receipt-normalize.js";
 import { parseOcrOutput } from "../src/services/receipt/receipt-parser.js";
 import type { OcrOutput, ReceiptOcrProvider } from "../src/services/receipt/receipt-types.js";
+import { useSeedCatalog } from "../src/services/catalog/catalog-build.js";
+
+// Mô phỏng không có database: nạp danh mục từ dữ liệu seed (cùng hàm dựng như khi chạy thật).
+useSeedCatalog();
 
 // Đo tỉ lệ đọc đúng của quét hóa đơn trên bộ ảnh thật (GĐ3c). Không cần DB: tên đã biết lấy từ seed-data (33 món), kho rỗng.
 //   npm run eval:receipt -w backend                          (Tesseract, và OpenAI nếu có OPENAI_API_KEY, trên rNN.jpg|png|webp)

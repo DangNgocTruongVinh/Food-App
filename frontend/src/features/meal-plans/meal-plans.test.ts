@@ -1,6 +1,7 @@
 import type { QueryClient } from "@tanstack/react-query";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { api } from "../../api/client";
+import { SEED_FOOD_CATEGORIES } from "../../test/seed-catalog";
 import { createAppQueryClient, retryUnlessClientError } from "../../api/query-client";
 import { queryKeys } from "../../api/query-keys";
 import type { MealPlan, MealPlanItem, NutritionProfile, Recipe } from "../../types";
@@ -264,7 +265,7 @@ describe("Meal Plan and Shopping page business logic", () => {
       { name: "Hành lá", purchased: false, category: "Rau củ" }, { name: "Tôm", purchased: false, category: "Thịt & cá" },
       { name: "Đậu hũ", purchased: false, category: "Đậu & hạt" }, { name: "Gạo", purchased: false, category: "Ngũ cốc" },
       { name: "Đá viên", purchased: false, category: null },
-    ]);
+    ], SEED_FOOD_CATEGORIES);
     expect(result.map((group) => [group.name, group.items.map((item) => item.name)])).toEqual([
       ["Rau củ", ["Hành lá", "Tỏi"]], ["Thịt & cá", ["Tôm"]], ["Đậu & hạt", ["Đậu hũ"]], ["Ngũ cốc", ["Gạo"]], ["Gia vị", ["Muối"]], ["Khác", ["Đá viên"]],
     ]);

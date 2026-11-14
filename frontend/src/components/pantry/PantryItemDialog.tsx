@@ -1,3 +1,4 @@
+import { useFoodCategoryNames } from "../../features/catalog/catalog.queries";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { type FormEvent, useRef, useState } from "react";
 import { getApiError } from "../../api/client";
@@ -30,6 +31,7 @@ const numberValue = (value: number) => (Number.isNaN(value) ? "" : value);
 
 /** Hộp thoại Thêm/Sửa thực phẩm: đúng các trường của kho; lỗi hiện ngay dưới trường sau lần bấm lưu đầu tiên. */
 export function PantryItemDialog({ item, onClose, onSaved }: PantryItemDialogProps) {
+  const categories = useFoodCategoryNames();
   const queryClient = useQueryClient();
   const formRef = useRef<HTMLFormElement>(null);
   const [form, setForm] = useState<PantryFormValues>(() => (item ? toPantryFormValues(item) : initialPantryForm));
@@ -90,7 +92,7 @@ export function PantryItemDialog({ item, onClose, onSaved }: PantryItemDialogPro
         <Field label="Nhóm">
           {(control) => (
             <select {...control} value={form.category} onChange={(event) => update("category", event.target.value)}>
-              {pantryCategoryOptions(form.category).map((category) => <option key={category}>{category}</option>)}
+              {pantryCategoryOptions(form.category, categories).map((category) => <option key={category}>{category}</option>)}
             </select>
           )}
         </Field>

@@ -14,7 +14,6 @@ export const DIET_TAG_OPTIONS: Array<[DietTag, string]> = [
   ["BALANCED", "Cân bằng"], ["VEGETARIAN", "Món chay"], ["VEGAN", "Thuần chay"], ["LOW_CARB", "Ít tinh bột"], ["HIGH_PROTEIN", "Giàu đạm"],
 ];
 export const UNIT_OPTIONS: Array<[FoodUnit, string]> = [["G", "g"], ["KG", "kg"], ["ML", "ml"], ["L", "lít"], ["ITEM", "cái"], ["PACKAGE", "gói"]];
-export const CUISINE_OPTIONS = ["Việt Nam", "Nhật Bản", "Hàn Quốc", "Thái Lan", "Ý", "Hy Lạp", "Mỹ"];
 
 export type IngredientRow = { key: string; name: string; quantity: string; unit: FoodUnit; optional: boolean };
 export type StepRow = { key: string; text: string };

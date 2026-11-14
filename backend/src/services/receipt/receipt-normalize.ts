@@ -1,8 +1,8 @@
 import type { FoodUnit, StorageLocation } from "@prisma/client";
 import { expandRestrictedTerms, findRestrictedTerms, withoutNestedTerms } from "../dietary.service.js";
-import { foodCategoryOf, type FoodCategory } from "../food-category.js";
+import { foodCategoryOf } from "../food-category.js";
 import { choosePurchaseTarget, suggestedPantryDefaults, type PurchasePantryItem } from "../pantry-purchase.js";
-import { RECEIPT_ALIASES } from "./receipt-aliases.js";
+import { receiptAbbreviations } from "./receipt-catalog.js";
 import { foldText, hasVietnameseMarks, sentenceCase } from "./receipt-text.js";
 import type { RawReceiptItem } from "./receipt-types.js";
 
@@ -20,7 +20,7 @@ export type ReceiptDraftLine = {
   name: string;
   quantity: number;
   unit: FoodUnit;
-  category: FoodCategory;
+  category: string;
   storageLocation: StorageLocation;
   /** yyyy-MM-dd */
   expiryDate: string | null;
@@ -64,7 +64,7 @@ function buildLevel(pairs: Array<[string, string]>): NameLevel {
 /** Thứ tự ưu tiên: tên trong kho của người dùng → tên nguyên liệu của bộ món → bảng viết tắt hóa đơn. */
 export function buildNameIndex(pantryNames: string[], knownNames: string[]): NameIndex {
   const own = (names: string[]) => names.map((name) => [foldText(name), name.trim().replace(/\s+/g, " ")] as [string, string]);
-  return [buildLevel(own(pantryNames)), buildLevel(own(knownNames)), buildLevel(RECEIPT_ALIASES)];
+  return [buildLevel(own(pantryNames)), buildLevel(own(knownNames)), buildLevel(receiptAbbreviations())];
 }
 
 /**

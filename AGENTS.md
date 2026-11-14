@@ -7,6 +7,8 @@
 - Frontend dùng `features/*/*.api.ts`, component theo `components/<module>/`,
   thành phần dùng chung ở `components/ui/`.
 - CSS dùng token trong `styles/ui/tokens.css`.
+- Dữ liệu nghiệp vụ (danh mục dị ứng, nhóm thực phẩm, hạn dùng, viết tắt hóa đơn…) lưu trong database, đọc qua
+  `backend/src/services/catalog/`; không viết mảng danh mục trong code chạy thật (dữ liệu ban đầu chỉ ở `backend/prisma/catalog-data.ts`).
 
 ## Đóng băng code
 

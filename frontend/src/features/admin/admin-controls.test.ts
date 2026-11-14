@@ -21,6 +21,12 @@ const adminSource = ADMIN_SOURCES.map(sourceOf).join("\n");
 
 const CONTROLS: Record<string, string[]> = {
   "điều hướng Admin": ["/admin/recipes", "/admin/users", "/admin/moderation", "/admin/audit-logs", "Công thức", "Người dùng", "Kiểm duyệt", "Nhật ký"],
+  // hardcode-2: danh mục dữ liệu chuyển vào database, Admin xem/thêm/sửa/ẩn.
+  "Danh mục dữ liệu": [
+    "/admin/catalog", "Danh mục dữ liệu", "Loại danh mục", "Nhóm dị ứng", "Nhóm thực phẩm", "Viết tắt hóa đơn", "Thêm nhóm dị ứng", "Thêm nhóm",
+    "Đổi tên", "Thêm tên gọi khác", "Thêm nguyên liệu", "`Ẩn nhóm ${group.label}?`", "Ẩn nguyên liệu", "Thêm nhóm thực phẩm", "`Lưu nhóm ${category.name}`",
+    "Thêm viết tắt", "Hiện lại", "Ẩn nhóm",
+  ],
   "Tổng quan (thống kê)": ["Đang tải thống kê", "AdminWeeklyChart"],
   "Công thức — danh sách": [
     // ra-soat-cuoi: ô tìm theo tên mở rộng thành tìm cả nguyên liệu/ẩm thực (searchRecipes dùng chung); thêm "Đã xóa" + "Khôi phục".

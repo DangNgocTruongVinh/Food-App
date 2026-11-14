@@ -1,6 +1,7 @@
 import type { AdminAuditAction, AdminAuditTargetType, Prisma } from "@prisma/client";
 import { prisma } from "../../lib/prisma.js";
 import type { AdminAuditLogQuery } from "./admin-audit.schema.js";
+import type { CatalogKind } from "./admin-catalog.schema.js";
 
 // Nhật ký thao tác Admin. Mỗi thao tác ghi đúng một dòng trong cùng transaction với thao tác (thao tác lỗi thì không có
 // nhật ký, ghi nhật ký lỗi thì thao tác bị hủy). details chỉ chứa các trường liệt kê dưới đây, không bao giờ chép body
@@ -15,7 +16,9 @@ export type AdminAuditDetails =
   | { authorId: string; imageCount: number; commentCount: number; likeCount: number; hasRecipe: boolean } // POST_DELETE
   | { authorId: string; postId: string } // COMMENT_DELETE
   | { authorId: string } // POST_HIDE, POST_SHOW, POST_APPROVE
-  | { authorId: string; recipeId: string; recipeName: string }; // POST_PROMOTE: món mới tạo từ công thức tự viết
+  | { authorId: string; recipeId: string; recipeName: string } // POST_PROMOTE: món mới tạo từ công thức tự viết
+  | { kind: CatalogKind } // CATALOG_CREATE: loại mục (nhóm dị ứng, tên gọi khác…)
+  | { kind: CatalogKind; changedFields: string[] }; // CATALOG_UPDATE: tên trường đã đổi (hidden = ẩn/hiện)
 
 export type AdminAuditEntry = {
   actorId: string;

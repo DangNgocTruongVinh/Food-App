@@ -1,3 +1,4 @@
+import { useFoodCategoryNames } from "../../features/catalog/catalog.queries";
 import { groupShoppingItems } from "../../features/meal-plans/meal-plans.logic";
 import type { ShoppingNotice } from "../../features/meal-plans/shopping-purchase.logic";
 import type { ShoppingItem } from "../../types";
@@ -30,6 +31,7 @@ function PurchaseNotice({ notice }: { notice: ShoppingNotice }) {
 /** Danh sách đi chợ theo nhóm; cả dòng là vùng bấm (≥ 52px) để tick "Đã mua" bằng một tay trên điện thoại. Tick là thêm vào kho. */
 export function ShoppingListCard({ items, pendingId, notice, onToggle }: ShoppingListCardProps) {
   const purchased = items.filter((item) => item.purchased).length;
+  const categories = useFoodCategoryNames();
   return (
     <Card as="section" className="td-card td-shopping" aria-labelledby="td-shopping-title">
       <header className="td-card__header">
@@ -39,7 +41,7 @@ export function ShoppingListCard({ items, pendingId, notice, onToggle }: Shoppin
       {!items.length ? (
         <EmptyState message="Kho đã đủ nguyên liệu cho thực đơn này, không cần mua thêm." />
       ) : (
-        <div className="td-shop-groups">{groupShoppingItems(items).map((group) => (
+        <div className="td-shop-groups">{groupShoppingItems(items, categories).map((group) => (
           <section key={group.name} className="td-shop-group" aria-label={group.name}>
             <h3 className="td-shop-group__title">{group.name}</h3>
             <ul className="td-shop-list">

@@ -1,6 +1,6 @@
 import type { DietType } from "@prisma/client";
 import {
-  ALLERGY_GROUPS, allergyMatchesOfFoodName, foldAllergyText, mainTermsOf, MAY_CONTAIN_PREFIX, normalizeAllergyText, resolveRestriction,
+  allergyCatalogVersion, allergyGroups, allergyMatchesOfFoodName, foldAllergyText, mainTermsOf, MAY_CONTAIN_PREFIX, normalizeAllergyText, resolveRestriction,
 } from "./allergy-groups.js";
 
 type DietaryRecipe = {
@@ -23,6 +23,7 @@ export function normalizeFoodText(value: string) {
  * Mục không nhận ra vẫn được giữ làm cụm chữ (không bao giờ bỏ qua).
  */
 export function expandRestrictedTerms(items: string[], { strict = true } = {}) {
+  syncWithCatalog();
   const key = `${strict ? 1 : 0}\u0001${items.join("\u0001")}`;
   const cached = expandCache.get(key);
   if (cached) return cached;
@@ -43,17 +44,28 @@ export function expandRestrictedTerms(items: string[], { strict = true } = {}) {
 const expandCache = new Map<string, string[]>();
 
 // Cụm của danh mục → ngoại lệ của nhóm chứa nó ("sữa" không khớp "sữa đậu nành"). Cụm không có ở đây là chữ người dùng tự gõ.
-const CATALOG_EXCLUDES = new Map<string, string[]>();
-for (const group of ALLERGY_GROUPS) {
-  for (const term of [...group.terms, ...(group.mayContain ?? [])]) {
-    const key = normalizeAllergyText(term);
-    CATALOG_EXCLUDES.set(key, [...(CATALOG_EXCLUDES.get(key) ?? []), ...(group.excludes ?? []).map(normalizeAllergyText)]);
+// Dựng lại khi danh mục trong database được nạp lại (Admin sửa danh mục).
+let CATALOG_EXCLUDES = new Map<string, string[]>();
+let builtForVersion = -1;
+function syncWithCatalog() {
+  if (builtForVersion === allergyCatalogVersion()) return;
+  const excludes = new Map<string, string[]>();
+  for (const group of allergyGroups()) {
+    for (const term of [...group.terms, ...(group.mayContain ?? [])]) {
+      const key = normalizeAllergyText(term);
+      excludes.set(key, [...(excludes.get(key) ?? []), ...(group.excludes ?? []).map(normalizeAllergyText)]);
+    }
   }
+  CATALOG_EXCLUDES = excludes;
+  expandCache.clear();
+  dietTermsCache = null;
+  builtForVersion = allergyCatalogVersion();
 }
 
 type Needle = { term: string; folded: boolean; text: string; catalog: boolean; excludes: string[] };
 const needleCache = new WeakMap<string[], Needle[]>();
 const needlesOf = (terms: string[]) => {
+  syncWithCatalog();
   const cached = needleCache.get(terms);
   if (cached) return cached;
   const needles = terms.map((term) => {
@@ -149,8 +161,16 @@ export function allergenLabels(recipe: Pick<DietaryRecipe, "name" | "ingredients
 }
 
 // Nguyên liệu động vật trái với nhãn chay/thuần chay. Dùng chung cho kiểm tra dữ liệu seed và API Admin công thức.
-export const MEAT_AND_FISH_TERMS = ["thịt", "sườn", "xương", "gà", "bò", "heo", "đùi gà", "ức gà", ...expandRestrictedTerms(["Hải sản"])];
-export const ANIMAL_PRODUCT_TERMS = [...MEAT_AND_FISH_TERMS, ...expandRestrictedTerms(["Sữa", "Trứng"]), "mật ong"];
+// Dựng từ danh mục dị ứng (nạp từ database) nên tính khi cần, nhớ tới lần nạp lại danh mục kế tiếp.
+let dietTermsCache: { meatAndFish: string[]; animalProduct: string[] } | null = null;
+function dietTerms() {
+  syncWithCatalog();
+  if (!dietTermsCache) {
+    const meatAndFish = ["thịt", "sườn", "xương", "gà", "bò", "heo", "đùi gà", "ức gà", ...expandRestrictedTerms(["Hải sản"])];
+    dietTermsCache = { meatAndFish, animalProduct: [...meatAndFish, ...expandRestrictedTerms(["Sữa", "Trứng"]), "mật ong"] };
+  }
+  return dietTermsCache;
+}
 
 /** Nhãn chế độ ăn không trùng lặp; món thuần chay luôn được gắn thêm nhãn chay. */
 export function normalizeDietTags(tags: DietType[]) {
@@ -168,7 +188,7 @@ export type DietViolation = { ingredient: string; terms: string[]; dietTag: "VEG
 export function findDietViolations(recipe: Pick<DietaryRecipe, "dietTags" | "ingredients">): DietViolation[] {
   const dietTag = recipe.dietTags.includes("VEGAN") ? "VEGAN" : recipe.dietTags.includes("VEGETARIAN") ? "VEGETARIAN" : null;
   if (!dietTag) return [];
-  const forbidden = dietTag === "VEGAN" ? ANIMAL_PRODUCT_TERMS : MEAT_AND_FISH_TERMS;
+  const forbidden = dietTag === "VEGAN" ? dietTerms().animalProduct : dietTerms().meatAndFish;
   return recipe.ingredients.flatMap(({ name }) => {
     const terms = findRestrictedTerms({ name: "", ingredients: [{ name }] }, forbidden);
     return terms.length ? [{ ingredient: name, terms, dietTag }] : [];

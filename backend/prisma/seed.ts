@@ -1,5 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 import { readSeedEnv } from "../src/config/seed-env.js";
+import { seedCatalog } from "../src/services/catalog/catalog.service.js";
 import { DEMO_EMAIL, DEMO_PASSWORD, seedDemoAccount } from "./demo-account.js";
 import { seedRecipes } from "./seed-data.js";
 import { seedSampleAccounts } from "./sample-accounts.js";
@@ -10,6 +11,8 @@ const prisma = new PrismaClient();
 async function main() {
   const options = readSeedEnv();
   // Không xóa và (mặc định) không ghi đè công thức: Admin có thể đã sửa món gốc hoặc thêm món mới.
+  const catalog = await seedCatalog(prisma);
+  console.log("Danh mục dữ liệu (dòng mới tạo):", JSON.stringify(catalog));
   const recipes = await seedRecipeCatalog(prisma, seedRecipes, options.updateRecipes);
   console.log(`Công thức: tạo mới ${recipes.created}, cập nhật ${recipes.updated}, giữ nguyên ${recipes.skipped}.`);
 

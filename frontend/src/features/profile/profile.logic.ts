@@ -27,7 +27,6 @@ export const ACTIVITY_OPTIONS = [
   ["VERY_ACTIVE", "Rất nhiều, cường độ cao"],
 ] as const;
 /** Gợi ý nhanh cho ô ẩm thực ưa thích: đúng các nền ẩm thực có trong bộ món. */
-export const CUISINE_SUGGESTIONS = ["Việt Nam", "Nhật Bản", "Hàn Quốc", "Thái Lan", "Ý", "Hy Lạp", "Mỹ"];
 
 export const emptyProfileForm: ProfileFormValues = {
   name: "", age: "", gender: "FEMALE", heightCm: "", weightKg: "", targetWeightKg: "",

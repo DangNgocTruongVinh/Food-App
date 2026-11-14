@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { FOOD_CATEGORIES } from "../../services/food-category.js";
+import { isFoodCategory } from "../../services/food-category.js";
 
 const empty = z.object({});
 const scanParams = z.object({ id: z.string().cuid() });
@@ -23,7 +23,8 @@ export const receiptLineSchema = z.object({
   name: text(100),
   quantity: z.number().positive().max(100_000),
   unit: z.enum(["G", "KG", "ML", "L", "ITEM", "PACKAGE"]),
-  category: z.enum(FOOD_CATEGORIES),
+  // Nhóm phải có trong danh mục FoodCategory (database), kiểm khi nhận request.
+  category: z.string().trim().refine(isFoodCategory, "Nhóm thực phẩm không có trong danh mục."),
   storageLocation: z.enum(["REFRIGERATOR", "FREEZER", "DRY_STORAGE"]),
   expiryDate: z.string().date().nullable(),
   expiryEstimated: z.boolean().default(false),

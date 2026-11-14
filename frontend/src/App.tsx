@@ -37,6 +37,7 @@ const AdminRecipeEditorPage = lazy(() => import("./pages/admin/AdminRecipeEditor
 const AdminUsersPage = lazy(() => import("./pages/admin/AdminUsersPage"));
 const AdminModerationPage = lazy(() => import("./pages/admin/AdminModerationPage"));
 const AdminAuditLogsPage = lazy(() => import("./pages/admin/AdminAuditLogsPage"));
+const AdminCatalogPage = lazy(() => import("./pages/admin/AdminCatalogPage"));
 const DevUiPage = import.meta.env.DEV ? lazy(() => import("./pages/dev/DevUiPage")) : null;
 
 function ProtectedRoute() {
@@ -82,6 +83,7 @@ export default function App() {
             <Route path="recipes/:id/edit" element={<AdminRecipeEditorPage />} />
             <Route path="users" element={<AdminUsersPage />} />
             <Route path="moderation" element={<AdminModerationPage />} />
+            <Route path="catalog" element={<AdminCatalogPage />} />
             <Route path="audit-logs" element={<AdminAuditLogsPage />} />
           </Route>
         </Route>
