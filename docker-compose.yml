@@ -6,8 +6,10 @@ services:
       POSTGRES_DB: nutriplan
       POSTGRES_USER: nutriplan
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Thiếu POSTGRES_PASSWORD trong file .env ở thư mục gốc}
+    # Chỉ máy đang chạy Docker kết nối được (backend chạy ngoài Docker khi phát triển dùng localhost:5432); máy khác trong
+    # mạng LAN không thấy cổng này. Xem/sửa dữ liệu: docker compose exec postgres psql -U nutriplan -d nutriplan
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
     volumes:
       - nutriplan_postgres:/var/lib/postgresql/data
     healthcheck:

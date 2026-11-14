@@ -85,6 +85,18 @@ npm run db:seed                           # sau khi backend đã áp migration
 npm run dev                               # frontend http://localhost:5173 (proxy /api → 4000), backend http://localhost:4000
 ```
 
+### Truy cập cơ sở dữ liệu
+
+PostgreSQL chỉ mở cổng cho chính máy đang chạy Docker (`127.0.0.1:5432`), máy khác trong mạng LAN không kết nối được. Xem dữ liệu
+bằng `psql` ngay trong container (không cần cài PostgreSQL trên máy):
+
+```bash
+docker compose exec postgres psql -U nutriplan -d nutriplan                     # mở psql tương tác (\dt: danh sách bảng, \q: thoát)
+docker compose exec postgres psql -U nutriplan -d nutriplan -c 'SELECT email, role FROM "User" LIMIT 5;'
+```
+
+Công cụ đồ họa (DBeaver, pgAdmin…) chạy trên cùng máy thì kết nối `localhost:5432`, người dùng `nutriplan`, mật khẩu `POSTGRES_PASSWORD`.
+
 ### Đặt lại dữ liệu demo (`demo:reset`)
 
 Chỉ tác động `demo@nouri.vn`: xóa thực đơn, bài viết (kèm ảnh Cloudinary), bình luận, lượt thích, tin nhắn trợ lý, lịch sử kho,
