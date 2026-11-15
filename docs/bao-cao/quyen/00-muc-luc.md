@@ -453,3 +453,28 @@ Ba chữ trong phiếu quyển **không được lặp lại như khẳng địn
 | 5 | "Quét hóa đơn đúng bao nhiêu phần trăm? Dị ứng có sót không?" | 5.6 nói thẳng chưa đo trên hóa đơn thật, công cụ đo đã sẵn sàng, màn duyệt bắt buộc vì OCR có thể sai (nếu kịp bổ sung ~10 ảnh trước 2/12 thì điền Bảng 5.13). Dị ứng: lọc theo tên và danh mục, thành phần thật tùy nhãn hàng nên có thể lọc dư hoặc sót với tên lạ; người dị ứng nặng vẫn phải đọc nhãn (HC 2.2) |
 
 Câu hỏi phụ nên chuẩn bị sẵn trong quyển: thuật toán 2 có R@10 thấp nhất (0,230) — giải thích ở 5.2.3 bằng thiết kế không gợi ý lại món đã ăn và R@10 món mới cao nhất (0,567); bộ món chỉ 33 món; tên đề tài ghi "ứng dụng" nhưng sản phẩm là website.
+
+---
+
+## F. Cập nhật sau lượt 2 (15/11/2026) — trạng thái các mục ở phần D
+
+**D1 (mâu thuẫn nguồn):** đã sửa mục 1–7 và 9 trong chính tài liệu nguồn (`so-lieu.md` mục 1, 6; `cau-hoi-bao-ve.md` câu 2, 3, 7, 9, 35,
+40; `thuat-toan-goi-y.md` mục 2; `han-che.md` 2.2; `sql-mau.md`; `giai-thich-code-goi-y.md` 2.3; `README.md`). Số trong `so-lieu.md` mục
+6 nay là 87 endpoint, 32 bảng / 19 enum / 39 khóa ngoại, 26 migration, 14 use case mới. Còn lại: mục 8 (thứ tự mục của
+`thuat-toan-goi-y.md`, không sửa để giữ số mục đã được trích ở nơi khác), 10 (kế hoạch cũ, giữ làm lịch sử), 11 (nhãn ngày), 12 (ảnh,
+xem `danh-sach-anh.md`), 13–15 (ghi chú khi viết). Các số cũ còn xuất hiện trong `docs/` (0,60/0,20/0,20; w_pop0 0,3; 1544; 11,8%…) đều
+nằm trong câu **kể lịch sử có ghi ngày** (mục 10 "Lịch sử số liệu", câu 6 và 44 của `cau-hoi-bao-ve.md`, chú thích trong
+`giai-thich-code-goi-y.md`), không phải số đang dùng.
+
+**D2 (dữ liệu thiếu):**
+
+| # | Mục | Trạng thái |
+|---|---|---|
+| 1 | Phiếu giao đề tài | Đã có nguyên văn (`phieu-giao-de-tai.md`); còn thiếu tên giảng viên, ngày giao |
+| 4 | Khảo sát ứng dụng liên quan | Đã có 4 ứng dụng đọc được trang chính thức (`nguon-chuong-1.md` mục 2); SuperCook, Samsung Food [CẦN BỔ SUNG]; Mealime đã đóng cửa 21/10/2026 |
+| 5 | Số liệu lãng phí thực phẩm | Đã có từ UNEP Food Waste Index Report 2024, gồm dòng Việt Nam (`nguon-chuong-1.md` mục 1); cần đối chiếu bằng mắt với bản PDF trên unep.org |
+| 2, 3, 6–10 | Mẫu trường, OCR hóa đơn thật, người dùng thật, lỗi thật luồng kho/hóa đơn, chi tiết bộ phân tích, công thức BMR, giảng viên | Chưa có |
+
+**Điều chỉnh nội dung do khảo sát:** NoWaste đã có quét hóa đơn và gợi ý món từ kho (theo trang chính thức), nên mục 1.2.2 và 1.3.4
+**không được viết** Nouri là ứng dụng duy nhất có quét hóa đơn; khoảng trống nêu ra là: tự trừ kho theo bữa đã ăn từ thực đơn, lọc dị ứng
+theo nhóm có thành phần ẩn, lý do gợi ý, và ngữ cảnh tiếng Việt/món Việt.
