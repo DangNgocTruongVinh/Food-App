@@ -1,6 +1,6 @@
 # Câu hỏi hội đồng có thể hỏi và câu trả lời
 
-Trả lời ngắn, dựa trên mã và số liệu thật trên `main` (12/11/2026). Mỗi câu ghi file nguồn để mở ra khi cần. Số liệu chi tiết:
+Trả lời ngắn, dựa trên mã và số liệu thật trên `main` (12/11/2026; số liệu rà lại 15/11/2026). Mỗi câu ghi file nguồn để mở ra khi cần. Số liệu chi tiết:
 `docs/bao-cao/so-lieu.md`; hạn chế: `docs/han-che.md`.
 
 ## A. Tổng quan
@@ -12,10 +12,10 @@ Nguồn: `REPORT_NOURI.md`, `docs/bao-cao/use-case.md`.
 
 **2. Phạm vi so với khảo sát ban đầu?**
 26 use case khảo sát: 15 làm đúng, 11 làm khác/mở rộng; phần "theo dõi thành viên" của UC25 không làm (ngoài trọng tâm, ghi ở
-`docs/han-che.md`). Thêm 13 use case mới (UC27–UC39). Nguồn: `docs/bao-cao/use-case.md`.
+`docs/han-che.md`). Thêm 14 use case mới (UC27–UC40). Nguồn: `docs/bao-cao/use-case.md`.
 
 **3. Hệ thống gồm những thành phần nào?**
-SPA React 19 (nginx) → API Express 5 → PostgreSQL 16 qua Prisma 6; dịch vụ ngoài tùy chọn: OpenAI, Cloudinary, SMTP. 80 endpoint, 23 bảng.
+SPA React 19 (nginx) → API Express 5 → PostgreSQL 16 qua Prisma 6; dịch vụ ngoài tùy chọn: OpenAI, Cloudinary, SMTP. 87 endpoint, 32 bảng (đếm 15/11/2026).
 Nguồn: `docs/bao-cao/kien-truc.md`, `api.md`, `erd.md`.
 
 ## B. Thuật toán gợi ý
@@ -38,7 +38,7 @@ chặt hơn (dữ liệu mô phỏng đổi), chạy lại cùng quy tắc: bộ
 Nguồn: `docs/thuat-toan-goi-y.md` mục 8 bảng 3, mục 10.
 
 **7. Đánh giá bộ gợi ý thế nào, kết quả ra sao?**
-Mô phỏng 5 lần × 80 người × 28 ngày, chia 80/20 theo thời gian (chạy lại 15/11/2026, commit `e8dfad3`). Bộ trộn + phổ biến: P@10 0,166,
+Mô phỏng 5 lần × 80 người × 28 ngày, chia 80/20 theo thời gian (chạy lại 15/11/2026, commit `2ebc970`). Bộ trộn + phổ biến: P@10 0,166,
 R@10 0,671 (ngẫu nhiên 0,377, phổ biến nhất 0,608, nội dung 0,651); lệch calo 38,2 %, 82,3 % danh sách có đồ sắp hết hạn; 0 % vi phạm
 an toàn. Đây là dữ liệu **mô phỏng**. Nguồn: `docs/bao-cao/so-lieu.md` mục 2.
 
@@ -48,9 +48,10 @@ với 0,651) vừa có món mới tốt hơn (0,461), lệch calo gần bằng (
 59,0 %). Nguồn: `docs/thuat-toan-goi-y.md` bảng 1.
 
 **9. Xử lý khởi đầu lạnh?**
-Người chưa có tương tác: γ = 0 nên trọng số cộng tác bằng 0, thành phần phổ biến nhận đủ w_pop0 (mã: 0,3); thuật toán 1 dùng tiên
-nghiệm từ hồ sơ. Lần chạy lại 15/11 trên tập kiểm định: R@10 nhóm 0 tương tác 0,200 → 0,600, tổng 0,622 → 0,676; quy tắc chọn 0,4
-(ngày 3/11 chọn 0,3), mã đã chọn lại 0,4. Trên tập kiểm tra, nhóm 0 tương tác 0,386 → 0,614. Nguồn: `docs/thuat-toan-goi-y.md` bảng 4, 5, mục 10.
+Người chưa có tương tác: γ = 0 nên trọng số cộng tác bằng 0, thành phần phổ biến nhận đủ w_pop0 = 0,4; thuật toán 1 dùng tiên
+nghiệm từ hồ sơ. w_pop0 chọn trên tập kiểm định theo quy tắc đặt trước (R@10 nhóm 0 tương tác, hòa thì lấy R@10 tổng cao hơn): nhóm 0
+tương tác 0,200 → 0,600, tổng 0,622 → 0,676 ở 0,4. Trên tập kiểm tra (chỉ để xác nhận), nhóm 0 tương tác 0,386 → 0,614. Lịch sử: giá trị
+trước 15/11 và lý do chọn lại ở câu 44. Nguồn: `docs/thuat-toan-goi-y.md` bảng 4, 5, mục 10.
 
 **10. Làm sao bảo đảm không gợi ý món gây dị ứng?**
 Lọc an toàn chạy **trước** mọi thuật toán (`safety.ts`): dị ứng mở rộng theo nhóm, món không thích, chay/thuần chay, món ẩn, đúng bữa.
@@ -202,7 +203,7 @@ Không: `demo:reset` tạo 8 tuần lịch sử kho **mẫu** (bỏ đi 4 → 1 
 6,25·chiều cao − 5·tuổi ± hằng số giới tính) × hệ số vận động. Nguồn: `backend/prisma/seed-data.ts`, `services/nutrition.service.ts`.
 
 **35. Kiểm thử thế nào?**
-1.737 test tự động (backend 1.234, frontend 503) chạy không cần CSDL/mạng: Prisma giả lập kèm transaction giả, OpenAI/Cloudinary/SMTP
+1.917 test tự động (backend 1.395, frontend 522; chạy 15/11/2026) chạy không cần CSDL/mạng: Prisma giả lập kèm transaction giả, OpenAI/Cloudinary/SMTP
 giả lập, đồng hồ giả. Kiểm cả quy tắc giao diện và kiểm kê nút Admin. Đo hiệu năng riêng: gợi ý < 150 ms với 500 món × 1.000 người.
 Nguồn: `docs/bao-cao/so-lieu.md` mục 1.
 
@@ -223,7 +224,8 @@ Không bị bỏ qua. Nouri chuẩn hóa (bỏ dấu khi gõ không dấu, bỏ 
 miền và tiếng Anh, nguyên liệu thuộc nhóm): "trứng gà", "trung ga", "egg", "lòng đỏ" đều thành nhóm Trứng. Không nhận ra thì vẫn lọc
 theo đúng chữ đó (nguyên từ, hai chiều) và ô nhập báo "Nouri chưa nhận ra … — sẽ lọc theo đúng chữ này", kèm "Có phải bạn muốn: Trứng?"
 nếu sai 1–2 ký tự; hệ thống không tự đoán. Dưới ô luôn hiện "Sẽ tránh: …" để người dùng kiểm lại. Kiểm bằng ma trận an toàn với 14 cách
-gõ. Nguồn: `allergy-groups.ts`, `docs/thuat-toan-goi-y.md` mục 2.
+gõ. Danh mục 11 nhóm lưu trong database (từ 14/11/2026), Admin bổ sung được ở trang "Danh mục dữ liệu". Nguồn: logic `allergy-groups.ts`,
+danh mục `services/catalog/` và bảng `AllergenGroup`…, `docs/thuat-toan-goi-y.md` mục 2.
 
 **41. Dị ứng khác món không thích thế nào?**
 Dị ứng là an toàn nên lọc rộng: cả nhóm, tên gọi khác, nguyên liệu chế biến và thành phần ẩn (dị ứng cá → tránh cả nước mắm), kể cả

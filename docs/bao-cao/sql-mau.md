@@ -51,7 +51,7 @@ ORDER BY g."sortOrder", e.phrase;
 ## 3. Món có nguyên liệu thuộc nhóm X (ví dụ Giáp xác)
 
 So nguyên từ bằng biểu thức chính quy `\m…\M` (đầu/cuối từ): "ốc" khớp "Ốc hương", không khớp "Quốc". Đây là bản SQL rút gọn để
-minh họa; bộ lọc thật trong backend (`services/allergy-groups.ts`) còn tính ngoại lệ, tên gọi khác và chữ không dấu.
+minh họa; bộ lọc thật trong backend (logic ở `services/allergy-groups.ts`, danh mục đọc từ chính các bảng này qua `services/catalog/`) còn tính ngoại lệ, tên gọi khác và chữ không dấu.
 
 ```sql
 SELECT DISTINCT r.name AS mon, i.name AS nguyen_lieu, t.name AS khop_voi, t.level AS muc

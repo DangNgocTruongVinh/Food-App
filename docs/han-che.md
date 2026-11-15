@@ -62,7 +62,8 @@ Chi tiết cách kiểm: `docs/test-evidence/bao-mat.md`. Hướng xử lý: nâ
 
 ### 2.2. An toàn thực phẩm (dị ứng, chế độ ăn)
 
-- So khớp dị ứng dựa trên **tên** nguyên liệu và danh mục nhóm cố định (`allergy-groups.ts`), đã gồm nguyên liệu chế biến phổ biến
+- So khớp dị ứng dựa trên **tên** nguyên liệu và danh mục nhóm (lưu trong database từ 14/11/2026, Admin bổ sung được ở trang "Danh mục
+  dữ liệu"; logic so khớp ở `allergy-groups.ts`), đã gồm nguyên liệu chế biến phổ biến
   (nước tương → Đậu nành + Gluten, dầu hào → Hải sản…). Thành phần thật **tùy nhãn hàng** (nước tương không gluten, tương ớt có đậu
   nành…) không biết được: chỗ không chắc gán "có thể chứa" và vẫn lọc (có thể lọc dư); nguyên liệu chế biến chưa có trong danh mục,
   hoặc Admin đặt tên lạ, có thể không bị phát hiện. Người dị ứng nặng cần đọc nhãn sản phẩm.

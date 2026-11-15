@@ -1,6 +1,6 @@
 # Số liệu cho quyển báo cáo
 
-Tổng hợp mọi bảng số liệu từ mã và kết quả chạy thật, cập nhật 12/11/2026 (rà soát cuối); mục 2–3 và hiệu năng chạy lại 15/11/2026. Mỗi mục ghi **nguồn** và **loại dữ liệu**:
+Tổng hợp mọi bảng số liệu từ mã và kết quả chạy thật, cập nhật 12/11/2026 (rà soát cuối); mục 1–3, hiệu năng và mục 6 (quy mô) đếm/chạy lại 15/11/2026. Mỗi mục ghi **nguồn** và **loại dữ liệu**:
 *đo thật* (chạy trên mã/máy thật), *mô phỏng* (người dùng giả lập sinh trong bộ nhớ, không có trong CSDL), *dữ liệu mẫu* (dựng sẵn cho demo).
 Các bảng mục 2–3 được chép nguyên văn từ `docs/thuat-toan-goi-y.md` (phần do script sinh ra, giữa các dấu `EVAL`).
 
@@ -16,6 +16,11 @@ số, chọn lại tham số gợi ý):
 | **Tổng** | **111** | **1.917** | **tất cả đạt** |
 
 (Lần chạy 12/11/2026, nhánh `ra-soat-cuoi`: backend 67 file / 1.248 test, frontend 33 / 507, tổng 1.755, tất cả đạt.)
+
+Chạy lại ngày 15/11/2026 ở commit `3258f13` (chỉ thêm tài liệu so với `2ebc970`): cùng số file và số test, tất cả đạt. Ở lần chạy lại
+này Vitest báo thêm một lỗi hạ tầng `[vitest-worker]: Timeout calling "onTaskUpdate"` ở backend (tiến trình test báo tiến độ quá
+giờ khi bộ ma trận an toàn chạy 10–17 giây mỗi test trên máy dev đang tải nặng); không có test nào sai, nhưng lệnh `npm test` kết
+thúc với mã lỗi 1. Lần chạy ở `2ebc970` không gặp lỗi này.
 
 Kiểm thử trên ứng dụng thật (Playwright, Docker, cùng ngày, sau `demo:reset`), *đo thật*:
 
@@ -183,14 +188,16 @@ Hiện chỉ có test với dữ liệu giả lập (`backend/src/services/recei
 
 ## 6. Quy mô hệ thống — đo thật trên mã
 
+Đếm lại ngày 15/11/2026 ở commit `3258f13` (mã giống `2ebc970`).
+
 | Mục | Số lượng | Nguồn |
 |---|---|---|
-| Endpoint API | 83 (công khai 10, đăng nhập 54, Admin 19) | `docs/bao-cao/api.md` (sinh từ routes) |
-| Bảng CSDL / enum / quan hệ khóa ngoại | 23 / 16 / 33 | `docs/bao-cao/erd.md` (sinh từ `schema.prisma`) |
-| Migration | 24 | `backend/prisma/migrations/` |
+| Endpoint API | 87 (công khai 11, đăng nhập 54, Admin 22) | `docs/bao-cao/api.md` (sinh từ routes bằng `node scripts/docs/gen-api.mjs`) |
+| Bảng CSDL / enum / quan hệ khóa ngoại | 32 / 19 / 39 (trong đó 9 bảng danh mục nghiệp vụ thêm ngày 14/11) | `docs/bao-cao/erd.md` (sinh từ `schema.prisma` bằng `node scripts/docs/gen-erd.mjs`) |
+| Migration | 26 | `backend/prisma/migrations/` (đếm thư mục) |
 | Món trong bộ seed | 33 | `backend/prisma/seed-data.ts` |
-| Ảnh màn hình cho quyển | 29 (24 ở 1440px, 5 ở 390px) | `docs/bao-cao/anh-man-hinh/README.md` |
-| Use case | 26 khảo sát (15 đã làm, 11 làm khác; không làm phần "theo dõi thành viên") + 13 mới | `docs/bao-cao/use-case.md` |
+| Ảnh màn hình cho quyển | 29 màn hình (24 ở 1440px, 5 ở 390px), 30 tệp; chụp 12/11, cần chụp lại (`docs/bao-cao/quyen/danh-sach-anh.md`) | `docs/bao-cao/anh-man-hinh/README.md` |
+| Use case | 26 khảo sát (15 đã làm, 11 làm khác; không làm phần "theo dõi thành viên") + 14 mới (UC27–UC40) | `docs/bao-cao/use-case.md` |
 
 ## 7. Dữ liệu mẫu cho demo — dữ liệu mẫu, không phải hoạt động thật
 
