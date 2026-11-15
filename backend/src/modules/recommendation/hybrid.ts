@@ -22,9 +22,10 @@ export type RecommendationContext = "today" | "for-you" | "pantry" | "similar" |
 export const ALGORITHMS: Algorithm[] = ["content", "collaborative", "knowledge"];
 export const CONTEXT_WEIGHTS: Record<RecommendationContext, Record<Algorithm, number>> = {
   today: { content: 0.35, collaborative: 0.25, knowledge: 0.4 },
-  // Chốt sau đánh giá R6 ngày 3/11/2026: 0,60/0,20/0,20 hơn bộ ban đầu 0,45/0,30/0,25 trên tập kiểm định. Lần chạy lại 15/11 (lọc
-  // dị ứng chặt hơn) chênh dưới ngưỡng 0,01; chưa đổi, xem docs/thuat-toan-goi-y.md mục 10.
-  "for-you": { content: 0.6, collaborative: 0.2, knowledge: 0.2 },
+  // Chọn trên tập kiểm định theo quy tắc đặt trước (đổi khỏi bộ kế hoạch chỉ khi R@10 hơn ≥ 0,01). Ngày 3/11 quy tắc chọn 0,60/0,20/0,20;
+  // dữ liệu mô phỏng đổi ở b8bc55a (lọc dị ứng chặt hơn) nên chọn lại 15/11 theo cùng quy tắc: bộ nội dung mạnh chỉ hơn 0,009 → giữ bộ
+  // kế hoạch 0,45/0,30/0,25 (docs/thuat-toan-goi-y.md mục 8 bảng 3, mục 10).
+  "for-you": { content: 0.45, collaborative: 0.3, knowledge: 0.25 },
   pantry: { content: 0.15, collaborative: 0.1, knowledge: 0.75 },
   similar: { content: 1, collaborative: 0, knowledge: 0 },
   "also-cooked": { content: 0, collaborative: 1, knowledge: 0 },
@@ -32,10 +33,11 @@ export const CONTEXT_WEIGHTS: Record<RecommendationContext, Record<Algorithm, nu
 export const COLD_START_KAPPA = 10;
 /**
  * Thành phần phổ biến (Σ_u r_ui, mọi người kể cả tài khoản mẫu; vẫn sau lọc an toàn): w_pop = (1 − γ_u)·w_pop0, các thành phần
- * khác nhân (1 − w_pop). Người mới (γ = 0) nhận đủ w_pop0, người nhiều lịch sử gần như 0. w_pop0 chọn ở đánh giá ngày 3/11/2026
- * (docs/thuat-toan-goi-y.md mục 8 bảng 4, tiêu chí riêng cho khởi đầu lạnh). Lần chạy lại 15/11 quy tắc chọn 0,4; chưa đổi, xem mục 10.
+ * khác nhân (1 − w_pop). Người mới (γ = 0) nhận đủ w_pop0, người nhiều lịch sử gần như 0. Chọn trên tập kiểm định (tiêu chí riêng cho
+ * khởi đầu lạnh: R@10 nhóm 0 tương tác cao nhất, tổng không giảm, hòa thì tổng cao hơn). Ngày 3/11 chọn 0,3; dữ liệu mô phỏng đổi ở
+ * b8bc55a nên chọn lại 15/11 theo cùng quy tắc: 0,4 (nhóm 0 tương tác 0,600 như 0,3 nhưng tổng 0,676 so với 0,651; docs mục 8 bảng 4, mục 10).
  */
-export const POPULARITY_WEIGHT0 = 0.3;
+export const POPULARITY_WEIGHT0 = 0.4;
 export const MMR_LAMBDA = 0.8;
 
 /** Min–max về [0, 1] trên tập id; id không có điểm tính là 0; mọi điểm bằng nhau → 0 (thuật toán không phân biệt được món nào). */
