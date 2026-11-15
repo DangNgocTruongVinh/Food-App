@@ -1,6 +1,6 @@
 # Sơ đồ dữ liệu (ERD)
 
-Sinh tự động từ `backend/prisma/schema.prisma` bằng `node scripts/docs/gen-erd.mjs` (2026-11-14).
+Sinh tự động từ `backend/prisma/schema.prisma` bằng `node scripts/docs/gen-erd.mjs` (2026-11-15).
 32 bảng, 19 kiểu enum, 39 quan hệ khóa ngoại. CSDL: PostgreSQL qua Prisma; mọi thay đổi schema có migration
 riêng trong `backend/prisma/migrations/`.
 
@@ -359,6 +359,7 @@ erDiagram
     String categoryId FK
     String prefix
     Int priority
+    DateTime hiddenAt
   }
   FoodShelfLifeRule {
     String id PK
@@ -368,6 +369,7 @@ erDiagram
     Int shelfLifeDays
     StorageLocation storage
     Int priority
+    DateTime hiddenAt
   }
   ReceiptAbbreviation {
     String id PK
@@ -385,6 +387,7 @@ erDiagram
     String keyword
     ReceiptKeywordMatch matchMode
     Int sortOrder
+    DateTime hiddenAt
   }
 ```
 
@@ -953,6 +956,7 @@ Từ đầu tên → nhóm. Xét theo priority tăng dần, khớp đầu tiên 
 | categoryId | String | có | FK | — |
 | prefix | String | có | — | — |
 | priority | Int | có | — | — |
+| hiddenAt | DateTime | không | — | — |
 
 Chỉ mục / ràng buộc: `@@unique([categoryId, prefix])`, `@@index([priority])`.
 
@@ -969,6 +973,7 @@ Hạn dùng riêng cho loại con trong nhóm (hạt khô 90 ngày, đồ khô 1
 | shelfLifeDays | Int | không | — | — |
 | storage | StorageLocation (enum) | có | — | — |
 | priority | Int | có | — | — |
+| hiddenAt | DateTime | không | — | — |
 
 Chỉ mục / ràng buộc: `@@unique([categoryId, pattern, matchMode])`.
 
@@ -998,5 +1003,6 @@ Từ khóa nhận dòng không phải hàng trên hóa đơn (thuế, giảm gi�
 | keyword | String | có | — | — |
 | matchMode | ReceiptKeywordMatch (enum) | có | — | — |
 | sortOrder | Int | có | — | — |
+| hiddenAt | DateTime | không | — | — |
 
 Chỉ mục / ràng buộc: `@@unique([reason, keyword, matchMode])`.
