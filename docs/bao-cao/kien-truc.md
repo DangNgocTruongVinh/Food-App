@@ -118,7 +118,7 @@ flowchart TD
   safe --> c1["Thuật toán 1: dựa trên nội dung<br/>(cosine hồ sơ sở thích)"]
   safe --> c2["Thuật toán 2: cộng tác item–item"]
   safe --> c3["Thuật toán 3: dựa trên tri thức<br/>(calo, macro, kho sắp hết hạn, ngữ cảnh)"]
-  safe --> pop["Phổ biến (w_pop0 = 0,3)"]
+  safe --> pop["Phổ biến (w_pop0 = 0,4)"]
   c1 --> mix["Trộn theo CONTEXT_WEIGHTS,<br/>giảm cộng tác khi ít dữ liệu (γ)"]
   c2 --> mix
   c3 --> mix

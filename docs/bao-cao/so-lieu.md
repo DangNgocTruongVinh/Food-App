@@ -6,13 +6,16 @@ Các bảng mục 2–3 được chép nguyên văn từ `docs/thuat-toan-goi-y.
 
 ## 1. Kiểm thử tự động — đo thật
 
-Chạy `npm test` (Vitest, `backend/` và `frontend/`) ngày 12/11/2026 trên nhánh `ra-soat-cuoi` (rà soát cuối, trước khi đóng băng code):
+Chạy `npm test` (Vitest, `backend/` và `frontend/`) ngày 15/11/2026 ở commit `2ebc970` (sau khi chuyển danh mục vào database, gom hằng
+số, chọn lại tham số gợi ý):
 
 | Phần | File test | Test | Kết quả |
 |---|---|---|---|
-| Backend | 67 | 1.248 | tất cả đạt |
-| Frontend | 33 | 507 | tất cả đạt |
-| **Tổng** | **100** | **1.755** | **tất cả đạt** |
+| Backend | 73 | 1.395 | tất cả đạt |
+| Frontend | 38 | 522 | tất cả đạt |
+| **Tổng** | **111** | **1.917** | **tất cả đạt** |
+
+(Lần chạy 12/11/2026, nhánh `ra-soat-cuoi`: backend 67 file / 1.248 test, frontend 33 / 507, tổng 1.755, tất cả đạt.)
 
 Kiểm thử trên ứng dụng thật (Playwright, Docker, cùng ngày, sau `demo:reset`), *đo thật*:
 
@@ -37,15 +40,15 @@ dùng phản hồi giả lập, đồng hồ giả cho lịch nhắc hạn. Mộ
 | Kiểm kê nút Admin | mọi nút/hộp thoại khu Admin còn đủ | `frontend/src/features/admin/admin-controls.test.ts` |
 | Quy tắc giao diện | CSS chỉ dùng token, không mã màu cứng, gradient, emoji | `frontend/src/features/ui/design-rules.test.ts` |
 
-Hiệu năng gợi ý (`npm run test:perf -w backend`, *đo thật* trên máy dev): chạy lại 15/11/2026 ở commit `e8dfad3`, 2/2 test đạt
+Hiệu năng gợi ý (`npm run test:perf -w backend`, *đo thật* trên máy dev): chạy lại 15/11/2026 ở commit `2ebc970`, 2/2 test đạt
 ngưỡng < 150 ms cho một lần gợi ý với 33 món và với 500 món × 1.000 người dùng trong bộ nhớ. Lần nhanh nhất trong 5 lần (3 lần chạy):
-33 món 3–5 ms; 500 món × 1.000 người 86–99 ms (lần đo 3/11: khoảng 70 ms).
+33 món 3–6,5 ms; 500 món × 1.000 người 90–117 ms (lần đo 3/11: khoảng 70 ms).
 
 ## 2. Đánh giá bộ gợi ý — mô phỏng
 
 Nguồn: `docs/thuat-toan-goi-y.md` mục 8, lệnh `npm run eval:recommend -w backend`.
 
-Mã ở commit `e8dfad3`, chạy ngày 15/11/2026.
+Mã ở commit `2ebc970`, chạy ngày 15/11/2026.
 
 Sinh bằng `npm run eval:recommend -w backend`: 5 lần mô phỏng (seed 20261103–20261107), mỗi lần 80 người, 6 nhóm khẩu vị, 28 ngày; trung bình 1488 tương tác mỗi lần. Dữ liệu **mô phỏng**, chỉ trong bộ nhớ, không có trong cơ sở dữ liệu. Ngữ cảnh "for-you", K = 5 và 10; số trong bảng là trung bình 5 lần.
 
@@ -110,7 +113,9 @@ Tiêu chí riêng cho thành phần phổ biến (ngoại lệ có chủ đích 
 | >5 tương tác (296 người) | 0,654 | 0,683 |
 | Tất cả | 0,619 | 0,671 |
 
-Thời gian chạy: 19.3 s.
+Cấu hình đang chạy trong mã (`hybrid.ts`, "for-you"): 0,45/0,30/0,25, w_pop0 = 0,4 — **khớp** cấu hình quy tắc chọn, nên bảng 1–2, 5 đo đúng cấu hình đang chạy.
+
+Thời gian chạy: 19.8 s.
 
 Lịch sử số liệu (bảng cũ ngày 3/11 → bảng mới, lý do đổi): `docs/thuat-toan-goi-y.md` mục 10.
 
@@ -118,22 +123,22 @@ Lịch sử số liệu (bảng cũ ngày 3/11 → bảng mới, lý do đổi):
 
 Nguồn: `docs/thuat-toan-goi-y.md` mục 9, lệnh `npm run eval:mealplan -w backend`.
 
-Mã ở commit `e8dfad3`, chạy ngày 15/11/2026.
+Mã ở commit `2ebc970`, chạy ngày 15/11/2026.
 
 Sinh bằng `npm run eval:mealplan -w backend`: 5 lần mô phỏng (seed 20261109–20261113), mỗi lần 100 người (500 thực đơn 7 ngày cho mỗi phương pháp). Hồ sơ ngẫu nhiên (5 chế độ ăn, 20% có một dị ứng, 10% có món không thích, 30% ăn 4 bữa), kho 8 thực phẩm (lượng 1–4 lần định lượng một món, hạn 0–10 ngày, 20% không có hạn), lịch sử 0–25 bữa đã ăn trong 4 tuần trước. Dữ liệu **mô phỏng**, chỉ trong bộ nhớ. Số trong bảng là trung bình trên mọi thực đơn.
 
-| Phương pháp | Lệch calo ngày | Ngày lệch ≤ 10% | Lượng đồ sắp hết hạn dùng trước hạn | Đồ sắp hết hạn được dùng | Bữa lặp trong 3 ngày / thực đơn | Số món khác nhau | Vi phạm an toàn | Thời gian / thực đơn |
-|---|---|---|---|---|---|---|---|---|
-| Bộ tạo cũ (fallbackPlan) | 32,6% | 11,2% | 43,7% | 59,0% | 2,46 | 16,4 | 0,3% | 0,5 ms |
-| Bộ tạo mới, không có khoảng calo (so sánh) | 28,1% | 17,0% | 58,4% | 73,5% | 1,72 | 16,5 | 0,3% | 11,1 ms |
-| Bộ tạo mới (scoredPlan) **(dùng)** | 25,4% | 20,3% | 54,0% | 68,6% | 1,78 | 15,6 | 0,3% | 8,3 ms |
-| OpenAI giả lập → reconcileAIPlan | 31,4% | 10,9% | 35,9% | 48,9% | 5,71 | 14,4 | 0,3% | 1,1 ms |
+| Phương pháp | Lệch calo ngày | Ngày lệch ≤ 10% | Lượng đồ sắp hết hạn dùng trước hạn | Đồ sắp hết hạn được dùng | Bữa lặp trong 3 ngày / thực đơn | Số món khác nhau | Vi phạm dị ứng/chế độ ăn | Bữa lấy món khác loại | Thời gian / thực đơn |
+|---|---|---|---|---|---|---|---|---|---|
+| Bộ tạo cũ (fallbackPlan) | 32,6% | 11,2% | 43,7% | 59,0% | 2,46 | 16,4 | 0,0% | 0,3% | 0,6 ms |
+| Bộ tạo mới, không có khoảng calo (so sánh) | 28,1% | 17,0% | 58,4% | 73,5% | 1,72 | 16,5 | 0,0% | 0,3% | 11,2 ms |
+| Bộ tạo mới (scoredPlan) **(dùng)** | 25,4% | 20,3% | 54,0% | 68,6% | 1,78 | 15,6 | 0,0% | 0,3% | 8,4 ms |
+| OpenAI giả lập → reconcileAIPlan | 31,4% | 10,9% | 35,9% | 48,9% | 5,71 | 14,4 | 0,0% | 0,3% | 1,1 ms |
+
+"Bữa lấy món khác loại": hồ sơ không còn món an toàn đúng loại bữa (chủ yếu chay/thuần chay kèm dị ứng gluten thiếu món trưa/tối) thì bộ tạo dùng món an toàn của bữa khác — an toàn trước, đúng bữa sau.
 
 Giới hạn dưới của lệch calo ngày với bộ món hiện có (mỗi bữa chọn món chỉ theo calo, khẩu phần 1, bỏ mọi tiêu chí khác): 16,2%; mục tiêu calo trung bình của hồ sơ mô phỏng 2131 kcal/ngày.
 
-"OpenAI giả lập": 6/500 thực đơn hỏng quá nửa số bữa nên dùng cả thực đơn của bộ tạo mới; còn lại bữa vi phạm được thay. Thời gian chạy: 14.1 s.
-
-"Vi phạm an toàn" 0,3% là bữa sai loại bữa ở hồ sơ chay/thuần chay dị ứng gluten, không có bữa vi phạm dị ứng/chế độ ăn (`docs/thuat-toan-goi-y.md` mục 9).
+"OpenAI giả lập": 6/500 thực đơn hỏng quá nửa số bữa nên dùng cả thực đơn của bộ tạo mới; còn lại bữa vi phạm được thay. Thời gian chạy: 14.3 s.
 
 ## 4. Tốc độ tải trang khi bật gzip — đo thật
 

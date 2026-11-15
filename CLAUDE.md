@@ -105,7 +105,7 @@ Biến môi trường mới phải thêm vào `backend/src/config/env.ts` (Zod) 
 - Làm lại toàn bộ giao diện UI-1 → UI-12 theo `docs/design/DESIGN.md` (gộp `main` 03/11/2026).
 - GĐ3 — Admin (vai trò, khóa tài khoản, món ẩn, công thức, người dùng, kiểm duyệt, thống kê, nhật ký), Cloudinary (ảnh công thức, ảnh bài viết xóa EXIF).
 - GĐ3b lượt 1–7 — gzip; lịch sử kho `PantryTransaction`; "Đã ăn" → trừ kho (hộp xem trước) và hoàn lại; 8 nhóm thực phẩm chung, "Đã dùng hết"; "Đã mua" → kho (gộp/dùng lại/tạo mới, hạn ước tính) và hoàn lại; giao diện lịch sử kho; `demo:reset`.
-- GĐ3b-R: R1 (lọc an toàn + `fit` + ràng buộc AI + ma trận an toàn), R3 (thuật toán 1), R4 (thuật toán 2 + tài khoản mẫu `isSample`), R5 (thuật toán 3, bộ trộn, `GET /api/recommendations`), lịch sử mẫu demo, R6 (đánh giá mô phỏng, chốt trọng số), thành phần phổ biến (w_pop0 = 0,3), R7 (gợi ý trên giao diện).
+- GĐ3b-R: R1 (lọc an toàn + `fit` + ràng buộc AI + ma trận an toàn), R3 (thuật toán 1), R4 (thuật toán 2 + tài khoản mẫu `isSample`), R5 (thuật toán 3, bộ trộn, `GET /api/recommendations`), lịch sử mẫu demo, R6 (đánh giá mô phỏng, chốt trọng số), thành phần phổ biến (w_pop0 = 0,4; chọn lại 15/11 cùng trọng số for-you 0,45/0,30/0,25), R7 (gợi ý trên giao diện).
 
 - GĐ3c phần 1 (P1-1 backend Tesseract + parser + API quét/hoàn tác lô; P1-2 giao diện quét, màn duyệt, hoàn tác): xong, người dùng đã kiểm thử, gộp `main` 09/11/2026. Phần 2 (OpenAI Vision) chờ `OPENAI_API_KEY`.
 - Codex (tuần 45, nhánh `codex-tuan-45`): C0 `AGENTS.md`, C1 đối chiếu R2, C2 thêm/xóa món thủ công (Claude sửa: đi chợ chỉ đổi theo phần của bữa, ngày trống/bữa phụ, nút ở chi tiết công thức).

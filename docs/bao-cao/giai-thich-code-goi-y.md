@@ -1,6 +1,6 @@
 # Giải thích code bộ gợi ý món (để mở code trình bày)
 
-> **Commit dùng để ghi số dòng: `3496c1b`** (Merge branch 'sua-mon-khong-thich', nhánh `main`). Số dòng chỉ đúng với commit này;
+> **Commit dùng để ghi số dòng: `2ebc970`** (chọn lại tham số for-you và w_pop0, 15/11/2026). Số dòng chỉ đúng với commit này;
 > sửa code sau đó thì tìm bằng cột "Ctrl+F". Thư mục: `backend/src/modules/recommendation/`. Công thức đầy đủ và số liệu đánh giá:
 > `docs/thuat-toan-goi-y.md`.
 
@@ -11,7 +11,7 @@ Thứ tự trình bày: 1) luồng chung `runRecommendation` → 2) lọc an to�
 
 ## 1. Luồng chung — `runRecommendation` (hybrid.ts)
 
-### 1.1. Lọc an toàn trước, rồi lọc theo ngữ cảnh — `hybrid.ts:160–167`
+### 1.1. Lọc an toàn trước, rồi lọc theo ngữ cảnh — `hybrid.ts:162–169`
 
 Ctrl+F: `export function runRecommendation`
 
@@ -34,7 +34,7 @@ ngữ cảnh: "gợi ý cho thực phẩm X" (`focusItem`) chỉ giữ món dùn
 **Nói với cô:** "Mọi gợi ý đi qua bộ lọc an toàn trước, nên thuật toán có chấm điểm cao đến đâu cũng không thể đưa ra món vi phạm
 dị ứng."
 
-### 1.2. Hai ngữ cảnh chỉ dùng một thuật toán — `hybrid.ts:173–180`
+### 1.2. Hai ngữ cảnh chỉ dùng một thuật toán — `hybrid.ts:175–182`
 
 Ctrl+F: `query.context === "similar"`
 
@@ -50,11 +50,11 @@ Ctrl+F: `query.context === "similar"`
 ```
 
 **Code làm gì:** ở trang chi tiết món, "Món tương tự" chỉ dùng thuật toán 1 (cosine giữa hai vector món), "Người khác cũng nấu"
-(dòng 183–187) chỉ dùng thuật toán 2 (`alsoCooked`). Cả hai vẫn chỉ chọn trong `ids` — tập đã qua lọc an toàn.
+(dòng 185–189) chỉ dùng thuật toán 2 (`alsoCooked`). Cả hai vẫn chỉ chọn trong `ids` — tập đã qua lọc an toàn.
 
 **Nói với cô:** "Ở chi tiết món, hai khối gợi ý mỗi khối dùng một thuật toán riêng, nhưng vẫn lấy từ danh sách đã lọc an toàn."
 
-### 1.3. Chạy ba thuật toán trên cùng tập ứng viên — `hybrid.ts:190–197`
+### 1.3. Chạy ba thuật toán trên cùng tập ứng viên — `hybrid.ts:192–199`
 
 Ctrl+F: `const user = userVector`
 
@@ -75,7 +75,7 @@ bữa này (`target`). Dòng 198–200 chấm thuật toán 3 (`knowledgeScore`)
 
 **Nói với cô:** "Ba thuật toán chấm điểm độc lập trên cùng một tập món an toàn, sau đó mới trộn."
 
-### 1.4. Trọng số, trộn điểm, đa dạng hóa — `hybrid.ts:201–209`
+### 1.4. Trọng số, trộn điểm, đa dạng hóa — `hybrid.ts:203–211`
 
 Ctrl+F: `const weights = withPopularity`
 
@@ -98,7 +98,7 @@ người mới thì giảm thuật toán 2; `withPopularity`: thêm thành phầ
 **Nói với cô:** "Điểm cuối cùng là tổng có trọng số của ba thuật toán; người mới chưa có lịch sử thì dựa nhiều hơn vào hồ sơ và độ
 phổ biến."
 
-### 1.5. Gắn lý do cho từng món — `hybrid.ts:210–217`
+### 1.5. Gắn lý do cho từng món — `hybrid.ts:212–219`
 
 Ctrl+F: `const usedKinds = new Set`
 
@@ -190,7 +190,7 @@ export function safeRecipes<T extends SafetyRecipe>(recipes: T[], profile: Safet
 ```
 
 **Code làm gì:** món bị Admin ẩn hoặc xóa → loại ngay; còn lại phải đúng bữa và `safe`. `safeRecipes` là hàm duy nhất mà
-`runRecommendation` (hybrid.ts:164), thực đơn và các nguồn gợi ý khác gọi.
+`runRecommendation` (hybrid.ts:166), thực đơn và các nguồn gợi ý khác gọi.
 
 **Nói với cô:** "Chỉ có một hàm lọc dùng chung cho mọi nơi, nên không có chỗ nào quên lọc."
 
@@ -280,7 +280,7 @@ riêng phần đóng góp của từng khối (`blocks`) để viết lý do ("C
 
 **Nói với cô:** "Độ giống nhau là tổng cosine có trọng số của 5 khối, và biết được khối nào đóng góp nhiều nhất."
 
-### 3.5. Tương tác có suy giảm theo thời gian — `interactions.ts:13–15` và `content-based.ts:49–50`
+### 3.5. Tương tác có suy giảm theo thời gian — `interactions.ts:14–16` và `content-based.ts:49–50`
 
 Ctrl+F: `export const CONTENT_WEIGHTS` / `export const interactionWeight`
 
@@ -366,7 +366,7 @@ Ctrl+F: `export function buildRatings`
 
 **Code làm gì:** r_ui = ln(1 + Σ ω·số lần·e^(−Δ/30)). Không có điểm sao, nên dùng phản hồi ngầm (ăn 3, đăng bài 3, thích 2). "Có
 trong thực đơn" (PLANNED) bị bỏ (dòng 24) để tránh vòng lặp: món được gợi ý → vào thực đơn → lại được gợi ý nhiều hơn
-(`interactions.ts:5–6`). `log1p` làm người ăn một món 20 lần không lấn át hoàn toàn.
+(`interactions.ts:6–7`). `log1p` làm người ăn một món 20 lần không lấn át hoàn toàn.
 
 **Ví dụ minh họa:** ăn món hôm nay 2 lần: Σ = 3 × 2 × 1 = 6 → r = ln 7 ≈ 1,95.
 
@@ -449,7 +449,7 @@ Lệnh: `npx vitest run src/modules/recommendation/collaborative.test.ts`
 
 ## 5. Thuật toán 3 — dựa trên tri thức, đa tiêu chí (knowledge-based.ts)
 
-### 5.1. Năm tiêu chí và trọng số — `knowledge-based.ts:19`
+### 5.1. Năm tiêu chí và trọng số — `knowledge-based.ts:21`
 
 Ctrl+F: `export const KNOWLEDGE_WEIGHTS`
 
@@ -462,7 +462,7 @@ nhất vì mục tiêu đề tài là giảm lãng phí.
 
 **Nói với cô:** "Thuật toán 3 chấm theo các quy tắc nghiệp vụ, ưu tiên nhất là dùng đồ sắp hết hạn trong kho."
 
-### 5.2. f_hạn — dùng đồ sắp hết hạn — `knowledge-based.ts:61–67`
+### 5.2. f_hạn — dùng đồ sắp hết hạn — `knowledge-based.ts:62–68`
 
 Ctrl+F: `export function expiringFeature`
 
@@ -477,13 +477,13 @@ Ctrl+F: `export function expiringFeature`
 ```
 
 **Code làm gì:** với mỗi thực phẩm trong kho còn hạn ≤ D = 3 ngày (`PANTRY_EXPIRING_WINDOW_DAYS`) mà món dùng, cộng (D + 1 − d)/(D + 1),
-d = số ngày còn lại; càng gần hạn càng được nhiều điểm. Kết quả cắt tối đa 1 (dòng 68).
+d = số ngày còn lại; càng gần hạn càng được nhiều điểm. Kết quả cắt tối đa 1 (dòng 69).
 
 **Ví dụ minh họa:** đậu hũ còn 1 ngày: (4 − 1)/4 = 0,75; ức gà còn 3 ngày: 1/4 = 0,25 → món dùng cả hai: f_hạn = min(1; 1,0) = 1.
 
 **Nói với cô:** "Món dùng thực phẩm sắp hỏng được đẩy lên trước để người dùng nấu kịp."
 
-### 5.3. f_kho — tỷ lệ nguyên liệu có sẵn — `knowledge-based.ts:75–77`
+### 5.3. f_kho — tỷ lệ nguyên liệu có sẵn — `knowledge-based.ts:76–78`
 
 Ctrl+F: `export function pantryFeature`
 
@@ -500,7 +500,7 @@ bạn" và trừ kho; f_kho = có / tổng.
 
 **Nói với cô:** "Món càng có sẵn nhiều nguyên liệu thì càng ít phải đi chợ."
 
-### 5.4. f_dd — hợp mục tiêu dinh dưỡng của bữa — `knowledge-based.ts:81–87`
+### 5.4. f_dd — hợp mục tiêu dinh dưỡng của bữa — `knowledge-based.ts:82–88`
 
 Ctrl+F: `export function nutritionFeature`
 
@@ -515,7 +515,7 @@ export function nutritionFeature(recipe: Pick<KnowledgeRecipe, "calories" | "pro
 ```
 
 **Code làm gì:** phần calo là hàm chuông Gauss quanh calo mục tiêu E* của bữa, độ rộng σ = `CALORIE_SIGMA` = 35% mục tiêu; phần đạm
-= đạm món / đạm mục tiêu P* (tối đa 1). Trộn 0,6 calo + 0,4 đạm. E*, P* tính ở `mealTarget` (dòng 148–163): hôm nay đã ăn thì chia
+= đạm món / đạm mục tiêu P* (tối đa 1). Trộn 0,6 calo + 0,4 đạm. E*, P* tính ở `mealTarget` (dòng 149–164): hôm nay đã ăn thì chia
 phần còn lại cho số bữa còn lại, chưa ăn thì theo tỷ lệ bữa (sáng 25%, trưa 35%, tối 30%, phụ 10%).
 
 **Ví dụ minh họa:** mục tiêu 600 kcal, 25 g đạm; món 810 kcal (lệch đúng 35%), 20 g đạm: calo = e^(−0,5) ≈ 0,61, đạm = 0,8 →
@@ -523,7 +523,7 @@ f_dd = 0,6 × 0,61 + 0,4 × 0,8 ≈ 0,68.
 
 **Nói với cô:** "Món có calo càng gần mục tiêu của bữa và đủ đạm thì điểm dinh dưỡng càng cao."
 
-### 5.5. f_dạng — khác món mấy ngày gần đây — `knowledge-based.ts:93–99`
+### 5.5. f_dạng — khác món mấy ngày gần đây — `knowledge-based.ts:94–100`
 
 Ctrl+F: `export function diversityFeature`
 
@@ -544,7 +544,7 @@ toán 1). Món vừa ăn → 0; chưa ăn gì gần đây → 1.
 
 **Nói với cô:** "Tránh gợi ý lại món giống món vừa ăn để bữa ăn đa dạng."
 
-### 5.6. Cộng có trọng số — `knowledge-based.ts:121–128`
+### 5.6. Cộng có trọng số — `knowledge-based.ts:122–129`
 
 Ctrl+F: `export function knowledgeScore`
 
@@ -574,15 +574,17 @@ Lệnh: `npx vitest run src/modules/recommendation/hybrid.test.ts -t "Algorithm 
 
 ## 6. Bộ trộn và lý do (hybrid.ts, reasons.ts)
 
-### 6.1. Trọng số theo ngữ cảnh — `hybrid.ts:23–30`
+### 6.1. Trọng số theo ngữ cảnh — `hybrid.ts:23–32`
 
 Ctrl+F: `export const CONTEXT_WEIGHTS`
 
 ```ts
 export const CONTEXT_WEIGHTS: Record<RecommendationContext, Record<Algorithm, number>> = {
   today: { content: 0.35, collaborative: 0.25, knowledge: 0.4 },
-  // Chốt sau đánh giá R6 (docs/thuat-toan-goi-y.md, bảng 3): 0,60/0,20/0,20 hơn bộ ban đầu 0,45/0,30/0,25 trên tập kiểm định.
-  "for-you": { content: 0.6, collaborative: 0.2, knowledge: 0.2 },
+  // Chọn trên tập kiểm định theo quy tắc đặt trước (đổi khỏi bộ kế hoạch chỉ khi R@10 hơn ≥ 0,01). Ngày 3/11 quy tắc chọn 0,60/0,20/0,20;
+  // dữ liệu mô phỏng đổi ở b8bc55a (lọc dị ứng chặt hơn) nên chọn lại 15/11 theo cùng quy tắc: bộ nội dung mạnh chỉ hơn 0,009 → giữ bộ
+  // kế hoạch 0,45/0,30/0,25 (docs/thuat-toan-goi-y.md mục 8 bảng 3, mục 10).
+  "for-you": { content: 0.45, collaborative: 0.3, knowledge: 0.25 },
   pantry: { content: 0.15, collaborative: 0.1, knowledge: 0.75 },
   similar: { content: 1, collaborative: 0, knowledge: 0 },
   "also-cooked": { content: 0, collaborative: 1, knowledge: 0 },
@@ -590,13 +592,13 @@ export const CONTEXT_WEIGHTS: Record<RecommendationContext, Record<Algorithm, nu
 ```
 
 **Code làm gì:** mỗi ngữ cảnh một bộ trọng số (nội dung / cộng tác / tri thức). "Hôm nay" ưu tiên tri thức (kho, dinh dưỡng); "Dành
-cho bạn" ưu tiên khẩu vị, bộ 0,60/0,20/0,20 chọn bằng đánh giá mô phỏng ngày 3/11; "Kho" gần như chỉ tri thức (0,75). Lần chạy lại
-15/11 (lọc dị ứng chặt hơn), quy tắc chọn sẽ giữ bộ 0,45/0,30/0,25 — chưa đổi tham số (`docs/thuat-toan-goi-y.md` mục 10).
+cho bạn" 0,45/0,30/0,25 chọn bằng đánh giá mô phỏng trên tập kiểm định (chọn lại 15/11 sau khi lọc dị ứng chặt hơn; 3/11–15/11 là
+0,60/0,20/0,20, `docs/thuat-toan-goi-y.md` mục 10); "Kho" gần như chỉ tri thức (0,75).
 
 **Nói với cô:** "Cùng ba thuật toán nhưng mỗi màn hình trộn theo tỷ lệ khác, phù hợp mục đích của màn hình đó; tỷ lệ ở 'Dành cho
 bạn' được chọn bằng thực nghiệm."
 
-### 6.2. Chuẩn hóa min–max — `hybrid.ts:42–47`
+### 6.2. Chuẩn hóa min–max — `hybrid.ts:44–49`
 
 Ctrl+F: `export function minMax`
 
@@ -616,7 +618,7 @@ export function minMax(scores: Map<string, number>, ids: string[]) {
 
 **Nói với cô:** "Phải đưa điểm về cùng thang trước khi cộng, nếu không thuật toán có số to sẽ lấn át."
 
-### 6.3. Khởi đầu lạnh và độ phổ biến — `hybrid.ts:50–57` và `hybrid.ts:66–72`
+### 6.3. Khởi đầu lạnh và độ phổ biến — `hybrid.ts:52–59` và `hybrid.ts:68–74`
 
 Ctrl+F: `export function coldStartWeights` / `export function withPopularity`
 
@@ -643,15 +645,15 @@ export function coldStartWeights(weights: Record<Algorithm, number>, interacted:
 
 **Code làm gì:** γ = n/(n + κ), n = số món người dùng đã tương tác, κ = `COLD_START_KAPPA` = 10. Thuật toán 2 cần lịch sử nên
 trọng số nhân γ; phần bớt đi chia cho thuật toán 1 và 3 theo tỷ lệ. Thêm thành phần phổ biến w_pop = (1 − γ)·w_pop0,
-`POPULARITY_WEIGHT0` = 0,3 (dòng 38), các thành phần còn lại nhân (1 − w_pop) để tổng vẫn bằng 1.
+`POPULARITY_WEIGHT0` = 0,4 (dòng 40; chọn lại 15/11, trước đó 0,3), các thành phần còn lại nhân (1 − w_pop) để tổng vẫn bằng 1.
 
-**Ví dụ minh họa** ("Dành cho bạn" 0,6/0,2/0,2): người mới n = 0 → γ = 0: cộng tác 0, nội dung 0,75, tri thức 0,25; thêm phổ biến
-0,3 → nội dung 0,525, tri thức 0,175, phổ biến 0,3. Người có n = 10 → γ = 0,5: cộng tác còn 0,1.
+**Ví dụ minh họa** ("Dành cho bạn" 0,45/0,30/0,25): người mới n = 0 → γ = 0: cộng tác 0, nội dung 0,643, tri thức 0,357; thêm phổ
+biến 0,4 → nội dung 0,386, tri thức 0,214, phổ biến 0,4. Người có n = 10 → γ = 0,5: cộng tác còn 0,15.
 
 **Nói với cô:** "Người mới chưa có lịch sử thì chưa dùng được lọc cộng tác, nên hệ thống tự chuyển trọng số sang hồ sơ và món phổ
 biến; dùng càng nhiều thì cộng tác càng có tiếng nói."
 
-### 6.4. Cộng có trọng số — `hybrid.ts:81–87`
+### 6.4. Cộng có trọng số — `hybrid.ts:83–89`
 
 Ctrl+F: `export function blendScores`
 
@@ -670,7 +672,7 @@ Ctrl+F: `export function blendScores`
 
 **Nói với cô:** "Điểm cuối là tổng có trọng số, và hệ thống biết thành phần nào đóng góp bao nhiêu."
 
-### 6.5. Đa dạng hóa MMR — `hybrid.ts:100–103`
+### 6.5. Đa dạng hóa MMR — `hybrid.ts:102–105`
 
 Ctrl+F: `export function mmr`
 
@@ -681,7 +683,7 @@ Ctrl+F: `export function mmr`
     });
 ```
 
-**Code làm gì:** chọn lần lượt món có λ·S − (1 − λ)·(độ giống lớn nhất với các món đã chọn), λ = `MMR_LAMBDA` = 0,8 (dòng 39).
+**Code làm gì:** chọn lần lượt món có λ·S − (1 − λ)·(độ giống lớn nhất với các món đã chọn), λ = `MMR_LAMBDA` = 0,8 (dòng 41).
 Món điểm cao nhưng gần trùng món đã chọn bị trừ, nhường chỗ cho món khác hẳn.
 
 **Ví dụ minh họa:** món A điểm 0,9 nhưng giống món đã chọn 0,8 → 0,72 − 0,16 = 0,56; món B điểm 0,7, giống 0,1 → 0,56 − 0,02 = 0,54.
@@ -749,9 +751,9 @@ Toàn bộ bộ gợi ý: `npx vitest run src/modules/recommendation src/test/di
 
 | File | Hàm / hằng | Dòng | Từ khóa Ctrl+F |
 |---|---|---|---|
-| hybrid.ts | `runRecommendation` (luồng chung) | 160–230 | `export function runRecommendation` |
-| hybrid.ts | gọi lọc an toàn | 164 | `safeRecipes(data.recipes` |
-| hybrid.ts | trọng số, trộn, MMR | 201–209 | `const weights = withPopularity` |
+| hybrid.ts | `runRecommendation` (luồng chung) | 162–232 | `export function runRecommendation` |
+| hybrid.ts | gọi lọc an toàn | 166 | `safeRecipes(data.recipes` |
+| hybrid.ts | trọng số, trộn, MMR | 203–211 | `const weights = withPopularity` |
 | safety.ts | `fitsMealType` | 20–21 | `export const fitsMealType` |
 | safety.ts | `recipeFit` | 24–30 | `export function recipeFit` |
 | safety.ts | `isRecipeSafe`, `safeRecipes` | 33–40 | `export function isRecipeSafe` |
@@ -760,7 +762,7 @@ Toàn bộ bộ gợi ý: `npx vitest run src/modules/recommendation src/test/di
 | features.ts | `idfOf`, `termFrequencies` | 61–71 | `export const idfOf` |
 | features.ts | `nutritionBlock` | 85–93 | `export function nutritionBlock` |
 | features.ts | `similarity` | 141–149 | `export function similarity` |
-| interactions.ts | trọng số tương tác, `decay` | 13–21 | `export const CONTENT_WEIGHTS` |
+| interactions.ts | trọng số tương tác, `decay` | 14–21 | `export const CONTENT_WEIGHTS` |
 | content-based.ts | `interactionWeight` | 49–50 | `export const interactionWeight` |
 | content-based.ts | `userVector` | 53–70 | `export function userVector` |
 | content-based.ts | `contentScores` | 99–104 | `export function contentScores` |
@@ -768,19 +770,19 @@ Toàn bộ bộ gợi ý: `npx vitest run src/modules/recommendation src/test/di
 | collaborative.ts | co rút n/(n+λ) | 58 | `support / (support + lambda)` |
 | collaborative.ts | `collaborativeScores` | 89–107 | `export function collaborativeScores` |
 | collaborative.ts | `alsoCooked` (≥ 3 người khác) | 113–120 | `MIN_SUPPORT` |
-| knowledge-based.ts | `KNOWLEDGE_WEIGHTS` | 19 | `export const KNOWLEDGE_WEIGHTS` |
-| knowledge-based.ts | `expiringFeature` | 55–69 | `export function expiringFeature` |
-| knowledge-based.ts | `pantryFeature` | 72–78 | `export function pantryFeature` |
-| knowledge-based.ts | `nutritionFeature` | 81–87 | `export function nutritionFeature` |
-| knowledge-based.ts | `diversityFeature` | 90–100 | `export function diversityFeature` |
-| knowledge-based.ts | `knowledgeScore` | 112–130 | `export function knowledgeScore` |
-| knowledge-based.ts | `mealTarget` | 148–163 | `export function mealTarget` |
-| hybrid.ts | `CONTEXT_WEIGHTS` | 23–30 | `export const CONTEXT_WEIGHTS` |
-| hybrid.ts | `minMax` | 42–47 | `export function minMax` |
-| hybrid.ts | `coldStartWeights` | 50–60 | `export function coldStartWeights` |
-| hybrid.ts | `withPopularity` | 63–73 | `export function withPopularity` |
-| hybrid.ts | `blendScores` | 78–89 | `export function blendScores` |
-| hybrid.ts | `mmr` | 92–114 | `export function mmr` |
+| knowledge-based.ts | `KNOWLEDGE_WEIGHTS` | 21 | `export const KNOWLEDGE_WEIGHTS` |
+| knowledge-based.ts | `expiringFeature` | 56–70 | `export function expiringFeature` |
+| knowledge-based.ts | `pantryFeature` | 73–79 | `export function pantryFeature` |
+| knowledge-based.ts | `nutritionFeature` | 82–88 | `export function nutritionFeature` |
+| knowledge-based.ts | `diversityFeature` | 91–101 | `export function diversityFeature` |
+| knowledge-based.ts | `knowledgeScore` | 113–131 | `export function knowledgeScore` |
+| knowledge-based.ts | `mealTarget` | 149–164 | `export function mealTarget` |
+| hybrid.ts | `CONTEXT_WEIGHTS` | 23–32 | `export const CONTEXT_WEIGHTS` |
+| hybrid.ts | `minMax` | 44–49 | `export function minMax` |
+| hybrid.ts | `coldStartWeights` | 52–62 | `export function coldStartWeights` |
+| hybrid.ts | `withPopularity` | 65–75 | `export function withPopularity` |
+| hybrid.ts | `blendScores` | 80–91 | `export function blendScores` |
+| hybrid.ts | `mmr` | 94–116 | `export function mmr` |
 | reasons.ts | `contentReason`, `knowledgeReason` | 35–71 | `export function contentReason` |
 | reasons.ts | `reasonCandidates` | 90–115 | `export function reasonCandidates` |
 | reasons.ts | `pickReason` | 121–129 | `export function pickReason` |

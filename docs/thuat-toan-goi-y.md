@@ -130,7 +130,7 @@ ngữ cảnh Kho chỉ xét món có ít nhất một nguyên liệu trong kho.
 4. `S = w1' · ŝ1 + w2' · ŝ2 + w3' · ŝ3`.
    Thành phần phổ biến (khởi đầu lạnh): `w_pop = (1 − γ_u) · w_pop0`, các thành phần khác nhân `(1 − w_pop)`; điểm phổ biến của món
    = Σ_u r_ui của mọi người (kể cả tài khoản mẫu), vẫn sau lọc an toàn; lý do "Nhiều người đang nấu món này". w_pop0 chọn ở mục 8
-   (bảng 4): **0,3** (chốt ở lần đánh giá 3/11/2026; lần chạy lại 15/11 quy tắc chọn ra 0,4 — chưa đổi tham số, xem mục 10).
+   (bảng 4): **0,4** (chọn lại ngày 15/11/2026 theo cùng quy tắc sau khi dữ liệu mô phỏng đổi; 3/11–15/11 là 0,3 — mục 10).
 5. Đa dạng hóa MMR: chọn lần lượt `argmax 0,8 · S(r) − 0,2 · max_{s đã chọn} cos(v_r, v_s)`.
 6. Lý do: thành phần có `w_a' · ŝ_a` lớn nhất, rồi tiêu chí con lớn nhất của nó (khối đặc trưng, tiêu chí của thuật toán 3, món
    "vì" của thuật toán 2). Ví dụ: "Dùng 2 thực phẩm sắp hết hạn: Đậu hũ, Ức gà", "Có nguyên liệu bạn hay dùng: Gừng, Ức gà",
@@ -139,19 +139,19 @@ ngữ cảnh Kho chỉ xét món có ít nhất một nguyên liệu trong kho.
 | Ngữ cảnh (`context`) | Dùng ở | w1 (nội dung) | w2 (cộng tác) | w3 (tri thức) |
 |---|---|---|---|---|
 | `today` | Tổng quan: hôm nay nấu gì | 0,35 | 0,25 | 0,40 |
-| `for-you` | Công thức: Dành cho bạn | 0,60 | 0,20 | 0,20 (chốt sau đánh giá 3/11, mục 8; ban đầu 0,45/0,30/0,25; lần chạy lại 15/11 xem mục 10) |
+| `for-you` | Công thức: Dành cho bạn | 0,45 | 0,30 | 0,25 (chọn trên tập kiểm định, mục 8; 3/11–15/11 dùng 0,60/0,20/0,20, xem mục 10) |
 | `pantry` | Kho: Nấu gì từ kho, Gợi ý món cho thực phẩm X | 0,15 | 0,10 | 0,75 |
 | `similar` | Chi tiết món: Món tương tự | 1 | 0 | 0 |
 | `also-cooked` | Chi tiết món: Người khác cũng nấu | 0 | 1 | 0 |
 
-Hiệu năng (đo riêng bằng `npm run test:perf -w backend`, máy dev, commit `e8dfad3`, 15/11/2026, lần nhanh nhất trong 5 lần, 3 lần
-chạy): một lần gợi ý với 33 món 3–5 ms; 500 món × 1.000 người dùng, hồ sơ có dị ứng, 86–99 ms (ngưỡng kiểm 150 ms; lần đo 3/11: khoảng
-70 ms).
+Hiệu năng (đo riêng bằng `npm run test:perf -w backend`, máy dev, commit `2ebc970`, 15/11/2026, lần nhanh nhất trong 5 lần, 3 lần
+chạy): một lần gợi ý với 33 món 3–6,5 ms; 500 món × 1.000 người dùng, hồ sơ có dị ứng, 90–117 ms (ngưỡng kiểm 150 ms; lần đo 3/11:
+khoảng 70 ms). Phép đo dùng ngữ cảnh `today`, không phụ thuộc trọng số `for-you`; chênh giữa các lần là do máy.
 
 ## 8. Đánh giá trên dữ liệu mô phỏng
 
 <!-- EVAL:START -->
-Mã ở commit `e8dfad3`, chạy ngày 15/11/2026.
+Mã ở commit `2ebc970`, chạy ngày 15/11/2026.
 
 Sinh bằng `npm run eval:recommend -w backend`: 5 lần mô phỏng (seed 20261103–20261107), mỗi lần 80 người, 6 nhóm khẩu vị, 28 ngày; trung bình 1488 tương tác mỗi lần. Dữ liệu **mô phỏng**, chỉ trong bộ nhớ, không có trong cơ sở dữ liệu. Ngữ cảnh "for-you", K = 5 và 10; số trong bảng là trung bình 5 lần.
 
@@ -216,10 +216,12 @@ Tiêu chí riêng cho thành phần phổ biến (ngoại lệ có chủ đích 
 | >5 tương tác (296 người) | 0,654 | 0,683 |
 | Tất cả | 0,619 | 0,671 |
 
-Thời gian chạy: 19.3 s.
+Cấu hình đang chạy trong mã (`hybrid.ts`, "for-you"): 0,45/0,30/0,25, w_pop0 = 0,4 — **khớp** cấu hình quy tắc chọn, nên bảng 1–2, 5 đo đúng cấu hình đang chạy.
+
+Thời gian chạy: 19.8 s.
 <!-- EVAL:END -->
 
-**Nhận xét** (dựa trên các bảng trên — lần chạy 15/11/2026, commit `e8dfad3`; cùng xu hướng ở cả 5 lần mô phỏng):
+**Nhận xét** (dựa trên các bảng trên — lần chạy 15/11/2026, commit `2ebc970`, cấu hình đang chạy; cùng xu hướng ở cả 5 lần mô phỏng):
 
 - **Thuật toán 1 (nội dung)** đúng nhất trong ba thuật toán khi người dùng đã có lịch sử (R@10 0,651; với > 5 tương tác 0,711) vì khẩu
   vị trong dữ liệu bám theo đặc trưng món. Điểm yếu: ít đa dạng nhất (0,605) và hay gợi ý lại món đã ăn — "R@10 món mới" thấp nhất
@@ -245,8 +247,9 @@ Thời gian chạy: 19.3 s.
   ứng/chế độ ăn/món không thích của chính người được gợi ý.
 - **Chọn trọng số:** sáu bộ trọng số được so trên tập kiểm định (không dùng tập kiểm tra) theo quy tắc đặt trước (chỉ đổi khi R@10 kiểm
   định cao hơn ít nhất 0,01). Lần chạy này bộ "nội dung mạnh" (0,60/0,20/0,20) cao nhất nhưng chỉ hơn bộ kế hoạch 0,009 (0,631 so với
-  0,622) nên quy tắc giữ bộ kế hoạch. **Mã đang chạy vẫn dùng 0,60/0,20/0,20 cho `for-you` và w_pop0 = 0,3** — hai giá trị chốt ở lần
-  đánh giá 3/11 (khi đó hơn 0,033 và chọn đúng quy tắc); chưa đổi tham số theo lần chạy lại, xem mục 10. Các ngữ cảnh `today` và
+  0,622) nên quy tắc giữ bộ kế hoạch. **Mã đã chọn lại theo kết quả này:** `for-you` dùng 0,45/0,30/0,25 và w_pop0 = 0,4 (trước đó
+  0,60/0,20/0,20 và 0,3, chốt ngày 3/11 khi bộ nội dung mạnh hơn 0,033); dòng cuối khối số xác nhận cấu hình đang chạy khớp cấu hình
+  quy tắc chọn. Các ngữ cảnh `today` và
   `pantry` giữ trọng số theo mục tiêu sản phẩm (dùng đồ sắp hết hạn, dinh dưỡng trong ngày), vì đánh giá "đoán món sẽ ăn" không đo được
   mục tiêu đó.
 
@@ -298,29 +301,31 @@ Bộ tạo chỉ **gọi lại** các hàm có sẵn của bộ gợi ý, không
 Đánh giá (bộ tạo cũ `fallbackPlan`: xếp theo số nguyên liệu có trong kho + quy tắc giảm lặp, không xét calo hay hạn dùng):
 
 <!-- EVAL-MEALPLAN:START -->
-Mã ở commit `e8dfad3`, chạy ngày 15/11/2026.
+Mã ở commit `2ebc970`, chạy ngày 15/11/2026.
 
 Sinh bằng `npm run eval:mealplan -w backend`: 5 lần mô phỏng (seed 20261109–20261113), mỗi lần 100 người (500 thực đơn 7 ngày cho mỗi phương pháp). Hồ sơ ngẫu nhiên (5 chế độ ăn, 20% có một dị ứng, 10% có món không thích, 30% ăn 4 bữa), kho 8 thực phẩm (lượng 1–4 lần định lượng một món, hạn 0–10 ngày, 20% không có hạn), lịch sử 0–25 bữa đã ăn trong 4 tuần trước. Dữ liệu **mô phỏng**, chỉ trong bộ nhớ. Số trong bảng là trung bình trên mọi thực đơn.
 
-| Phương pháp | Lệch calo ngày | Ngày lệch ≤ 10% | Lượng đồ sắp hết hạn dùng trước hạn | Đồ sắp hết hạn được dùng | Bữa lặp trong 3 ngày / thực đơn | Số món khác nhau | Vi phạm an toàn | Thời gian / thực đơn |
-|---|---|---|---|---|---|---|---|---|
-| Bộ tạo cũ (fallbackPlan) | 32,6% | 11,2% | 43,7% | 59,0% | 2,46 | 16,4 | 0,3% | 0,5 ms |
-| Bộ tạo mới, không có khoảng calo (so sánh) | 28,1% | 17,0% | 58,4% | 73,5% | 1,72 | 16,5 | 0,3% | 11,1 ms |
-| Bộ tạo mới (scoredPlan) **(dùng)** | 25,4% | 20,3% | 54,0% | 68,6% | 1,78 | 15,6 | 0,3% | 8,3 ms |
-| OpenAI giả lập → reconcileAIPlan | 31,4% | 10,9% | 35,9% | 48,9% | 5,71 | 14,4 | 0,3% | 1,1 ms |
+| Phương pháp | Lệch calo ngày | Ngày lệch ≤ 10% | Lượng đồ sắp hết hạn dùng trước hạn | Đồ sắp hết hạn được dùng | Bữa lặp trong 3 ngày / thực đơn | Số món khác nhau | Vi phạm dị ứng/chế độ ăn | Bữa lấy món khác loại | Thời gian / thực đơn |
+|---|---|---|---|---|---|---|---|---|---|
+| Bộ tạo cũ (fallbackPlan) | 32,6% | 11,2% | 43,7% | 59,0% | 2,46 | 16,4 | 0,0% | 0,3% | 0,6 ms |
+| Bộ tạo mới, không có khoảng calo (so sánh) | 28,1% | 17,0% | 58,4% | 73,5% | 1,72 | 16,5 | 0,0% | 0,3% | 11,2 ms |
+| Bộ tạo mới (scoredPlan) **(dùng)** | 25,4% | 20,3% | 54,0% | 68,6% | 1,78 | 15,6 | 0,0% | 0,3% | 8,4 ms |
+| OpenAI giả lập → reconcileAIPlan | 31,4% | 10,9% | 35,9% | 48,9% | 5,71 | 14,4 | 0,0% | 0,3% | 1,1 ms |
+
+"Bữa lấy món khác loại": hồ sơ không còn món an toàn đúng loại bữa (chủ yếu chay/thuần chay kèm dị ứng gluten thiếu món trưa/tối) thì bộ tạo dùng món an toàn của bữa khác — an toàn trước, đúng bữa sau.
 
 Giới hạn dưới của lệch calo ngày với bộ món hiện có (mỗi bữa chọn món chỉ theo calo, khẩu phần 1, bỏ mọi tiêu chí khác): 16,2%; mục tiêu calo trung bình của hồ sơ mô phỏng 2131 kcal/ngày.
 
-"OpenAI giả lập": 6/500 thực đơn hỏng quá nửa số bữa nên dùng cả thực đơn của bộ tạo mới; còn lại bữa vi phạm được thay. Thời gian chạy: 14.1 s.
+"OpenAI giả lập": 6/500 thực đơn hỏng quá nửa số bữa nên dùng cả thực đơn của bộ tạo mới; còn lại bữa vi phạm được thay. Thời gian chạy: 14.3 s.
 <!-- EVAL-MEALPLAN:END -->
 
 **Nhận xét:**
 
 - Bộ tạo mới tốt hơn bộ cũ ở cả ba mục tiêu: lệch calo thấp hơn, dùng được nhiều đồ sắp hết hạn hơn trước khi hỏng, ít bữa lặp hơn.
 - **Không bữa nào vi phạm dị ứng, chế độ ăn hay món không thích** (mọi phương pháp chạy sau lọc an toàn; ma trận `dietary-matrix.test.ts`
-  có nguồn `scoredPlan`). Cột "Vi phạm an toàn" còn tính cả **sai loại bữa**: 0,3% ở mọi phương pháp là đúng các bữa trưa/tối phải dùng
-  món không đúng loại bữa (vd. "Khoai lang luộc" cho bữa tối) — 168 bữa tính chung 4 phương pháp, tất cả ở hồ sơ chay/thuần chay có dị
-  ứng gluten. Từ khi nước tương thuộc nhóm Gluten (commit `b8bc55a`), các hồ sơ này gần như không còn món trưa/tối an toàn trong bộ
+  có nguồn `scoredPlan`): cột "Vi phạm dị ứng/chế độ ăn" 0,0%. Cột "Bữa lấy món khác loại" 0,3% ở mọi phương pháp là các bữa trưa/tối
+  phải dùng món an toàn của bữa khác (vd. "Khoai lang luộc" cho bữa tối) — 168 bữa tính chung 4 phương pháp, tất cả ở hồ sơ chay/thuần
+  chay có dị ứng gluten. Từ khi nước tương thuộc nhóm Gluten (commit `b8bc55a`), các hồ sơ này gần như không còn món trưa/tối an toàn trong bộ
   33 món; bộ tạo chọn món an toàn của bữa khác thay vì món có gluten (an toàn trước, đúng bữa sau). Thêm món thuần chay không gluten
   là hướng phát triển (`docs/han-che.md`).
 - **Ràng buộc calo ±35% (chốt giữ).** Hai dòng "Bộ tạo mới" trong bảng chỉ khác nhau ở ràng buộc này:
@@ -344,7 +349,8 @@ Giới hạn dưới của lệch calo ngày với bộ món hiện có (mỗi b
 ## 10. Lịch sử số liệu đánh giá
 
 Các bảng ở mục 8 và 9 đã **đổi một lần**: bảng cũ sinh ở commit `e8a618f` (3/11/2026, gợi ý) và ngày 9/11/2026 (thực đơn); bảng mới
-chạy lại ngày 15/11/2026 ở commit `e8dfad3`, **cùng phương pháp** (cùng seed, cùng cách chia tập kiểm định/kiểm tra, cùng quy tắc chọn).
+chạy lại ngày 15/11/2026 ở commit `e8dfad3`, **cùng phương pháp** (cùng seed, cùng cách chia tập kiểm định/kiểm tra, cùng quy tắc chọn),
+rồi chạy lại lần nữa ở commit `2ebc970` sau khi chọn lại tham số: số giống hệt (đánh giá vốn đo cấu hình quy tắc chọn ra).
 
 **Commit làm đổi số: `b8bc55a` (13/11/2026) — sửa lỗi thành phần ẩn.** Trước đó, nguyên liệu chế biến và gia vị (nước tương, nước mắm,
 dầu hào, tương đen…) không được tính vào nhóm dị ứng, nên "Bánh mì ốp la" (có nước tương) vẫn được gợi ý cho người dị ứng đậu nành hoặc
@@ -365,10 +371,11 @@ dùng mô phỏng có dị ứng bị loại thêm món. Người mô phỏng ch
 | "Phổ biến nhất" không lọc an toàn: món vi phạm | 11,8% | 13,5% |
 | Thực đơn — lệch calo ngày: bộ cũ → bộ mới | 32,6% → 25,2% | 32,6% → 25,4% |
 | Thực đơn — đồ sắp hết hạn dùng trước hạn: bộ cũ → bộ mới | 44,1% → 54,7% | 43,7% → 54,0% |
-| Thực đơn — "Vi phạm an toàn" (gồm sai loại bữa) | 0,0% | 0,3% (chỉ sai loại bữa, xem mục 9) |
-| Hiệu năng 500 món × 1.000 người | khoảng 70 ms | 86–99 ms (ngưỡng 150 ms) |
+| Thực đơn — vi phạm (bảng cũ: một cột "Vi phạm an toàn", gồm cả sai loại bữa) | 0,0% | dị ứng/chế độ ăn 0,0%; bữa lấy món khác loại 0,3% |
+| Hiệu năng 500 món × 1.000 người | khoảng 70 ms | 90–117 ms (ngưỡng 150 ms) |
 
-**Quyết định cũ không còn đúng theo quy tắc chọn (chưa đổi tham số, chờ quyết định):** (1) trọng số `for-you` đang là 0,60/0,20/0,20,
-lần chạy lại quy tắc giữ bộ kế hoạch 0,45/0,30/0,25 (bộ nội dung mạnh vẫn cao nhất nhưng chênh dưới ngưỡng 0,01); (2) w_pop0 đang là
-0,3, lần chạy lại quy tắc chọn 0,4 (nhóm 0 tương tác bằng nhau ở 0,2–0,5, chọn theo R@10 kiểm định tổng: 0,651 ở 0,3, 0,676 ở 0,4).
-Bảng 1–2, 5 đo cấu hình mà quy tắc chọn ra, không phải cấu hình đang chạy.
+**Tham số đã chọn lại (15/11/2026, commit `2ebc970`), theo đúng quy tắc đặt trước trên tập kiểm định:** (1) trọng số `for-you`
+0,60/0,20/0,20 → **0,45/0,30/0,25** (bộ nội dung mạnh vẫn cao nhất nhưng chỉ hơn bộ kế hoạch 0,009, dưới ngưỡng 0,01, nên quy tắc giữ bộ
+kế hoạch); (2) w_pop0 0,3 → **0,4** (R@10 kiểm định nhóm 0 tương tác bằng nhau ở 0,2–0,5, hòa thì lấy tổng cao hơn: 0,676 ở 0,4 so với
+0,651 ở 0,3). Lý do chọn lại: dữ liệu mô phỏng đổi ở `b8bc55a`; tập kiểm tra không dùng để chọn. Từ commit này bảng 1–2, 5 đo đúng cấu
+hình đang chạy (script ghi dòng xác nhận).
