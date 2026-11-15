@@ -10,10 +10,10 @@ cân bằng dinh dưỡng và hợp khẩu vị (đồ án tốt nghiệp).
 
 - Đăng ký, đăng nhập (access token 15 phút + refresh token), quên/đặt lại mật khẩu qua email, hồ sơ dinh dưỡng.
 - Kho thực phẩm: số lượng, hạn, đơn giá, lịch sử thay đổi; quét hóa đơn (OpenAI Vision hoặc Tesseract dự phòng); nhắc hạn qua email.
-- Thực đơn 7 ngày (OpenAI, hoặc bộ tạo chấm điểm khi không có AI), danh sách đi chợ, "Đã ăn" trừ kho, "Đã mua" vào kho.
+- Thực đơn 7 ngày (mặc định bộ tạo chấm điểm bằng thuật toán; "Tạo bằng AI" là lựa chọn phụ khi có OpenAI), danh sách đi chợ, "Đã ăn" trừ kho, "Đã mua" vào kho.
 - 33 công thức, tìm kiếm không dấu theo tên/nguyên liệu/ẩm thực, gợi ý cá nhân hóa (lọc an toàn dị ứng/chế độ ăn), món yêu thích.
 - Cộng đồng: bài viết kèm ảnh và công thức, AI kiểm duyệt; Trợ lý AI "Hỏi Nouri"; Báo cáo lãng phí và dinh dưỡng tuần.
-- Khu Admin: thống kê, công thức (ẩn, xóa hẳn/xóa mềm, khôi phục), người dùng (khóa/mở khóa), kiểm duyệt, nhật ký thao tác.
+- Khu Admin: thống kê, công thức (ẩn, xóa hẳn/xóa mềm, khôi phục), người dùng (khóa/mở khóa), kiểm duyệt, nhật ký thao tác, danh mục dữ liệu (nhóm dị ứng, nhóm thực phẩm, hóa đơn).
 
 ## Cấu trúc
 

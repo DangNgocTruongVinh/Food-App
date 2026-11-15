@@ -22,8 +22,10 @@ Một món chỉ được gợi ý khi: chưa bị Admin ẩn/xóa; không chứ
 gõ dị ứng) kiểm mọi nguồn gợi ý với một bảng đáp án viết tay.
 
 **Dị ứng theo nhóm (sửa lỗi 13/11/2026).** Lỗi cũ: hồ sơ ghi "trứng gà" không lọc "Bánh mì ốp la" (nguyên liệu "Trứng") vì chỉ
-nhận đúng tên nhóm và so khớp một chiều theo chữ. Nay dùng một danh mục chung cho backend và frontend
-(`backend/src/services/allergy-groups.ts`, frontend chép y nguyên, test so hai file): 11 nhóm — Trứng, Sữa, Hải sản (= Cá + Giáp xác +
+nhận đúng tên nhóm và so khớp một chiều theo chữ. Nay dùng một danh mục chung cho backend và frontend. Từ 14/11/2026 **danh mục nằm trong database** (bảng `AllergenGroup`,
+`AllergenAlias`, `AllergenTerm`, `AllergenExclusion`; dữ liệu ban đầu ở `backend/prisma/catalog-data.ts`), backend nạp vào bộ nhớ qua
+`services/catalog/`, frontend lấy qua `GET /api/catalog`, Admin sửa ở trang "Danh mục dữ liệu" (có nhật ký). File
+`backend/src/services/allergy-groups.ts` chỉ còn **logic** so khớp (frontend chép y nguyên file logic, test so hai file): 11 nhóm — Trứng, Sữa, Hải sản (= Cá + Giáp xác +
 Nhuyễn thể), Đậu phộng, Hạt cây, Gluten, Đậu nành, Mè — mỗi nhóm có tên gọi khác (hai miền, tiếng Anh), nguyên liệu thuộc nhóm và
 ngoại lệ ("Sữa đậu nành" thuộc Đậu nành, không thuộc Sữa).
 

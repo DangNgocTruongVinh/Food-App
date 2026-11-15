@@ -169,8 +169,8 @@ Ctrl+F: `export function recipeWarnings`
 ```
 
 **Code làm gì:** `expandRestrictedTerms` biến mục người dùng nhập thành các cụm cần tránh: dị ứng mở rộng theo nhóm (gõ "trứng gà"
-→ cả nhóm Trứng, kể cả thành phần ẩn như mayonnaise); món không thích (`strict: false`) chỉ lấy nguyên liệu chính. Danh mục nhóm ở
-`backend/src/services/allergy-groups.ts`.
+→ cả nhóm Trứng, kể cả thành phần ẩn như mayonnaise); món không thích (`strict: false`) chỉ lấy nguyên liệu chính. Logic nhóm ở
+`backend/src/services/allergy-groups.ts`; danh mục nhóm (tên gọi khác, nguyên liệu) lưu trong database, nạp qua `services/catalog/`.
 
 **Nói với cô:** "Dị ứng lọc rộng theo nhóm vì là chuyện an toàn; món không thích chỉ lọc đúng nguyên liệu vì là khẩu vị."
 
