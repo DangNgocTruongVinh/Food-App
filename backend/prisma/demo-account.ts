@@ -1,7 +1,7 @@
 import type { Prisma, PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { nutritionTargetFields } from "../src/services/nutrition.service.js";
-import { vietnamToday } from "../src/utils/vietnam-date.js";
+import { DAY_MS, vietnamToday } from "../src/utils/vietnam-date.js";
 import { createDemoHistory } from "./demo-history.js";
 import { createDemoReportHistory } from "./demo-report.js";
 import { rebuildSampleAccounts, samplePasswordHashes } from "./sample-accounts.js";
@@ -42,7 +42,7 @@ export { vietnamToday };
 export function demoPantryItems(userId: string, now = new Date()): Prisma.PantryItemCreateManyInput[] {
   const today = vietnamToday(now);
   return demoPantryTemplate.map(({ expiresInDays, ...item }) => ({
-    ...item, userId, expiryDate: new Date(today.getTime() + expiresInDays * 86_400_000), purchasedAt: now,
+    ...item, userId, expiryDate: new Date(today.getTime() + expiresInDays * DAY_MS), purchasedAt: now,
   }));
 }
 

@@ -2,7 +2,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useState } from "react";
 import { getApiError } from "../../api/client";
 import { AdminAllergenCatalog } from "../../components/admin/AdminAllergenCatalog";
-import { AdminFoodCatalog, AdminReceiptCatalog } from "../../components/admin/AdminFoodCatalog";
+import { AdminFoodCatalog } from "../../components/admin/AdminFoodCatalog";
+import { AdminReceiptCatalog } from "../../components/admin/AdminReceiptCatalog";
 import { ChoiceGroup, ErrorState, LoadingState, Skeleton, Toast } from "../../components/ui";
 import type { CatalogSaveInput } from "../../features/admin/admin.api";
 import { adminMutations, adminQueries } from "../../features/admin/admin.queries";
@@ -11,12 +12,13 @@ import { catalogQuery } from "../../features/catalog/catalog.queries";
 /** Lưu một mục; true = thành công (form tự xóa ô nhập). Lỗi máy chủ hiện ở đầu trang. */
 export type SaveCatalog = (input: CatalogSaveInput, done: string) => Promise<boolean>;
 
-const TABS = [["allergens", "Nhóm dị ứng"], ["food", "Nhóm thực phẩm"], ["receipt", "Viết tắt hóa đơn"]] as const;
+const TABS = [["allergens", "Nhóm dị ứng"], ["food", "Nhóm thực phẩm"], ["receipt", "Hóa đơn"]] as const;
 type Tab = (typeof TABS)[number][0];
 
 /**
  * /admin/catalog: dữ liệu nghiệp vụ lưu trong database — nhóm dị ứng (tên gọi khác, nguyên liệu thuộc nhóm), nhóm thực phẩm
- * và hạn dùng ước tính, viết tắt trên hóa đơn. Không xóa, chỉ ẩn/hiện. Lưu xong backend nạp lại danh mục, bộ lọc dùng ngay.
+ * (từ đầu tên, hạn dùng ước tính, hạn riêng theo loại), viết tắt và từ khóa bỏ dòng trên hóa đơn. Không xóa, chỉ ẩn/hiện.
+ * Lưu xong backend nạp lại danh mục, bộ lọc dùng ngay.
  */
 export default function AdminCatalogPage() {
   const queryClient = useQueryClient();
@@ -60,7 +62,7 @@ export default function AdminCatalogPage() {
       ) : tab === "food" ? (
         <AdminFoodCatalog categories={data.foodCategories} save={save} busy={busy} />
       ) : (
-        <AdminReceiptCatalog abbreviations={data.receiptAbbreviations} save={save} busy={busy} />
+        <AdminReceiptCatalog abbreviations={data.receiptAbbreviations} keywords={data.receiptSkipKeywords} save={save} busy={busy} />
       )}
       <Toast message={toast} onDone={clearToast} />
     </section>

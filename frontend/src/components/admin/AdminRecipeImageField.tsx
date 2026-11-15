@@ -4,6 +4,7 @@ import { recipeImageError } from "../../features/admin/admin-recipes.logic";
 import { COMMUNITY_IMAGE_TYPES } from "../../features/community/community.logic";
 import { IMAGE_WIDTHS } from "../../utils/images";
 import { Button, ErrorState, RecipeImage } from "../ui";
+import { MAX_IMAGE_MB } from "../../features/shared/limits";
 
 type ImageFieldProps = {
   name: string;
@@ -52,7 +53,7 @@ export function AdminRecipeImageField({ name, imageUrl, file, error, uploading, 
           {file && <Button onClick={() => onSelect(null, "")} disabled={uploading}>Bỏ ảnh đã chọn</Button>}
           {!file && imageUrl && <Button onClick={onRemoveImage}>Bỏ ảnh hiện tại</Button>}
           <p className="ui-small">
-            JPG, PNG hoặc WEBP, tối đa 5 MB.{" "}
+            JPG, PNG hoặc WEBP, tối đa {MAX_IMAGE_MB} MB.{" "}
             {file && !canUploadNow ? "Ảnh được tải lên ngay sau khi tạo món." : !file && imageUrl ? "Bỏ ảnh có hiệu lực khi bấm Lưu thay đổi." : ""}
           </p>
         </div>

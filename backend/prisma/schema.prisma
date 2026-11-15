@@ -695,6 +695,7 @@ model FoodCategoryTerm {
   category   FoodCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
   prefix     String
   priority   Int          @default(0)
+  hiddenAt   DateTime?
 
   @@unique([categoryId, prefix])
   @@index([priority])
@@ -710,6 +711,7 @@ model FoodShelfLifeRule {
   shelfLifeDays Int?
   storage       StorageLocation
   priority      Int             @default(0)
+  hiddenAt      DateTime?
 
   @@unique([categoryId, pattern, matchMode])
 }
@@ -741,6 +743,7 @@ model ReceiptSkipKeyword {
   keyword     String
   matchMode   ReceiptKeywordMatch
   sortOrder   Int                 @default(0)
+  hiddenAt    DateTime?
 
   @@unique([reason, keyword, matchMode])
 }

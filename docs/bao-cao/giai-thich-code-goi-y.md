@@ -590,7 +590,8 @@ export const CONTEXT_WEIGHTS: Record<RecommendationContext, Record<Algorithm, nu
 ```
 
 **Code làm gì:** mỗi ngữ cảnh một bộ trọng số (nội dung / cộng tác / tri thức). "Hôm nay" ưu tiên tri thức (kho, dinh dưỡng); "Dành
-cho bạn" ưu tiên khẩu vị, bộ 0,60/0,20/0,20 chọn bằng đánh giá mô phỏng; "Kho" gần như chỉ tri thức (0,75).
+cho bạn" ưu tiên khẩu vị, bộ 0,60/0,20/0,20 chọn bằng đánh giá mô phỏng ngày 3/11; "Kho" gần như chỉ tri thức (0,75). Lần chạy lại
+15/11 (lọc dị ứng chặt hơn), quy tắc chọn sẽ giữ bộ 0,45/0,30/0,25 — chưa đổi tham số (`docs/thuat-toan-goi-y.md` mục 10).
 
 **Nói với cô:** "Cùng ba thuật toán nhưng mỗi màn hình trộn theo tỷ lệ khác, phù hợp mục đích của màn hình đó; tỷ lệ ở 'Dành cho
 bạn' được chọn bằng thực nghiệm."

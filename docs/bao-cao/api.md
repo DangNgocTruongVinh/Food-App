@@ -1,6 +1,6 @@
 # Danh sách API
 
-Sinh tự động từ `backend/src/app.ts` và các file `*.routes.ts` bằng `node scripts/docs/gen-api.mjs` (2026-11-14).
+Sinh tự động từ `backend/src/app.ts` và các file `*.routes.ts` bằng `node scripts/docs/gen-api.mjs` (2026-11-15).
 Tổng 87 endpoint: Công khai 11, Đăng nhập 54, Admin 22.
 
 Quy ước: "Đăng nhập" = `requireAuth` (JWT 15 phút, `userId` lấy từ token, đọc `role`/`lockedAt` từ DB mỗi request); "Admin" = thêm
@@ -92,7 +92,7 @@ Dữ liệu của người khác hoặc không tồn tại → 404 (không lộ 
 | 81 | DELETE | `/api/admin/community/posts/:postId` | Admin | Xóa bài vi phạm (service xóa dùng chung) | — | 204 |
 | 82 | DELETE | `/api/admin/community/comments/:commentId` | Admin | Xóa bình luận vi phạm | — | 204 |
 | 83 | GET | `/api/admin/stats` | Admin | Thống kê: tổng số và 12 tuần gần nhất (không tính tài khoản mẫu) | — | totals, weekly[] |
-| 84 | GET | `/api/admin/catalog` | Admin | Toàn bộ danh mục kể cả mục đã ẩn (trang Danh mục dữ liệu) | — | allergenGroups, foodCategories, receiptAbbreviations |
-| 85 | POST | `/api/admin/catalog/:kind` | Admin | Thêm nhóm dị ứng / tên gọi khác / nguyên liệu thuộc nhóm / nhóm thực phẩm / viết tắt hóa đơn; ghi nhật ký, nạp lại danh mục ngay; trùng → 409 | kind + trường theo loại (Zod) | id, label |
+| 84 | GET | `/api/admin/catalog` | Admin | Toàn bộ danh mục kể cả mục đã ẩn (trang Danh mục dữ liệu) | — | allergenGroups, foodCategories (terms, shelfLifeRules), receiptAbbreviations, receiptSkipKeywords |
+| 85 | POST | `/api/admin/catalog/:kind` | Admin | Thêm nhóm dị ứng / tên gọi khác / nguyên liệu thuộc nhóm / nhóm thực phẩm / từ đầu tên / hạn riêng / viết tắt / từ khóa bỏ dòng hóa đơn; ghi nhật ký, nạp lại danh mục ngay; trùng → 409 | kind + trường theo loại (Zod) | id, label |
 | 86 | PATCH | `/api/admin/catalog/:kind/:id` | Admin | Sửa hoặc ẩn/hiện (hidden) một mục; đổi tên nhóm dị ứng giữ tên cũ làm tên gọi khác; đổi tên nhóm thực phẩm đổi theo trong Kho | trường cần đổi, hidden | id, label, changedFields |
 | 87 | GET | `/api/admin/audit-logs` | Admin | Nhật ký thao tác Admin | action, targetType, targetId, actorId, page, pageSize | items, total |

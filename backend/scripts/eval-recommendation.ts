@@ -1,5 +1,6 @@
 import type { DietType, Gender, HealthGoal } from "@prisma/client";
 import { readFileSync, writeFileSync } from "node:fs";
+import { evalProvenance } from "./eval-provenance.js";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { buildCollaborativeModel, type CollaborativeModel } from "../src/modules/recommendation/collaborative.js";
@@ -13,6 +14,7 @@ import { normalizeFoodText } from "../src/services/dietary.service.js";
 import type { FitPantryItem } from "../src/services/recipe-fit.service.js";
 import { seedRecipesAsRecords } from "../src/test/seed-recipes.js";
 import { useSeedCatalog } from "../src/services/catalog/catalog-build.js";
+import { DAY_MS } from "../src/utils/vietnam-date.js";
 
 // Mô phỏng không có database: nạp danh mục từ dữ liệu seed (cùng hàm dựng như khi chạy thật).
 useSeedCatalog();
@@ -30,7 +32,6 @@ const SEED = 20261103;
 const SEEDS = [0, 1, 2, 3, 4].map((offset) => SEED + offset);
 const USERS = 80;
 const DAYS = 28;
-const DAY_MS = 86_400_000;
 const START = Date.UTC(2026, 9, 1);
 const TEMPERATURE = 0.7;
 const KS = [5, 10] as const;
@@ -302,6 +303,8 @@ const results = methodNames.map((name, index) => {
 
 const totalEvents = runs.reduce((sum, { users }) => sum + users.reduce((acc, user) => acc + user.events.length, 0), 0);
 const lines: string[] = [];
+lines.push(evalProvenance());
+lines.push("");
 lines.push(`Sinh bằng \`npm run eval:recommend -w backend\`: ${SEEDS.length} lần mô phỏng (seed ${SEEDS[0]}–${SEEDS.at(-1)}), mỗi lần ${USERS} người, `
   + `${GROUPS.length} nhóm khẩu vị, ${DAYS} ngày; trung bình ${Math.round(totalEvents / SEEDS.length)} tương tác mỗi lần. Dữ liệu **mô phỏng**, `
   + `chỉ trong bộ nhớ, không có trong cơ sở dữ liệu. Ngữ cảnh "for-you", K = 5 và 10; số trong bảng là trung bình ${SEEDS.length} lần.`);

@@ -4,7 +4,7 @@ import type { SaveCatalog } from "../../pages/admin/AdminCatalogPage";
 import { Button, Card, Field, useConfirm } from "../ui";
 
 type Props = { groups: AdminAllergenGroup[]; save: SaveCatalog; busy: boolean };
-type Entry = { id: string; name: string; hiddenAt: string | null; detail?: string };
+export type Entry = { id: string; name: string; hiddenAt: string | null; detail?: string };
 
 const LEVEL_LABEL: Record<AllergenTermLevel, string> = { CONTAINS: "Chứa", MAY_CONTAIN: "Có thể chứa" };
 
@@ -99,9 +99,9 @@ function GroupCard({ group, groups, save, busy }: { group: AdminAllergenGroup; g
   );
 }
 
-type EntryListProps = { title: string; kind: CatalogKind; groupLabel: string; entries: Entry[]; save: SaveCatalog; busy: boolean };
+export type EntryListProps = { title: string; kind: CatalogKind; groupLabel: string; entries: Entry[]; save: SaveCatalog; busy: boolean };
 
-function EntryList({ title, kind, groupLabel, entries, save, busy }: EntryListProps) {
+export function EntryList({ title, kind, groupLabel, entries, save, busy }: EntryListProps) {
   const confirm = useConfirm();
   const toggle = async (entry: Entry) => {
     // Ẩn nguyên liệu làm bộ lọc dị ứng bỏ qua nó: hỏi lại.

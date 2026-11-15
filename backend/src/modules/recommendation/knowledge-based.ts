@@ -3,9 +3,11 @@ import { prefersDiet } from "../../services/dietary.service.js";
 import { calculateNutritionTargets } from "../../services/nutrition.service.js";
 import { groupPantryByName, pantryMatchesFor } from "../../services/pantry-match.js";
 import {
-  type FitIngredient, type FitPantryItem, matchRecipeToPantry, PANTRY_EXPIRING_WINDOW_DAYS, pantryExpiryState,
+  type FitIngredient, type FitPantryItem, matchRecipeToPantry, pantryExpiryState,
 } from "../../services/recipe-fit.service.js";
 import { type FeatureSpace, similarity } from "./features.js";
+import { EXPIRING_SOON_DAYS } from "../../shared/limits.js";
+import { DAY_MS } from "../../utils/vietnam-date.js";
 
 // Thuật toán 3 — dựa trên tri thức, tối ưu đa tiêu chí (GĐ3b-R5). Chạy sau lọc cứng (safety.ts). Điểm mềm:
 //   s3 = 0,35·f_hạn + 0,25·f_kho + 0,20·f_dd + 0,10·f_dạng + 0,10·f_ưu,  mỗi f ∈ [0, 1]
@@ -23,7 +25,6 @@ export const KNOWLEDGE_PARTS = Object.keys(KNOWLEDGE_WEIGHTS) as KnowledgePart[]
 export const MEAL_SHARE: Record<MealType, number> = { BREAKFAST: 0.25, LUNCH: 0.35, DINNER: 0.3, SNACK: 0.1 };
 export const CALORIE_SIGMA = 0.35;
 export const RECENT_DAYS = 3;
-const DAY_MS = 86_400_000;
 
 export type KnowledgeRecipe = {
   id: string;
@@ -63,7 +64,7 @@ export function expiringFeature(
       used.set(item.name, Math.min(used.get(item.name) ?? Infinity, days));
     }
   }
-  const window = PANTRY_EXPIRING_WINDOW_DAYS + 1;
+  const window = EXPIRING_SOON_DAYS + 1;
   const sum = [...used.values()].reduce((total, days) => total + (window - days) / window, 0);
   return { value: Math.min(1, sum), names: [...used].sort((a, b) => a[1] - b[1] || a[0].localeCompare(b[0])).map(([name]) => name) };
 }

@@ -130,7 +130,7 @@ ngữ cảnh Kho chỉ xét món có ít nhất một nguyên liệu trong kho.
 4. `S = w1' · ŝ1 + w2' · ŝ2 + w3' · ŝ3`.
    Thành phần phổ biến (khởi đầu lạnh): `w_pop = (1 − γ_u) · w_pop0`, các thành phần khác nhân `(1 − w_pop)`; điểm phổ biến của món
    = Σ_u r_ui của mọi người (kể cả tài khoản mẫu), vẫn sau lọc an toàn; lý do "Nhiều người đang nấu món này". w_pop0 chọn ở mục 8
-   (bảng 4): **0,3**.
+   (bảng 4): **0,3** (chốt ở lần đánh giá 3/11/2026; lần chạy lại 15/11 quy tắc chọn ra 0,4 — chưa đổi tham số, xem mục 10).
 5. Đa dạng hóa MMR: chọn lần lượt `argmax 0,8 · S(r) − 0,2 · max_{s đã chọn} cos(v_r, v_s)`.
 6. Lý do: thành phần có `w_a' · ŝ_a` lớn nhất, rồi tiêu chí con lớn nhất của nó (khối đặc trưng, tiêu chí của thuật toán 3, món
    "vì" của thuật toán 2). Ví dụ: "Dùng 2 thực phẩm sắp hết hạn: Đậu hũ, Ức gà", "Có nguyên liệu bạn hay dùng: Gừng, Ức gà",
@@ -139,115 +139,123 @@ ngữ cảnh Kho chỉ xét món có ít nhất một nguyên liệu trong kho.
 | Ngữ cảnh (`context`) | Dùng ở | w1 (nội dung) | w2 (cộng tác) | w3 (tri thức) |
 |---|---|---|---|---|
 | `today` | Tổng quan: hôm nay nấu gì | 0,35 | 0,25 | 0,40 |
-| `for-you` | Công thức: Dành cho bạn | 0,60 | 0,20 | 0,20 (chốt sau đánh giá, mục 8; ban đầu 0,45/0,30/0,25) |
+| `for-you` | Công thức: Dành cho bạn | 0,60 | 0,20 | 0,20 (chốt sau đánh giá 3/11, mục 8; ban đầu 0,45/0,30/0,25; lần chạy lại 15/11 xem mục 10) |
 | `pantry` | Kho: Nấu gì từ kho, Gợi ý món cho thực phẩm X | 0,15 | 0,10 | 0,75 |
 | `similar` | Chi tiết món: Món tương tự | 1 | 0 | 0 |
 | `also-cooked` | Chi tiết món: Người khác cũng nấu | 0 | 1 | 0 |
 
-Hiệu năng (đo riêng bằng `npm run test:perf -w backend`): một lần gợi ý với 33 món dưới 10 ms; 500 món × 1.000 người dùng,
-hồ sơ có dị ứng, khoảng 70 ms (ngưỡng kiểm 150 ms).
+Hiệu năng (đo riêng bằng `npm run test:perf -w backend`, máy dev, commit `e8dfad3`, 15/11/2026, lần nhanh nhất trong 5 lần, 3 lần
+chạy): một lần gợi ý với 33 món 3–5 ms; 500 món × 1.000 người dùng, hồ sơ có dị ứng, 86–99 ms (ngưỡng kiểm 150 ms; lần đo 3/11: khoảng
+70 ms).
 
 ## 8. Đánh giá trên dữ liệu mô phỏng
 
 <!-- EVAL:START -->
-Sinh bằng `npm run eval:recommend -w backend`: 5 lần mô phỏng (seed 20261103–20261107), mỗi lần 80 người, 6 nhóm khẩu vị, 28 ngày; trung bình 1544 tương tác mỗi lần. Dữ liệu **mô phỏng**, chỉ trong bộ nhớ, không có trong cơ sở dữ liệu. Ngữ cảnh "for-you", K = 5 và 10; số trong bảng là trung bình 5 lần.
+Mã ở commit `e8dfad3`, chạy ngày 15/11/2026.
+
+Sinh bằng `npm run eval:recommend -w backend`: 5 lần mô phỏng (seed 20261103–20261107), mỗi lần 80 người, 6 nhóm khẩu vị, 28 ngày; trung bình 1488 tương tác mỗi lần. Dữ liệu **mô phỏng**, chỉ trong bộ nhớ, không có trong cơ sở dữ liệu. Ngữ cảnh "for-you", K = 5 và 10; số trong bảng là trung bình 5 lần.
 
 **Bảng 1 — Tập kiểm tra (20% tương tác cuối của mỗi người).**
 
 | Phương pháp | P@5 | R@5 | P@10 | R@10 (± độ lệch giữa các lần) | R@10 món mới | Độ phủ | Đa dạng | Lệch calo | Có đồ sắp hết hạn | Vi phạm an toàn |
 |---|---|---|---|---|---|---|---|---|---|---|
-| Ngẫu nhiên | 0,096 | 0,162 | 0,099 | 0,352 ± 0,025 | 0,323 | 100,0% | 0,757 | 42,2% | 65,0% | 0,0% |
-| Phổ biến nhất | 0,185 | 0,378 | 0,149 | 0,564 ± 0,057 | 0,386 | 61,8% | 0,778 | 46,3% | 64,5% | 0,0% |
-| Phổ biến nhất (không lọc an toàn) | 0,164 | 0,338 | 0,137 | 0,524 ± 0,045 | 0,339 | 30,3% | 0,791 | 46,2% | 65,3% | 11,8% |
-| TT1 Nội dung | 0,248 | 0,443 | 0,171 | 0,618 ± 0,015 | 0,268 | 100,0% | 0,607 | 38,7% | 62,2% | 0,0% |
-| TT2 Cộng tác | 0,062 | 0,119 | 0,059 | 0,235 ± 0,023 | 0,602 | 99,4% | 0,793 | 43,1% | 66,8% | 0,0% |
-| TT3 Tri thức | 0,108 | 0,194 | 0,104 | 0,377 ± 0,041 | 0,378 | 100,0% | 0,710 | 33,0% | 85,3% | 0,0% |
-| Bộ trộn (Nội dung mạnh (0,60/0,20/0,20)) | 0,228 | 0,418 | 0,163 | 0,590 ± 0,017 | 0,308 | 100,0% | 0,620 | 37,1% | 79,5% | 0,0% |
-| Bộ trộn + phổ biến (w_pop0 = 0,3) | 0,241 | 0,456 | 0,170 | 0,622 ± 0,021 | 0,347 | 100,0% | 0,653 | 38,2% | 78,5% | 0,0% |
+| Ngẫu nhiên | 0,105 | 0,198 | 0,100 | 0,377 ± 0,027 | 0,368 | 100,0% | 0,754 | 42,5% | 61,7% | 0,0% |
+| Phổ biến nhất | 0,184 | 0,399 | 0,148 | 0,608 ± 0,075 | 0,400 | 70,3% | 0,769 | 45,1% | 63,5% | 0,0% |
+| Phổ biến nhất (không lọc an toàn) | 0,159 | 0,354 | 0,133 | 0,558 ± 0,066 | 0,350 | 30,3% | 0,778 | 44,6% | 64,3% | 13,5% |
+| TT1 Nội dung | 0,258 | 0,510 | 0,171 | 0,651 ± 0,043 | 0,312 | 100,0% | 0,605 | 38,3% | 59,0% | 0,0% |
+| TT2 Cộng tác | 0,059 | 0,120 | 0,055 | 0,230 ± 0,016 | 0,567 | 98,8% | 0,791 | 42,8% | 67,5% | 0,0% |
+| TT3 Tri thức | 0,114 | 0,219 | 0,106 | 0,411 ± 0,029 | 0,410 | 100,0% | 0,707 | 33,3% | 85,3% | 0,0% |
+| Bộ trộn (Kế hoạch (0,45/0,30/0,25)) | 0,211 | 0,438 | 0,156 | 0,619 ± 0,040 | 0,405 | 100,0% | 0,639 | 35,7% | 83,5% | 0,0% |
+| Bộ trộn + phổ biến (w_pop0 = 0,4) | 0,234 | 0,492 | 0,166 | 0,671 ± 0,067 | 0,461 | 98,2% | 0,692 | 38,2% | 82,3% | 0,0% |
 
 **Bảng 2 — R@10 theo số tương tác trong tập huấn luyện (khởi đầu lạnh; gộp người của 5 lần).**
 
-| Phương pháp | 0 tương tác (39 người) | 1–5 tương tác (56 người) | >5 tương tác (305 người) |
+| Phương pháp | 0 tương tác (44 người) | 1–5 tương tác (60 người) | >5 tương tác (296 người) |
 |---|---|---|---|
-| Ngẫu nhiên | 0,231 | 0,357 | 0,366 |
-| Phổ biến nhất | 0,538 | 0,554 | 0,569 |
-| Phổ biến nhất (không lọc an toàn) | 0,513 | 0,536 | 0,523 |
-| TT1 Nội dung | 0,308 | 0,536 | 0,673 |
-| TT2 Cộng tác | 0,462 | 0,339 | 0,187 |
-| TT3 Tri thức | 0,359 | 0,446 | 0,366 |
-| Bộ trộn (Nội dung mạnh (0,60/0,20/0,20)) | 0,256 | 0,571 | 0,636 |
-| Bộ trộn + phổ biến (w_pop0 = 0,3) | 0,308 | 0,643 | 0,658 |
+| Ngẫu nhiên | 0,318 | 0,300 | 0,401 |
+| Phổ biến nhất | 0,705 | 0,617 | 0,591 |
+| Phổ biến nhất (không lọc an toàn) | 0,659 | 0,567 | 0,542 |
+| TT1 Nội dung | 0,386 | 0,550 | 0,711 |
+| TT2 Cộng tác | 0,341 | 0,400 | 0,179 |
+| TT3 Tri thức | 0,409 | 0,367 | 0,421 |
+| Bộ trộn (Kế hoạch (0,45/0,30/0,25)) | 0,386 | 0,617 | 0,654 |
+| Bộ trộn + phổ biến (w_pop0 = 0,4) | 0,614 | 0,650 | 0,683 |
 
 **Bảng 3 — Chọn trọng số bộ trộn trên tập kiểm định (20% cuối của tập huấn luyện; tập kiểm tra không dùng để chọn).**
 
 | Bộ trọng số (nội dung/cộng tác/tri thức) | R@10 kiểm định | P@10 kiểm định | Đa dạng | Có đồ sắp hết hạn |
 |---|---|---|---|---|
-| Kế hoạch (0,45/0,30/0,25) | 0,627 | 0,149 | 0,647 | 84,2% |
-| Như Tổng quan (0,35/0,25/0,40) | 0,585 | 0,138 | 0,669 | 85,0% |
-| Bằng nhau (1/3) | 0,594 | 0,139 | 0,669 | 85,0% |
-| Nội dung mạnh (0,60/0,20/0,20) **(chọn)** | 0,660 | 0,158 | 0,629 | 80,6% |
-| Cộng tác mạnh (0,30/0,50/0,20) | 0,593 | 0,138 | 0,665 | 84,5% |
-| Tri thức mạnh (0,25/0,25/0,50) | 0,519 | 0,121 | 0,684 | 85,3% |
+| Kế hoạch (0,45/0,30/0,25) **(chọn)** | 0,622 | 0,150 | 0,648 | 84,0% |
+| Như Tổng quan (0,35/0,25/0,40) | 0,571 | 0,135 | 0,671 | 86,0% |
+| Bằng nhau (1/3) | 0,578 | 0,136 | 0,670 | 86,0% |
+| Nội dung mạnh (0,60/0,20/0,20) | 0,631 | 0,152 | 0,627 | 79,5% |
+| Cộng tác mạnh (0,30/0,50/0,20) | 0,581 | 0,136 | 0,663 | 84,3% |
+| Tri thức mạnh (0,25/0,25/0,50) | 0,518 | 0,121 | 0,683 | 86,0% |
 
-Quy tắc chọn: giữ bộ trọng số của kế hoạch trừ khi bộ khác có R@10 kiểm định trung bình cao hơn ít nhất 0,01. Bộ cao nhất: Nội dung mạnh (0,60/0,20/0,20) (0,660 so với 0,627) → chọn **Nội dung mạnh (0,60/0,20/0,20)**.
+Quy tắc chọn: giữ bộ trọng số của kế hoạch trừ khi bộ khác có R@10 kiểm định trung bình cao hơn ít nhất 0,01. Bộ cao nhất: Nội dung mạnh (0,60/0,20/0,20) (0,631 so với 0,622) → chọn **Kế hoạch (0,45/0,30/0,25)**.
 
 **Bảng 4 — Chọn w_pop0 của thành phần phổ biến (khởi đầu lạnh) trên tập kiểm định, với bộ trọng số đã chọn.**
 
 | w_pop0 | R@10 kiểm định, tất cả | R@10 kiểm định, 0 tương tác | R@10 kiểm định, 1–5 tương tác | Đa dạng | Có đồ sắp hết hạn |
 |---|---|---|---|---|---|
-| 0,0 | 0,660 | 0,556 | 0,690 | 0,629 | 80,6% |
-| 0,1 | 0,656 | 0,667 | 0,638 | 0,636 | 80,6% |
-| 0,2 | 0,659 | 0,667 | 0,621 | 0,645 | 79,7% |
-| 0,3 **(chọn)** | 0,669 | 0,778 | 0,621 | 0,658 | 79,0% |
-| 0,4 | 0,667 | 0,778 | 0,603 | 0,677 | 77,5% |
-| 0,5 | 0,664 | 0,778 | 0,586 | 0,697 | 77,8% |
+| 0,0 | 0,622 | 0,200 | 0,559 | 0,648 | 84,0% |
+| 0,1 | 0,626 | 0,400 | 0,559 | 0,654 | 83,5% |
+| 0,2 | 0,641 | 0,600 | 0,588 | 0,664 | 83,5% |
+| 0,3 | 0,651 | 0,600 | 0,618 | 0,679 | 83,5% |
+| 0,4 **(chọn)** | 0,676 | 0,600 | 0,691 | 0,697 | 82,6% |
+| 0,5 | 0,667 | 0,600 | 0,632 | 0,712 | 82,1% |
 
-Tiêu chí riêng cho thành phần phổ biến (ngoại lệ có chủ đích so với ngưỡng 0,01 của bảng 3): mục tiêu là khởi đầu lạnh nên chọn theo R@10 kiểm định nhóm 0 tương tác, với điều kiện R@10 kiểm định tổng không giảm. Chọn **w_pop0 = 0,3**: nhóm 0 tương tác 0,556 → 0,778, tổng 0,660 → 0,669. Đánh đổi: nhóm 1–5 tương tác 0,690 → 0,621.
+Tiêu chí riêng cho thành phần phổ biến (ngoại lệ có chủ đích so với ngưỡng 0,01 của bảng 3): mục tiêu là khởi đầu lạnh nên chọn theo R@10 kiểm định nhóm 0 tương tác, với điều kiện R@10 kiểm định tổng không giảm. Chọn **w_pop0 = 0,4**: nhóm 0 tương tác 0,200 → 0,600, tổng 0,622 → 0,676. Đánh đổi: nhóm 1–5 tương tác 0,559 → 0,691.
 
-**Bảng 5 — Bộ trộn trước/sau khi thêm thành phần phổ biến w_pop0 = 0,3 (đã chọn ở bảng 4; tập kiểm tra, R@10 theo số tương tác — chỉ để xác nhận, không dùng chọn tham số).**
+**Bảng 5 — Bộ trộn trước/sau khi thêm thành phần phổ biến w_pop0 = 0,4 (đã chọn ở bảng 4; tập kiểm tra, R@10 theo số tương tác — chỉ để xác nhận, không dùng chọn tham số).**
 
-| Nhóm | Trước (w_pop0 = 0) | Sau (w_pop0 = 0,3) |
+| Nhóm | Trước (w_pop0 = 0) | Sau (w_pop0 = 0,4) |
 |---|---|---|
-| 0 tương tác (39 người) | 0,256 | 0,308 |
-| 1–5 tương tác (56 người) | 0,571 | 0,643 |
-| >5 tương tác (305 người) | 0,636 | 0,658 |
-| Tất cả | 0,590 | 0,622 |
+| 0 tương tác (44 người) | 0,386 | 0,614 |
+| 1–5 tương tác (60 người) | 0,617 | 0,650 |
+| >5 tương tác (296 người) | 0,654 | 0,683 |
+| Tất cả | 0,619 | 0,671 |
 
-Thời gian chạy: 17.4 s.
+Thời gian chạy: 19.3 s.
 <!-- EVAL:END -->
 
-**Nhận xét** (dựa trên các bảng trên; cùng xu hướng ở cả 5 lần mô phỏng):
+**Nhận xét** (dựa trên các bảng trên — lần chạy 15/11/2026, commit `e8dfad3`; cùng xu hướng ở cả 5 lần mô phỏng):
 
-- **Thuật toán 1 (nội dung)** đúng nhất khi người dùng đã có lịch sử (R@10 0,62; với > 5 tương tác 0,67) vì khẩu vị trong dữ liệu
-  bám theo đặc trưng món. Điểm yếu: ít đa dạng nhất (0,61) và hay gợi ý lại món đã ăn — "R@10 món mới" thấp nhất (0,27). Khi chưa
-  có lịch sử chỉ còn tiên nghiệm từ hồ sơ nên kém (0,31).
-- **Thuật toán 2 (cộng tác)** có R@10 chung thấp nhất trong ba thuật toán vì theo thiết kế không gợi ý lại món người dùng đã tương
-  tác (mà món ăn thì hay được ăn lại). Đổi lại, nó **mạnh nhất ở món mới** (R@10 món mới 0,60, gấp đôi thuật toán 1): tìm món người
-  dùng chưa từng nấu nhưng người cùng khẩu vị hay nấu. Cần dữ liệu của nhiều người; lý do này cũng là vì sao cần tài khoản mẫu khi demo.
-- **Thuật toán 3 (tri thức)** không nhắm tới "đoán món sẽ ăn" (R@10 0,38) mà tới mục tiêu sản phẩm: lệch calo thấp nhất (33%) và
-  85% danh sách có món dùng đồ sắp hết hạn (ngẫu nhiên: 65%).
-- **Bộ trộn** gần bằng thuật toán 1 về độ đúng (R@10 0,59 so với 0,62), tốt nhất ở nhóm 1–5 tương tác (0,57), nhưng giữ được phần lớn
-  lợi ích của thuật toán 3 (lệch calo 37%, 80% danh sách dùng đồ sắp hết hạn) và gợi ý món mới tốt hơn thuật toán 1 (0,31 so với 0,27).
-  Đó là đánh đổi mong muốn: một chút độ đúng để đổi lấy giảm lãng phí và dinh dưỡng hợp mục tiêu.
-- **Khởi đầu lạnh (0 tương tác):** "phổ biến nhất" tốt nhất (0,54); bộ trộn chỉ 0,26 vì khi chưa có lịch sử, trọng số thuật toán 2
-  bằng 0 và thuật toán 1 chỉ dựa vào hồ sơ. Đã thử thêm thành phần phổ biến `w_pop = (1 − γ_u)·w_pop0` (bảng 4, 5): trên tập kiểm định,
-  với tiêu chí riêng (ngoại lệ có chủ đích so với ngưỡng 0,01 của R6, vì mục tiêu của thành phần này là khởi đầu lạnh): chọn theo
-  R@10 kiểm định nhóm 0 tương tác (0,556 → 0,778 với w_pop0 = 0,3), điều kiện R@10 kiểm định tổng không giảm (0,660 → 0,669)
-  → **chốt w_pop0 = 0,3**. Đánh đổi trung thực: nhóm 1–5 tương tác trên kiểm định giảm 0,690 → 0,621. Bảng 5 (tập kiểm tra, chỉ để
-  xác nhận, không dùng chọn tham số): nhóm 0 tương tác 0,256 → 0,308, nhóm 1–5 0,571 → 0,643, tổng 0,590 → 0,622.
-  Tập kiểm định có ít người mới (mỗi lần mô phỏng vài người) nên kết luận ở nhóm này còn nhiễu.
-- **Lọc an toàn là bắt buộc:** mọi phương pháp chạy sau lọc an toàn đều 0% vi phạm; "phổ biến nhất" không lọc có 11,8% món vi phạm dị
+- **Thuật toán 1 (nội dung)** đúng nhất trong ba thuật toán khi người dùng đã có lịch sử (R@10 0,651; với > 5 tương tác 0,711) vì khẩu
+  vị trong dữ liệu bám theo đặc trưng món. Điểm yếu: ít đa dạng nhất (0,605) và hay gợi ý lại món đã ăn — "R@10 món mới" thấp nhất
+  (0,312). Khi chưa có lịch sử chỉ còn tiên nghiệm từ hồ sơ nên kém (0,386).
+- **Thuật toán 2 (cộng tác)** có R@10 chung thấp nhất (0,230) vì theo thiết kế không gợi ý lại món người dùng đã tương tác (mà món ăn
+  thì hay được ăn lại). Đổi lại, nó **mạnh nhất ở món mới** (R@10 món mới 0,567, gần gấp đôi thuật toán 1): tìm món người dùng chưa từng
+  nấu nhưng người cùng khẩu vị hay nấu. Cần dữ liệu của nhiều người; lý do này cũng là vì sao cần tài khoản mẫu khi demo.
+- **Thuật toán 3 (tri thức)** không nhắm tới "đoán món sẽ ăn" (R@10 0,411) mà tới mục tiêu sản phẩm: lệch calo thấp nhất (33,3%) và
+  85,3% danh sách có món dùng đồ sắp hết hạn (ngẫu nhiên: 61,7%).
+- **Bộ trộn** (bộ trọng số kế hoạch 0,45/0,30/0,25, do quy tắc ở bảng 3 chọn) gần bằng thuật toán 1 về độ đúng (R@10 0,619 so với
+  0,651) nhưng giữ được phần lớn lợi ích của thuật toán 3 (lệch calo 35,7%, 83,5% danh sách dùng đồ sắp hết hạn) và gợi ý món mới tốt
+  hơn thuật toán 1 (0,405 so với 0,312). Đó là đánh đổi mong muốn: một chút độ đúng để đổi lấy giảm lãng phí và dinh dưỡng hợp mục tiêu.
+- **Bộ trộn + phổ biến** (w_pop0 = 0,4 do bảng 4 chọn) có R@10 cao nhất mọi phương pháp (0,671), tốt nhất ở nhóm 1–5 tương tác (0,650)
+  và món mới 0,461.
+- **Khởi đầu lạnh (0 tương tác):** "phổ biến nhất" tốt nhất (0,705); bộ trộn chỉ 0,386 vì khi chưa có lịch sử, trọng số thuật toán 2
+  bằng 0 và thuật toán 1 chỉ dựa vào hồ sơ. Thành phần phổ biến `w_pop = (1 − γ_u)·w_pop0` (bảng 4, 5) chọn trên tập kiểm định theo
+  tiêu chí riêng (ngoại lệ có chủ đích so với ngưỡng 0,01 của R6, vì mục tiêu của thành phần này là khởi đầu lạnh): R@10 kiểm định nhóm
+  0 tương tác 0,200 → 0,600 (bằng nhau ở w_pop0 = 0,2; 0,3; 0,4; 0,5), hòa thì lấy R@10 kiểm định tổng cao hơn → **w_pop0 = 0,4**
+  (tổng 0,622 → 0,676; nhóm 1–5 tương tác cũng tăng 0,559 → 0,691). Bảng 5 (tập kiểm tra, chỉ để xác nhận, không dùng chọn tham số):
+  nhóm 0 tương tác 0,386 → 0,614, nhóm 1–5 0,617 → 0,650, tổng 0,619 → 0,671. Tập kiểm định có ít người mới (mỗi lần mô phỏng vài người)
+  nên kết luận ở nhóm này còn nhiễu.
+- **Lọc an toàn là bắt buộc:** mọi phương pháp chạy sau lọc an toàn đều 0% vi phạm; "phổ biến nhất" không lọc có 13,5% món vi phạm dị
   ứng/chế độ ăn/món không thích của chính người được gợi ý.
-- **Chọn trọng số:** sáu bộ trọng số được so trên tập kiểm định (không dùng tập kiểm tra) theo quy tắc đặt trước; bộ "nội dung mạnh"
-  (0,60/0,20/0,20) hơn bộ ban đầu 0,036 R@10 nên được chốt cho ngữ cảnh `for-you`. Các ngữ cảnh `today` và `pantry` giữ trọng số theo
-  mục tiêu sản phẩm (dùng đồ sắp hết hạn, dinh dưỡng trong ngày), vì đánh giá "đoán món sẽ ăn" không đo được mục tiêu đó.
+- **Chọn trọng số:** sáu bộ trọng số được so trên tập kiểm định (không dùng tập kiểm tra) theo quy tắc đặt trước (chỉ đổi khi R@10 kiểm
+  định cao hơn ít nhất 0,01). Lần chạy này bộ "nội dung mạnh" (0,60/0,20/0,20) cao nhất nhưng chỉ hơn bộ kế hoạch 0,009 (0,631 so với
+  0,622) nên quy tắc giữ bộ kế hoạch. **Mã đang chạy vẫn dùng 0,60/0,20/0,20 cho `for-you` và w_pop0 = 0,3** — hai giá trị chốt ở lần
+  đánh giá 3/11 (khi đó hơn 0,033 và chọn đúng quy tắc); chưa đổi tham số theo lần chạy lại, xem mục 10. Các ngữ cảnh `today` và
+  `pantry` giữ trọng số theo mục tiêu sản phẩm (dùng đồ sắp hết hạn, dinh dưỡng trong ngày), vì đánh giá "đoán món sẽ ăn" không đo được
+  mục tiêu đó.
 
 **Hạn chế của dữ liệu mô phỏng:**
 
 - Khẩu vị được sinh từ luật theo đặc trưng món, nên dữ liệu thiên vị thuật toán 1 dù đã thêm "món ruột" ngẫu nhiên mỗi nhóm; con số
   tuyệt đối không nói lên hiệu quả với người dùng thật.
 - Bộ món nhỏ (33 món, ~25 món an toàn mỗi người): chọn 10 món đã trùng một phần lớn bộ món, nên Recall@10 cao kể cả với ngẫu nhiên
-  (0,35); nên so sánh tương đối giữa các phương pháp, không đọc như số đo thực tế.
+  (0,38); nên so sánh tương đối giữa các phương pháp, không đọc như số đo thực tế.
 - Kho mô phỏng ngẫu nhiên (6 thực phẩm, hạn 0–11 ngày) nên tỷ lệ "có đồ sắp hết hạn" cao ở mọi phương pháp.
 - Mô hình cộng tác được tính một lần từ tập huấn luyện của mọi người, nên với một người có thể đã thấy một phần tương tác của người khác
   xảy ra sau thời điểm gợi ý (rò rỉ nhẹ theo thời gian).
@@ -290,38 +298,77 @@ Bộ tạo chỉ **gọi lại** các hàm có sẵn của bộ gợi ý, không
 Đánh giá (bộ tạo cũ `fallbackPlan`: xếp theo số nguyên liệu có trong kho + quy tắc giảm lặp, không xét calo hay hạn dùng):
 
 <!-- EVAL-MEALPLAN:START -->
+Mã ở commit `e8dfad3`, chạy ngày 15/11/2026.
+
 Sinh bằng `npm run eval:mealplan -w backend`: 5 lần mô phỏng (seed 20261109–20261113), mỗi lần 100 người (500 thực đơn 7 ngày cho mỗi phương pháp). Hồ sơ ngẫu nhiên (5 chế độ ăn, 20% có một dị ứng, 10% có món không thích, 30% ăn 4 bữa), kho 8 thực phẩm (lượng 1–4 lần định lượng một món, hạn 0–10 ngày, 20% không có hạn), lịch sử 0–25 bữa đã ăn trong 4 tuần trước. Dữ liệu **mô phỏng**, chỉ trong bộ nhớ. Số trong bảng là trung bình trên mọi thực đơn.
 
 | Phương pháp | Lệch calo ngày | Ngày lệch ≤ 10% | Lượng đồ sắp hết hạn dùng trước hạn | Đồ sắp hết hạn được dùng | Bữa lặp trong 3 ngày / thực đơn | Số món khác nhau | Vi phạm an toàn | Thời gian / thực đơn |
 |---|---|---|---|---|---|---|---|---|
-| Bộ tạo cũ (fallbackPlan) | 32,6% | 11,2% | 44,1% | 59,7% | 2,34 | 16,7 | 0,0% | 0,4 ms |
-| Bộ tạo mới, không có khoảng calo (so sánh) | 28,0% | 17,3% | 59,2% | 74,5% | 1,60 | 16,6 | 0,0% | 9,1 ms |
-| Bộ tạo mới (scoredPlan) **(dùng)** | 25,2% | 20,6% | 54,7% | 69,4% | 1,65 | 15,7 | 0,0% | 6,9 ms |
-| OpenAI giả lập → reconcileAIPlan | 31,4% | 10,5% | 36,4% | 49,6% | 5,55 | 14,6 | 0,0% | 0,6 ms |
+| Bộ tạo cũ (fallbackPlan) | 32,6% | 11,2% | 43,7% | 59,0% | 2,46 | 16,4 | 0,3% | 0,5 ms |
+| Bộ tạo mới, không có khoảng calo (so sánh) | 28,1% | 17,0% | 58,4% | 73,5% | 1,72 | 16,5 | 0,3% | 11,1 ms |
+| Bộ tạo mới (scoredPlan) **(dùng)** | 25,4% | 20,3% | 54,0% | 68,6% | 1,78 | 15,6 | 0,3% | 8,3 ms |
+| OpenAI giả lập → reconcileAIPlan | 31,4% | 10,9% | 35,9% | 48,9% | 5,71 | 14,4 | 0,3% | 1,1 ms |
 
-Giới hạn dưới của lệch calo ngày với bộ món hiện có (mỗi bữa chọn món chỉ theo calo, khẩu phần 1, bỏ mọi tiêu chí khác): 16,0%; mục tiêu calo trung bình của hồ sơ mô phỏng 2131 kcal/ngày.
+Giới hạn dưới của lệch calo ngày với bộ món hiện có (mỗi bữa chọn món chỉ theo calo, khẩu phần 1, bỏ mọi tiêu chí khác): 16,2%; mục tiêu calo trung bình của hồ sơ mô phỏng 2131 kcal/ngày.
 
-"OpenAI giả lập": 3/500 thực đơn hỏng quá nửa số bữa nên dùng cả thực đơn của bộ tạo mới; còn lại bữa vi phạm được thay. Thời gian chạy: 10.6 s.
+"OpenAI giả lập": 6/500 thực đơn hỏng quá nửa số bữa nên dùng cả thực đơn của bộ tạo mới; còn lại bữa vi phạm được thay. Thời gian chạy: 14.1 s.
 <!-- EVAL-MEALPLAN:END -->
 
 **Nhận xét:**
 
-- Bộ tạo mới tốt hơn bộ cũ ở cả ba mục tiêu: lệch calo thấp hơn, dùng được nhiều đồ sắp hết hạn hơn trước khi hỏng, ít bữa lặp hơn;
-  không có vi phạm an toàn (cả hai đều chạy sau lọc an toàn; ma trận `dietary-matrix.test.ts` có thêm nguồn `scoredPlan`).
+- Bộ tạo mới tốt hơn bộ cũ ở cả ba mục tiêu: lệch calo thấp hơn, dùng được nhiều đồ sắp hết hạn hơn trước khi hỏng, ít bữa lặp hơn.
+- **Không bữa nào vi phạm dị ứng, chế độ ăn hay món không thích** (mọi phương pháp chạy sau lọc an toàn; ma trận `dietary-matrix.test.ts`
+  có nguồn `scoredPlan`). Cột "Vi phạm an toàn" còn tính cả **sai loại bữa**: 0,3% ở mọi phương pháp là đúng các bữa trưa/tối phải dùng
+  món không đúng loại bữa (vd. "Khoai lang luộc" cho bữa tối) — 168 bữa tính chung 4 phương pháp, tất cả ở hồ sơ chay/thuần chay có dị
+  ứng gluten. Từ khi nước tương thuộc nhóm Gluten (commit `b8bc55a`), các hồ sơ này gần như không còn món trưa/tối an toàn trong bộ
+  33 món; bộ tạo chọn món an toàn của bữa khác thay vì món có gluten (an toàn trước, đúng bữa sau). Thêm món thuần chay không gluten
+  là hướng phát triển (`docs/han-che.md`).
 - **Ràng buộc calo ±35% (chốt giữ).** Hai dòng "Bộ tạo mới" trong bảng chỉ khác nhau ở ràng buộc này:
 
   | Bộ tạo mới | Lệch calo ngày | Lượng đồ sắp hết hạn dùng trước hạn |
   |---|---|---|
-  | Có ràng buộc ±35% **(dùng)** | 25,2% | 54,7% |
-  | Không có ràng buộc | 28,0% | 59,2% |
+  | Có ràng buộc ±35% **(dùng)** | 25,4% | 54,0% |
+  | Không có ràng buộc | 28,1% | 58,4% |
 
   Lý do giữ: (1) thực đơn tuần là kế hoạch ăn uống, nên khớp năng lượng theo bữa là yêu cầu của chức năng, còn dùng đồ sắp hết hạn là
   ưu tiên trong số các món đã hợp bữa; (2) bỏ ràng buộc thì món dùng đồ sắp hết hạn có thể lệch calo nhiều so với bữa (ví dụ món 600 kcal
   cho bữa sáng 450 kcal), lỗi dễ thấy với người dùng có mục tiêu giảm cân/tăng cơ; (3) có ràng buộc vẫn hơn hẳn bộ cũ ở cả hai chỉ số
-  (lệch calo 32,6% → 25,2%; đồ sắp hết hạn 44,1% → 54,7%); (4) ±35% dùng lại σ của `f_dd`, không thêm tham số mới, và chỉ áp dụng
-  khi có món trong khoảng (không có thì bỏ qua). Phần đồ sắp hết hạn bị mất (4,5 điểm) là đánh đổi được chấp nhận.
+  (lệch calo 32,6% → 25,4%; đồ sắp hết hạn 43,7% → 54,0%); (4) ±35% dùng lại σ của `f_dd`, không thêm tham số mới, và chỉ áp dụng
+  khi có món trong khoảng (không có thì bỏ qua). Phần đồ sắp hết hạn bị mất (4,4 điểm) là đánh đổi được chấp nhận.
 - Lệch calo còn lớn chủ yếu do bộ món: khẩu phần cố định 1, món nhiều nhất khoảng 660 kcal; với mục tiêu trên 2.000 kcal/ngày và
   3 bữa thì không đạt được (xem giới hạn dưới). Điều chỉnh khẩu phần theo mục tiêu là hướng phát triển.
 - "Bữa lặp trong 3 ngày" của bộ mới không về 0 vì có hồ sơ chỉ còn ít món cho một bữa (ví dụ thuần chay ăn 4 bữa: 3 món bữa phụ).
 - Bộ tạo mới chậm hơn (vài ms mỗi thực đơn) nhưng không đáng kể so với thời gian ghi DB.
 - Hạn chế: dữ liệu mô phỏng; "dùng trước hạn" giả định người dùng ăn đúng thực đơn; kho ảo không tính đồ mua thêm trong tuần.
+
+## 10. Lịch sử số liệu đánh giá
+
+Các bảng ở mục 8 và 9 đã **đổi một lần**: bảng cũ sinh ở commit `e8a618f` (3/11/2026, gợi ý) và ngày 9/11/2026 (thực đơn); bảng mới
+chạy lại ngày 15/11/2026 ở commit `e8dfad3`, **cùng phương pháp** (cùng seed, cùng cách chia tập kiểm định/kiểm tra, cùng quy tắc chọn).
+
+**Commit làm đổi số: `b8bc55a` (13/11/2026) — sửa lỗi thành phần ẩn.** Trước đó, nguyên liệu chế biến và gia vị (nước tương, nước mắm,
+dầu hào, tương đen…) không được tính vào nhóm dị ứng, nên "Bánh mì ốp la" (có nước tương) vẫn được gợi ý cho người dị ứng đậu nành hoặc
+gluten. Sau khi sửa, các nguyên liệu này thuộc nhóm (nước tương → Đậu nành + Gluten, nước mắm → Cá, dầu hào → Nhuyễn thể…), nên người
+dùng mô phỏng có dị ứng bị loại thêm món. Người mô phỏng chỉ "ăn" món an toàn với họ, nên chính dữ liệu mô phỏng cũng đổi (trung bình
+1544 → 1488 tương tác mỗi lần), kéo theo mọi chỉ số. Nói gọn: **số đổi vì lọc an toàn chặt hơn, không phải vì thuật toán đổi.**
+Đã chạy lại đánh giá ở từng commit từ `e8a618f` tới `1016df9` (10 commit đụng tới gợi ý, lọc an toàn, dữ liệu món): số giữ nguyên tới
+`c3ced89`, đổi ở `b8bc55a`, rồi giữ nguyên tới nay (kể cả khi chuyển danh mục vào database và gom hằng số).
+
+| Chỉ số (tập kiểm tra trừ khi ghi khác) | Cũ (3/11, `e8a618f`) | Mới (15/11, `e8dfad3`) |
+|---|---|---|
+| Tương tác mô phỏng trung bình mỗi lần | 1544 | 1488 |
+| R@10 thuật toán 1 / 2 / 3 | 0,618 / 0,235 / 0,377 | 0,651 / 0,230 / 0,411 |
+| R@10 ngẫu nhiên / phổ biến nhất | 0,352 / 0,564 | 0,377 / 0,608 |
+| Bộ trọng số quy tắc chọn (bảng 3, R@10 kiểm định) | nội dung mạnh 0,660 > kế hoạch 0,627 (+0,033) → **0,60/0,20/0,20** | nội dung mạnh 0,631, kế hoạch 0,622 (+0,009 < 0,01) → **0,45/0,30/0,25** |
+| w_pop0 quy tắc chọn (bảng 4) | **0,3** (nhóm 0 tương tác 0,556 → 0,778) | **0,4** (nhóm 0 tương tác 0,200 → 0,600; tổng 0,622 → 0,676) |
+| R@10 bộ trộn / bộ trộn + phổ biến | 0,590 / 0,622 | 0,619 / 0,671 |
+| "Phổ biến nhất" không lọc an toàn: món vi phạm | 11,8% | 13,5% |
+| Thực đơn — lệch calo ngày: bộ cũ → bộ mới | 32,6% → 25,2% | 32,6% → 25,4% |
+| Thực đơn — đồ sắp hết hạn dùng trước hạn: bộ cũ → bộ mới | 44,1% → 54,7% | 43,7% → 54,0% |
+| Thực đơn — "Vi phạm an toàn" (gồm sai loại bữa) | 0,0% | 0,3% (chỉ sai loại bữa, xem mục 9) |
+| Hiệu năng 500 món × 1.000 người | khoảng 70 ms | 86–99 ms (ngưỡng 150 ms) |
+
+**Quyết định cũ không còn đúng theo quy tắc chọn (chưa đổi tham số, chờ quyết định):** (1) trọng số `for-you` đang là 0,60/0,20/0,20,
+lần chạy lại quy tắc giữ bộ kế hoạch 0,45/0,30/0,25 (bộ nội dung mạnh vẫn cao nhất nhưng chênh dưới ngưỡng 0,01); (2) w_pop0 đang là
+0,3, lần chạy lại quy tắc chọn 0,4 (nhóm 0 tương tác bằng nhau ở 0,2–0,5, chọn theo R@10 kiểm định tổng: 0,651 ở 0,3, 0,676 ở 0,4).
+Bảng 1–2, 5 đo cấu hình mà quy tắc chọn ra, không phải cấu hình đang chạy.

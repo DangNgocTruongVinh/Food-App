@@ -1,8 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
   answerAllergyWarnings, CHAT_HISTORY_MAX_CHARS, CHAT_HISTORY_TURNS, CHAT_PANTRY_LIMIT, chatHistoryTurns, chatMealPlanContext, chatPantryContext,
-  chatProfileContext, chatSafetyContext, vietnamDateKey,
+  chatProfileContext, chatSafetyContext,
 } from "./chat-context.js";
+import { vietnamDateKey } from "../../utils/vietnam-date.js";
 
 const day = (date: string, items: Array<[string, string, number, boolean]>) => ({
   date: new Date(`${date}T00:00:00.000Z`),

@@ -1,11 +1,11 @@
 import { env } from "../../config/env.js";
 import { prisma } from "../../lib/prisma.js";
 import { HttpError } from "../../utils/http-error.js";
-import { vietnamToday } from "../../utils/vietnam-date.js";
+import { vietnamDateKey, vietnamDayStart, vietnamToday } from "../../utils/vietnam-date.js";
 import { answerNutritionQuestion, getAIStatus } from "./ai.service.js";
 import {
   answerAllergyWarnings, CHAT_HISTORY_TURNS, CHAT_PLAN_DAYS, chatHistoryTurns, chatMealPlanContext, chatPantryContext, chatProfileContext,
-  chatSafetyContext, vietnamDateKey,
+  chatSafetyContext,
 } from "./chat-context.js";
 
 // Hỏi Nouri: không có key hoặc OpenAI lỗi → 503 kèm code để khung chat gợi ý "Gợi ý cho bạn" / "Nấu gì từ kho?"; không lưu tin.
@@ -51,7 +51,7 @@ function findActivePlanForChat(userId: string, now: Date) {
 
 /** Số câu hỏi đã gửi hôm nay (từ 00:00 giờ Việt Nam). */
 function countQuestionsToday(userId: string, now: Date) {
-  const dayStart = new Date(vietnamToday(now).getTime() - 7 * 3_600_000);
+  const dayStart = vietnamDayStart(now);
   return prisma.chatMessage.count({ where: { userId, role: "user", createdAt: { gte: dayStart } } });
 }
 

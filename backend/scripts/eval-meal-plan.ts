@@ -1,5 +1,6 @@
 import type { ActivityLevel, DietType, Gender, HealthGoal } from "@prisma/client";
 import { readFileSync, writeFileSync } from "node:fs";
+import { evalProvenance } from "./eval-provenance.js";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import type { GeneratedPlan } from "../src/modules/ai/ai.service.js";
@@ -12,6 +13,7 @@ import { calculateNutritionTargets } from "../src/services/nutrition.service.js"
 import { type ConsumptionPantryItem, planConsumption } from "../src/services/pantry-consumption.js";
 import { seedRecipesAsRecords } from "../src/test/seed-recipes.js";
 import { useSeedCatalog } from "../src/services/catalog/catalog-build.js";
+import { DAY_MS } from "../src/utils/vietnam-date.js";
 
 // Mô phỏng không có database: nạp danh mục từ dữ liệu seed (cùng hàm dựng như khi chạy thật).
 useSeedCatalog();
@@ -24,7 +26,6 @@ useSeedCatalog();
 
 const SEEDS = [0, 1, 2, 3, 4].map((offset) => 20261109 + offset);
 const USERS = 100;
-const DAY_MS = 86_400_000;
 const START = new Date(Date.UTC(2026, 10, 2));
 
 function rng(seed: number) {
@@ -203,6 +204,8 @@ for (const seed of SEEDS) {
 }
 
 const lines: string[] = [];
+lines.push(evalProvenance());
+lines.push("");
 lines.push(`Sinh bằng \`npm run eval:mealplan -w backend\`: ${SEEDS.length} lần mô phỏng (seed ${SEEDS[0]}–${SEEDS.at(-1)}), mỗi lần ${USERS} người `
   + `(${plans} thực đơn 7 ngày cho mỗi phương pháp). Hồ sơ ngẫu nhiên (5 chế độ ăn, 20% có một dị ứng, 10% có món không thích, 30% ăn 4 bữa), `
   + `kho 8 thực phẩm (lượng 1–4 lần định lượng một món, hạn 0–10 ngày, 20% không có hạn), lịch sử 0–25 bữa đã ăn trong 4 tuần trước. `

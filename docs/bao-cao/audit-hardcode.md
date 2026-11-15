@@ -72,7 +72,8 @@ commit, kể cả trong lịch sử git (xem mục "Đã kiểm, không có vấ
 > - Code chạy thật chỉ còn logic: `services/catalog/catalog.service.ts` đọc database, giữ trong bộ nhớ, nạp lại sau mỗi lần Admin sửa;
 >   danh mục chưa nạp thì báo lỗi (không bao giờ lọc với danh mục rỗng). Frontend lấy qua `GET /api/catalog` (bỏ bản chép tay).
 > - Danh sách ẩm thực: lấy từ các giá trị `Recipe.cuisine` đang có (bỏ 2 mảng ở frontend; `seed-data.ts` vẫn là dữ liệu seed).
-> - Admin: trang "Danh mục dữ liệu" (`/admin/catalog`, UC40). Từ khóa dòng không phải hàng (`ReceiptSkipKeyword`) chỉ seed, chưa có màn Admin.
+> - Admin: trang "Danh mục dữ liệu" (`/admin/catalog`, UC40); từ nhánh `hardcode-3` quản lý cả từ đầu tên → nhóm, hạn riêng theo loại
+>   và từ khóa bỏ dòng hóa đơn (thêm cột `hiddenAt`, migration `20261115090000_catalog_hide_rules`).
 > - Kiểm chứng: test và `eval:*` nạp danh mục từ seed qua cùng hàm dựng (`useSeedCatalog`); ma trận an toàn đạt nguyên vẹn;
 >   `eval:recommend`/`eval:mealplan` ra đúng từng số như code trước khi chuyển; test tích hợp seed → Admin thêm tên gọi khác → lọc nhận ra.
 > - Câu SQL demo: `docs/bao-cao/sql-mau.md`.
@@ -144,6 +145,10 @@ Ba lượt nhỏ, mỗi lượt một nhánh, không đổi giá trị nào (ch�
 
 ### Lượt 2 — Hằng số dùng chung backend–frontend (B6, B7, B-chữ "5 MB/4 ảnh", E1 phía frontend)
 
+> **Đã làm (nhánh `hardcode-3`, 15/11/2026):** `backend/src/shared/limits.ts` (bản gốc) + `frontend/src/features/shared/limits.ts`
+> (bản chép) + `limits.test.ts` so hai file và giữ giá trị; chữ "5 MB", "4 ảnh", "8 ký tự" lấy từ hằng. B7 đã thay bằng danh mục trong
+> database (lượt `hardcode-2`). Mọi giá trị giữ nguyên.
+
 - **File:** mới `backend/src/shared/limits.ts` (bản gốc) + `frontend/src/features/shared/limits.ts` (bản chép) + test so hai file;
   sửa import ở `community-member-recipe.ts`, `member-recipe.logic.ts`, `profile.schema.ts`, `profile.logic.ts`, `community.schema.ts`,
   `community.logic.ts`, `image-file.ts`, `receipt-scan.logic.ts`, `auth.schema.ts`, `auth.logic.ts`, `food-category.ts`,
@@ -154,6 +159,11 @@ Ba lượt nhỏ, mỗi lượt một nhánh, không đổi giá trị nào (ch�
   và API), đăng bài 5 ảnh / ảnh 6 MB, mật khẩu 7 ký tự, công thức thành viên 31 nguyên liệu, lọc Kho theo nhóm, nhãn "sắp hết hạn".
 
 ### Lượt 3 — Quy tắc thời gian (E1 phía backend, E2, B `DAY_MS`)
+
+> **Đã làm (nhánh `hardcode-3`, 15/11/2026):** E1 một hằng `EXPIRING_SOON_DAYS` (trong `shared/limits.ts`) cho nhãn Kho, thông báo,
+> gợi ý, trợ lý AI; E2 `utils/vietnam-date.ts` có `DAY_MS`, `VIETNAM_OFFSET_MS`, `vietnamDateKey`, `vietnamDayStart`, `vietnamWeekStart`
+> (một hàm cho Báo cáo và Thống kê Admin, test so với hai công thức cũ trên mọi nửa giờ của 6 tuần — số hai trang không đổi);
+> bỏ 14 khai báo `DAY_MS`. `eval:recommend`/`eval:mealplan` ra đúng từng số như trước khi sửa.
 
 - **File:** `backend/src/utils/vietnam-date.ts` (thêm `VIETNAM_OFFSET_MS`, `DAY_MS`, `vietnamDayStart`, `vietnamDateKey`,
   `vietnamWeekStart`), sửa `admin-stats.logic.ts`, `chat-context.ts`, `chat.service.ts`, `reports.logic.ts`, `reports.service.ts`,

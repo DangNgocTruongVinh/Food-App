@@ -1,7 +1,8 @@
 import jwt from "jsonwebtoken";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { request, testApp } from "../../test/http-test-utils.js";
-import { classifyWaste, recentWeeks, summarizeNutrition, summarizeWaste, vietnamWeekStart, type WasteRow } from "./reports.logic.js";
+import { classifyWaste, recentWeeks, summarizeNutrition, summarizeWaste, type WasteRow } from "./reports.logic.js";
+import { vietnamWeekStart } from "../../utils/vietnam-date.js";
 
 const mocks = vi.hoisted(() => ({
   secret: "nouri-test-only-secret-at-least-32-characters", findTransactions: vi.fn(), findItems: vi.fn(), findProfile: vi.fn(),
@@ -25,9 +26,9 @@ const row = (extra: Partial<WasteRow>): WasteRow => ({
 
 describe("Tuần theo giờ Việt Nam", () => {
   it("tuần bắt đầu Thứ Hai 00:00 giờ VN (= Chủ Nhật 17:00 UTC)", () => {
-    expect(vietnamWeekStart(now).toISOString()).toBe("2026-11-09T00:00:00.000Z");
+    expect(vietnamWeekStart(now).day.toISOString()).toBe("2026-11-09T00:00:00.000Z");
     // 00:30 Thứ Hai giờ VN vẫn là Chủ Nhật theo UTC nhưng đã sang tuần mới.
-    expect(vietnamWeekStart(new Date("2026-11-08T17:30:00.000Z")).toISOString()).toBe("2026-11-09T00:00:00.000Z");
+    expect(vietnamWeekStart(new Date("2026-11-08T17:30:00.000Z")).day.toISOString()).toBe("2026-11-09T00:00:00.000Z");
     const [previous, current] = recentWeeks(now, 2);
     expect(current.from.toISOString()).toBe("2026-11-08T17:00:00.000Z");
     expect(previous.to.getTime()).toBe(current.from.getTime());

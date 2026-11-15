@@ -23,9 +23,11 @@ const CONTROLS: Record<string, string[]> = {
   "điều hướng Admin": ["/admin/recipes", "/admin/users", "/admin/moderation", "/admin/audit-logs", "Công thức", "Người dùng", "Kiểm duyệt", "Nhật ký"],
   // hardcode-2: danh mục dữ liệu chuyển vào database, Admin xem/thêm/sửa/ẩn.
   "Danh mục dữ liệu": [
-    "/admin/catalog", "Danh mục dữ liệu", "Loại danh mục", "Nhóm dị ứng", "Nhóm thực phẩm", "Viết tắt hóa đơn", "Thêm nhóm dị ứng", "Thêm nhóm",
+    "/admin/catalog", "Danh mục dữ liệu", "Loại danh mục", "Nhóm dị ứng", "Nhóm thực phẩm", "Hóa đơn", "Viết tắt hóa đơn", "Thêm nhóm dị ứng", "Thêm nhóm",
     "Đổi tên", "Thêm tên gọi khác", "Thêm nguyên liệu", "`Ẩn nhóm ${group.label}?`", "Ẩn nguyên liệu", "Thêm nhóm thực phẩm", "`Lưu nhóm ${category.name}`",
     "Thêm viết tắt", "Hiện lại", "Ẩn nhóm",
+    // hardcode-3: từ đầu tên → nhóm, hạn riêng theo loại, từ khóa bỏ dòng hóa đơn.
+    "Thêm từ đầu tên", "Thêm hạn riêng", "Từ khóa bỏ dòng hóa đơn", "Thêm từ khóa",
   ],
   "Tổng quan (thống kê)": ["Đang tải thống kê", "AdminWeeklyChart"],
   "Công thức — danh sách": [

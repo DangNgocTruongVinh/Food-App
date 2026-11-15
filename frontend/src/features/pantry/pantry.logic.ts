@@ -4,6 +4,7 @@ import { formatDisplayDate } from "../../utils/date";
 import { foodUnitLabel } from "../../utils/units";
 import type { PantryFormValues } from "./pantry.api";
 import type { ComboOption } from "../ui/combobox.logic";
+import { EXPIRING_SOON_DAYS } from "../shared/limits";
 
 /** depleted: số lượng 0 (giữ lại trong kho sau khi trừ hết, GĐ3b quyết định 1). */
 export type PantryItemStatus = "good" | "expiring" | "expired" | "depleted";
@@ -53,7 +54,7 @@ export function getPantryStatus(item: Pick<PantryItem, "expiryDate"> & { quantit
   if (item.quantity !== undefined && item.quantity <= 0) return "depleted";
   const days = getDaysLeft(item, now);
   if (days !== null && days < 0) return "expired";
-  if (days !== null && days <= 3) return "expiring";
+  if (days !== null && days <= EXPIRING_SOON_DAYS) return "expiring";
   return "good";
 }
 

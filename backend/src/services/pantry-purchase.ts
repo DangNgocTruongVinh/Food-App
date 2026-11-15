@@ -1,13 +1,12 @@
 import type { FoodUnit } from "@prisma/client";
 import { canConvertUnit } from "../utils/food-units.js";
-import { vietnamToday } from "../utils/vietnam-date.js";
+import { DAY_MS, vietnamToday } from "../utils/vietnam-date.js";
 import { normalizeFoodText } from "./dietary.service.js";
 import { foodCategoryOf, shelfLifeFor } from "./food-category.js";
 import { pantryExpiryState } from "./recipe-fit.service.js";
 
 // "Đã mua" → thêm vào kho (GĐ3b lượt 6): phần tính toán thuần. Đọc/ghi DB ở modules/meal-plans/shopping-purchase.service.ts.
 
-const DAY_MS = 86_400_000;
 
 /**
  * Nhóm, nơi bảo quản và hạn gợi ý cho thực phẩm mới từ "Đã mua". Hạn tính từ hôm nay theo giờ Việt Nam; có hạn thì đánh dấu

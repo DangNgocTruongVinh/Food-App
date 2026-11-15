@@ -2,13 +2,13 @@ import type { DietType, FoodUnit } from "@prisma/client";
 import { allergenLabels, expandRestrictedTerms, findRestrictedTerms, matchesRequiredDiet, restrictedFoodNames } from "./dietary.service.js";
 import { calculateNutritionTargets } from "./nutrition.service.js";
 import { groupPantryByName, pantryMatchesFor } from "./pantry-match.js";
+import { EXPIRING_SOON_DAYS } from "../shared/limits.js";
+import { DAY_MS } from "../utils/vietnam-date.js";
 
 // Mức độ phù hợp của một công thức với người dùng (không truy cập DB): dùng cho khối "Dành cho bạn"
 // ở trang chi tiết công thức và cho bộ gợi ý (modules/recommendation).
 
-const DAY_MS = 86_400_000;
 /** Cùng ngưỡng với cảnh báo PANTRY_EXPIRING: hạn dùng trong khoảng hôm nay → 3 ngày tới (theo ngày UTC). */
-export const PANTRY_EXPIRING_WINDOW_DAYS = 3;
 
 export type FitIngredient = { name: string; quantity: number; unit: FoodUnit; optional?: boolean };
 export type FitRecipe = { name: string; calories: number; dietTags: DietType[]; ingredients: FitIngredient[] };
@@ -27,7 +27,7 @@ export function pantryExpiryState(expiryDate: Date | null, now = new Date()): "e
   const today = startOfUtcDay(now);
   const expiryDay = startOfUtcDay(expiryDate);
   if (expiryDay < today) return "expired";
-  return expiryDay.getTime() <= today.getTime() + PANTRY_EXPIRING_WINDOW_DAYS * DAY_MS ? "expiring" : "fresh";
+  return expiryDay.getTime() <= today.getTime() + EXPIRING_SOON_DAYS * DAY_MS ? "expiring" : "fresh";
 }
 
 /**

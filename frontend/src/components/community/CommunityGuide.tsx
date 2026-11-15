@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { COMMUNITY_MAX_IMAGES } from "../../features/community/community.logic";
 import { Card } from "../ui";
+import { MAX_IMAGE_MB } from "../../features/shared/limits";
 
 /** Cột phải (≥ 1024px): cách đăng món kèm công thức và ảnh. Không có thành viên/chủ đề nổi bật hay số liệu giả. */
 export default function CommunityGuide() {
@@ -10,7 +11,7 @@ export default function CommunityGuide() {
       <ul className="cm-guide__list">
         <li><strong>Viết vài dòng</strong> về món bạn nấu: hôm nào, cho ai, có đổi gì so với công thức.</li>
         <li>
-          <strong>Thêm ảnh</strong>: tối đa {COMMUNITY_MAX_IMAGES} ảnh JPG, PNG hoặc WEBP, mỗi ảnh tới 5 MB.
+          <strong>Thêm ảnh</strong>: tối đa {COMMUNITY_MAX_IMAGES} ảnh JPG, PNG hoặc WEBP, mỗi ảnh tới {MAX_IMAGE_MB} MB.
           Vị trí chụp (GPS) trong ảnh được xóa trước khi đăng.
         </li>
         <li><strong>Gắn công thức</strong> bằng nút "Công thức" để người xem mở ngay cách làm, nguyên liệu và calo.</li>

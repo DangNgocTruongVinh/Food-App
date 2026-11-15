@@ -71,11 +71,14 @@ export const AUDIT_ACTION_LABELS: Record<AuditAction, string> = {
 
 const CATALOG_KIND_LABELS: Record<string, string> = {
   "allergen-groups": "nhóm dị ứng", "allergen-aliases": "tên gọi khác", "allergen-terms": "nguyên liệu thuộc nhóm",
-  "food-categories": "nhóm thực phẩm", "receipt-abbreviations": "viết tắt hóa đơn",
+  "food-categories": "nhóm thực phẩm", "food-category-terms": "từ đầu tên thuộc nhóm", "food-shelf-life-rules": "hạn riêng theo loại",
+  "receipt-abbreviations": "viết tắt hóa đơn", "receipt-skip-keywords": "từ khóa bỏ dòng hóa đơn",
 };
 const CATALOG_FIELD_LABELS: Record<string, string> = {
   label: "tên", name: "tên", parentId: "nhóm cha", hidden: "ẩn/hiện", level: "mức", processed: "chế biến/gia vị",
   defaultStorage: "nơi bảo quản", defaultShelfLifeDays: "hạn dùng", abbreviation: "chữ viết tắt", fullName: "tên đầy đủ",
+  prefix: "từ đầu tên", priority: "thứ tự ưu tiên", pattern: "mẫu tên", matchMode: "cách khớp", shelfLifeDays: "hạn dùng", storage: "nơi bảo quản",
+  keyword: "từ khóa",
 };
 
 const RECIPE_FIELD_LABELS: Record<string, string> = {

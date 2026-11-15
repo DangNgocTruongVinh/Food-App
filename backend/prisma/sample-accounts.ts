@@ -2,14 +2,13 @@ import type { DietType, HealthGoal, MealType, Prisma, PrismaClient } from "@pris
 import bcrypt from "bcryptjs";
 import { randomBytes } from "node:crypto";
 import { nutritionTargetFields } from "../src/services/nutrition.service.js";
-import { vietnamToday } from "../src/utils/vietnam-date.js";
+import { DAY_MS, vietnamToday } from "../src/utils/vietnam-date.js";
 
 // Tài khoản mẫu minh họa (GĐ3b-R4, quyết định 3): 8 người "Người dùng mẫu N" (mauN@nouri.vn, User.isSample = true) thuộc
 // 3 nhóm khẩu vị, có hồ sơ và tương tác thật tạo bằng seed — đã ăn (thực đơn tuần trước), đăng bài gắn món, thích bài của
 // người cùng nhóm — để thuật toán gợi ý cộng tác có dữ liệu khi demo. Mật khẩu ngẫu nhiên, không in ra, không ai đăng nhập.
 // Không tính vào thống kê Admin. Đây là dữ liệu minh họa, không phải người dùng thật.
 
-const DAY_MS = 86_400_000;
 export const SAMPLE_EMAIL = (index: number) => `mau${index}@nouri.vn`;
 
 type SampleGroup = {

@@ -1,9 +1,10 @@
 import type { MealType } from "@prisma/client";
 import { expandRestrictedTerms, findRestrictedTerms, withoutNestedTerms } from "../../services/dietary.service.js";
+import { DAY_MS, vietnamDateKey } from "../../utils/vietnam-date.js";
+import { EXPIRING_SOON_DAYS } from "../../shared/limits.js";
 
 // Ngữ cảnh gửi cho trợ lý AI: chỉ những trường cần cho câu trả lời, không có id, email, mật khẩu hay token.
 
-const VIETNAM_OFFSET_MS = 7 * 60 * 60 * 1000;
 export const CHAT_PLAN_DAYS = 3;
 
 const MEAL_LABELS: Record<MealType, string> = { BREAKFAST: "Bữa sáng", LUNCH: "Bữa trưa", SNACK: "Bữa phụ", DINNER: "Bữa tối" };
@@ -47,11 +48,6 @@ export function chatSafetyContext(profile: Pick<ProfileInput, "dietType" | "alle
   };
 }
 
-/** Ngày hôm nay theo giờ Việt Nam (yyyy-MM-dd); ngày trong thực đơn lưu 00:00 UTC của ngày lịch. */
-export function vietnamDateKey(instant: Date) {
-  return new Date(instant.getTime() + VIETNAM_OFFSET_MS).toISOString().slice(0, 10);
-}
-
 /**
  * Tóm tắt thực đơn đang áp dụng: các bữa hôm nay và vài ngày tới (tên món, bữa, calo, đã ăn hay chưa),
  * tổng calo hôm nay so với mục tiêu. Không gửi nguyên liệu. Không có thực đơn thì ghi rõ "chưa có thực đơn".
@@ -89,7 +85,6 @@ export const CHAT_HISTORY_TURNS = 6;
 export const CHAT_HISTORY_MAX_CHARS = 600;
 /** Kho gửi kèm tối đa bao nhiêu thực phẩm (ưu tiên hạn gần nhất) và ngưỡng "sắp hết hạn". */
 export const CHAT_PANTRY_LIMIT = 40;
-export const EXPIRING_SOON_DAYS = 3;
 
 type PantryInput = { name: string; quantity: number; unit: string; expiryDate: Date | null };
 
@@ -99,7 +94,7 @@ type PantryInput = { name: string; quantity: number; unit: string; expiryDate: D
  */
 export function chatPantryContext(pantry: PantryInput[], now = new Date()) {
   const today = Date.parse(`${vietnamDateKey(now)}T00:00:00.000Z`);
-  const daysLeft = (date: Date | null) => (date ? Math.round((Date.parse(date.toISOString().slice(0, 10)) - today) / 86_400_000) : null);
+  const daysLeft = (date: Date | null) => (date ? Math.round((Date.parse(date.toISOString().slice(0, 10)) - today) / DAY_MS) : null);
   const sorted = [...pantry].sort((a, b) => (a.expiryDate?.getTime() ?? Infinity) - (b.expiryDate?.getTime() ?? Infinity));
   const items = sorted.slice(0, CHAT_PANTRY_LIMIT).map((item) => ({
     name: item.name, quantity: item.quantity, unit: item.unit, daysLeft: daysLeft(item.expiryDate),

@@ -1,11 +1,10 @@
 import type { FoodUnit, MealType, Prisma } from "@prisma/client";
-import { vietnamToday } from "../src/utils/vietnam-date.js";
+import { DAY_MS, vietnamToday } from "../src/utils/vietnam-date.js";
 
 // Dữ liệu mẫu cho trang Báo cáo của demo (không phải hoạt động thật): 8 tuần lịch sử kho với số món bỏ đi giảm dần và tỉ lệ dùng
 // trước hạn tăng dần (xu hướng cải thiện), một nửa món bỏ đi có giá; và các bữa "Đã ăn" trong 6 ngày gần đây (bỏ trống 1 ngày để thấy
 // "chưa ghi"). Dòng lịch sử ghi chú "Dữ liệu mẫu", không gắn thực phẩm nào trong kho hiện tại.
 
-const DAY_MS = 86_400_000;
 const HOUR_MS = 3_600_000;
 export const DEMO_REPORT_NOTE = "Dữ liệu mẫu (báo cáo)";
 

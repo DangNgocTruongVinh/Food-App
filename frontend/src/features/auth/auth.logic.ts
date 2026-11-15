@@ -1,4 +1,5 @@
 import axios from "axios";
+import { PASSWORD_LIMITS as P } from "../shared/limits";
 
 export type AuthMode = "login" | "register";
 export type AuthFormValues = { name: string; email: string; password: string };
@@ -17,8 +18,8 @@ export function validateAuthForm(form: AuthFormValues, mode: AuthMode): AuthForm
   const email = emailError(form.email);
   if (email) errors.email = email;
   if (!form.password) errors.password = "Nhập mật khẩu của bạn.";
-  else if (form.password.length < 8) errors.password = "Mật khẩu cần ít nhất 8 ký tự.";
-  else if (form.password.length > 72) errors.password = "Mật khẩu tối đa 72 ký tự.";
+  else if (form.password.length < P.min) errors.password = `Mật khẩu cần ít nhất ${P.min} ký tự.`;
+  else if (form.password.length > P.max) errors.password = `Mật khẩu tối đa ${P.max} ký tự.`;
   return errors;
 }
 
@@ -36,8 +37,8 @@ export type ResetPasswordErrors = Partial<Record<keyof ResetPasswordValues, stri
 /** Đặt mật khẩu mới qua email: độ mạnh như lúc đăng ký (8–72 ký tự, khớp backend), nhập lại phải trùng. */
 export function validateResetPassword(values: ResetPasswordValues): ResetPasswordErrors {
   const errors: ResetPasswordErrors = {};
-  if (values.password.length < 8) errors.password = "Mật khẩu cần ít nhất 8 ký tự.";
-  else if (values.password.length > 72) errors.password = "Mật khẩu tối đa 72 ký tự.";
+  if (values.password.length < P.min) errors.password = `Mật khẩu cần ít nhất ${P.min} ký tự.`;
+  else if (values.password.length > P.max) errors.password = `Mật khẩu tối đa ${P.max} ký tự.`;
   if (values.confirmPassword !== values.password) errors.confirmPassword = "Nhập lại đúng mật khẩu mới.";
   return errors;
 }
@@ -59,8 +60,8 @@ export const emptyChangePassword: ChangePasswordValues = { currentPassword: "", 
 export function validateChangePassword(values: ChangePasswordValues): ChangePasswordErrors {
   const errors: ChangePasswordErrors = {};
   if (!values.currentPassword) errors.currentPassword = "Nhập mật khẩu bạn đang dùng.";
-  if (values.newPassword.length < 8) errors.newPassword = "Mật khẩu mới cần ít nhất 8 ký tự.";
-  else if (values.newPassword.length > 72) errors.newPassword = "Mật khẩu mới tối đa 72 ký tự.";
+  if (values.newPassword.length < P.min) errors.newPassword = `Mật khẩu mới cần ít nhất ${P.min} ký tự.`;
+  else if (values.newPassword.length > P.max) errors.newPassword = `Mật khẩu mới tối đa ${P.max} ký tự.`;
   else if (values.newPassword === values.currentPassword) errors.newPassword = "Chọn mật khẩu khác mật khẩu hiện tại.";
   if (values.confirmPassword !== values.newPassword) errors.confirmPassword = "Nhập lại đúng mật khẩu mới.";
   return errors;
@@ -76,7 +77,7 @@ export function authErrorMessage(error: unknown, mode: AuthMode) {
   }
   if (status === 401 && mode === "login") return "Email hoặc mật khẩu chưa đúng. Kiểm tra lại rồi thử lần nữa.";
   if (status === 409 && mode === "register") return "Email này đã có tài khoản. Hãy đăng nhập, hoặc dùng email khác để đăng ký.";
-  if (status === 422 || status === 400) return "Thông tin chưa hợp lệ. Kiểm tra lại email và mật khẩu (ít nhất 8 ký tự).";
+  if (status === 422 || status === 400) return `Thông tin chưa hợp lệ. Kiểm tra lại email và mật khẩu (ít nhất ${P.min} ký tự).`;
   return data?.message ?? "Máy chủ đang gặp lỗi. Thử lại sau ít phút.";
 }
 

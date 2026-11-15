@@ -1,7 +1,7 @@
 import { prisma } from "../../lib/prisma.js";
-import { recentWeeks, summarizeNutrition, summarizeWaste, vietnamWeekStart } from "./reports.logic.js";
+import { recentWeeks, summarizeNutrition, summarizeWaste } from "./reports.logic.js";
+import { DAY_MS, vietnamWeekStart } from "../../utils/vietnam-date.js";
 
-const DAY_MS = 86_400_000;
 
 /** GET /api/reports/waste?weeks=4|8: lãng phí thực phẩm theo tuần (giờ Việt Nam), chỉ dữ liệu của người dùng trong JWT. */
 export async function getWasteReport(userId: string, weekCount: number, now = new Date()) {
@@ -20,7 +20,7 @@ export async function getWasteReport(userId: string, weekCount: number, now = ne
 
 /** GET /api/reports/nutrition?week=current|previous: bữa "Đã ăn" trong tuần so với mục tiêu hồ sơ. */
 export async function getNutritionReport(userId: string, week: "current" | "previous", now = new Date()) {
-  const start = new Date(vietnamWeekStart(now).getTime() - (week === "previous" ? 7 * DAY_MS : 0));
+  const start = new Date(vietnamWeekStart(now).day.getTime() - (week === "previous" ? 7 * DAY_MS : 0));
   const [items, profile] = await Promise.all([
     prisma.mealPlanItem.findMany({
       where: { completed: true, day: { date: { gte: start, lt: new Date(start.getTime() + 7 * DAY_MS) }, mealPlan: { userId } } },

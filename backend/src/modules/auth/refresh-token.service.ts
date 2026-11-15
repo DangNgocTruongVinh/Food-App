@@ -3,6 +3,7 @@ import type { Prisma } from "@prisma/client";
 import { prisma } from "../../lib/prisma.js";
 import { accountLockedError } from "../../middleware/auth.js";
 import { HttpError } from "../../utils/http-error.js";
+import { DAY_MS } from "../../utils/vietnam-date.js";
 
 // Refresh token (GĐ4). Token gốc (32 byte ngẫu nhiên) chỉ nằm trong cookie httpOnly; DB lưu SHA-256 của nó (token đủ ngẫu nhiên
 // nên không cần bcrypt). Xoay vòng: mỗi lần làm mới đánh dấu token cũ usedAt và phát token mới cùng chuỗi (familyId).
@@ -11,7 +12,6 @@ import { HttpError } from "../../utils/http-error.js";
 
 export const REFRESH_COOKIE = "nouri_refresh";
 export const REFRESH_COOKIE_PATH = "/api/auth";
-const DAY_MS = 86_400_000;
 /** "Nhớ đăng nhập": 30 ngày kể từ lần làm mới gần nhất. Không nhớ: cookie phiên, phía server hết hạn sau 1 ngày không dùng. */
 export const REMEMBER_TTL_MS = 30 * DAY_MS;
 export const SESSION_TTL_MS = DAY_MS;

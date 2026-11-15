@@ -32,26 +32,29 @@ nhân γ = n/(n + 10) theo số tương tác, phần dư chia cho hai thuật to
 dạng hóa MMR (λ = 0,8). Nguồn: `backend/src/modules/recommendation/hybrid.ts`.
 
 **6. Vì sao chọn 0,60/0,20/0,20 cho "for-you"?**
-So sáu bộ trọng số trên tập **kiểm định** (không dùng tập kiểm tra) với quy tắc đặt trước: chỉ đổi khi R@10 cao hơn ≥ 0,01. Bộ này
-0,660 so với bộ kế hoạch 0,627. Nguồn: `docs/thuat-toan-goi-y.md` mục 8, bảng 3.
+So sáu bộ trọng số trên tập **kiểm định** (không dùng tập kiểm tra) với quy tắc đặt trước: chỉ đổi khi R@10 cao hơn ≥ 0,01. Lần đánh giá
+3/11 bộ này đạt 0,660 so với bộ kế hoạch 0,627 nên được chốt. Lần chạy lại 15/11 (sau khi lọc dị ứng chặt hơn) bộ này vẫn cao nhất
+(0,631) nhưng chỉ hơn bộ kế hoạch 0,009 (0,622), dưới ngưỡng, nên theo quy tắc sẽ giữ bộ kế hoạch; mã chưa đổi, chờ quyết định.
+Nguồn: `docs/thuat-toan-goi-y.md` mục 8 bảng 3, mục 10.
 
 **7. Đánh giá bộ gợi ý thế nào, kết quả ra sao?**
-Mô phỏng 5 lần × 80 người × 28 ngày, chia 80/20 theo thời gian. Bộ trộn + phổ biến: P@10 0,170, R@10 0,622 (ngẫu nhiên 0,352, phổ biến
-nhất 0,564, nội dung 0,618); lệch calo 38,2 %, 78,5 % danh sách có đồ sắp hết hạn; 0 % vi phạm an toàn. Đây là dữ liệu **mô phỏng**.
-Nguồn: `docs/bao-cao/so-lieu.md` mục 2.
+Mô phỏng 5 lần × 80 người × 28 ngày, chia 80/20 theo thời gian (chạy lại 15/11/2026, commit `e8dfad3`). Bộ trộn + phổ biến: P@10 0,166,
+R@10 0,671 (ngẫu nhiên 0,377, phổ biến nhất 0,608, nội dung 0,651); lệch calo 38,2 %, 82,3 % danh sách có đồ sắp hết hạn; 0 % vi phạm
+an toàn. Đây là dữ liệu **mô phỏng**. Nguồn: `docs/bao-cao/so-lieu.md` mục 2.
 
 **8. Sao không chỉ dùng thuật toán 1 khi nó đúng nhất?**
-Thuật toán 1 ít đa dạng nhất (0,607) và hay gợi ý lại món đã ăn (R@10 món mới 0,268). Bộ trộn đổi một chút độ đúng (0,622 so với 0,618
-là tương đương) để có món mới tốt hơn (0,347), lệch calo thấp hơn và dùng đồ sắp hết hạn nhiều hơn (78,5 % so với 62,2 %).
-Nguồn: `docs/thuat-toan-goi-y.md` bảng 1.
+Thuật toán 1 ít đa dạng nhất (0,605) và hay gợi ý lại món đã ăn (R@10 món mới 0,312). Bộ trộn + phổ biến vừa đúng hơn (R@10 0,671 so
+với 0,651) vừa có món mới tốt hơn (0,461), lệch calo gần bằng (38,2 % so với 38,3 %) và dùng đồ sắp hết hạn nhiều hơn (82,3 % so với
+59,0 %). Nguồn: `docs/thuat-toan-goi-y.md` bảng 1.
 
 **9. Xử lý khởi đầu lạnh?**
-Người chưa có tương tác: γ = 0 nên trọng số cộng tác bằng 0, thành phần phổ biến nhận đủ 0,3; thuật toán 1 dùng tiên nghiệm từ hồ sơ.
-w_pop0 = 0,3 chọn trên tập kiểm định: R@10 nhóm 0 tương tác 0,556 → 0,778, tổng không giảm. Nguồn: `docs/thuat-toan-goi-y.md` bảng 4.
+Người chưa có tương tác: γ = 0 nên trọng số cộng tác bằng 0, thành phần phổ biến nhận đủ w_pop0 (mã: 0,3); thuật toán 1 dùng tiên
+nghiệm từ hồ sơ. Lần chạy lại 15/11 trên tập kiểm định: R@10 nhóm 0 tương tác 0,200 → 0,600, tổng 0,622 → 0,676; quy tắc chọn 0,4
+(ngày 3/11 chọn 0,3), mã chưa đổi. Trên tập kiểm tra, nhóm 0 tương tác 0,386 → 0,614. Nguồn: `docs/thuat-toan-goi-y.md` bảng 4, 5, mục 10.
 
 **10. Làm sao bảo đảm không gợi ý món gây dị ứng?**
 Lọc an toàn chạy **trước** mọi thuật toán (`safety.ts`): dị ứng mở rộng theo nhóm, món không thích, chay/thuần chay, món ẩn, đúng bữa.
-Ma trận test 105 hồ sơ × mọi nguồn gợi ý/thực đơn: 0 món vi phạm. Không lọc thì "phổ biến nhất" có 11,8 % món vi phạm.
+Ma trận test 105 hồ sơ × mọi nguồn gợi ý/thực đơn: 0 món vi phạm. Không lọc thì "phổ biến nhất" có 13,5 % món vi phạm.
 Nguồn: `backend/src/modules/recommendation/safety.ts`, `backend/src/test/dietary-matrix.test.ts`.
 
 **11. Tài khoản mẫu có làm sai lệch đánh giá không?**
@@ -65,8 +68,9 @@ Không: đánh giá dùng dữ liệu mô phỏng riêng trong bộ nhớ. 8 tà
 ±35 % mục tiêu bữa; "kho ảo" trừ dần nguyên liệu để không dùng quá lượng đồ sắp hết hạn. Nguồn: `meal-plan-scorer.ts`.
 
 **13. So với bộ tạo cũ?**
-Mô phỏng 500 thực đơn: lệch calo ngày 32,6 % → 25,2 %; đồ sắp hết hạn dùng trước hạn 44,1 % → 54,7 %; bữa lặp trong 3 ngày 2,34 → 1,65.
-Nguồn: `docs/thuat-toan-goi-y.md` mục 9.
+Mô phỏng 500 thực đơn (chạy lại 15/11/2026): lệch calo ngày 32,6 % → 25,4 %; đồ sắp hết hạn dùng trước hạn 43,7 % → 54,0 %; bữa lặp
+trong 3 ngày 2,46 → 1,78. Không bữa nào vi phạm dị ứng/chế độ ăn; 0,3 % bữa sai loại bữa ở hồ sơ chay dị ứng gluten (gần như không còn món
+trưa/tối an toàn). Nguồn: `docs/thuat-toan-goi-y.md` mục 9.
 
 **14. Có OpenAI thì sao, có tin AI hoàn toàn không?**
 Không: kết quả OpenAI luôn qua `reconcileAIPlan` (chỉ món trong danh sách đã lọc an toàn, đúng bữa, không lặp trong ngày; bữa vi phạm bị
@@ -178,6 +182,14 @@ Vì đó không phải dữ liệu nghiệp vụ mà là một phần của thu�
 bằng thí nghiệm (`eval:recommend`, `eval:mealplan`) và mô tả trong `docs/thuat-toan-goi-y.md`; đổi chúng là đổi thuật toán, phải chạy
 lại đánh giá và cập nhật tài liệu, không nên cho Admin chỉnh lúc chạy. Để trong code thì có review, có test, có lịch sử git và kết quả
 đánh giá tái lập được. Danh mục (dị ứng, nhóm thực phẩm…) thì khác: là dữ liệu thay đổi theo thực tế, không cần đổi logic, nên ở database.
+
+**44. Vì sao số liệu đánh giá trong tài liệu thay đổi (bảng cũ 3/11, bảng mới 15/11)?**
+Vì lọc an toàn chặt hơn, không phải vì thuật toán đổi. Commit `b8bc55a` (13/11) sửa lỗi thành phần ẩn: nước tương, nước mắm, dầu hào…
+nay thuộc nhóm dị ứng (nước tương → Đậu nành + Gluten), nên "Bánh mì ốp la" không còn được gợi ý cho người dị ứng gluten. Người dùng mô
+phỏng chỉ ăn món an toàn với họ, nên dữ liệu mô phỏng đổi (1544 → 1488 tương tác/lần) và mọi chỉ số đổi theo. Đã chạy lại đánh giá ở 10
+commit liên quan để xác định đúng commit này; cùng seed, cùng phương pháp. Hệ quả cần nói rõ: theo quy tắc chọn đặt trước, lần chạy mới
+chọn bộ trọng số 0,45/0,30/0,25 và w_pop0 = 0,4, còn mã đang dùng 0,60/0,20/0,20 và 0,3 (chốt ngày 3/11); chưa đổi tham số khi chưa có
+quyết định. Nguồn: `docs/thuat-toan-goi-y.md` mục 10.
 
 ## G. Dữ liệu mẫu, kiểm thử, triển khai
 

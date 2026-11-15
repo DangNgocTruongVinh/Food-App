@@ -1,11 +1,10 @@
 import type { MemberRecipe } from "../../types";
+import { MEMBER_RECIPE_LIMITS } from "../shared/limits";
 
-// Công thức tự viết trong bài cộng đồng: bản nháp của form, kiểm tra và chuyển sang dữ liệu gửi API. Giới hạn khớp Zod
-// backend (community-member-recipe.ts); backend vẫn kiểm tra lại.
+// Công thức tự viết trong bài cộng đồng: bản nháp của form, kiểm tra và chuyển sang dữ liệu gửi API. Giới hạn dùng chung
+// với Zod backend (features/shared/limits.ts); backend vẫn kiểm tra lại.
 
-export const MEMBER_RECIPE_LIMITS = {
-  name: 120, servings: 20, minutes: 1440, ingredients: 30, ingredientName: 80, quantity: 20, unit: 20, steps: 20, step: 500,
-} as const;
+export { MEMBER_RECIPE_LIMITS };
 
 export type MemberIngredientDraft = { key: string; name: string; quantity: string; unit: string };
 export type MemberStepDraft = { key: string; text: string };

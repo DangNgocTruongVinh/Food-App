@@ -148,8 +148,8 @@ Mẫu giống mục 12 `REPORT_NOURI.md`. Mọi thao tác của Người dùng c
 - Tác nhân chính: Admin.
 - Luồng chính: (1) khu `/admin` → Danh mục dữ liệu, chọn loại: Nhóm dị ứng / Nhóm thực phẩm / Viết tắt hóa đơn; (2) nhóm dị ứng: thêm nhóm
   (có thể thuộc nhóm cha, như Hải sản → Cá), đổi tên, thêm tên gọi khác, thêm nguyên liệu thuộc nhóm với mức "Chứa" hoặc "Có thể chứa"
-  và cờ chế biến/gia vị; (3) nhóm thực phẩm: thêm, đổi tên, nơi bảo quản và hạn dùng mặc định; (4) viết tắt hóa đơn: thêm (lưu dạng bỏ
-  dấu), ẩn/hiện; (5) mọi mục chỉ ẩn/hiện, không xóa. Mỗi thao tác kiểm bằng Zod, ghi `AdminAuditLog` (`CATALOG_CREATE`/`CATALOG_UPDATE`)
+  và cờ chế biến/gia vị; (3) nhóm thực phẩm: thêm, đổi tên, nơi bảo quản và hạn dùng mặc định, từ đầu tên thuộc nhóm, hạn riêng theo loại
+  (vd. đậu khô 90 ngày nơi khô ráo); (4) hóa đơn: viết tắt và từ khóa bỏ dòng (thuế, tổng tiền, túi…; lưu dạng bỏ dấu), ẩn/hiện; (5) mọi mục chỉ ẩn/hiện, không xóa. Mỗi thao tác kiểm bằng Zod, ghi `AdminAuditLog` (`CATALOG_CREATE`/`CATALOG_UPDATE`)
   cùng transaction; lưu xong backend nạp lại danh mục vào bộ nhớ nên bộ lọc dị ứng, nhóm Kho, đọc hóa đơn dùng bản mới ngay.
 - Luồng phụ: ẩn nhóm hoặc nguyên liệu dị ứng phải xác nhận (bộ lọc sẽ thôi nhận); đổi tên nhóm dị ứng giữ tên cũ làm tên gọi khác (hồ sơ
   cũ vẫn nhận ra); đổi tên nhóm thực phẩm đổi theo trong Kho và danh sách đi chợ; trùng tên → 409; không ẩn được nhóm thực phẩm mặc định

@@ -1,12 +1,11 @@
 import type { MealType, Prisma } from "@prisma/client";
-import { vietnamToday } from "../src/utils/vietnam-date.js";
+import { DAY_MS, vietnamToday } from "../src/utils/vietnam-date.js";
 
 // Lịch sử mẫu của tài khoản demo (dữ liệu mẫu, không phải hoạt động thật): khoảng 2 tuần trước ngày chạy (giờ Việt Nam), để bộ
 // gợi ý không rơi vào "khởi đầu lạnh" khi demo. Khẩu vị nhất quán: món Việt, thích món cá, thêm vài món Nhật (khớp hồ sơ demo:
 // ẩm thực Việt Nam, Nhật Bản; không món nào có "Cần tây" — món demo không thích). Bữa "đã ăn" theo kiểu "chỉ đánh dấu, không trừ
 // kho" nên không có lịch sử kho. Thích 2–3 bài của tài khoản mẫu minh họa có món cùng khẩu vị.
 
-const DAY_MS = 86_400_000;
 
 /** Bữa đã ăn: món (slug), ngày so với hôm nay, bữa. */
 export const DEMO_HISTORY_MEALS: Array<{ slug: string; day: number; mealType: MealType }> = [

@@ -2,9 +2,9 @@ import { searchRecipes, type SearchableRecipe } from "../recipes/recipe-search";
 import { format, formatDistanceToNow } from "date-fns";
 import { vi } from "date-fns/locale";
 import type { CommunityPost, CommunityRecipeSummary, MemberRecipe, Recipe } from "../../types";
+import { COMMUNITY_COMMENT_MAX_LENGTH, COMMUNITY_POST_MAX_LENGTH, IMAGE_MIME_TYPES, MAX_IMAGE_BYTES, MAX_IMAGE_MB, MAX_POST_IMAGES } from "../shared/limits";
 
-export const COMMUNITY_POST_MAX_LENGTH = 2000;
-export const COMMUNITY_COMMENT_MAX_LENGTH = 500;
+export { COMMUNITY_COMMENT_MAX_LENGTH, COMMUNITY_POST_MAX_LENGTH };
 
 /** id phần tử bài viết: link thông báo `/community?post=<id>` cuộn tới phần tử này. */
 export function communityPostElementId(postId: string) {
@@ -69,10 +69,10 @@ export function toCommunityPublishInput(
   };
 }
 
-// Kiểm tra trước khi gửi, khớp với backend (backend vẫn kiểm tra lại theo byte đầu file).
-export const COMMUNITY_MAX_IMAGES = 4;
-export const COMMUNITY_IMAGE_MAX_BYTES = 5 * 1024 * 1024;
-export const COMMUNITY_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
+// Kiểm tra trước khi gửi, cùng giới hạn với backend (features/shared/limits.ts; backend vẫn kiểm tra lại theo byte đầu file).
+export const COMMUNITY_MAX_IMAGES = MAX_POST_IMAGES;
+export const COMMUNITY_IMAGE_MAX_BYTES = MAX_IMAGE_BYTES;
+export const COMMUNITY_IMAGE_TYPES = IMAGE_MIME_TYPES;
 
 type ImageCandidate = { name: string; type: string; size: number };
 
@@ -82,7 +82,7 @@ export function addCommunityImages<T extends ImageCandidate>(current: T[], incom
   let error: string | null = null;
   for (const file of incoming) {
     if (!COMMUNITY_IMAGE_TYPES.includes(file.type)) error ??= `"${file.name}" không phải ảnh JPG, PNG hoặc WEBP.`;
-    else if (file.size > COMMUNITY_IMAGE_MAX_BYTES) error ??= `"${file.name}" vượt quá 5 MB.`;
+    else if (file.size > COMMUNITY_IMAGE_MAX_BYTES) error ??= `"${file.name}" vượt quá ${MAX_IMAGE_MB} MB.`;
     else if (images.length >= COMMUNITY_MAX_IMAGES) error ??= `Mỗi bài tối đa ${COMMUNITY_MAX_IMAGES} ảnh.`;
     else images.push(file);
   }

@@ -2,6 +2,7 @@ import { Check, CircleAlert, LoaderCircle } from "lucide-react";
 import { type FormEvent, useState } from "react";
 import { Link } from "react-router-dom";
 import type { ResetPasswordErrors, ResetPasswordValues } from "../../features/auth/auth.logic";
+import { PASSWORD_LIMITS } from "../../features/shared/limits";
 
 // Form quên mật khẩu / đặt mật khẩu mới, cùng kiểu với form đăng nhập (lớp dn-*, lỗi ngay dưới ô, khóa form khi đang gửi).
 
@@ -87,7 +88,7 @@ export function ResetPasswordForm({ values, errors, error, loading, missingToken
         onChange={(event) => onChange(key, event.target.value)}
       />
       <FieldError id={`reset-${key}-error`} message={errors[key]} />
-      {key === "password" && <p id="reset-password-hint" className="dn-hint">Ít nhất 8 ký tự.</p>}
+      {key === "password" && <p id="reset-password-hint" className="dn-hint">Ít nhất {PASSWORD_LIMITS.min} ký tự.</p>}
     </div>
   );
   return (

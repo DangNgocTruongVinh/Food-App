@@ -79,7 +79,12 @@ export function fakeCatalogDb() {
     findMany: async (args: { where?: Record<string, unknown>; include?: Record<string, unknown> } = {}) =>
       tables[name].rows.filter((row) => matches(row, args.where)).map((row) => withRelations(name, row, args.include)),
     findUnique: async ({ where }: { where: Record<string, unknown> }) => { const row = one(name, where); return row && { ...row }; },
-    findFirst: async ({ where }: { where?: Record<string, unknown> } = {}) => { const row = one(name, where ?? {}); return row && { ...row }; },
+    findFirst: async ({ where, orderBy }: { where?: Record<string, unknown>; orderBy?: Record<string, "asc" | "desc"> } = {}) => {
+      const rows = tables[name].rows.filter((row) => matches(row, where));
+      const [[field, direction] = []] = Object.entries(orderBy ?? {});
+      if (field) rows.sort((a, b) => (Number(a[field]) - Number(b[field])) * (direction === "desc" ? -1 : 1));
+      return rows[0] ? { ...rows[0] } : null;
+    },
     count: async ({ where }: { where?: Record<string, unknown> } = {}) => tables[name].rows.filter((row) => matches(row, where)).length,
     create: async ({ data }: { data: Record<string, unknown> }) => ({ ...insert(name, data) }),
     createMany: async ({ data }: { data: Record<string, unknown>[] }) => ({ count: data.map((item) => insert(name, item)).length }),

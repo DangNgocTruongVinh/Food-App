@@ -1,17 +1,9 @@
 import type { ProfileResponse } from "../../types";
 import type { ProfileFormValues } from "./profile.api";
+import { PROFILE_LIMITS } from "../shared/limits";
 
-// Giới hạn khớp backend (profile.schema.ts): kiểm tra trước khi gửi để báo lỗi ngay dưới từng trường.
-export const PROFILE_LIMITS = {
-  name: { min: 2, max: 80 },
-  age: { min: 13, max: 120 },
-  heightCm: { min: 100, max: 250 },
-  weightKg: { min: 25, max: 400 },
-  listItemMax: 60,
-  allergies: 30,
-  dislikedFoods: 30,
-  preferredCuisines: 20,
-} as const;
+// Giới hạn dùng chung với backend (features/shared/limits.ts): kiểm tra trước khi gửi để báo lỗi ngay dưới từng trường.
+export { PROFILE_LIMITS };
 
 export const GENDER_OPTIONS = [["FEMALE", "Nữ"], ["MALE", "Nam"], ["OTHER", "Khác"]] as const;
 export const GOAL_OPTIONS = [["LOSE_WEIGHT", "Giảm cân"], ["MAINTAIN", "Giữ cân"], ["GAIN_WEIGHT", "Tăng cân"], ["BUILD_MUSCLE", "Tăng cơ"]] as const;
