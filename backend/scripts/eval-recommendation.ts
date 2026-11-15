@@ -13,6 +13,7 @@ import { normalizeFoodText } from "../src/services/dietary.service.js";
 import type { FitPantryItem } from "../src/services/recipe-fit.service.js";
 import { seedRecipesAsRecords } from "../src/test/seed-recipes.js";
 import { useSeedCatalog } from "../src/services/catalog/catalog-build.js";
+import { DAY_MS } from "../src/utils/vietnam-date.js";
 
 // Mô phỏng không có database: nạp danh mục từ dữ liệu seed (cùng hàm dựng như khi chạy thật).
 useSeedCatalog();
@@ -30,7 +31,6 @@ const SEED = 20261103;
 const SEEDS = [0, 1, 2, 3, 4].map((offset) => SEED + offset);
 const USERS = 80;
 const DAYS = 28;
-const DAY_MS = 86_400_000;
 const START = Date.UTC(2026, 9, 1);
 const TEMPERATURE = 0.7;
 const KS = [5, 10] as const;

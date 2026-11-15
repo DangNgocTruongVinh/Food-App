@@ -4,7 +4,7 @@ import { prisma } from "../../lib/prisma.js";
 import { expiryReminderEmail } from "../../services/email-templates.js";
 import { isEmailConfigured, sendMail } from "../../services/email.service.js";
 import { HttpError } from "../../utils/http-error.js";
-import { vietnamToday } from "../../utils/vietnam-date.js";
+import { DAY_MS, vietnamToday } from "../../utils/vietnam-date.js";
 import { UNIT_LABEL } from "../pantry/pantry-history.service.js";
 import { getRecommendations } from "../recommendation/recommendation.service.js";
 import { isValidUnsubscribeToken, pickExpiringItems, unsubscribeToken } from "./expiry-email.js";
@@ -26,7 +26,7 @@ const isUniqueConflict = (error: unknown) => error instanceof Prisma.PrismaClien
 /** Các món đã nhắc trong bản hằng ngày gần đây (khóa id + hạn; quá 14 ngày thì món đó đã hết hạn từ lâu). */
 async function remindedKeys(userId: string, now: Date) {
   const rows = await prisma.expiryEmailLog.findMany({
-    where: { userId, slot: DAILY_SLOT, createdAt: { gte: new Date(now.getTime() - 14 * 86_400_000) } }, select: { itemKeys: true },
+    where: { userId, slot: DAILY_SLOT, createdAt: { gte: new Date(now.getTime() - 14 * DAY_MS) } }, select: { itemKeys: true },
   });
   return new Set(rows.flatMap((row) => row.itemKeys));
 }
@@ -46,7 +46,7 @@ async function suggestedRecipes(userId: string, now: Date) {
 async function sendReminder(recipient: Recipient, slot: string, now: Date, send = sendMail): Promise<SendResult> {
   const today = vietnamToday(now);
   const pantry = await prisma.pantryItem.findMany({
-    where: { userId: recipient.userId, quantity: { gt: 0 }, expiryDate: { gte: today, lte: new Date(today.getTime() + (recipient.days + 1) * 86_400_000) } },
+    where: { userId: recipient.userId, quantity: { gt: 0 }, expiryDate: { gte: today, lte: new Date(today.getTime() + (recipient.days + 1) * DAY_MS) } },
     select: { id: true, name: true, quantity: true, unit: true, expiryDate: true },
   });
   const reminded = slot === DAILY_SLOT ? await remindedKeys(recipient.userId, now) : new Set<string>();

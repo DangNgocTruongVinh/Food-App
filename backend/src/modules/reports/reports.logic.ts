@@ -1,24 +1,16 @@
 import type { FoodUnit, PantryRemovalReason, PantryTransactionSource } from "@prisma/client";
-import { vietnamToday } from "../../utils/vietnam-date.js";
+import { DAY_MS, VIETNAM_OFFSET_MS, vietnamToday, vietnamWeekStart } from "../../utils/vietnam-date.js";
 
 // Báo cáo (logic thuần): tuần bắt đầu Thứ Hai 00:00 giờ Việt Nam; lãng phí thực phẩm từ lịch sử kho; dinh dưỡng tuần từ bữa "Đã ăn".
 
-const DAY_MS = 86_400_000;
-const VIETNAM_OFFSET_MS = 7 * 3_600_000;
 const isoDay = (date: Date) => date.toISOString().slice(0, 10);
 
 /** Một tuần: `start` là Thứ Hai (00:00 UTC của ngày lịch Việt Nam); [from, to) là khoảng thời điểm thật (Thứ Hai 00:00 giờ VN). */
 export type Week = { start: Date; from: Date; to: Date };
 
-export function vietnamWeekStart(now: Date) {
-  const today = vietnamToday(now);
-  const sinceMonday = (today.getUTCDay() + 6) % 7;
-  return new Date(today.getTime() - sinceMonday * DAY_MS);
-}
-
 /** `count` tuần gần nhất, cũ → mới; tuần cuối là tuần hiện tại (chưa trọn). */
 export function recentWeeks(now: Date, count: number): Week[] {
-  const current = vietnamWeekStart(now);
+  const current = vietnamWeekStart(now).day;
   return Array.from({ length: count }, (_, index) => {
     const start = new Date(current.getTime() - (count - 1 - index) * 7 * DAY_MS);
     const from = new Date(start.getTime() - VIETNAM_OFFSET_MS);

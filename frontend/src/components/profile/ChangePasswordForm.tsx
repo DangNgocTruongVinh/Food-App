@@ -1,6 +1,7 @@
 import type { FormEvent } from "react";
 import type { ChangePasswordErrors, ChangePasswordValues } from "../../features/auth/auth.logic";
 import { Button, ErrorState, Field } from "../ui";
+import { PASSWORD_LIMITS } from "../../features/shared/limits";
 
 type ChangePasswordFormProps = {
   values: ChangePasswordValues;
@@ -13,7 +14,7 @@ type ChangePasswordFormProps = {
 
 const FIELDS: Array<{ key: keyof ChangePasswordValues; label: string; autoComplete: string; hint?: string }> = [
   { key: "currentPassword", label: "Mật khẩu hiện tại", autoComplete: "current-password" },
-  { key: "newPassword", label: "Mật khẩu mới", autoComplete: "new-password", hint: "Từ 8 đến 72 ký tự." },
+  { key: "newPassword", label: "Mật khẩu mới", autoComplete: "new-password", hint: `Từ ${PASSWORD_LIMITS.min} đến ${PASSWORD_LIMITS.max} ký tự.` },
   { key: "confirmPassword", label: "Nhập lại mật khẩu mới", autoComplete: "new-password" },
 ];
 

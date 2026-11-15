@@ -40,6 +40,10 @@ Chi tiết cách kiểm: `docs/test-evidence/bao-mat.md`. Hướng xử lý: nâ
 - Các trạng thái chỉ giữ trong bộ nhớ một tiến trình backend: bộ đếm rate limit (đăng nhập, đăng ký, quên mật khẩu, tắt nhắc), dòng nháp
   quét hóa đơn (30 phút), mô hình gợi ý cộng tác (nhớ 10 phút). Khởi động lại backend thì mất (người dùng quét lại); chạy nhiều tiến trình
   cần kho chung (Redis).
+- Danh mục dữ liệu (nhóm dị ứng, nhóm thực phẩm, hạn dùng, viết tắt và từ khóa hóa đơn) đọc từ database một lần rồi giữ trong bộ nhớ;
+  Admin sửa thì **chỉ tiến trình nhận yêu cầu sửa** nạp lại ngay. Đúng khi chạy một tiến trình backend (như bản nộp); chạy nhiều tiến trình
+  thì tiến trình khác còn dùng bản cũ tới khi khởi động lại — cần báo nhau làm mới (`LISTEN/NOTIFY` của PostgreSQL, Redis pub/sub, hoặc
+  đọc lại khi cột `updatedAt` lớn nhất đổi).
 - Lịch nhắc hạn email chạy trong tiến trình backend (`node-cron`): backend tắt đúng lúc 07:00 thì hôm đó không gửi bù. Khóa chống gửi trùng
   nằm ở DB nên chạy nhiều tiến trình vẫn chỉ một email/người/ngày.
 - Chưa cấu hình SMTP thì email (kể cả liên kết đặt lại mật khẩu) được ghi ra log để thử ở máy dev; bản chạy thật bắt buộc cấu hình SMTP.
@@ -122,5 +126,6 @@ Chi tiết cách kiểm: `docs/test-evidence/bao-mat.md`. Hướng xử lý: nâ
 - Đánh giá OCR trên ≥ 10 hóa đơn thật, so sánh Tesseract và OpenAI (độ đúng, thời gian, chi phí); đọc nhãn sản phẩm có HSD.
 - Nhận diện dị ứng theo thành phần thật của sản phẩm (mã vạch / cơ sở dữ liệu nhãn hàng) thay vì danh mục theo tên; thêm món thuần
   chay không gluten (dùng tamari thay nước tương).
-- Nâng các gói phụ thuộc bản lớn (mục 1.1) trên nhánh riêng; chuyển trạng thái trong bộ nhớ sang Redis để chạy nhiều tiến trình.
+- Nâng các gói phụ thuộc bản lớn (mục 1.1) trên nhánh riêng; chuyển trạng thái trong bộ nhớ sang Redis để chạy nhiều tiến trình;
+  làm mới danh mục dữ liệu giữa các tiến trình qua DB (`LISTEN/NOTIFY`) hoặc Redis (mục 1.4).
 - Thông báo đẩy (web push) cho nhắc hạn, thay hoặc bổ sung email.

@@ -12,6 +12,7 @@ import { calculateNutritionTargets } from "../src/services/nutrition.service.js"
 import { type ConsumptionPantryItem, planConsumption } from "../src/services/pantry-consumption.js";
 import { seedRecipesAsRecords } from "../src/test/seed-recipes.js";
 import { useSeedCatalog } from "../src/services/catalog/catalog-build.js";
+import { DAY_MS } from "../src/utils/vietnam-date.js";
 
 // Mô phỏng không có database: nạp danh mục từ dữ liệu seed (cùng hàm dựng như khi chạy thật).
 useSeedCatalog();
@@ -24,7 +25,6 @@ useSeedCatalog();
 
 const SEEDS = [0, 1, 2, 3, 4].map((offset) => 20261109 + offset);
 const USERS = 100;
-const DAY_MS = 86_400_000;
 const START = new Date(Date.UTC(2026, 10, 2));
 
 function rng(seed: number) {

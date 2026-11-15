@@ -1,5 +1,5 @@
 import { api } from "../../api/client";
-import type { DietTag, FoodUnit, MealType, MemberRecipe, StorageLocation } from "../../types";
+import type { DietTag, FoodUnit, MealType, MemberRecipe, ReceiptSkipReason, StorageLocation } from "../../types";
 
 export type AdminStats = {
   totals: { users: number; lockedUsers: number; mealPlans: number; posts: number; recipes: number; hiddenRecipes: number };
@@ -168,7 +168,10 @@ export async function listAuditLogs(query: AuditLogQuery) {
 
 // ---------- Danh mục dữ liệu (dị ứng, nhóm thực phẩm, viết tắt hóa đơn) ----------
 
-export type CatalogKind = "allergen-groups" | "allergen-aliases" | "allergen-terms" | "food-categories" | "receipt-abbreviations";
+export type CatalogKind = "allergen-groups" | "allergen-aliases" | "allergen-terms" | "food-categories" | "food-category-terms"
+  | "food-shelf-life-rules" | "receipt-abbreviations" | "receipt-skip-keywords";
+export type FoodTextMatch = "PREFIX" | "PREFIX_WORD" | "CONTAINS_WORD";
+export type ReceiptKeywordMatch = "WORD" | "PREFIX" | "LINE" | "LINE_SUFFIX";
 type CatalogRow = { id: string; sortOrder: number; hiddenAt: string | null };
 export type AllergenTermLevel = "CONTAINS" | "MAY_CONTAIN";
 export type AdminAllergenGroup = CatalogRow & {
@@ -179,10 +182,19 @@ export type AdminAllergenGroup = CatalogRow & {
 };
 export type AdminFoodCategory = CatalogRow & {
   name: string; defaultStorage: StorageLocation; defaultShelfLifeDays: number | null; isFallback: boolean;
-  shelfLifeRules: Array<{ id: string; pattern: string; matchMode: string; shelfLifeDays: number | null; storage: StorageLocation }>;
+  terms: Array<{ id: string; prefix: string; priority: number; hiddenAt: string | null }>;
+  shelfLifeRules: Array<{
+    id: string; pattern: string; matchMode: FoodTextMatch; shelfLifeDays: number | null; storage: StorageLocation; priority: number; hiddenAt: string | null;
+  }>;
 };
 export type AdminReceiptAbbreviation = CatalogRow & { abbreviation: string; fullName: string };
-export type AdminCatalog = { allergenGroups: AdminAllergenGroup[]; foodCategories: AdminFoodCategory[]; receiptAbbreviations: AdminReceiptAbbreviation[] };
+export type AdminReceiptSkipKeyword = {
+  id: string; reason: ReceiptSkipReason; reasonOrder: number; keyword: string; matchMode: ReceiptKeywordMatch; sortOrder: number; hiddenAt: string | null;
+};
+export type AdminCatalog = {
+  allergenGroups: AdminAllergenGroup[]; foodCategories: AdminFoodCategory[]; receiptAbbreviations: AdminReceiptAbbreviation[];
+  receiptSkipKeywords: AdminReceiptSkipKeyword[];
+};
 export type CatalogSaveInput = { kind: CatalogKind; id?: string; body: Record<string, unknown> };
 
 export async function getAdminCatalog() {

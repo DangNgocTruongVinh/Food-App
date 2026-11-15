@@ -12,6 +12,7 @@ import { recipeFit, type SafetyProfile } from "../recommendation/safety.js";
 import { reconcileAIPlan } from "./meal-plan-generator.js";
 import { scoredPlan } from "./meal-plan-scorer.js";
 import { planSuggestions, type SuggestionProfile } from "./meal-plan-suggestions.js";
+import { DAY_MS } from "../../utils/vietnam-date.js";
 
 /** Vì sao thực đơn "Tạo bằng AI" phải dùng bộ tạo thuật toán: chưa có key, OpenAI quá 120 giây, OpenAI lỗi, kết quả AI hỏng quá nửa. */
 export type PlanFallbackReason = "AI_NOT_CONFIGURED" | "AI_TIMEOUT" | "AI_ERROR" | "AI_INVALID";
@@ -82,7 +83,7 @@ export async function generateWeeklyPlan(userId: string, startDateInput: string,
   endDate.setUTCDate(endDate.getUTCDate() + 6);
   const selectedIngredients: Array<{ name: string; quantity: number; unit: FoodUnit }> = [];
   const days = validDays.map((day) => ({
-    date: new Date(startDate.getTime() + day.dayIndex * 86_400_000),
+    date: new Date(startDate.getTime() + day.dayIndex * DAY_MS),
     items: day.meals.flatMap((meal) => {
       const recipe = recipeById.get(meal.recipeId);
       if (!recipe) return [];

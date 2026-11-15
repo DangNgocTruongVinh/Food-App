@@ -109,6 +109,36 @@ describe("Danh mục dữ liệu trong database (seed → nạp → Admin sửa 
     expect(canonicalFoodName("NAM KM", buildNameIndex([], [])).name).toBe("Nấm kim châm");
   });
 
+  it("Admin thêm từ đầu tên → nhóm, hạn riêng, từ khóa bỏ dòng hóa đơn: áp ngay; ẩn thì thôi áp", async () => {
+    const category = (name: string) => db.rows("foodCategory").find((row) => row.name === name)!.id;
+    expect(foodCategoryOf("Rong biển khô")).toBe("Khác");
+    const term = await admin("POST", "food-category-terms", { categoryId: category("Rau & củ"), prefix: "  Rong Biển " });
+    expect(term.status).toBe(201);
+    expect(db.rows("foodCategoryTerm").at(-1)!.prefix).toBe("rong biển");
+    expect(foodCategoryOf("Rong biển khô")).toBe("Rau & củ");
+
+    const rule = await admin("POST", "food-shelf-life-rules", {
+      categoryId: category("Rau & củ"), pattern: "rong biển", matchMode: "PREFIX_WORD", shelfLifeDays: 120, storage: "DRY_STORAGE",
+    });
+    expect(rule.status).toBe(201);
+    expect(shelfLifeFor("Rong biển", "Rau & củ")).toEqual({ days: 120, storage: "DRY_STORAGE" });
+    await admin("PATCH", `food-shelf-life-rules/${rule.body.id}`, { hidden: true });
+    expect(shelfLifeFor("Rong biển", "Rau & củ")).toEqual({ days: 4, storage: "REFRIGERATOR" });
+    await admin("PATCH", `food-category-terms/${term.body.id}`, { hidden: true });
+    expect(foodCategoryOf("Rong biển khô")).toBe("Khác");
+
+    const skips = (line: string) => skipRules().find(([, pattern]) => pattern.test(line))?.[0];
+    expect(skips("ma van don 123")).toBe(undefined);
+    const keyword = await admin("POST", "receipt-skip-keywords", { reason: "HEADER", keyword: "Mã vận đơn", matchMode: "PREFIX" });
+    expect(keyword.status).toBe(201);
+    expect(db.rows("receiptSkipKeyword").at(-1)).toMatchObject({ keyword: "ma van don", reason: "HEADER" });
+    expect(skips("ma van don xyz")).toBe("HEADER");
+    await admin("PATCH", `receipt-skip-keywords/${keyword.body.id}`, { hidden: true });
+    expect(skips("ma van don xyz")).toBe(undefined);
+    expect(lastAudit()).toMatchObject({ action: "CATALOG_UPDATE", details: { kind: "receipt-skip-keywords", changedFields: ["hidden"] } });
+    expect((await admin("POST", "receipt-skip-keywords", { reason: "KHONG_CO", keyword: "x" })).status).toBe(422);
+  });
+
   it("kiểm tra dữ liệu (Zod) và quyền Admin; API công khai trả danh mục đang dùng", async () => {
     expect((await admin("POST", "unknown-kind", { name: "x" })).status).toBe(422);
     expect((await admin("POST", "allergen-aliases", { groupId: "khong-phai-id", name: "x" })).status).toBe(422);

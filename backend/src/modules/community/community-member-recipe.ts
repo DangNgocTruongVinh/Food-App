@@ -1,21 +1,12 @@
 import { z } from "zod";
 import { allergenLabels, expandRestrictedTerms, findRestrictedTerms } from "../../services/dietary.service.js";
+import { MEMBER_RECIPE_LIMITS } from "../../shared/limits.js";
 
 /**
  * Công thức tự viết trong bài cộng đồng (lưu JSON ở CommunityPost.memberRecipe). Không phải Recipe: không vào thực đơn,
- * gợi ý hay kho; số lượng/đơn vị nhập tự do. Giới hạn dùng chung cho Zod và giao diện (frontend giữ cùng số).
+ * gợi ý hay kho; số lượng/đơn vị nhập tự do. Giới hạn dùng chung cho Zod và giao diện: shared/limits.ts.
  */
-export const MEMBER_RECIPE_LIMITS = {
-  name: 120,
-  servings: 20,
-  minutes: 1440,
-  ingredients: 30,
-  ingredientName: 80,
-  quantity: 20,
-  unit: 20,
-  steps: 20,
-  step: 500,
-} as const;
+export { MEMBER_RECIPE_LIMITS };
 
 const L = MEMBER_RECIPE_LIMITS;
 

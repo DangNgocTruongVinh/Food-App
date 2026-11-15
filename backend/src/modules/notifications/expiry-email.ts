@@ -1,8 +1,8 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
+import { DAY_MS } from "../../utils/vietnam-date.js";
 
 // Logic thuần của email nhắc đồ sắp hết hạn: chọn món, chống nhắc lại, token "Tắt nhắc", biểu thức lịch gửi.
 
-const DAY_MS = 86_400_000;
 
 export type PantryForReminder = { id: string; name: string; quantity: number; unit: string; expiryDate: Date | null };
 export type ExpiringItem = PantryForReminder & { daysLeft: number; key: string };

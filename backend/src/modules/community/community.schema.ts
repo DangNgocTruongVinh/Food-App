@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { memberRecipeField, memberRecipeSchema } from "./community-member-recipe.js";
+import { COMMUNITY_COMMENT_MAX_LENGTH, COMMUNITY_POST_MAX_LENGTH } from "../../shared/limits.js";
 
 const empty = z.object({});
 const postIdParams = z.object({ postId: z.string().cuid() });
@@ -16,7 +17,7 @@ const ONE_RECIPE_ONLY = "Chỉ chọn một: đính kèm món có sẵn hoặc t
 // kiểm tra trong service vì cần biết số ảnh; bài không có chữ thì nội dung lưu "".
 export const createCommunityPostSchema = z.object({
   body: z.object({
-    content: z.string().trim().max(2000).default(""),
+    content: z.string().trim().max(COMMUNITY_POST_MAX_LENGTH).default(""),
     recipeId: z.string().cuid().optional(),
     memberRecipe: memberRecipeField.optional(),
   }).refine((body) => !(body.recipeId && body.memberRecipe), { message: ONE_RECIPE_ONLY, path: ["memberRecipe"] }),
@@ -43,7 +44,7 @@ export const toggleCommunityLikeSchema = z.object({
 });
 
 export const addCommunityCommentSchema = z.object({
-  body: z.object({ content: z.string().trim().min(1).max(500) }),
+  body: z.object({ content: z.string().trim().min(1).max(COMMUNITY_COMMENT_MAX_LENGTH) }),
   params: postIdParams,
   query: empty,
 });

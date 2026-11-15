@@ -11,6 +11,7 @@ import {
 } from "../recommendation/knowledge-based.js";
 import { fitsMealType, safeRecipes, type SafetyProfile, type SafetyRecipe } from "../recommendation/safety.js";
 import { mealSlots } from "./meal-plan-generator.js";
+import { DAY_MS } from "../../utils/vietnam-date.js";
 
 // Bộ tạo thực đơn 7 ngày khi không có OpenAI (GĐ3b-R8), hàm thuần. Chỉ ghép các hàm có sẵn của bộ gợi ý, không đổi công thức
 // hay trọng số của chúng. Với từng bữa, theo thứ tự ngày → bữa:
@@ -29,7 +30,6 @@ export const CONTENT_WEIGHT = 0.3;
 export const REPEAT_WINDOW_DAYS = 3;
 /** Phạt nhẹ mỗi lần món đã được xếp trong tuần (phân bổ đều; nhỏ hơn hẳn phần thưởng đồ sắp hết hạn 0,35). */
 export const WEEKLY_REPEAT_PENALTY = 0.1;
-const DAY_MS = 86_400_000;
 
 export type ScorerRecipe = SafetyRecipe & FeatureRecipe & KnowledgeRecipe & {
   id: string;

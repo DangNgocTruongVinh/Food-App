@@ -1,3 +1,4 @@
+import { MAX_POST_IMAGES } from "../shared/limits";
 /** Nội dung tĩnh của Landing (chữ mô tả chức năng có thật; số liệu lấy từ API, không đặt ở đây). */
 
 export const LANDING_SECTIONS = [
@@ -54,7 +55,7 @@ export const LANDING_STEPS = [
 ] as const;
 
 export const LANDING_COMMUNITY = [
-  "Đăng món bạn vừa nấu kèm tối đa 4 ảnh và gắn công thức có sẵn trong Nouri, để người khác mở xem nguyên liệu và cách làm.",
+  `Đăng món bạn vừa nấu kèm tối đa ${MAX_POST_IMAGES} ảnh và gắn công thức có sẵn trong Nouri, để người khác mở xem nguyên liệu và cách làm.`,
   "Bạn thích và bình luận bài của người khác, nhận thông báo khi bài của mình có lượt thích hoặc bình luận, và tự xóa bài của mình khi cần.",
 ] as const;
 

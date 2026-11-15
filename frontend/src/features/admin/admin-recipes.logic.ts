@@ -1,6 +1,7 @@
 import type { DietTag, FoodUnit, MealType, MemberRecipe } from "../../types";
 import { COMMUNITY_IMAGE_MAX_BYTES, COMMUNITY_IMAGE_TYPES } from "../community/community.logic";
 import type { AdminRecipeDetail, AdminRecipeInput, RecipeEstimate, RecipeUsage } from "./admin.api";
+import { MAX_IMAGE_MB } from "../shared/limits";
 
 // Kiểm tra phía client giống Zod backend (admin-recipes.schema.ts) để báo lỗi ngay tại trường/dòng.
 export const RECIPE_LIMITS = {
@@ -239,6 +240,6 @@ export function deleteRecipeConfirmText(recipe: { name: string; usage: RecipeUsa
 /** Ảnh công thức: kiểm tra trước khi gửi, khớp backend (JPG, PNG, WEBP; tối đa 5 MB). */
 export function recipeImageError(file: Pick<File, "name" | "type" | "size">) {
   if (!COMMUNITY_IMAGE_TYPES.includes(file.type)) return `"${file.name}" không phải ảnh JPG, PNG hoặc WEBP.`;
-  if (file.size > COMMUNITY_IMAGE_MAX_BYTES) return `"${file.name}" vượt quá 5 MB. Chọn ảnh nhỏ hơn.`;
+  if (file.size > COMMUNITY_IMAGE_MAX_BYTES) return `"${file.name}" vượt quá ${MAX_IMAGE_MB} MB. Chọn ảnh nhỏ hơn.`;
   return null;
 }

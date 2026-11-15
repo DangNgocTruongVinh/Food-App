@@ -1,6 +1,7 @@
 import { z } from "zod";
+import { NAME_LIMITS, PASSWORD_LIMITS } from "../../shared/limits.js";
 
-const password = z.string().min(8).max(72);
+const password = z.string().min(PASSWORD_LIMITS.min).max(PASSWORD_LIMITS.max);
 
 export const loginSchema = z.object({
   // remember: "Nhớ đăng nhập" (mặc định có, như trước GĐ4).
@@ -10,7 +11,7 @@ export const loginSchema = z.object({
 });
 
 export const registerSchema = z.object({
-  body: z.object({ email: z.string().email(), password, name: z.string().min(2).max(80) }),
+  body: z.object({ email: z.string().email(), password, name: z.string().min(NAME_LIMITS.min).max(NAME_LIMITS.max) }),
   params: z.object({}),
   query: z.object({}),
 });

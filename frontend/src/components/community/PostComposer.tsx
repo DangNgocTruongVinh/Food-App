@@ -6,6 +6,7 @@ import type { CommunityRecipeSummary } from "../../types";
 import { Button, Card } from "../ui";
 import ComposerImagePreviews from "./ComposerImagePreviews";
 import RecipeAttachmentCard from "./RecipeAttachmentCard";
+import { MAX_IMAGE_MB } from "../../features/shared/limits";
 
 export const COMMUNITY_POST_INPUT_ID = "community-post";
 
@@ -66,7 +67,7 @@ export default function PostComposer(props: PostComposerProps) {
             <label className={cx("ui-button ui-button--secondary cm-tool", imagesFull && "is-disabled")} aria-disabled={imagesFull || undefined}>
               <ImagePlus aria-hidden="true" />
               <span>Ảnh</span>
-              <span className="ui-visually-hidden">(tối đa {COMMUNITY_MAX_IMAGES} ảnh JPG, PNG, WEBP, mỗi ảnh tối đa 5 MB)</span>
+              <span className="ui-visually-hidden">(tối đa {COMMUNITY_MAX_IMAGES} ảnh JPG, PNG, WEBP, mỗi ảnh tối đa {MAX_IMAGE_MB} MB)</span>
               <input
                 type="file"
                 className="cm-tool__file"

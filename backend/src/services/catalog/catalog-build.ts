@@ -22,11 +22,11 @@ export type AllergenGroupRow = Hidden & {
 };
 export type FoodCategoryRow = Hidden & {
   name: string; sortOrder: number; defaultStorage: StorageLocation; defaultShelfLifeDays: number | null; isFallback: boolean;
-  terms: Array<{ prefix: string; priority: number }>;
-  shelfLifeRules: Array<{ pattern: string; matchMode: FoodTextMatch; shelfLifeDays: number | null; storage: StorageLocation; priority: number }>;
+  terms: Array<Hidden & { prefix: string; priority: number }>;
+  shelfLifeRules: Array<Hidden & { pattern: string; matchMode: FoodTextMatch; shelfLifeDays: number | null; storage: StorageLocation; priority: number }>;
 };
 export type ReceiptAbbreviationRow = Hidden & { abbreviation: string; fullName: string; sortOrder: number };
-export type ReceiptSkipKeywordRow = { reason: string; reasonOrder: number; keyword: string; matchMode: ReceiptKeywordMatch; sortOrder: number };
+export type ReceiptSkipKeywordRow = Hidden & { reason: string; reasonOrder: number; keyword: string; matchMode: ReceiptKeywordMatch; sortOrder: number };
 export type CatalogRows = {
   allergenGroups: AllergenGroupRow[];
   foodCategories: FoodCategoryRow[];
@@ -68,9 +68,9 @@ export function buildFoodCatalog(rows: FoodCategoryRow[]): FoodCatalog {
       defaultStorage: category.defaultStorage,
       defaultShelfLifeDays: category.defaultShelfLifeDays,
       isFallback: category.isFallback,
-      shelfLifeRules: byPriority(category.shelfLifeRules).map(({ pattern, matchMode, shelfLifeDays, storage }) => ({ pattern, matchMode, shelfLifeDays, storage })),
+      shelfLifeRules: byPriority(visible(category.shelfLifeRules)).map(({ pattern, matchMode, shelfLifeDays, storage }) => ({ pattern, matchMode, shelfLifeDays, storage })),
     })),
-    terms: byPriority(categories.flatMap((category) => category.terms.map((term) => ({ ...term, category: category.name }))))
+    terms: byPriority(categories.flatMap((category) => visible(category.terms).map((term) => ({ ...term, category: category.name }))))
       .map(({ prefix, category }) => ({ prefix, category })),
   };
 }
@@ -78,7 +78,7 @@ export function buildFoodCatalog(rows: FoodCategoryRow[]): FoodCatalog {
 export function buildReceiptCatalog(abbreviations: ReceiptAbbreviationRow[], keywords: ReceiptSkipKeywordRow[]): ReceiptCatalog {
   return {
     abbreviations: bySort(visible(abbreviations)).map((row) => [row.abbreviation, row.fullName]),
-    skipKeywords: [...keywords].sort((a, b) => a.reasonOrder - b.reasonOrder || a.sortOrder - b.sortOrder)
+    skipKeywords: visible(keywords).sort((a, b) => a.reasonOrder - b.reasonOrder || a.sortOrder - b.sortOrder)
       .map((row) => ({ reason: row.reason as ReceiptSkipReason, keyword: row.keyword, matchMode: row.matchMode })),
   };
 }
@@ -104,15 +104,15 @@ export function seedCatalogRows(): CatalogRows {
   }));
   const foodCategories = FOOD_CATEGORY_SEED.map((category, index): FoodCategoryRow => ({
     ...category, isFallback: Boolean(category.isFallback), sortOrder: index, hiddenAt: null,
-    terms: FOOD_CATEGORY_TERM_SEED.flatMap(([name, prefixes], priority) => (name === category.name ? prefixes.map((prefix) => ({ prefix, priority })) : [])),
+    terms: FOOD_CATEGORY_TERM_SEED.flatMap(([name, prefixes], priority) => (name === category.name ? prefixes.map((prefix) => ({ prefix, priority, hiddenAt: null })) : [])),
     shelfLifeRules: SHELF_LIFE_RULE_SEED.flatMap((rule, priority) => (rule.category === category.name
-      ? rule.patterns.map((pattern) => ({ pattern, matchMode: rule.matchMode, shelfLifeDays: rule.shelfLifeDays, storage: rule.storage, priority }))
+      ? rule.patterns.map((pattern) => ({ pattern, matchMode: rule.matchMode, shelfLifeDays: rule.shelfLifeDays, storage: rule.storage, priority, hiddenAt: null }))
       : [])),
   }));
   const receiptAbbreviations = RECEIPT_ABBREVIATION_SEED.map(([abbreviation, fullName], index) => ({ abbreviation, fullName, sortOrder: index, hiddenAt: null }));
   const modes = ["WORD", "PREFIX", "LINE", "LINE_SUFFIX"] as const;
   const receiptSkipKeywords = RECEIPT_SKIP_SEED.flatMap((rule, reasonOrder) => modes.flatMap((matchMode) =>
-    (rule[matchMode] ?? []).map((keyword, sortOrder) => ({ reason: rule.reason, reasonOrder, keyword, matchMode, sortOrder }))));
+    (rule[matchMode] ?? []).map((keyword, sortOrder) => ({ reason: rule.reason, reasonOrder, keyword, matchMode, sortOrder, hiddenAt: null }))));
   return { allergenGroups, foodCategories, receiptAbbreviations, receiptSkipKeywords };
 }
 

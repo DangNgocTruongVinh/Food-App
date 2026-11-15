@@ -1,16 +1,7 @@
+import { DAY_MS, vietnamWeekStart } from "../../utils/vietnam-date.js";
 // Thống kê theo tuần theo giờ Việt Nam (Asia/Ho_Chi_Minh, UTC+7, không có giờ mùa hè), tuần bắt đầu thứ Hai.
 
-const VIETNAM_OFFSET_MS = 7 * 60 * 60 * 1000;
-const DAY_MS = 24 * 60 * 60 * 1000;
 export const STATS_WEEKS = 12;
-
-/** Thứ Hai 00:00 giờ Việt Nam của tuần chứa `instant`: trả về ngày (yyyy-MM-dd) và thời điểm UTC tương ứng. */
-export function vietnamWeekStart(instant: Date) {
-  const local = new Date(instant.getTime() + VIETNAM_OFFSET_MS);
-  const daysSinceMonday = (local.getUTCDay() + 6) % 7;
-  const mondayLocal = Date.UTC(local.getUTCFullYear(), local.getUTCMonth(), local.getUTCDate()) - daysSinceMonday * DAY_MS;
-  return { key: new Date(mondayLocal).toISOString().slice(0, 10), start: new Date(mondayLocal - VIETNAM_OFFSET_MS) };
-}
 
 /** Đầu tuần cũ nhất trong khoảng thống kê (tuần hiện tại tính là tuần thứ 12). */
 export function statsRangeStart(now: Date, weeks = STATS_WEEKS) {

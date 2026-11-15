@@ -2,6 +2,7 @@ import { CircleAlert, Check, LoaderCircle } from "lucide-react";
 import { type FormEvent, type KeyboardEvent, useState } from "react";
 import { Link } from "react-router-dom";
 import type { AuthFormErrors, AuthFormValues, AuthMode } from "../../features/auth/auth.logic";
+import { PASSWORD_LIMITS } from "../../features/shared/limits";
 
 type AuthFormProps = {
   mode: AuthMode;
@@ -131,7 +132,7 @@ export function AuthForm(props: AuthFormProps) {
             </button>
           </div>
           <FieldError id="auth-password-error" message={errors.password} />
-          {register && <p id="auth-password-hint" className="dn-hint">Ít nhất 8 ký tự.</p>}
+          {register && <p id="auth-password-hint" className="dn-hint">Ít nhất {PASSWORD_LIMITS.min} ký tự.</p>}
           {capsLock && <p id="auth-password-caps" className="dn-hint">Caps Lock đang bật.</p>}
         </div>
 

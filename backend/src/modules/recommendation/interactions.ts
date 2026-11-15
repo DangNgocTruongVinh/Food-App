@@ -1,3 +1,4 @@
+import { DAY_MS } from "../../utils/vietnam-date.js";
 // Tương tác người dùng × món (GĐ3b-R), suy ra từ bảng có sẵn, không có bảng sự kiện riêng (nạp ở interaction-loader.ts;
 // file này thuần, không truy cập DB — script đánh giá dùng được):
 //   EATEN  — bữa đã đánh dấu đã ăn (MealPlanItem.completed), thời điểm = ngày của bữa;
@@ -13,7 +14,6 @@ export type Interaction<K extends InteractionKind = InteractionKind> = { userId:
 export const CONTENT_WEIGHTS: Record<InteractionKind, number> = { EATEN: 3, POSTED: 3, LIKED: 2, PLANNED: 0.5 };
 export const COLLABORATIVE_WEIGHTS: Record<CollaborativeKind, number> = { EATEN: 3, POSTED: 3, LIKED: 2 };
 export const DECAY_TAU_DAYS = 30;
-const DAY_MS = 86_400_000;
 
 /** e^(−Δ/τ), Δ = số ngày từ lúc tương tác tới nay (tương tác ở tương lai, vd. bữa đã ăn sớm, tính Δ = 0). */
 export function decay(at: Date, now: Date, tauDays = DECAY_TAU_DAYS) {

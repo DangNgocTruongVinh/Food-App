@@ -1,9 +1,8 @@
 import { prisma } from "../../lib/prisma.js";
 import { matchRecipeToPantry } from "../../services/recipe-fit.service.js";
-import { vietnamToday } from "../../utils/vietnam-date.js";
+import { DAY_MS, vietnamToday } from "../../utils/vietnam-date.js";
 import { engineRecipeQuery, recommendWithData } from "../recommendation/recommendation.service.js";
 
-const DAY_MS = 86_400_000;
 const DASHBOARD_WINDOW_DAYS = 7;
 const DASHBOARD_RECOMMENDATIONS = 3;
 

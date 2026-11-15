@@ -10,7 +10,7 @@ import { normalizeReceiptItems, type NormalizeContext } from "../../services/rec
 import { parseOcrOutput } from "../../services/receipt/receipt-parser.js";
 import type { OcrOutput, ReceiptOcrProvider } from "../../services/receipt/receipt-types.js";
 import { HttpError } from "../../utils/http-error.js";
-import { vietnamToday } from "../../utils/vietnam-date.js";
+import { vietnamDayStart, vietnamToday } from "../../utils/vietnam-date.js";
 import {
   addToPantry, REUSED_DEPLETED_NOTE, reversePantryIntake, syncPantryNotificationsQuietly, type IntakeLink,
 } from "../pantry/pantry-intake.js";
@@ -30,7 +30,6 @@ const receiptLink = (receiptScanId: string): IntakeLink => ({
 });
 
 /** 00:00 hôm nay theo giờ Việt Nam (UTC+7), dạng thời điểm UTC. */
-const vietnamDayStart = (now: Date) => new Date(vietnamToday(now).getTime() - 7 * 3_600_000);
 
 function countScansToday(userId: string, now: Date) {
   return prisma.receiptScan.count({ where: { userId, createdAt: { gte: vietnamDayStart(now) } } });

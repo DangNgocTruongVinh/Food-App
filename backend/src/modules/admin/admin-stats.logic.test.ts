@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { buildWeeklySeries, statsRangeStart, vietnamWeekStart } from "./admin-stats.logic.js";
+import { vietnamWeekStart } from "../../utils/vietnam-date.js";
+import { buildWeeklySeries, statsRangeStart } from "./admin-stats.logic.js";
 
 describe("Vietnam week boundaries (Asia/Ho_Chi_Minh, weeks start on Monday)", () => {
   it("puts Sunday 23:59 Vietnam time in the previous week and Monday 00:00 in the new week", () => {
@@ -10,7 +11,7 @@ describe("Vietnam week boundaries (Asia/Ho_Chi_Minh, weeks start on Monday)", ()
 
   it("returns the UTC instant of Monday 00:00 Vietnam time", () => {
     expect(vietnamWeekStart(new Date("2026-11-04T05:00:00.000Z")))
-      .toEqual({ key: "2026-11-02", start: new Date("2026-11-01T17:00:00.000Z") });
+      .toEqual({ key: "2026-11-02", day: new Date("2026-11-02T00:00:00.000Z"), start: new Date("2026-11-01T17:00:00.000Z") });
   });
 
   it("uses Vietnam time even when the UTC date is still the previous day", () => {

@@ -3,6 +3,7 @@ import { useRef, useState } from "react";
 import { AI_UPLOAD_NOTICE, PROVIDER_LABELS, scanModeOptions, sendsImageToAI } from "../../features/pantry/receipt-scan.logic";
 import type { ReceiptScanMode, ReceiptScanStatus } from "../../types";
 import { Button, ChoiceGroup, ErrorState, LoadingState } from "../ui";
+import { MAX_IMAGE_MB } from "../../features/shared/limits";
 
 type ReceiptScanPickerProps = {
   status: ReceiptScanStatus | undefined;
@@ -48,7 +49,7 @@ export function ReceiptScanPicker({ status, statusError, error, onPick, onManual
       <p className="ui-text">Chụp hoặc chọn ảnh hóa đơn, nhãn sản phẩm. Nouri đọc các dòng hàng để bạn kiểm tra trước khi thêm vào kho.</p>
       <ul className="kho-scan__tips">
         <li>Chụp thẳng, đủ sáng, cả tờ hóa đơn nằm trong khung.</li>
-        <li>Ảnh JPG, PNG hoặc WEBP, tối đa 5 MB. Ảnh chỉ dùng để đọc rồi bỏ, không lưu lại.</li>
+        <li>Ảnh JPG, PNG hoặc WEBP, tối đa {MAX_IMAGE_MB} MB. Ảnh chỉ dùng để đọc rồi bỏ, không lưu lại.</li>
       </ul>
       {modes && (
         <ChoiceGroup legend="Chế độ đọc" name="receipt-mode" options={modes} value={mode} onChange={(value) => setMode(value as ReceiptScanMode)}

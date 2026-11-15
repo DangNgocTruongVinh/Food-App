@@ -1,6 +1,7 @@
 import { Prisma } from "@prisma/client";
 import { prisma } from "../../lib/prisma.js";
 import { loadCatalog } from "../../services/catalog/catalog.service.js";
+import { normalizeFoodText } from "../../services/dietary.service.js";
 import { foldText } from "../../services/receipt/receipt-text.js";
 import { HttpError } from "../../utils/http-error.js";
 import { recordAdminAction } from "./admin-audit.service.js";
@@ -16,15 +17,18 @@ type Saved = { id: string; label: string };
 /** Toàn bộ danh mục (kể cả mục đã ẩn) cho trang Admin. */
 export async function listCatalogForAdmin() {
   const sort = { sortOrder: "asc" } as const;
-  const [allergenGroups, foodCategories, receiptAbbreviations] = await Promise.all([
+  const [allergenGroups, foodCategories, receiptAbbreviations, receiptSkipKeywords] = await Promise.all([
     prisma.allergenGroup.findMany({
       orderBy: sort,
       include: { aliases: { orderBy: sort }, terms: { orderBy: [{ level: "asc" }, sort] }, exclusions: { orderBy: { phrase: "asc" } } },
     }),
-    prisma.foodCategory.findMany({ orderBy: sort, include: { shelfLifeRules: { orderBy: { priority: "asc" } } } }),
+    prisma.foodCategory.findMany({
+      orderBy: sort, include: { terms: { orderBy: [{ priority: "asc" }, { prefix: "asc" }] }, shelfLifeRules: { orderBy: { priority: "asc" } } },
+    }),
     prisma.receiptAbbreviation.findMany({ orderBy: sort }),
+    prisma.receiptSkipKeyword.findMany({ orderBy: [{ reasonOrder: "asc" }, { matchMode: "asc" }, sort] }),
   ]);
-  return { allergenGroups, foodCategories, receiptAbbreviations };
+  return { allergenGroups, foodCategories, receiptAbbreviations, receiptSkipKeywords };
 }
 
 const hiddenAt = (hidden: boolean | undefined, current: Date | null) => (hidden === undefined ? undefined : hidden ? current ?? new Date() : null);
@@ -33,8 +37,19 @@ const changedFields = (input: object, current: Record<string, unknown>) => Objec
     && (field === "hidden" ? (current.hiddenAt !== null) !== value : current[field] !== value))
   .map(([field]) => field);
 const notFound = () => new HttpError(404, "Không tìm thấy mục trong danh mục.");
-/** Tên viết tắt so trên chữ đã bỏ dấu, chữ thường (như bộ đọc hóa đơn). */
+/** Tên viết tắt, từ khóa hóa đơn: so trên chữ đã bỏ dấu, chữ thường (như bộ đọc hóa đơn). */
 const abbreviationKey = (value: string) => foldText(value);
+/** Từ đầu tên, mẫu hạn riêng: so trên tên thực phẩm chữ thường, giữ dấu (như food-category.ts). */
+const foodKey = (value: string) => normalizeFoodText(value.normalize("NFC"));
+const keywordLabel = (row: { reason: string; keyword: string }) => `${row.reason}: ${row.keyword}`;
+async function nextPriority(tx: Tx, table: "foodCategoryTerm" | "foodShelfLifeRule", categoryId: string) {
+  const last = table === "foodCategoryTerm"
+    ? await tx.foodCategoryTerm.findFirst({ where: { categoryId }, orderBy: { priority: "desc" }, select: { priority: true } })
+    : await tx.foodShelfLifeRule.findFirst({ where: { categoryId }, orderBy: { priority: "desc" }, select: { priority: true } });
+  if (table === "foodShelfLifeRule") return (last?.priority ?? -1) + 1;
+  // Nhóm chưa có từ nào: xếp sau mọi từ đang có (không chen trước các ngoại lệ như "đậu bắp" → Rau củ).
+  return last?.priority ?? (await tx.foodCategoryTerm.findFirst({ orderBy: { priority: "desc" }, select: { priority: true } }))?.priority ?? 0;
+}
 
 async function checkParent(tx: Tx, groupId: string | null, parentId: string | null | undefined) {
   if (!parentId) return;
@@ -82,6 +97,31 @@ async function createRow(tx: Tx, input: CatalogCreateInput): Promise<Saved> {
         data: { abbreviation: abbreviationKey(input.abbreviation), fullName: input.fullName, sortOrder },
       });
       return { id: row.id, label: `${row.abbreviation} → ${row.fullName}` };
+    }
+    case "food-category-terms": {
+      // Mặc định cùng mức ưu tiên với các từ đang có của nhóm (từ đầu tên khớp theo mức ưu tiên trên mọi nhóm, nhỏ trước).
+      const priority = input.priority ?? (await nextPriority(tx, "foodCategoryTerm", input.categoryId));
+      const row = await tx.foodCategoryTerm.create({ data: { categoryId: input.categoryId, prefix: foodKey(input.prefix), priority } });
+      return { id: row.id, label: row.prefix };
+    }
+    case "food-shelf-life-rules": {
+      const priority = input.priority ?? (await nextPriority(tx, "foodShelfLifeRule", input.categoryId));
+      const { kind: _kind, ...data } = input;
+      const row = await tx.foodShelfLifeRule.create({ data: { ...data, pattern: foodKey(input.pattern), priority } });
+      return { id: row.id, label: row.pattern };
+    }
+    case "receipt-skip-keywords": {
+      // Lý do đã có thì giữ thứ tự xét của lý do đó; lý do mới xét sau cùng.
+      const same = await tx.receiptSkipKeyword.findFirst({ where: { reason: input.reason }, select: { reasonOrder: true } });
+      const last = await tx.receiptSkipKeyword.findFirst({ orderBy: { reasonOrder: "desc" }, select: { reasonOrder: true } });
+      const sortOrder = await tx.receiptSkipKeyword.count({ where: { reason: input.reason, matchMode: input.matchMode } });
+      const row = await tx.receiptSkipKeyword.create({
+        data: {
+          reason: input.reason, reasonOrder: same?.reasonOrder ?? (last?.reasonOrder ?? -1) + 1, keyword: abbreviationKey(input.keyword),
+          matchMode: input.matchMode, sortOrder,
+        },
+      });
+      return { id: row.id, label: keywordLabel(row) };
     }
   }
 }
@@ -146,6 +186,37 @@ async function updateRow(tx: Tx, id: string, input: CatalogUpdateInput): Promise
         where: { id }, data: { abbreviation, fullName: input.fullName, hiddenAt: hiddenAt(input.hidden, current.hiddenAt) },
       });
       return { id, label: `${row.abbreviation} → ${row.fullName}`, changedFields: changedFields({ ...input, abbreviation }, current) };
+    }
+    case "food-category-terms": {
+      const current = await tx.foodCategoryTerm.findUnique({ where: { id } });
+      if (!current) throw notFound();
+      const prefix = input.prefix === undefined ? undefined : foodKey(input.prefix);
+      const row = await tx.foodCategoryTerm.update({
+        where: { id }, data: { prefix, priority: input.priority, hiddenAt: hiddenAt(input.hidden, current.hiddenAt) },
+      });
+      return { id, label: row.prefix, changedFields: changedFields({ ...input, prefix }, current) };
+    }
+    case "food-shelf-life-rules": {
+      const current = await tx.foodShelfLifeRule.findUnique({ where: { id } });
+      if (!current) throw notFound();
+      const pattern = input.pattern === undefined ? undefined : foodKey(input.pattern);
+      const row = await tx.foodShelfLifeRule.update({
+        where: { id },
+        data: {
+          pattern, matchMode: input.matchMode, shelfLifeDays: input.shelfLifeDays, storage: input.storage, priority: input.priority,
+          hiddenAt: hiddenAt(input.hidden, current.hiddenAt),
+        },
+      });
+      return { id, label: row.pattern, changedFields: changedFields({ ...input, pattern }, current) };
+    }
+    case "receipt-skip-keywords": {
+      const current = await tx.receiptSkipKeyword.findUnique({ where: { id } });
+      if (!current) throw notFound();
+      const keyword = input.keyword === undefined ? undefined : abbreviationKey(input.keyword);
+      const row = await tx.receiptSkipKeyword.update({
+        where: { id }, data: { keyword, matchMode: input.matchMode, hiddenAt: hiddenAt(input.hidden, current.hiddenAt) },
+      });
+      return { id, label: keywordLabel(row), changedFields: changedFields({ ...input, keyword }, current) };
     }
   }
 }

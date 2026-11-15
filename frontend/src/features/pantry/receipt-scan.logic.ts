@@ -3,18 +3,19 @@ import type {
   ReceiptScanMode, ReceiptScanPhase, ReceiptScanStatus, ReceiptSkipReason, ReceiptUndoResult, StorageLocation,
 } from "../../types";
 import { formatPantryQuantity } from "./pantry.logic";
+import { IMAGE_MIME_TYPES, MAX_IMAGE_BYTES, MAX_IMAGE_MB } from "../shared/limits";
 
 // Quét hóa đơn (GĐ3c): logic thuần cho hộp quét, màn tiến trình và màn duyệt ở trang Kho.
 
-export const MAX_RECEIPT_BYTES = 5 * 1024 * 1024;
-export const RECEIPT_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
+export const MAX_RECEIPT_BYTES = MAX_IMAGE_BYTES;
+export const RECEIPT_IMAGE_TYPES = IMAGE_MIME_TYPES;
 /** Thu nhỏ ở trình duyệt trước khi gửi (cạnh dài), giống giới hạn đọc ở server. */
 export const RECEIPT_LONG_SIDE = 2000;
 
 /** Kiểm tra file gửi đi (sau khi đã thu nhỏ). null: hợp lệ. */
 export function receiptFileError(file: { size: number; type: string }) {
   if (!RECEIPT_IMAGE_TYPES.includes(file.type)) return "Chỉ nhận ảnh JPG, PNG hoặc WEBP.";
-  if (file.size > MAX_RECEIPT_BYTES) return "Ảnh vượt quá 5 MB. Hãy chụp lại hoặc chọn ảnh nhỏ hơn.";
+  if (file.size > MAX_RECEIPT_BYTES) return `Ảnh vượt quá ${MAX_IMAGE_MB} MB. Hãy chụp lại hoặc chọn ảnh nhỏ hơn.`;
   return null;
 }
 

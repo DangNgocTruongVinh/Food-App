@@ -2,9 +2,9 @@ import type { PantryItem, Prisma } from "@prisma/client";
 import { prisma } from "../../lib/prisma.js";
 import { HttpError } from "../../utils/http-error.js";
 import type { NotificationListQuery } from "./notifications.schema.js";
+import { EXPIRING_SOON_DAYS } from "../../shared/limits.js";
+import { DAY_MS } from "../../utils/vietnam-date.js";
 
-const DAY_MS = 86_400_000;
-const EXPIRY_WINDOW_DAYS = 3;
 const DEFAULT_NOTIFICATION_LIMIT = 100;
 const MAX_NOTIFICATION_LIMIT = 200;
 
@@ -40,7 +40,7 @@ export function buildPantryNotificationCandidates(
   now = new Date(),
 ): NotificationCandidate[] {
   const today = startOfUtcDay(now);
-  const expiryLimit = new Date(today.getTime() + EXPIRY_WINDOW_DAYS * DAY_MS);
+  const expiryLimit = new Date(today.getTime() + EXPIRING_SOON_DAYS * DAY_MS);
   const candidates: NotificationCandidate[] = [];
 
   for (const item of items) {
@@ -93,7 +93,7 @@ export function buildPantryNotificationCandidates(
 
 export async function syncPantryNotifications(userId: string, now = new Date()) {
   const today = startOfUtcDay(now);
-  const expiryLimit = new Date(today.getTime() + EXPIRY_WINDOW_DAYS * DAY_MS);
+  const expiryLimit = new Date(today.getTime() + EXPIRING_SOON_DAYS * DAY_MS);
   const items = await prisma.pantryItem.findMany({
     where: {
       userId,
