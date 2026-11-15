@@ -5,7 +5,9 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { buildCollaborativeModel, type CollaborativeModel } from "../src/modules/recommendation/collaborative.js";
 import { getFeatureSpace, similarity } from "../src/modules/recommendation/features.js";
-import { type EngineData, type EngineProfile, type EngineRecipe, runRecommendation } from "../src/modules/recommendation/hybrid.js";
+import {
+  CONTEXT_WEIGHTS, type EngineData, type EngineProfile, type EngineRecipe, POPULARITY_WEIGHT0, runRecommendation,
+} from "../src/modules/recommendation/hybrid.js";
 import type { Interaction, InteractionKind } from "../src/modules/recommendation/interactions.js";
 import { expiringFeature, mealTarget } from "../src/modules/recommendation/knowledge-based.js";
 import type { Algorithm } from "../src/modules/recommendation/reasons.js";
@@ -359,6 +361,14 @@ lines.push(`| Nhóm | Trước (w_pop0 = 0) | Sau (w_pop0 = ${fmt(bestPopularity
 lines.push("|---|---|---|");
 for (const key of bucketKeys) lines.push(`| ${key} tương tác (${before.buckets[key].length} người) | ${fmt(mean(before.buckets[key]))} | ${fmt(mean(after.buckets[key]))} |`);
 lines.push(`| Tất cả | ${fmt(before.summary["R@10"])} | ${fmt(after.summary["R@10"])} |`);
+lines.push("");
+// Bảng 1–2, 5 đo cấu hình quy tắc chọn ra; ghi rõ có khớp cấu hình đang chạy trong mã (hybrid.ts, ngữ cảnh "for-you") không.
+const running = CONTEXT_WEIGHTS["for-you"];
+const sameWeights = (["content", "collaborative", "knowledge"] as const).every((key) => Math.abs(running[key] - chosen.weights[key]) < 1e-9);
+const samePopularity = Math.abs(POPULARITY_WEIGHT0 - chosenPopularity.popularityWeight) < 1e-9;
+lines.push(sameWeights && samePopularity
+  ? `Cấu hình đang chạy trong mã (\`hybrid.ts\`, "for-you"): ${fmt(running.content, 2)}/${fmt(running.collaborative, 2)}/${fmt(running.knowledge, 2)}, w_pop0 = ${fmt(POPULARITY_WEIGHT0, 1)} — **khớp** cấu hình quy tắc chọn, nên bảng 1–2, 5 đo đúng cấu hình đang chạy.`
+  : `**Cảnh báo:** cấu hình đang chạy trong mã (\`hybrid.ts\`) KHÁC cấu hình quy tắc chọn (trọng số ${sameWeights ? "khớp" : "khác"}, w_pop0 ${samePopularity ? "khớp" : "khác"}).`);
 lines.push("");
 lines.push(`Thời gian chạy: ${((Date.now() - started) / 1000).toFixed(1)} s.`);
 

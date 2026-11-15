@@ -25,6 +25,13 @@ export const MEMBER_RECIPE_LIMITS = {
   name: 120, servings: 20, minutes: 1440, ingredients: 30, ingredientName: 80, quantity: 20, unit: 20, steps: 20, step: 500,
 } as const;
 
+/** Công thức trong thư viện (form món của Admin): [tối thiểu, tối đa]. */
+export const RECIPE_LIMITS = {
+  name: [2, 120], description: [1, 1000], cuisine: [1, 50], prepMinutes: [0, 600], cookMinutes: [0, 1440], servings: [1, 12],
+  calories: [0, 5000], nutrient: [0, 1000], ingredientName: [1, 80], ingredientQuantityMax: 100_000, ingredients: [1, 40],
+  step: [1, 500], steps: [1, 20],
+} as const;
+
 export const COMMUNITY_POST_MAX_LENGTH = 2000;
 export const COMMUNITY_COMMENT_MAX_LENGTH = 500;
 

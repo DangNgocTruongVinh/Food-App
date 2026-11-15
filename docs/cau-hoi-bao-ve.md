@@ -27,14 +27,14 @@ thức: s3 = 0,35·f_hạn + 0,25·f_kho + 0,20·f_dd + 0,10·f_dạng + 0,10·f
 Nguồn: `backend/src/modules/recommendation/content-based.ts`, `collaborative.ts`, `knowledge-based.ts`.
 
 **5. Trộn ba thuật toán thế nào?**
-Trọng số theo ngữ cảnh (`CONTEXT_WEIGHTS`): "for-you" 0,60/0,20/0,20; "today" 0,35/0,25/0,40; "pantry" 0,15/0,10/0,75. Trọng số cộng tác
-nhân γ = n/(n + 10) theo số tương tác, phần dư chia cho hai thuật toán kia. Thêm thành phần phổ biến w_pop = (1 − γ)·0,3. Cuối cùng đa
+Trọng số theo ngữ cảnh (`CONTEXT_WEIGHTS`): "for-you" 0,45/0,30/0,25; "today" 0,35/0,25/0,40; "pantry" 0,15/0,10/0,75. Trọng số cộng tác
+nhân γ = n/(n + 10) theo số tương tác, phần dư chia cho hai thuật toán kia. Thêm thành phần phổ biến w_pop = (1 − γ)·0,4. Cuối cùng đa
 dạng hóa MMR (λ = 0,8). Nguồn: `backend/src/modules/recommendation/hybrid.ts`.
 
-**6. Vì sao chọn 0,60/0,20/0,20 cho "for-you"?**
-So sáu bộ trọng số trên tập **kiểm định** (không dùng tập kiểm tra) với quy tắc đặt trước: chỉ đổi khi R@10 cao hơn ≥ 0,01. Lần đánh giá
-3/11 bộ này đạt 0,660 so với bộ kế hoạch 0,627 nên được chốt. Lần chạy lại 15/11 (sau khi lọc dị ứng chặt hơn) bộ này vẫn cao nhất
-(0,631) nhưng chỉ hơn bộ kế hoạch 0,009 (0,622), dưới ngưỡng, nên theo quy tắc sẽ giữ bộ kế hoạch; mã chưa đổi, chờ quyết định.
+**6. Vì sao "for-you" dùng 0,45/0,30/0,25?**
+So sáu bộ trọng số trên tập **kiểm định** (không dùng tập kiểm tra) với quy tắc đặt trước: chỉ đổi khỏi bộ kế hoạch 0,45/0,30/0,25 khi
+R@10 cao hơn ≥ 0,01. Lần đánh giá 3/11 bộ nội dung mạnh 0,60/0,20/0,20 đạt 0,660 so với 0,627 nên được dùng tới 15/11. Sau khi lọc dị ứng
+chặt hơn (dữ liệu mô phỏng đổi), chạy lại cùng quy tắc: bộ đó chỉ hơn 0,009 (0,631 so với 0,622), dưới ngưỡng → chọn lại bộ kế hoạch.
 Nguồn: `docs/thuat-toan-goi-y.md` mục 8 bảng 3, mục 10.
 
 **7. Đánh giá bộ gợi ý thế nào, kết quả ra sao?**
@@ -50,7 +50,7 @@ với 0,651) vừa có món mới tốt hơn (0,461), lệch calo gần bằng (
 **9. Xử lý khởi đầu lạnh?**
 Người chưa có tương tác: γ = 0 nên trọng số cộng tác bằng 0, thành phần phổ biến nhận đủ w_pop0 (mã: 0,3); thuật toán 1 dùng tiên
 nghiệm từ hồ sơ. Lần chạy lại 15/11 trên tập kiểm định: R@10 nhóm 0 tương tác 0,200 → 0,600, tổng 0,622 → 0,676; quy tắc chọn 0,4
-(ngày 3/11 chọn 0,3), mã chưa đổi. Trên tập kiểm tra, nhóm 0 tương tác 0,386 → 0,614. Nguồn: `docs/thuat-toan-goi-y.md` bảng 4, 5, mục 10.
+(ngày 3/11 chọn 0,3), mã đã chọn lại 0,4. Trên tập kiểm tra, nhóm 0 tương tác 0,386 → 0,614. Nguồn: `docs/thuat-toan-goi-y.md` bảng 4, 5, mục 10.
 
 **10. Làm sao bảo đảm không gợi ý món gây dị ứng?**
 Lọc an toàn chạy **trước** mọi thuật toán (`safety.ts`): dị ứng mở rộng theo nhóm, món không thích, chay/thuần chay, món ẩn, đúng bữa.
@@ -178,7 +178,7 @@ dựng; ma trận an toàn đạt nguyên vẹn, số đánh giá giống hệt;
 `docs/bao-cao/sql-mau.md`. Nguồn: `services/catalog/`, `modules/admin/admin-catalog.*`.
 
 **43. Vì sao tham số thuật toán (trọng số, ngưỡng) vẫn để trong code?**
-Vì đó không phải dữ liệu nghiệp vụ mà là một phần của thuật toán: trọng số theo ngữ cảnh (vd. "Dành cho bạn" 0,6/0,2/0,2), số láng giềng 20, ngưỡng "sắp hết hạn" được chọn
+Vì đó không phải dữ liệu nghiệp vụ mà là một phần của thuật toán: trọng số theo ngữ cảnh (vd. "Dành cho bạn" 0,45/0,30/0,25), số láng giềng 20, ngưỡng "sắp hết hạn" được chọn
 bằng thí nghiệm (`eval:recommend`, `eval:mealplan`) và mô tả trong `docs/thuat-toan-goi-y.md`; đổi chúng là đổi thuật toán, phải chạy
 lại đánh giá và cập nhật tài liệu, không nên cho Admin chỉnh lúc chạy. Để trong code thì có review, có test, có lịch sử git và kết quả
 đánh giá tái lập được. Danh mục (dị ứng, nhóm thực phẩm…) thì khác: là dữ liệu thay đổi theo thực tế, không cần đổi logic, nên ở database.
@@ -188,8 +188,8 @@ Vì lọc an toàn chặt hơn, không phải vì thuật toán đổi. Commit `
 nay thuộc nhóm dị ứng (nước tương → Đậu nành + Gluten), nên "Bánh mì ốp la" không còn được gợi ý cho người dị ứng gluten. Người dùng mô
 phỏng chỉ ăn món an toàn với họ, nên dữ liệu mô phỏng đổi (1544 → 1488 tương tác/lần) và mọi chỉ số đổi theo. Đã chạy lại đánh giá ở 10
 commit liên quan để xác định đúng commit này; cùng seed, cùng phương pháp. Hệ quả cần nói rõ: theo quy tắc chọn đặt trước, lần chạy mới
-chọn bộ trọng số 0,45/0,30/0,25 và w_pop0 = 0,4, còn mã đang dùng 0,60/0,20/0,20 và 0,3 (chốt ngày 3/11); chưa đổi tham số khi chưa có
-quyết định. Nguồn: `docs/thuat-toan-goi-y.md` mục 10.
+chọn bộ trọng số 0,45/0,30/0,25 và w_pop0 = 0,4 (ngày 3/11 là 0,60/0,20/0,20 và 0,3); mã đã chọn lại theo đúng quy tắc đó, và từ đây
+bảng số đo đúng cấu hình đang chạy. Nguồn: `docs/thuat-toan-goi-y.md` mục 10.
 
 ## G. Dữ liệu mẫu, kiểm thử, triển khai
 

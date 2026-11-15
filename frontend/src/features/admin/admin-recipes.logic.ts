@@ -1,14 +1,10 @@
 import type { DietTag, FoodUnit, MealType, MemberRecipe } from "../../types";
 import { COMMUNITY_IMAGE_MAX_BYTES, COMMUNITY_IMAGE_TYPES } from "../community/community.logic";
 import type { AdminRecipeDetail, AdminRecipeInput, RecipeEstimate, RecipeUsage } from "./admin.api";
-import { MAX_IMAGE_MB } from "../shared/limits";
+import { MAX_IMAGE_MB, RECIPE_LIMITS } from "../shared/limits";
 
-// Kiểm tra phía client giống Zod backend (admin-recipes.schema.ts) để báo lỗi ngay tại trường/dòng.
-export const RECIPE_LIMITS = {
-  name: [2, 120], description: [1, 1000], cuisine: [1, 50], prepMinutes: [0, 600], cookMinutes: [0, 1440], servings: [1, 12],
-  calories: [0, 5000], nutrient: [0, 1000], ingredientName: [1, 80], ingredientQuantityMax: 100_000, ingredients: [1, 40],
-  step: [1, 500], steps: [1, 20],
-} as const;
+// Kiểm tra phía client cùng giới hạn với Zod backend (features/shared/limits.ts) để báo lỗi ngay tại trường/dòng.
+export { RECIPE_LIMITS };
 
 export const MEAL_TYPE_OPTIONS: Array<[MealType, string]> = [["BREAKFAST", "Bữa sáng"], ["LUNCH", "Bữa trưa"], ["DINNER", "Bữa tối"], ["SNACK", "Bữa phụ"]];
 export const DIET_TAG_OPTIONS: Array<[DietTag, string]> = [

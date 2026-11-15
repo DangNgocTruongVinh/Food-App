@@ -102,7 +102,7 @@ function simulatedAI(sim: SimCase, random: ReturnType<typeof rng>): GeneratedPla
   };
 }
 
-type Metrics = { calorieGap: number; within10: number; expiringUsed: number; expiringTouched: number; repeats: number; distinct: number; violations: number };
+type Metrics = { calorieGap: number; within10: number; expiringUsed: number; expiringTouched: number; repeats: number; distinct: number; unsafe: number; otherMealType: number };
 
 function measure(plan: GeneratedPlan, sim: SimCase): Metrics {
   const days = [...plan.days].sort((a, b) => a.dayIndex - b.dayIndex);
@@ -123,10 +123,12 @@ function measure(plan: GeneratedPlan, sim: SimCase): Metrics {
   const meals = days.flatMap((day) => day.meals.map((meal) => ({ ...meal, dayIndex: day.dayIndex })));
   const repeats = meals.filter((meal, index) => meals.slice(0, index)
     .some((other) => other.recipeId === meal.recipeId && meal.dayIndex - other.dayIndex < REPEAT_WINDOW_DAYS)).length;
-  const violations = meals.filter((meal) => {
+  // Tách hai loại: vi phạm dị ứng/chế độ ăn/món không thích/món ẩn (phải 0) và bữa lấy món khác loại bữa (hồ sơ thiếu món cho bữa đó).
+  const unsafe = meals.filter((meal) => {
     const recipe = byId.get(meal.recipeId)!;
-    return Boolean(recipe.hiddenAt) || !recipeFit(recipe, sim.profile).safe || !fitsMealType(recipe, meal.mealType);
+    return Boolean(recipe.hiddenAt) || !recipeFit(recipe, sim.profile).safe;
   }).length;
+  const otherMealType = meals.filter((meal) => !fitsMealType(byId.get(meal.recipeId)!, meal.mealType)).length;
   return {
     calorieGap: mean(gaps),
     within10: gaps.filter((gap) => gap <= 0.1).length / gaps.length,
@@ -134,7 +136,8 @@ function measure(plan: GeneratedPlan, sim: SimCase): Metrics {
     expiringTouched: used.length ? used.filter((share) => share > 0).length / used.length : NaN,
     repeats,
     distinct: new Set(meals.map((meal) => meal.recipeId)).size,
-    violations: violations / meals.length,
+    unsafe: unsafe / meals.length,
+    otherMealType: otherMealType / meals.length,
   };
 }
 
@@ -211,14 +214,17 @@ lines.push(`Sinh bằng \`npm run eval:mealplan -w backend\`: ${SEEDS.length} l�
   + `kho 8 thực phẩm (lượng 1–4 lần định lượng một món, hạn 0–10 ngày, 20% không có hạn), lịch sử 0–25 bữa đã ăn trong 4 tuần trước. `
   + `Dữ liệu **mô phỏng**, chỉ trong bộ nhớ. Số trong bảng là trung bình trên mọi thực đơn.`);
 lines.push("");
-lines.push("| Phương pháp | Lệch calo ngày | Ngày lệch ≤ 10% | Lượng đồ sắp hết hạn dùng trước hạn | Đồ sắp hết hạn được dùng | Bữa lặp trong 3 ngày / thực đơn | Số món khác nhau | Vi phạm an toàn | Thời gian / thực đơn |");
-lines.push("|---|---|---|---|---|---|---|---|---|");
+lines.push("| Phương pháp | Lệch calo ngày | Ngày lệch ≤ 10% | Lượng đồ sắp hết hạn dùng trước hạn | Đồ sắp hết hạn được dùng | Bữa lặp trong 3 ngày / thực đơn | Số món khác nhau | Vi phạm dị ứng/chế độ ăn | Bữa lấy món khác loại | Thời gian / thực đơn |");
+lines.push("|---|---|---|---|---|---|---|---|---|---|");
 for (const name of methods) {
   const rows = results.get(name)!;
   const avg = (key: keyof Metrics) => mean(rows.map((row) => row[key]));
   lines.push(`| ${name} | ${pct(avg("calorieGap"))} | ${pct(avg("within10"))} | ${pct(avg("expiringUsed"))} | ${pct(avg("expiringTouched"))} | `
-    + `${fmt(avg("repeats"))} | ${fmt(avg("distinct"), 1)} | ${pct(avg("violations"))} | ${fmt(timing.get(name)! / plans, 1)} ms |`);
+    + `${fmt(avg("repeats"))} | ${fmt(avg("distinct"), 1)} | ${pct(avg("unsafe"))} | ${pct(avg("otherMealType"))} | ${fmt(timing.get(name)! / plans, 1)} ms |`);
 }
+lines.push("");
+lines.push("\"Bữa lấy món khác loại\": hồ sơ không còn món an toàn đúng loại bữa (chủ yếu chay/thuần chay kèm dị ứng gluten thiếu món "
+  + "trưa/tối) thì bộ tạo dùng món an toàn của bữa khác — an toàn trước, đúng bữa sau.");
 lines.push("");
 lines.push(`Giới hạn dưới của lệch calo ngày với bộ món hiện có (mỗi bữa chọn món chỉ theo calo, khẩu phần 1, bỏ mọi tiêu chí khác): `
   + `${pct(mean(lowerBound))}; mục tiêu calo trung bình của hồ sơ mô phỏng ${Math.round(mean(simTargets))} kcal/ngày.`);

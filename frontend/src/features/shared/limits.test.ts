@@ -15,6 +15,7 @@ describe("limits dùng chung với backend", () => {
     expect(limits.PROFILE_LIMITS).toMatchObject({ allergies: 30, dislikedFoods: 30, preferredCuisines: 20, listItemMax: 60 });
     expect(limits.MEMBER_RECIPE_LIMITS).toMatchObject({ ingredients: 30, steps: 20, step: 500 });
     expect([limits.COMMUNITY_POST_MAX_LENGTH, limits.COMMUNITY_COMMENT_MAX_LENGTH]).toEqual([2000, 500]);
+    expect(limits.RECIPE_LIMITS).toMatchObject({ name: [2, 120], ingredients: [1, 40], steps: [1, 20], ingredientQuantityMax: 100_000 });
     expect([limits.MAX_IMAGE_BYTES, limits.MAX_POST_IMAGES, limits.EXPIRING_SOON_DAYS]).toEqual([5 * 1024 * 1024, 4, 3]);
   });
 });

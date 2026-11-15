@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { RECIPE_LIMITS as R } from "../../shared/limits.js";
 import { normalizeFoodText } from "../../services/dietary.service.js";
 import { isProjectImageUrl } from "../../services/image-upload.service.js";
 
@@ -7,34 +8,34 @@ const idParams = z.object({ id: z.string().cuid() });
 
 const ingredientSchema = z.object({
   // Giống quy tắc dữ liệu seed: "Bơ" trống là nhập nhằng (dùng "Quả bơ" hoặc "Bơ lạt").
-  name: z.string().trim().min(1).max(80).refine((name) => normalizeFoodText(name) !== "bơ", "Ghi rõ \"Quả bơ\" hoặc \"Bơ lạt\"."),
-  quantity: z.number().positive().max(100_000),
+  name: z.string().trim().min(R.ingredientName[0]).max(R.ingredientName[1]).refine((name) => normalizeFoodText(name) !== "bơ", "Ghi rõ \"Quả bơ\" hoặc \"Bơ lạt\"."),
+  quantity: z.number().positive().max(R.ingredientQuantityMax),
   unit: z.enum(["G", "KG", "ML", "L", "ITEM", "PACKAGE"]),
   optional: z.boolean().default(false),
 });
 
-const nutrient = z.number().min(0).max(1000);
+const nutrient = z.number().min(R.nutrient[0]).max(R.nutrient[1]);
 
 // Ảnh: chỉ ảnh nhóm món có sẵn (/assets/...) hoặc ảnh Cloudinary của dự án; tải ảnh mới dùng PUT /:id/image.
 const imageUrlSchema = z.string().trim().max(500).refine(isProjectImageUrl, "Ảnh phải là ảnh có sẵn (/assets) hoặc ảnh đã tải lên của Nouri.");
 
 export const recipeInputSchema = z.object({
-  name: z.string().trim().min(2).max(120),
-  description: z.string().trim().min(1).max(1000),
-  instructions: z.array(z.string().trim().min(1).max(500)).min(1).max(20),
-  prepMinutes: z.number().int().min(0).max(600),
-  cookMinutes: z.number().int().min(0).max(1440),
-  servings: z.number().int().min(1).max(12).default(1),
-  calories: z.number().int().min(0).max(5000),
+  name: z.string().trim().min(R.name[0]).max(R.name[1]),
+  description: z.string().trim().min(R.description[0]).max(R.description[1]),
+  instructions: z.array(z.string().trim().min(R.step[0]).max(R.step[1])).min(R.steps[0]).max(R.steps[1]),
+  prepMinutes: z.number().int().min(R.prepMinutes[0]).max(R.prepMinutes[1]),
+  cookMinutes: z.number().int().min(R.cookMinutes[0]).max(R.cookMinutes[1]),
+  servings: z.number().int().min(R.servings[0]).max(R.servings[1]).default(1),
+  calories: z.number().int().min(R.calories[0]).max(R.calories[1]),
   proteinG: nutrient,
   carbsG: nutrient,
   fatG: nutrient,
   fiberG: nutrient.default(0),
-  cuisine: z.string().trim().min(1).max(50),
+  cuisine: z.string().trim().min(R.cuisine[0]).max(R.cuisine[1]),
   dietTags: z.array(z.enum(["BALANCED", "VEGETARIAN", "VEGAN", "LOW_CARB", "HIGH_PROTEIN"])).min(1).max(5),
   mealTypes: z.array(z.enum(["BREAKFAST", "LUNCH", "DINNER", "SNACK"])).min(1).max(4),
   imageUrl: imageUrlSchema.nullable().optional(),
-  ingredients: z.array(ingredientSchema).min(1).max(40),
+  ingredients: z.array(ingredientSchema).min(R.ingredients[0]).max(R.ingredients[1]),
 });
 
 export const listAdminRecipesSchema = z.object({
