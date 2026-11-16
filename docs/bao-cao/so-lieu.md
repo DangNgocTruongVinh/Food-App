@@ -17,10 +17,11 @@ số, chọn lại tham số gợi ý):
 
 (Lần chạy 12/11/2026, nhánh `ra-soat-cuoi`: backend 67 file / 1.248 test, frontend 33 / 507, tổng 1.755, tất cả đạt.)
 
-Chạy lại ngày 15/11/2026 ở commit `3258f13` (chỉ thêm tài liệu so với `2ebc970`): cùng số file và số test, tất cả đạt. Ở lần chạy lại
-này Vitest báo thêm một lỗi hạ tầng `[vitest-worker]: Timeout calling "onTaskUpdate"` ở backend (tiến trình test báo tiến độ quá
-giờ khi bộ ma trận an toàn chạy 10–17 giây mỗi test trên máy dev đang tải nặng); không có test nào sai, nhưng lệnh `npm test` kết
-thúc với mã lỗi 1. Lần chạy ở `2ebc970` không gặp lỗi này.
+Lỗi hạ tầng đã sửa (16/11/2026): từ 15/11, `npm test` ở backend kết thúc mã lỗi 1 dù 1.395/1.395 test đạt, vì Vitest báo
+`[vitest-worker]: Timeout calling "onTaskUpdate"` (4/4 lần chạy). Nguyên nhân: ma trận an toàn gồm các test đồng bộ dài (cả file
+50–100 giây), chạy liền nhau chỉ nhường microtask nên worker không kịp trả lời RPC báo tiến độ trong 60 giây. Sửa ở
+`backend/src/test/setup.ts`: sau mỗi test nhường một nhịp vòng lặp sự kiện (`afterEach` + `setImmediate`); không xóa hay đổi test
+nào. Sau khi sửa: 3 lần chạy liên tiếp đều thoát mã 0, mỗi lần 73 file / 1.395 test đạt (73–101 giây).
 
 Kiểm thử trên ứng dụng thật (Playwright, Docker, cùng ngày, sau `demo:reset`), *đo thật*:
 
