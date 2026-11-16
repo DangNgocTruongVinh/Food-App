@@ -114,6 +114,9 @@ CH = `docs/cau-hoi-bao-ve.md`, RN = `REPORT_NOURI.md`, AMH = `docs/bao-cao/anh-m
 | 3.4.4 Thành phần ẩn và mức "chứa" / "có thể chứa" | Bảng nguyên liệu chế biến → nhóm; ngoại lệ (bánh phở, mì chính, quả bơ) | TT mục 2 (bảng nguyên liệu chế biến) | Bảng 3.15 | 0,5 |
 | 3.4.5 Dị ứng khác món không thích; một hàm dùng ở mọi nơi | Dị ứng lọc rộng, món không thích chỉ nguyên liệu chính; 8 nơi dùng chung `expandRestrictedTerms`/`findRestrictedTerms` | TT mục 2; CH câu 41 | Bảng 3.16 | 0,5 |
 | 3.4.6 Trường hợp biên | Hồ sơ hẹp không còn món đúng bữa → món an toàn khác bữa; danh mục chưa nạp thì báo lỗi, không lọc với danh mục rỗng | TT mục 2, 9; AH mục C | — | 0,25 |
+| 3.4.7 Ánh xạ thiết kế sang mã nguồn (thêm 16/11 để 3.4 đủ a–f) | Bảng tệp, hàm; chi tiết giao diện để ở 4.3 | mã ở commit `c0ea1cf` | — | 0,5 |
+| 3.4.8 Kiểm chứng thiết kế (thêm 16/11) | Ma trận 105 hồ sơ, 14 cách gõ, thành phần ẩn; 0,0% so với 13,5% khi không lọc; phân tích đầy đủ ở 5.4 | SL mục 1, 2; `dietary-matrix.test.ts` | — | 0,5 |
+| 3.4.9 Hạn chế và hướng phát triển (thêm 16/11) | So khớp theo tên, bộ món nhỏ, danh mục một tiến trình | HC 1.4, 2.2, 3 | — | 0,25 |
 | **3.5 Thiết kế bộ gợi ý [ĐN1]** | | | | 5,5 |
 | 3.5.1 Bài toán, ngữ cảnh gợi ý và phương án | 5 ngữ cảnh; vì sao không dùng phân rã ma trận/học sâu; vì sao lai | TT mục 1, 4, 6 | Hình 3.9; Bảng 3.17 | 0,5 |
 | 3.5.2 Thuật toán 1 — lọc theo nội dung | 5 khối đặc trưng và trọng số; vector sở thích có suy giảm τ = 30 ngày; tiên nghiệm từ hồ sơ | TT mục 3; GT mục 3 | Bảng 3.18 | 1 |
