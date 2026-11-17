@@ -1,10 +1,19 @@
 # Ảnh màn hình cho quyển báo cáo
 
-Chụp ngày 12/11/2026 bằng `npm run e2e:acceptance -- screenshots docs/bao-cao/anh-man-hinh` (script `e2e/acceptance/screenshots.cjs`),
-ngay sau `demo:reset`: tài khoản demo (dữ liệu mẫu) và Admin, ảnh chụp cả trang. Máy tính 1440px, điện thoại 390px (độ phân giải ×2).
-Định dạng WebP chất lượng 90 (đủ in, giữ nguyên số điểm ảnh); ảnh cao quá 16.383 px (giới hạn của WebP) được cắt thành nhiều phần nối tiếp.
-Dung lượng cả thư mục: 22,6 MB (PNG) → 8,3 MB (WebP).
-Chạy lại lệnh trên để cập nhật toàn bộ ảnh khi giao diện đổi.
+Chụp ngày 17/11/2026 ngay sau `demo:reset` (commit `aa5e875`, Docker): tài khoản demo (dữ liệu mẫu) và Admin, ảnh chụp cả trang trừ các
+ảnh 50, 50b, 52, 53 (chụp khung nhìn 1440 × 900 quanh phần cần xem). Máy tính 1440px, điện thoại 390px (độ phân giải ×2). Định dạng WebP
+chất lượng 90; ảnh cao quá 16.383 px được cắt thành nhiều phần nối tiếp.
+
+Lần này chụp bằng **bản chạy tạm** của `e2e/acceptance/screenshots.cjs` (ngoài repo), vì script trong repo dừng ở ảnh 16: ô tìm công thức
+đã đổi sang combobox (commit `337932c`) nhưng script vẫn tìm `searchbox`. Bản tạm chỉ đổi bộ chọn đó và thêm các ảnh 50–54. Chi tiết:
+`docs/bao-cao/quyen/tu-lieu-ch4-5.md`.
+
+Ảnh mới (50–54) cần trạng thái riêng, đã đưa về như cũ sau khi chụp:
+- 50, 50b: gõ vào ô Dị ứng ở Hồ sơ, **không bấm Lưu**.
+- 52: hồ sơ demo **tạm** có dị ứng "Đậu nành" (đổi qua API), chụp xong trả lại danh sách dị ứng rỗng như sau `demo:reset`.
+- 53: ảnh hóa đơn **dựng trong script** (như `demo-flow`, không phải hóa đơn thật), chế độ dự phòng (Tesseract), đóng không lưu; để lại
+  một lượt quét chưa lưu trong lịch sử của demo.
+- Ảnh 51 (hộp xem trước "Đã ăn") chưa chụp.
 
 | Tệp | Màn hình | Đường dẫn | Rộng |
 |---|---|---|---|
@@ -37,3 +46,8 @@ Chạy lại lệnh trên để cập nhật toàn bộ ảnh khi giao diện đ
 | [43-admin-nguoi-dung.webp](43-admin-nguoi-dung.webp) | Admin: Người dùng | `/admin/users` | 1440px |
 | [44-admin-kiem-duyet.webp](44-admin-kiem-duyet.webp) | Admin: Kiểm duyệt cộng đồng | `/admin/moderation` | 1440px |
 | [45-admin-nhat-ky.webp](45-admin-nhat-ky.webp) | Admin: Nhật ký thao tác | `/admin/audit-logs` | 1440px |
+| [50-ho-so-di-ung.webp](50-ho-so-di-ung.webp) | Hồ sơ: ô Dị ứng đã thêm "trứng gà" (thành thẻ Trứng), đang gõ "trứng" → gợi ý theo nhóm (danh sách gợi ý che dòng "Sẽ tránh", xem 50b; chưa lưu) | `/profile` | 1440px |
+| [50b-ho-so-se-tranh.webp](50b-ho-so-se-tranh.webp) | Hồ sơ: ô Dị ứng đã thêm "trứng gà" và "tôm" (chưa lưu), dòng "Sẽ tránh: Trứng (…), Giáp xác (…)" | `/profile` | 1440px |
+| [52-the-mon-chua-di-ung.webp](52-the-mon-chua-di-ung.webp) | Công thức: Hiện tất cả, thẻ món mang nhãn "Chứa: …" (hồ sơ tạm dị ứng Đậu nành) | `/recipes` | 1440px |
+| [53-duyet-hoa-don.webp](53-duyet-hoa-don.webp) | Quét hóa đơn: màn duyệt trước khi lưu (chế độ dự phòng, hóa đơn dựng) | `/pantry?scan=1` | 1440px |
+| [54-admin-danh-muc.webp](54-admin-danh-muc.webp) | Admin: Danh mục dữ liệu (tab Nhóm dị ứng) | `/admin/catalog` | 1440px |
