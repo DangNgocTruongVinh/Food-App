@@ -1,3 +1,4 @@
+import { Prisma } from "@prisma/client";
 import jwt from "jsonwebtoken";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { request, testApp } from "../../test/http-test-utils.js";
@@ -474,5 +475,24 @@ describe("Thích và bình luận chỉ trên bài được thấy (audit S1)", 
     expect(mocks.createNotification).toHaveBeenCalledTimes(2);
     expect(mocks.createNotification.mock.calls.map(([args]) => args.data.type)).toEqual(["COMMUNITY_LIKE", "COMMUNITY_COMMENT"]);
     expect(mocks.createNotification.mock.calls.every(([args]) => args.data.userId === ownerId)).toBe(true);
+  });
+});
+
+// Audit R4: hai yêu cầu thích cùng một bài gửi cùng lúc (bấm đúp, hai thiết bị). Cả hai đọc thấy "chưa thích" rồi cùng tạo lượt thích;
+// lần tạo sau vướng khóa chính (postId, userId) của CommunityLike → P2002. Không được trả 500.
+describe("Thích đồng thời cùng một bài (audit R4)", () => {
+  it("hai yêu cầu cùng lúc: một 200, một 409 có thông báo dễ hiểu; không yêu cầu nào 500, không lộ chi tiết DB", async () => {
+    mocks.createLike
+      .mockResolvedValueOnce({ postId, userId })
+      .mockRejectedValueOnce(new Prisma.PrismaClientKnownRequestError("Unique constraint failed on the fields: (`postId`,`userId`)", {
+        code: "P2002", clientVersion: "test", meta: { modelName: "CommunityLike", target: ["postId", "userId"] },
+      }));
+    const like = () => request(app, `/api/community/${postId}/like`, { method: "POST", token: token() });
+    const responses = await Promise.all([like(), like()]);
+    expect(mocks.findLike).toHaveBeenCalledTimes(2); // cả hai đều đọc thấy "chưa thích" trước khi ghi
+    expect(responses.map((response) => response.status).sort()).toEqual([200, 409]);
+    const conflict = responses.find((response) => response.status === 409)!;
+    expect(conflict.body).toEqual({ message: "Dữ liệu vừa thay đổi, vui lòng tải lại rồi thử lại." });
+    expect(JSON.stringify(conflict.body)).not.toMatch(/CommunityLike|postId|Unique/);
   });
 });
