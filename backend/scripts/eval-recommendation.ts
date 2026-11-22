@@ -16,7 +16,7 @@ import { normalizeFoodText } from "../src/services/dietary.service.js";
 import type { FitPantryItem } from "../src/services/recipe-fit.service.js";
 import { seedRecipesAsRecords } from "../src/test/seed-recipes.js";
 import { useSeedCatalog } from "../src/services/catalog/catalog-build.js";
-import { DAY_MS } from "../src/utils/vietnam-date.js";
+import { DAY_MS, vietnamToday } from "../src/utils/vietnam-date.js";
 
 // Mô phỏng không có database: nạp danh mục từ dữ liệu seed (cùng hàm dựng như khi chạy thật).
 useSeedCatalog();
@@ -158,9 +158,12 @@ function simulate(seed: number): SimUser[] {
 
 // ---------- Phương pháp gợi ý ----------
 type Method = { name: string; recommend: (user: SimUser, history: Interaction[], model: CollaborativeModel, now: Date, limit: number) => string[] };
-const pantryAt = (user: SimUser, now: Date): FitPantryItem[] => user.pantry.map(({ name, daysLeft }) => ({
-  name, quantity: 500, unit: "G", expiryDate: new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()) + daysLeft * DAY_MS),
-}));
+// Hạn mô phỏng = ngày lịch giờ Việt Nam của lúc gợi ý + daysLeft, lưu 00:00 UTC như hạn thật (audit H1: trước đây neo ngày UTC,
+// nên gợi ý lúc 17:00–24:00 UTC bị lệch một ngày so với cách mã tính "hôm nay").
+const pantryAt = (user: SimUser, now: Date): FitPantryItem[] => {
+  const today = vietnamToday(now).getTime();
+  return user.pantry.map(({ name, daysLeft }) => ({ name, quantity: 500, unit: "G", expiryDate: new Date(today + daysLeft * DAY_MS) }));
+};
 const engine = (weights: Record<Algorithm, number>, popularityWeight = 0) => (
   user: SimUser, history: Interaction[], model: CollaborativeModel, now: Date, limit: number,
 ) => {

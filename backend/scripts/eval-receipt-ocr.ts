@@ -15,6 +15,7 @@ import { normalizeReceiptItems } from "../src/services/receipt/receipt-normalize
 import { parseOcrOutput } from "../src/services/receipt/receipt-parser.js";
 import type { OcrOutput, ReceiptOcrProvider } from "../src/services/receipt/receipt-types.js";
 import { useSeedCatalog } from "../src/services/catalog/catalog-build.js";
+import { vietnamDateKey } from "../src/utils/vietnam-date.js";
 
 // Mô phỏng không có database: nạp danh mục từ dữ liệu seed (cùng hàm dựng như khi chạy thật).
 useSeedCatalog();
@@ -150,7 +151,7 @@ async function main() {
   const report = [
     "# Kết quả quét hóa đơn",
     "",
-    `Chạy ngày ${new Date().toISOString().slice(0, 10)}, ${answers.length} đáp án. Lệnh: \`npm run eval:receipt -w backend${args.length ? ` -- ${args.join(" ")}` : ""}\`.`,
+    `Chạy ngày ${vietnamDateKey(new Date())} (giờ Việt Nam), ${answers.length} đáp án. Lệnh: \`npm run eval:receipt -w backend${args.length ? ` -- ${args.join(" ")}` : ""}\`.`,
     `Model đọc ảnh: \`${visionModel}\` — giá tính chi phí: ${prices.inputPerMillion} USD/1 triệu token vào, `
       + `${prices.outputPerMillion} USD/1 triệu token ra, 1 USD = ${prices.vndPerUsd} đ (đối chiếu bảng giá của đúng model này).`,
     "",
