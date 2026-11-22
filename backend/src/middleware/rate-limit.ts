@@ -1,8 +1,12 @@
 import type { NextFunction, Request, Response } from "express";
+import type { AuthenticatedRequest } from "../types/http.js";
 import { HttpError } from "../utils/http-error.js";
 
 // Giới hạn số request theo IP, cửa sổ cố định, lưu trong bộ nhớ (một tiến trình backend; nhiều tiến trình thì cần kho chung như
 // Redis — ghi ở docs/test-evidence/bao-mat.md). IP lấy từ req.ip: sau proxy (nginx) phải đặt TRUST_PROXY để đọc X-Forwarded-For.
+
+/** Khóa theo tài khoản đã xác thực (đặt limiter SAU requireAuth): hai người dùng chung một IP được đếm riêng. */
+export const byUser = (req: Request) => `user:${(req as AuthenticatedRequest).userId}`;
 
 /** keyOf: đếm theo khóa khác IP (vd. email đã chuẩn hóa); mặc định theo IP. */
 export function rateLimit({ windowMs, max, message, keyOf }: {

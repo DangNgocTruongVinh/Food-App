@@ -22,7 +22,10 @@ export async function request(app: Express, path: string, options: RequestOption
   return { status, body };
 }
 
-/** Như request, gửi kèm header Cookie (`cookie`) và trả thêm các header Set-Cookie (`setCookie`). `rawBody`: gửi nguyên văn (JSON hỏng). */
+/**
+ * Như request, gửi kèm header Cookie (`cookie`) và trả thêm các header Set-Cookie (`setCookie`) và Retry-After (`retryAfter`, khi 429).
+ * `rawBody`: gửi nguyên văn (JSON hỏng).
+ */
 export async function requestWithCookies(app: Express, path: string, options: RequestOptions = {}) {
   const server = app.listen(0, "127.0.0.1");
   try {
@@ -38,7 +41,12 @@ export async function requestWithCookies(app: Express, path: string, options: Re
       body: options.form ?? options.rawBody ?? (options.body === undefined ? undefined : JSON.stringify(options.body)),
     });
     const text = await response.text();
-    return { status: response.status, body: text ? JSON.parse(text) : null, setCookie: response.headers.getSetCookie() };
+    // retryAfter chỉ có khi phản hồi gửi header Retry-After (429), để test cũ so sánh toàn bộ kết quả không đổi.
+    const retryAfter = response.headers.get("retry-after");
+    return {
+      status: response.status, body: text ? JSON.parse(text) : null, setCookie: response.headers.getSetCookie(),
+      ...(retryAfter === null ? {} : { retryAfter }),
+    };
   } finally {
     await new Promise<void>((resolve, reject) => {
       server.close((error) => error ? reject(error) : resolve());

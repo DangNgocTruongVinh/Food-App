@@ -3,7 +3,7 @@ import jwt from "jsonwebtoken";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { exifHasGps, jpegWithGps } from "../../test/image-fixtures.js";
 import { request, testApp } from "../../test/http-test-utils.js";
-import communityRoutes from "./community.routes.js";
+import communityRoutes, { commentLimit, likeLimit, postWriteLimit } from "./community.routes.js";
 
 const mocks = vi.hoisted(() => ({
   env: {} as Record<string, string | undefined>,
@@ -45,6 +45,7 @@ const formWith = (files: Array<{ bytes: Buffer; name?: string; type?: string }>,
 };
 
 beforeEach(async () => {
+  for (const limit of [postWriteLimit, commentLimit, likeLimit]) limit.reset(); // giới hạn theo tài khoản (S3): mỗi test bắt đầu từ 0
   vi.resetAllMocks();
   configure(true);
   photo ??= await jpegWithGps(64, 32, 6);

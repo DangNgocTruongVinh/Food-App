@@ -4,9 +4,9 @@ import { prisma } from "../../lib/prisma.js";
 import { getAccountStatus } from "../../services/account-status.service.js";
 import { fakeTransaction } from "../../test/fake-transaction.js";
 import { request, testApp } from "../../test/http-test-utils.js";
-import adminRoutes from "../admin/admin.routes.js";
+import adminRoutes, { recipeEstimateLimit } from "../admin/admin.routes.js";
 import { memberRecipeAllergens, memberRecipeSchema } from "./community-member-recipe.js";
-import communityRoutes from "./community.routes.js";
+import communityRoutes, { commentLimit, likeLimit, postWriteLimit } from "./community.routes.js";
 
 const mocks = vi.hoisted(() => ({
   secret: "nouri-test-only-secret-at-least-32-characters",
@@ -55,6 +55,7 @@ const feedRow = (extra: object = {}) => ({
 });
 
 beforeEach(() => {
+  for (const limit of [postWriteLimit, commentLimit, likeLimit, recipeEstimateLimit]) limit.reset(); // giới hạn theo tài khoản (S3)
   vi.resetAllMocks();
   vi.mocked(getAccountStatus).mockResolvedValue({ role: "USER", lockedAt: null });
   mocks.findProfile.mockResolvedValue(null);

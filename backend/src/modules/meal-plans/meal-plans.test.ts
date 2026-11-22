@@ -1,9 +1,9 @@
 import jwt from "jsonwebtoken";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { fakeTransaction } from "../../test/fake-transaction.js";
-import { request, testApp } from "../../test/http-test-utils.js";
+import { request, requestWithCookies, testApp } from "../../test/http-test-utils.js";
 import { seedRecipesAsRecords } from "../../test/seed-recipes.js";
-import mealPlanRoutes from "./meal-plans.routes.js";
+import mealPlanRoutes, { aiMealPlanLimit } from "./meal-plans.routes.js";
 import { filterRecipesForProfile } from "../../services/dietary.service.js";
 import { fallbackPlan } from "./meal-plan-generator.js";
 import { currentMealPlanJob, settleMealPlanJobsForTest } from "./meal-plan-jobs.js";
@@ -117,6 +117,7 @@ const planRead = {
 };
 
 beforeEach(() => {
+  aiMealPlanLimit.reset(); // giới hạn "Tạo bằng AI" theo tài khoản (S3): mỗi test bắt đầu từ 0
   vi.resetAllMocks();
   delete process.env.OPENAI_API_KEY;
   mocks.listPlans.mockResolvedValue([plan]);
@@ -510,5 +511,33 @@ describe("Meal Plan and Shopping validation", () => {
   ])("rejects invalid id for %s %s", async (method, path, body) => {
     const response = await request(app, path, { method, token: token(), body });
     expect(response.status).toBe(422);
+  });
+});
+
+// Audit S3: "Tạo bằng AI" tối đa 10 lần/ngày mỗi tài khoản (vẫn chỉ một việc chạy cùng lúc); bộ tạo thuật toán không giới hạn.
+describe("Giới hạn Tạo bằng AI theo tài khoản (audit S3)", () => {
+  const generate = (mode: "ai" | "algorithm", sub = userId) => requestWithCookies(app, "/api/meal-plans/generate", {
+    method: "POST", token: token(sub), body: { startDate: "2026-10-01", mode },
+  });
+
+  it("10 lần/ngày; lần thứ 11 → 429 kèm Retry-After; tạo bằng thuật toán và người dùng khác cùng IP vẫn được", async () => {
+    for (let i = 1; i <= 10; i += 1) {
+      expect((await generate("ai")).status).toBe(202);
+      await settleAndKeep(); // việc trước xong mới tạo việc sau (giới hạn một việc chạy cùng lúc vẫn giữ)
+    }
+    const limited = await generate("ai");
+    expect(limited.status).toBe(429);
+    expect(limited.body).toEqual({ message: "Bạn đã dùng hết 10 lượt tạo thực đơn bằng AI trong ngày. Vui lòng thử lại sau, hoặc tạo bằng thuật toán." });
+    expect(Number(limited.retryAfter)).toBeGreaterThan(0);
+    expect((await generate("algorithm")).status).toBe(201);
+    expect((await generate("ai", otherUserId)).status).toBe(202);
+  });
+
+  it("vẫn giữ giới hạn một việc chạy cùng lúc (409), độc lập với bộ đếm theo ngày", async () => {
+    let finish!: (value: null) => void;
+    mocks.generatePlanWithAI.mockReturnValue(new Promise((resolve) => { finish = resolve; }));
+    expect((await generate("ai")).status).toBe(202);
+    expect((await generate("ai")).status).toBe(409);
+    finish(null); // cho việc nền xong để afterEach không phải chờ
   });
 });

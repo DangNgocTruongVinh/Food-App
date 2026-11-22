@@ -43,3 +43,19 @@ export const IMAGE_MIME_TYPES = ["image/jpeg", "image/png", "image/webp"];
 
 /** "Sắp hết hạn" = còn ≤ 3 ngày: nhãn Kho, thông báo, gợi ý món dùng đồ sắp hết hạn, trợ lý AI. */
 export const EXPIRING_SOON_DAYS = 3;
+
+/**
+ * Giới hạn tần suất theo tài khoản (backend đếm trong bộ nhớ, cửa sổ cố định tính từ lần đầu): chống spam cộng đồng và đốt hạn mức
+ * AI. Hỏi Nouri (30 câu/ngày) và quét hóa đơn (10 lần/ngày, mọi chế độ) giữ giới hạn theo ngày giờ VN đếm trong database.
+ */
+export const USER_RATE_LIMITS = {
+  /** Đăng bài và sửa bài, chung một bộ đếm (mỗi lần đều gọi AI kiểm duyệt). */
+  postWrites: { max: 10, windowMs: 60 * 60_000 },
+  comments: { max: 20, windowMs: 10 * 60_000 },
+  /** Thích và bỏ thích (cùng một route bật/tắt). */
+  likes: { max: 60, windowMs: 60_000 },
+  /** "Tạo bằng AI" (thực đơn); vẫn chỉ một việc chạy cùng lúc. */
+  aiMealPlans: { max: 10, windowMs: 24 * 60 * 60_000 },
+  /** Admin "Chuyển thành công thức": AI ước tính dinh dưỡng. */
+  aiRecipeEstimates: { max: 20, windowMs: 24 * 60 * 60_000 },
+} as const;
