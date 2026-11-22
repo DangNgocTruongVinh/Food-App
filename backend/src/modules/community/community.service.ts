@@ -145,9 +145,10 @@ export async function createCommunityPost(authorId: string, { content, recipeId,
   }
 }
 
+/** Thích/bỏ thích chỉ trên bài người gọi được thấy (như bảng tin); bài bị ẩn/chờ duyệt của người khác → 404 như bài không tồn tại. */
 export async function toggleCommunityLike(userId: string, postId: string) {
   const [post, actor] = await Promise.all([
-    prisma.communityPost.findUnique({ where: { id: postId }, select: { id: true, authorId: true } }),
+    prisma.communityPost.findFirst({ where: { id: postId, ...visiblePostWhere(userId) }, select: { id: true, authorId: true } }),
     prisma.user.findUnique({ where: { id: userId }, select: { name: true } }),
   ]);
   if (!post) throw new HttpError(404, "Không tìm thấy bài viết.");
@@ -183,9 +184,10 @@ export async function toggleCommunityLike(userId: string, postId: string) {
   return { liked, likeCount: await prisma.communityLike.count({ where: { postId } }) };
 }
 
+/** Bình luận chỉ trên bài người gọi được thấy (như bảng tin); bài bị ẩn/chờ duyệt của người khác → 404 như bài không tồn tại. */
 export async function addCommunityComment(authorId: string, postId: string, content: string) {
   const [post, actor] = await Promise.all([
-    prisma.communityPost.findUnique({ where: { id: postId }, select: { id: true, authorId: true } }),
+    prisma.communityPost.findFirst({ where: { id: postId, ...visiblePostWhere(authorId) }, select: { id: true, authorId: true } }),
     prisma.user.findUnique({ where: { id: authorId }, select: { name: true } }),
   ]);
   if (!post) throw new HttpError(404, "Không tìm thấy bài viết.");

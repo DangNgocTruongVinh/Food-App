@@ -8,6 +8,7 @@ const mocks = vi.hoisted(() => ({
   findPosts: vi.fn(),
   createPost: vi.fn(),
   findPost: vi.fn(),
+  findVisiblePost: vi.fn(),
   findUser: vi.fn(),
   findLike: vi.fn(),
   deleteLike: vi.fn(),
@@ -30,6 +31,7 @@ vi.mock("../../lib/prisma.js", () => ({
       findMany: mocks.findPosts,
       create: mocks.createPost,
       findUnique: mocks.findPost,
+      findFirst: mocks.findVisiblePost,
       delete: mocks.deletePost,
     },
     communityLike: {
@@ -65,6 +67,12 @@ const imagesSelect = { select: { url: true, position: true }, orderBy: { positio
 const recipeResponse = { ...recipeSummary, hidden: false, deleted: false };
 const promotedSelect = { select: { id: true, name: true } };
 const basePost = { id: postId, authorId: ownerId, content: "Bữa trưa", recipeId: null, recipe: null, createdAt, updatedAt: createdAt, author, savedBy: [] };
+// findFirst giả: áp đúng điều kiện `where` service gửi (id, OR của visiblePostWhere) lên bản ghi bài giả của findPost,
+// để test kiểm quy tắc hiển thị thật chứ không chỉ giá trị dựng sẵn. Cột không có trong bản ghi coi như null (như DB).
+type Row = Record<string, unknown>;
+const matchesWhere = (where: Row, row: Row): boolean => Object.entries(where).every(([key, value]) => (key === "OR"
+  ? (value as Row[]).some((part) => matchesWhere(part, row))
+  : value === null ? row[key] == null : row[key] === value));
 const createdComment = {
   id: commentId,
   postId,
@@ -81,6 +89,10 @@ beforeEach(() => {
   mocks.findProfile.mockResolvedValue(null);
   mocks.createPost.mockResolvedValue(basePost);
   mocks.findPost.mockResolvedValue({ id: postId, authorId: ownerId });
+  mocks.findVisiblePost.mockImplementation(async (args: { where: Row }) => {
+    const row = await mocks.findPost(args);
+    return row && matchesWhere(args.where, row) ? row : null;
+  });
   mocks.findRecipe.mockResolvedValue({ id: recipeId, hiddenAt: null });
   mocks.findUser.mockResolvedValue({ name: "Minh An" });
   mocks.findLike.mockResolvedValue(null);
@@ -410,5 +422,57 @@ describe("Community HTTP contract (mock Prisma, no database)", () => {
     const response = await request(app, path, { method, token: token(), body });
     expect(response.status).toBe(500);
     expect(response.body).toHaveProperty("message");
+  });
+});
+
+// Audit S1: thích/bỏ thích và bình luận chỉ trên bài người gọi được thấy, cùng quy tắc với bảng tin (visiblePostWhere).
+describe("Thích và bình luận chỉ trên bài được thấy (audit S1)", () => {
+  const hidden = new Date("2026-11-20T08:00:00.000Z");
+  const like = () => request(app, `/api/community/${postId}/like`, { method: "POST", token: token() });
+  const comment = () => request(app, `/api/community/${postId}/comments`, { method: "POST", token: token(), body: { content: "Ngon quá" } });
+  const notFound = { status: 404, body: { message: "Không tìm thấy bài viết." } };
+
+  it("tìm bài bằng đúng điều kiện của bảng tin: id + visiblePostWhere của người gọi", async () => {
+    await like();
+    await comment();
+    const visible = { OR: [{ hiddenAt: null, pendingReviewAt: null }, { authorId: userId }] };
+    for (const [args] of mocks.findVisiblePost.mock.calls) expect(args.where).toEqual({ id: postId, ...visible });
+    expect(mocks.findVisiblePost).toHaveBeenCalledTimes(2);
+  });
+
+  it.each([
+    ["bị Admin ẩn", { id: postId, authorId: ownerId, hiddenAt: hidden, pendingReviewAt: null }],
+    ["đang chờ duyệt (người khác gọi)", { id: postId, authorId: ownerId, hiddenAt: null, pendingReviewAt: hidden }],
+  ])("bài %s: thích, bỏ thích và bình luận đều 404 như bài không tồn tại, không ghi gì, không thông báo", async (_label, row) => {
+    mocks.findPost.mockResolvedValue(row);
+    expect(await like()).toEqual(notFound);
+    mocks.findLike.mockResolvedValue({ postId, userId }); // đã thích từ trước khi bài bị ẩn: bỏ thích cũng bị chặn
+    expect(await like()).toEqual(notFound);
+    expect(await comment()).toEqual(notFound);
+    expect(mocks.createLike).not.toHaveBeenCalled();
+    expect(mocks.deleteLike).not.toHaveBeenCalled();
+    expect(mocks.createComment).not.toHaveBeenCalled();
+    expect(mocks.createNotification).not.toHaveBeenCalled();
+    expect(mocks.deleteNotifications).not.toHaveBeenCalled();
+    expect(mocks.transaction).not.toHaveBeenCalled();
+  });
+
+  it("bài đang chờ duyệt của chính tác giả: tác giả thích và bình luận được (tác giả luôn thấy bài mình), không tự thông báo", async () => {
+    mocks.findPost.mockResolvedValue({ id: postId, authorId: userId, hiddenAt: null, pendingReviewAt: hidden });
+    mocks.createComment.mockResolvedValue({ ...createdComment, content: "Ngon quá" });
+    expect(await like()).toEqual({ status: 200, body: { liked: true, likeCount: 1 } });
+    expect((await comment()).status).toBe(201);
+    expect(mocks.createLike).toHaveBeenCalledWith({ data: { postId, userId } });
+    expect(mocks.createComment).toHaveBeenCalledOnce();
+    expect(mocks.createNotification).not.toHaveBeenCalled();
+  });
+
+  it("bài bình thường của người khác: thích và bình luận được, tác giả nhận đúng hai thông báo", async () => {
+    mocks.findPost.mockResolvedValue({ id: postId, authorId: ownerId, hiddenAt: null, pendingReviewAt: null });
+    expect(await like()).toEqual({ status: 200, body: { liked: true, likeCount: 1 } });
+    expect((await comment()).status).toBe(201);
+    expect(mocks.createNotification).toHaveBeenCalledTimes(2);
+    expect(mocks.createNotification.mock.calls.map(([args]) => args.data.type)).toEqual(["COMMUNITY_LIKE", "COMMUNITY_COMMENT"]);
+    expect(mocks.createNotification.mock.calls.every(([args]) => args.data.userId === ownerId)).toBe(true);
   });
 });
