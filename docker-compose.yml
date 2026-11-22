@@ -22,6 +22,8 @@ services:
     build:
       context: .
       dockerfile: backend/Dockerfile
+    # Tiến trình backend chết (vd. lỗi native khi giải mã ảnh) thì Docker tự khởi động lại; dừng bằng tay thì không.
+    restart: unless-stopped
     environment:
       NODE_ENV: production
       PORT: 4000
