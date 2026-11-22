@@ -1,6 +1,8 @@
 import { Prisma } from "@prisma/client";
 import { prisma } from "../../lib/prisma.js";
 import { findDietViolations, normalizeDietTags } from "../../services/dietary.service.js";
+import { detectImageFormat } from "../../services/image-file.js";
+import { stripImageMetadata } from "../../services/image-sanitize.js";
 import { deleteImageQuietly, IMAGE_FOLDERS, uploadImage } from "../../services/image-upload.service.js";
 import { searchRecipes } from "../../services/recipe-search.js";
 import { HttpError } from "../../utils/http-error.js";
@@ -155,7 +157,9 @@ export async function updateRecipe(actorId: string, id: string, input: RecipeInp
 export async function replaceRecipeImage(actorId: string, id: string, file: Buffer) {
   const current = await prisma.recipe.findUnique({ where: { id }, select: { id: true, name: true, imagePublicId: true, deletedAt: true } });
   if (!current || current.deletedAt) throw new HttpError(404, NOT_FOUND);
-  const uploaded = await uploadImage(file, IMAGE_FOLDERS.recipes);
+  // Như ảnh bài cộng đồng: mã hóa lại không kèm EXIF/GPS trước khi lên Cloudinary (định dạng đã kiểm ở singleImageUpload).
+  const clean = await stripImageMetadata(file, detectImageFormat(file) ?? "jpg");
+  const uploaded = await uploadImage(clean, IMAGE_FOLDERS.recipes);
   let updated;
   try {
     updated = await prisma.$transaction(async (tx) => {
