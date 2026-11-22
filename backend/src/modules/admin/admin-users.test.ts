@@ -1,3 +1,4 @@
+import { Prisma } from "@prisma/client";
 import jwt from "jsonwebtoken";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { prisma } from "../../lib/prisma.js";
@@ -300,5 +301,28 @@ describe("Admin stats", () => {
     expect(mocks.planCount).toHaveBeenCalledWith({ where: { user: { isSample: false } } });
     expect(mocks.postCount).toHaveBeenCalledWith({ where: { author: { isSample: false } } });
     for (const call of mocks.userFindMany.mock.calls) expect(call[0].where).toMatchObject({ isSample: false });
+  });
+});
+
+// Audit R4: xóa cùng một bình luận hai lần (bấm hai lần, hai Admin cùng lúc).
+describe("Xóa một bình luận hai lần (audit R4)", () => {
+  const remove = () => request(app, `/api/admin/community/comments/${commentId}`, { method: "DELETE", token: token() });
+
+  it("lần sau chạy đua với lần trước (vẫn đọc thấy bình luận nhưng lệnh xóa gặp P2025) → 404, không phải 500", async () => {
+    mocks.commentDelete
+      .mockResolvedValueOnce({ id: commentId })
+      .mockRejectedValueOnce(new Prisma.PrismaClientKnownRequestError("Record to delete does not exist.", {
+        code: "P2025", clientVersion: "test", meta: { modelName: "CommunityComment", cause: "Record to delete does not exist." },
+      }));
+    expect((await remove()).status).toBe(204);
+    const second = await remove();
+    expect(second).toEqual({ status: 404, body: { message: "Không tìm thấy dữ liệu, có thể đã bị xóa." } });
+    // Nhật ký Admin của lần sau nằm cùng transaction dạng mảng với lệnh xóa: DB thật rollback cả lô (transaction giả không mô phỏng).
+  });
+
+  it("lần sau sau khi lần trước đã xong (không còn bình luận) → 404 của service, như trước", async () => {
+    expect((await remove()).status).toBe(204);
+    mocks.commentFindUnique.mockResolvedValue(null);
+    expect(await remove()).toEqual({ status: 404, body: { message: "Không tìm thấy bình luận." } });
   });
 });
