@@ -1,8 +1,11 @@
 import jwt from "jsonwebtoken";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import sharp from "sharp";
+import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { prisma } from "../../lib/prisma.js";
 import { getAccountStatus } from "../../services/account-status.service.js";
+import { detectImageFormat } from "../../services/image-file.js";
 import { fakeTransaction } from "../../test/fake-transaction.js";
+import { exifHasGps, jpegWithGps } from "../../test/image-fixtures.js";
 import { request, testApp } from "../../test/http-test-utils.js";
 import adminRoutes from "./admin.routes.js";
 
@@ -30,7 +33,11 @@ const accountStatus = vi.mocked(getAccountStatus);
 const cloudUrl = (id: string) => `https://res.cloudinary.com/nouri-cloud/image/upload/v1/${id}.jpg`;
 const tx = fakeTransaction(() => prisma);
 
-const jpg = Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 0x46]);
+// Ảnh món giờ được sharp mã hóa lại trước khi tải lên (bỏ EXIF), nên ảnh thử phải giải mã được (không chỉ có byte đầu JPEG).
+let jpg: Buffer;
+beforeAll(async () => {
+  jpg = await sharp({ create: { width: 8, height: 8, channels: 3, background: "#4a8" } }).jpeg().toBuffer();
+});
 const form = (bytes: Buffer, name = "mon-an.jpg", type = "image/jpeg") => {
   const data = new FormData();
   data.append("image", new Blob([new Uint8Array(bytes)], { type }), name);
@@ -210,5 +217,38 @@ describe("Deleting a recipe removes its uploaded image", () => {
     mocks.remove.mockRejectedValue(new Error("database unavailable"));
     expect((await request(app, deletePath, { method: "DELETE", token: token() })).status).toBe(500);
     expect(mocks.destroy).not.toHaveBeenCalled();
+  });
+});
+
+// Audit H4 (ghi nhận phụ): ảnh món của Admin đi cùng luồng với ảnh cộng đồng — kiểm định dạng rồi xóa EXIF trước Cloudinary.
+describe("Ảnh món được xóa EXIF trước khi tải lên Cloudinary", () => {
+  const uploadedBuffer = () => {
+    const end = mocks.uploadStream.mock.results[0].value.end as ReturnType<typeof vi.fn>;
+    return end.mock.calls[0][0] as Buffer;
+  };
+  beforeEach(() => {
+    mocks.uploadStream.mockImplementation((_options, callback) => ({
+      end: vi.fn(() => callback(undefined, { secure_url: cloudUrl("nouri/recipes/new"), public_id: "nouri/recipes/new" })),
+    }));
+  });
+
+  it("JPEG có EXIF (GPS, hãng máy): ảnh gửi lên Cloudinary vẫn là JPEG nhưng không còn EXIF/GPS", async () => {
+    const original = await jpegWithGps();
+    expect(exifHasGps((await sharp(original).metadata()).exif)).toBe(true);
+    expect((await request(app, path, { method: "PUT", form: form(original), token: token() })).status).toBe(200);
+    const sent = uploadedBuffer();
+    expect(detectImageFormat(sent)).toBe("jpg");
+    const meta = await sharp(sent).metadata();
+    expect(meta.exif).toBeUndefined();
+    expect(exifHasGps(meta.exif)).toBe(false);
+    expect(meta.orientation).toBeUndefined(); // đã xoay điểm ảnh theo tag rồi bỏ tag
+  });
+
+  it("đầu tệp là JPEG nhưng nội dung hỏng: 422 như ảnh cộng đồng, không tải lên, không ghi DB", async () => {
+    const broken = Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 0x46]);
+    expect(await request(app, path, { method: "PUT", form: form(broken), token: token() }))
+      .toEqual({ status: 422, body: { message: "Ảnh bị lỗi hoặc quá lớn, không đọc được." } });
+    expect(mocks.uploadStream).not.toHaveBeenCalled();
+    expect(mocks.update).not.toHaveBeenCalled();
   });
 });
