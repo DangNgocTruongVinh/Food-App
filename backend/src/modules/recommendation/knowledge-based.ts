@@ -7,7 +7,7 @@ import {
 } from "../../services/recipe-fit.service.js";
 import { type FeatureSpace, similarity } from "./features.js";
 import { EXPIRING_SOON_DAYS } from "../../shared/limits.js";
-import { DAY_MS } from "../../utils/vietnam-date.js";
+import { DAY_MS, vietnamDaysUntil } from "../../utils/vietnam-date.js";
 
 // Thuật toán 3 — dựa trên tri thức, tối ưu đa tiêu chí (GĐ3b-R5). Chạy sau lọc cứng (safety.ts). Điểm mềm:
 //   s3 = 0,35·f_hạn + 0,25·f_kho + 0,20·f_dd + 0,10·f_dạng + 0,10·f_ưu,  mỗi f ∈ [0, 1]
@@ -46,9 +46,8 @@ export type KnowledgeContext = {
   pantryIndex?: PantryIndex;
 };
 
-const startOfUtcDay = (value: Date) => Date.UTC(value.getUTCFullYear(), value.getUTCMonth(), value.getUTCDate());
-/** Số ngày còn tới hạn (theo ngày, cùng cách tính với pantryExpiryState). */
-const daysLeft = (expiryDate: Date, now: Date) => Math.round((startOfUtcDay(expiryDate) - startOfUtcDay(now)) / DAY_MS);
+/** Số ngày còn tới hạn (ngày lịch giờ Việt Nam, cùng cách tính với pantryExpiryState). */
+const daysLeft = (expiryDate: Date, now: Date) => vietnamDaysUntil(expiryDate, now);
 
 /** f_hạn và tên các thực phẩm sắp hết hạn món dùng (mỗi thực phẩm tính một lần, theo món hạn sớm nhất). */
 type PantryIndex = ReturnType<typeof groupPantryByName<FitPantryItem>>;

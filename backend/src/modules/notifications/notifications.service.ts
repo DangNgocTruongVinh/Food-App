@@ -3,7 +3,7 @@ import { prisma } from "../../lib/prisma.js";
 import { HttpError } from "../../utils/http-error.js";
 import type { NotificationListQuery } from "./notifications.schema.js";
 import { EXPIRING_SOON_DAYS } from "../../shared/limits.js";
-import { DAY_MS } from "../../utils/vietnam-date.js";
+import { DAY_MS, vietnamDaysUntil, vietnamToday } from "../../utils/vietnam-date.js";
 
 const DEFAULT_NOTIFICATION_LIMIT = 100;
 const MAX_NOTIFICATION_LIMIT = 200;
@@ -17,10 +17,6 @@ export type NotificationCandidate = Pick<
   Prisma.NotificationCreateManyInput,
   "userId" | "type" | "title" | "message" | "relatedId" | "actionUrl" | "dedupeKey"
 >;
-
-function startOfUtcDay(value: Date) {
-  return new Date(Date.UTC(value.getUTCFullYear(), value.getUTCMonth(), value.getUTCDate()));
-}
 
 function isoDay(value: Date) {
   return value.toISOString().slice(0, 10);
@@ -39,8 +35,6 @@ export function buildPantryNotificationCandidates(
   items: PantryNotificationItem[],
   now = new Date(),
 ): NotificationCandidate[] {
-  const today = startOfUtcDay(now);
-  const expiryLimit = new Date(today.getTime() + EXPIRING_SOON_DAYS * DAY_MS);
   const candidates: NotificationCandidate[] = [];
 
   for (const item of items) {
@@ -48,8 +42,10 @@ export function buildPantryNotificationCandidates(
 
     // Thực phẩm đã dùng hết (= 0, giữ lại trong kho từ GĐ3b) không còn nhắc hạn sử dụng, chỉ còn nhắc mua lại.
     if (item.expiryDate && item.quantity > 0) {
-      const expiryDay = startOfUtcDay(item.expiryDate);
-      if (expiryDay < today) {
+      // Ngày theo giờ Việt Nam (hạn lưu "yyyy-MM-dd" → 00:00 UTC): 00:00–07:00 giờ VN vẫn đúng ngày.
+      const days = vietnamDaysUntil(item.expiryDate, now);
+      const expiryDay = isoDay(item.expiryDate);
+      if (days < 0) {
         candidates.push({
           userId: item.userId,
           type: "PANTRY_EXPIRED",
@@ -57,10 +53,9 @@ export function buildPantryNotificationCandidates(
           message: `${item.name} đã hết hạn. Hãy kiểm tra trước khi sử dụng.`,
           relatedId: item.id,
           actionUrl,
-          dedupeKey: `pantry-expired:${item.id}:${isoDay(expiryDay)}`,
+          dedupeKey: `pantry-expired:${item.id}:${expiryDay}`,
         });
-      } else if (expiryDay <= expiryLimit) {
-        const days = Math.round((expiryDay.getTime() - today.getTime()) / DAY_MS);
+      } else if (days <= EXPIRING_SOON_DAYS) {
         candidates.push({
           userId: item.userId,
           type: "PANTRY_EXPIRING",
@@ -70,7 +65,7 @@ export function buildPantryNotificationCandidates(
             : `${item.name} sẽ hết hạn sau ${days} ngày.`,
           relatedId: item.id,
           actionUrl,
-          dedupeKey: `pantry-expiring:${item.id}:${isoDay(expiryDay)}`,
+          dedupeKey: `pantry-expiring:${item.id}:${expiryDay}`,
         });
       }
     }
@@ -92,8 +87,7 @@ export function buildPantryNotificationCandidates(
 }
 
 export async function syncPantryNotifications(userId: string, now = new Date()) {
-  const today = startOfUtcDay(now);
-  const expiryLimit = new Date(today.getTime() + EXPIRING_SOON_DAYS * DAY_MS);
+  const expiryLimit = new Date(vietnamToday(now).getTime() + EXPIRING_SOON_DAYS * DAY_MS);
   const items = await prisma.pantryItem.findMany({
     where: {
       userId,
