@@ -3,7 +3,7 @@ import { allergenLabels, expandRestrictedTerms, findRestrictedTerms, matchesRequ
 import { calculateNutritionTargets } from "./nutrition.service.js";
 import { groupPantryByName, pantryMatchesFor } from "./pantry-match.js";
 import { EXPIRING_SOON_DAYS } from "../shared/limits.js";
-import { DAY_MS } from "../utils/vietnam-date.js";
+import { vietnamDaysUntil } from "../utils/vietnam-date.js";
 
 // Mức độ phù hợp của một công thức với người dùng (không truy cập DB): dùng cho khối "Dành cho bạn"
 // ở trang chi tiết công thức và cho bộ gợi ý (modules/recommendation).
@@ -20,14 +20,11 @@ export type FitProfile = {
   dailyCalorieTarget?: number | null;
 } & Parameters<typeof calculateNutritionTargets>[0];
 
-const startOfUtcDay = (value: Date) => new Date(Date.UTC(value.getUTCFullYear(), value.getUTCMonth(), value.getUTCDate()));
-
 export function pantryExpiryState(expiryDate: Date | null, now = new Date()): "expired" | "expiring" | "fresh" {
   if (!expiryDate) return "fresh";
-  const today = startOfUtcDay(now);
-  const expiryDay = startOfUtcDay(expiryDate);
-  if (expiryDay < today) return "expired";
-  return expiryDay.getTime() <= today.getTime() + EXPIRING_SOON_DAYS * DAY_MS ? "expiring" : "fresh";
+  const days = vietnamDaysUntil(expiryDate, now);
+  if (days < 0) return "expired";
+  return days <= EXPIRING_SOON_DAYS ? "expiring" : "fresh";
 }
 
 /**

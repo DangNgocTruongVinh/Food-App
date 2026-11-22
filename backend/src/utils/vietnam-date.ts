@@ -12,6 +12,17 @@ export function vietnamToday(now = new Date()) {
   return new Date(Date.UTC(year, month - 1, day));
 }
 
+/**
+ * Số ngày lịch từ hôm nay (giờ Việt Nam) tới một ngày đã lưu theo quy ước "yyyy-MM-dd" → 00:00 UTC (vd. hạn dùng):
+ * 0 = hôm nay, âm = đã qua. Lúc 00:30 giờ VN ngày 25/11 (17:30 UTC ngày 24/11), hạn 24/11 là -1 (đã hết hạn).
+ * Tính bằng độ lệch cố định như vietnamDateKey (không dùng Intl): bộ gợi ý gọi hàm này cho từng thực phẩm × món, Intl chậm hơn nhiều lần.
+ */
+export function vietnamDaysUntil(day: Date, now = new Date()) {
+  const stored = Math.floor(day.getTime() / DAY_MS);
+  const today = Math.floor((now.getTime() + VIETNAM_OFFSET_MS) / DAY_MS);
+  return stored - today;
+}
+
 /** Ngày lịch Việt Nam (yyyy-MM-dd) của một thời điểm; ngày trong thực đơn lưu 00:00 UTC của ngày lịch. */
 export function vietnamDateKey(instant: Date) {
   return new Date(instant.getTime() + VIETNAM_OFFSET_MS).toISOString().slice(0, 10);
