@@ -172,6 +172,21 @@ describe("Pantry HTTP contract and ownership (no database)", () => {
     expect(mocks.syncNotifications).not.toHaveBeenCalled();
   });
 
+  // Audit M7: nhóm phải có trong danh mục (/api/catalog); giữ nguyên nhóm cũ đã bị Admin ẩn thì vẫn sửa được.
+  it("rejects a category that is not in the catalog on create and on change (422), keeps an unchanged old one", async () => {
+    const created = await request(app, "/api/pantry", { method: "POST", token: token(), body: { ...createBody, category: "Đồ chơi" } });
+    expect(created).toEqual({ status: 422, body: { message: "Nhóm thực phẩm không có trong danh mục. Hãy chọn một nhóm trong danh sách." } });
+    expect(mocks.create).not.toHaveBeenCalled();
+
+    mocks.findFirst.mockResolvedValue({ ...item, category: "Đồ hộp" });
+    const changed = await request(app, `/api/pantry/${itemId}`, { method: "PUT", token: token(), body: { category: "Đồ chơi" } });
+    expect(changed.status).toBe(422);
+    expect(mocks.updateMany).not.toHaveBeenCalled();
+    mocks.updateMany.mockResolvedValue({ count: 1 });
+    mocks.findUnique.mockResolvedValue({ ...item, category: "Đồ hộp" });
+    expect((await request(app, `/api/pantry/${itemId}`, { method: "PUT", token: token(), body: { category: "Đồ hộp", quantity: 400 } })).status).toBe(200);
+  });
+
   it("deletes only an owned item and its related pantry notifications in one transaction", async () => {
     const response = await request(app, `/api/pantry/${itemId}?reason=DISCARDED`, { method: "DELETE", token: token() });
     expect(response).toEqual({ status: 204, body: null });

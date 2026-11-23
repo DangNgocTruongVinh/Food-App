@@ -22,12 +22,17 @@ export type PantryFilters = {
 
 export const PANTRY_PAGE_SIZE = 8;
 
+/** Nhóm để trống: hộp thoại điền nhóm đầu tiên của danh mục (/api/catalog, audit M7), không viết cứng tên nhóm. */
 export const initialPantryForm: PantryFormValues = {
-  name: "", category: "Rau củ", quantity: 1, unit: "ITEM" as FoodUnit,
+  name: "", category: "", quantity: 1, unit: "ITEM" as FoodUnit,
   storageLocation: "REFRIGERATOR" as StorageLocation, expiryDate: "", minimumStock: 0, note: "", unitPrice: Number.NaN,
 };
 
 /** Nhóm thực phẩm lấy từ danh mục (useFoodCategoryNames); nhóm cũ của thực phẩm đang sửa không còn trong danh mục thì vẫn giữ. */
+/** Form chưa có nhóm: lấy nhóm đầu tiên của danh mục đang dùng (danh mục chưa tải thì giữ nguyên). */
+export const withDefaultCategory = (form: PantryFormValues, categories: string[]) =>
+  (form.category || !categories[0] ? form : { ...form, category: categories[0] });
+
 export function pantryCategoryOptions(current: string, categories: string[]) {
   return !current || categories.includes(current) ? categories : [current, ...categories];
 }
@@ -160,7 +165,7 @@ export function pantryItemPage(items: { id: string }[], itemId: string, pageSize
   return index < 0 ? null : Math.floor(index / pageSize) + 1;
 }
 
-export type PantryFormField = "name" | "expiryDate" | "quantity" | "minimumStock" | "note" | "unitPrice";
+export type PantryFormField = "name" | "category" | "expiryDate" | "quantity" | "minimumStock" | "note" | "unitPrice";
 export type PantryFormErrors = Partial<Record<PantryFormField, string>>;
 
 /** Lỗi theo từng trường, nói rõ cách sửa. Hạn sử dụng trống là hợp lệ (không có hạn). */
@@ -169,6 +174,7 @@ export function validatePantryForm(form: PantryFormValues, expiryDateInvalid: bo
   const name = form.name.trim();
   if (!name) errors.name = "Nhập tên thực phẩm, ví dụ: Ức gà.";
   else if (name.length > 100) errors.name = "Rút tên xuống tối đa 100 ký tự.";
+  if (!form.category) errors.category = "Chọn nhóm thực phẩm.";
   if (expiryDateInvalid) errors.expiryDate = "Ngày không hợp lệ. Nhập theo dạng dd/mm/yyyy, hoặc để trống nếu không có hạn.";
   if (!Number.isFinite(form.quantity) || form.quantity <= 0) errors.quantity = "Nhập số lượng lớn hơn 0.";
   if (!Number.isFinite(form.minimumStock) || form.minimumStock < 0) errors.minimumStock = "Nhập 0 hoặc một số dương.";

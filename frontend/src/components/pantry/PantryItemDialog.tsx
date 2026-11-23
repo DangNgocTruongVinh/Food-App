@@ -1,10 +1,10 @@
 import { useFoodCategoryNames } from "../../features/catalog/catalog.queries";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { type FormEvent, useRef, useState } from "react";
+import { type FormEvent, useEffect, useRef, useState } from "react";
 import { getApiError } from "../../api/client";
 import { suggestFoodNames, toPantryFormValues, type PantryFormValues } from "../../features/pantry/pantry.api";
 import {
-  initialPantryForm, isExpiryEstimated, pantryCategoryOptions, pantryDoneMessage, storageLabel, validatePantryForm,
+  initialPantryForm, isExpiryEstimated, pantryCategoryOptions, pantryDoneMessage, storageLabel, validatePantryForm, withDefaultCategory,
 } from "../../features/pantry/pantry.logic";
 import { invalidatePantryQueries, pantryMutations } from "../../features/pantry/pantry.queries";
 import { foodUnitLabel } from "../../utils/units";
@@ -35,6 +35,11 @@ export function PantryItemDialog({ item, onClose, onSaved }: PantryItemDialogPro
   const queryClient = useQueryClient();
   const formRef = useRef<HTMLFormElement>(null);
   const [form, setForm] = useState<PantryFormValues>(() => (item ? toPantryFormValues(item) : initialPantryForm));
+  // Thêm mới: nhóm mặc định là nhóm đầu tiên của danh mục (audit M7); danh mục tải xong sau khi mở hộp thoại thì điền lúc đó.
+  const firstCategory = categories[0];
+  useEffect(() => {
+    setForm((current) => withDefaultCategory(current, firstCategory ? [firstCategory] : []));
+  }, [firstCategory]);
   const [expiryInvalid, setExpiryInvalid] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const errors = submitted ? validatePantryForm(form, expiryInvalid) : {};
@@ -89,7 +94,7 @@ export function PantryItemDialog({ item, onClose, onSaved }: PantryItemDialogPro
             />
           )}
         </Field>
-        <Field label="Nhóm">
+        <Field label="Nhóm" error={errors.category}>
           {(control) => (
             <select {...control} value={form.category} onChange={(event) => update("category", event.target.value)}>
               {pantryCategoryOptions(form.category, categories).map((category) => <option key={category}>{category}</option>)}

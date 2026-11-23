@@ -1,4 +1,5 @@
 import { prisma } from "../../lib/prisma.js";
+import { isFoodCategory } from "../../services/food-category.js";
 import { syncPantryNotifications } from "../notifications/notifications.service.js";
 import { HttpError } from "../../utils/http-error.js";
 import { manualEditChange, recordPantryChange } from "./pantry-history.service.js";
@@ -35,8 +36,12 @@ export function listPantryItems(userId: string) {
   });
 }
 
+// Nhóm phải có trong danh mục đang dùng (audit M7). Sửa mà giữ nguyên nhóm cũ (Admin đã ẩn nhóm đó) thì vẫn cho lưu.
+const UNKNOWN_CATEGORY = "Nhóm thực phẩm không có trong danh mục. Hãy chọn một nhóm trong danh sách.";
+
 // Kho CRUD ghi lịch sử (pantry-history.service.ts) trong cùng transaction với thay đổi.
 export async function createPantryItem(userId: string, input: CreatePantryInput) {
+  if (!isFoodCategory(input.category)) throw new HttpError(422, UNKNOWN_CATEGORY);
   const item = await prisma.$transaction(async (transaction) => {
     const created = await transaction.pantryItem.create({ data: { userId, ...toCreateData(input) } });
     await recordPantryChange(transaction, { item: created, delta: created.quantity, source: "MANUAL_ADD" });
@@ -52,6 +57,9 @@ export async function updatePantryItem(userId: string, id: string, input: Update
   const item = await prisma.$transaction(async (transaction) => {
     const current = await transaction.pantryItem.findFirst({ where: { id, userId } });
     if (!current) throw new HttpError(404, "Không tìm thấy thực phẩm.");
+    if (input.category !== undefined && input.category !== current.category && !isFoodCategory(input.category)) {
+      throw new HttpError(422, UNKNOWN_CATEGORY);
+    }
 
     const data = toUpdateData(input);
     // Người dùng đổi hạn thì hạn không còn là ước tính; gửi lại đúng hạn cũ (form gửi đủ trường) thì giữ nguyên cờ.
