@@ -29,6 +29,24 @@ describe("Meal plan suggestions respect the profile", () => {
     expect(suggestion.text).not.toMatch(/cá|đậu nành|óc chó/i);
   });
 
+  // Audit H2: so theo nhóm dị ứng của danh mục, không theo chữ trong gợi ý.
+  it.each([["đỗ tương"], ["soy"], ["walnut"], ["Đậu phụ"], ["các loại hạt"]])(
+    "allergy written as \"%s\" (vegan): no soy/walnut advice", (allergy) => {
+      const suggestion = fatSuggestion(profile({ dietType: "VEGAN", allergies: [allergy] }));
+      expect(suggestion.key).toBe("fat-plant-oil");
+      expect(suggestion.text).not.toMatch(/đậu nành|óc chó/i);
+    },
+  );
+
+  it.each([["fish"], ["seafood"], ["cá thu"], ["Mực"]])("allergy \"%s\" (fish or its parent group) rules out fish advice", (allergy) => {
+    expect(fatSuggestion(profile({ allergies: [allergy] })).key).toBe(allergy === "Mực" ? "omega3-fish" : "omega3-plant");
+  });
+
+  it("disliked food that is not a group name still matches the group's ingredients (\"cá hồi\")", () => {
+    expect(fatSuggestion(profile({ dislikedFoods: ["cá hồi"] })).key).toBe("omega3-plant");
+    expect(fatSuggestion(profile({ dislikedFoods: ["hành tây"] })).key).toBe("omega3-fish");
+  });
+
   it("does not mistake an unrelated allergy for fish (whole words: \"cà\" is not \"cá\")", () => {
     expect(fatSuggestion(profile({ allergies: ["Cà chua", "Đậu phộng"] })).key).toBe("omega3-fish");
   });

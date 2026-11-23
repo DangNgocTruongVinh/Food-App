@@ -1,5 +1,6 @@
 import type { DietType } from "@prisma/client";
-import { overlapsFoodTerms } from "../../services/dietary.service.js";
+import { allergyGroups, resolveRestriction } from "../../services/allergy-groups.js";
+import { expandRestrictedTerms, overlapsFoodTerms } from "../../services/dietary.service.js";
 
 // Gợi ý dinh dưỡng của một thực đơn (thẻ "Gợi ý cho tuần này"), không truy cập DB. Trước GĐ3b-R2 nằm ở frontend
 // (features/meal-plans/meal-plans.logic.ts, có hàm `asWords` riêng); nay tính ở backend và dùng chung
@@ -9,7 +10,8 @@ import { overlapsFoodTerms } from "../../services/dietary.service.js";
 export const FIBER_TARGET_G = 30;
 
 export type MealPlanSuggestion = { key: string; text: string };
-type SuggestionCandidate = MealPlanSuggestion & { excludedDiets?: DietType[]; conflicts?: string[] };
+/** conflictGroups: mã nhóm dị ứng trong danh mục (audit H2), không phải chữ: "đỗ tương", "soy", "walnut" đều nhận ra. */
+type SuggestionCandidate = MealPlanSuggestion & { excludedDiets?: DietType[]; conflictGroups?: string[] };
 export type SuggestionProfile = {
   dietType?: DietType | null;
   allergies?: string[];
@@ -19,21 +21,30 @@ export type SuggestionProfile = {
 } | null | undefined;
 type SuggestionPlan = { days: Array<{ items: Array<{ recipe: { fiberG: number; fatG: number } }> }> };
 
-// Gợi ý không được mâu thuẫn với chế độ ăn, dị ứng hoặc món không thích (vd. "cá hồi" ↔ "cá", "Hải sản").
+// Gợi ý không được mâu thuẫn với chế độ ăn, dị ứng hoặc món không thích. Mỗi mục hồ sơ đi qua resolveRestriction như bộ lọc món:
+// thuộc một nhóm của gợi ý ("Hải sản" → Cá, "đỗ tương" → Đậu nành) thì tránh; chữ không thành nhóm ("cá hồi" khi là món không
+// thích) thì so với nguyên liệu của các nhóm đó.
 function conflictsWithProfile(candidate: SuggestionCandidate, profile: SuggestionProfile) {
   if (!profile) return false;
   if (profile.dietType && candidate.excludedDiets?.includes(profile.dietType)) return true;
-  return overlapsFoodTerms(candidate.conflicts ?? [], [...(profile.allergies ?? []), ...(profile.dislikedFoods ?? [])]);
+  const codes = candidate.conflictGroups ?? [];
+  if (!codes.length) return false;
+  const terms = expandRestrictedTerms(allergyGroups().filter((group) => codes.includes(group.id)).map((group) => group.label));
+  const hits = (items: string[] | undefined, strict: boolean) => (items ?? []).some((raw) => {
+    const resolved = resolveRestriction(raw, { strict });
+    return resolved.groups.some((group) => codes.includes(group.id)) || Boolean(resolved.text && overlapsFoodTerms([resolved.text], terms));
+  });
+  return hits(profile.allergies, true) || hits(profile.dislikedFoods, false);
 }
 
 const fatCandidates: SuggestionCandidate[] = [
   {
     key: "omega3-fish", text: "Thêm cá béo như cá hồi, cá thu 1–2 bữa để có thêm Omega-3.",
-    excludedDiets: ["VEGETARIAN", "VEGAN"], conflicts: ["hải sản", "thủy sản", "đồ biển", "seafood", "cá"],
+    excludedDiets: ["VEGETARIAN", "VEGAN"], conflictGroups: ["FISH"],
   },
   {
     key: "omega3-plant", text: "Thêm Omega-3 từ thực vật: đậu nành, đậu hũ hoặc hạt óc chó.",
-    conflicts: ["đậu nành", "đậu hũ", "óc chó", "các loại hạt"],
+    conflictGroups: ["SOY", "TREE_NUT"],
   },
   { key: "fat-plant-oil", text: "Nấu bằng dầu thực vật và giữ lượng chất béo như hiện tại." },
 ];
