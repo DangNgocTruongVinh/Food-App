@@ -1,6 +1,6 @@
 import type { ProfileResponse } from "../../types";
 import type { ProfileFormValues } from "./profile.api";
-import { PROFILE_LIMITS } from "../shared/limits";
+import { NUTRITION_FORMULA, PROFILE_LIMITS } from "../shared/limits";
 
 // Giới hạn dùng chung với backend (features/shared/limits.ts): kiểm tra trước khi gửi để báo lỗi ngay dưới từng trường.
 export { PROFILE_LIMITS };
@@ -102,4 +102,15 @@ export function testEmailMessage(result: { emailConfigured: boolean; remainingTo
   return result.emailConfigured
     ? `Đã gửi email thử tới hộp thư của bạn. ${left}`
     : `Máy chủ chưa cấu hình email nên nội dung chỉ được ghi vào log máy chủ. ${left}`;
+}
+
+const percent = (ratio: number) => `${Math.round(ratio * 100)}%`;
+/** Câu "Cách tính" ở thẻ chỉ tiêu, ghép từ cùng các số backend dùng để tính (NUTRITION_FORMULA, audit M2). */
+export function nutritionFormulaText() {
+  const { defaultBody, calorieAdjustment, minCalories, proteinRatio, fatRatio } = NUTRITION_FORMULA;
+  const kcal = (value: number) => `${Math.abs(value).toLocaleString("vi-VN")} kcal`;
+  return "Cách tính: năng lượng nghỉ theo công thức Mifflin–St Jeor (tuổi, giới tính, chiều cao, cân nặng) nhân hệ số vận động, rồi trừ "
+    + `${kcal(calorieAdjustment.loseWeight)} khi giảm cân hoặc cộng ${kcal(calorieAdjustment.gainWeight)} khi tăng cân, tăng cơ; tối thiểu `
+    + `${kcal(minCalories)}. Đạm chiếm ${percent(proteinRatio.default)} (tăng cơ ${percent(proteinRatio.buildMuscle)}), béo ${percent(fatRatio)}, `
+    + `còn lại là tinh bột. Chưa nhập số đo thì dùng ${defaultBody.age} tuổi, ${defaultBody.heightCm} cm, ${defaultBody.weightKg} kg.`;
 }

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { ProfileResponse } from "../../types";
 import {
-  addTag, bodyMassIndex, emptyProfileForm, isProfileDirty, PROFILE_LIMITS, testEmailMessage, toProfileForm, validateProfileForm,
+  addTag, bodyMassIndex, emptyProfileForm, isProfileDirty, nutritionFormulaText, PROFILE_LIMITS, testEmailMessage, toProfileForm, validateProfileForm,
 } from "./profile.logic";
 
 const saved: ProfileResponse = {
@@ -60,5 +60,16 @@ describe("Nhắc đồ sắp hết hạn: thông báo gửi thử", () => {
   it("nói rõ email đã gửi hay chỉ ghi log (chưa cấu hình SMTP), kèm số lần còn lại", () => {
     expect(testEmailMessage({ emailConfigured: true, remainingToday: 2 })).toBe("Đã gửi email thử tới hộp thư của bạn. Còn 2 lần gửi thử hôm nay.");
     expect(testEmailMessage({ emailConfigured: false, remainingToday: 0 })).toContain("chỉ được ghi vào log máy chủ. Còn 0 lần");
+  });
+});
+
+// Audit M2: câu "Cách tính" ghép từ NUTRITION_FORMULA (cùng số với backend), nội dung giữ nguyên như câu viết tay trước đây.
+describe("nutritionFormulaText", () => {
+  it("ghép đúng câu cũ từ hằng dùng chung", () => {
+    expect(nutritionFormulaText()).toBe(
+      "Cách tính: năng lượng nghỉ theo công thức Mifflin–St Jeor (tuổi, giới tính, chiều cao, cân nặng) nhân hệ số vận động, rồi trừ "
+      + "350 kcal khi giảm cân hoặc cộng 300 kcal khi tăng cân, tăng cơ; tối thiểu 1.200 kcal. Đạm chiếm 25% (tăng cơ 30%), béo 28%, "
+      + "còn lại là tinh bột. Chưa nhập số đo thì dùng 25 tuổi, 165 cm, 60 kg.",
+    );
   });
 });

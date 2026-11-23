@@ -43,3 +43,18 @@ export const IMAGE_MIME_TYPES = ["image/jpeg", "image/png", "image/webp"];
 
 /** "Sắp hết hạn" = còn ≤ 3 ngày: nhãn Kho, thông báo, gợi ý món dùng đồ sắp hết hạn, trợ lý AI. */
 export const EXPIRING_SOON_DAYS = 3;
+
+/**
+ * Số của công thức chỉ tiêu dinh dưỡng (backend services/nutrition.service.ts, audit M1). Hồ sơ ghép câu "Cách tính" từ cùng các
+ * số này (audit M2) nên giao diện không nói khác công thức.
+ */
+export const NUTRITION_FORMULA = {
+  /** Chưa nhập số đo thì dùng cơ thể mặc định. */
+  defaultBody: { age: 25, heightCm: 165, weightKg: 60 },
+  /** kcal cộng vào năng lượng tiêu hao: giảm cân trừ, tăng cân/tăng cơ cộng. */
+  calorieAdjustment: { loseWeight: -350, gainWeight: 300 },
+  minCalories: 1200,
+  /** Tỷ lệ năng lượng từ đạm (tăng cơ cao hơn) và béo; phần còn lại là tinh bột. */
+  proteinRatio: { default: 0.25, buildMuscle: 0.3 },
+  fatRatio: 0.28,
+} as const;
