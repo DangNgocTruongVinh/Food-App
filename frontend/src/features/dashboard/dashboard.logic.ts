@@ -149,14 +149,3 @@ export function todayLabel(now = new Date()) {
   const text = format(now, "EEEE, d 'tháng' M", { locale: vi });
   return text.charAt(0).toUpperCase() + text.slice(1);
 }
-
-// Lượng nước: chỉ ghi nhận trong phiên (chưa lưu DB, xem GĐ5). Mỗi ly 250 ml, tối đa 8 ly.
-export const DASHBOARD_MAX_WATER_GLASSES = 8;
-
-export function dashboardWaterLiters(waterGlasses: number) {
-  return Number((waterGlasses * 0.25).toFixed(2));
-}
-
-export function nextWaterGlasses(waterGlasses: number) {
-  return Math.min(DASHBOARD_MAX_WATER_GLASSES, waterGlasses + 1);
-}
