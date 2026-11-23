@@ -32,7 +32,7 @@ export const TOPIC_PROMPT = [
 
 const unique = <T,>(items: T[]) => [...new Set(items)];
 
-export function createPostReviewer(client: ReviewClient | null, model: string) {
+export function createPostReviewer(client: ReviewClient | null, model: string, moderationModel: string) {
   return async function reviewPost({ text, imageUrls }: { text: string; imageUrls: string[] }): Promise<PostReview | null> {
     if (!client) return null;
     const body = text.trim().slice(0, MAX_TEXT);
@@ -43,7 +43,7 @@ export function createPostReviewer(client: ReviewClient | null, model: string) {
     const options = { signal: controller.signal, maxRetries: 0 };
     const [moderation, topic] = await Promise.allSettled([
       client.moderations.create({
-        model: "omni-moderation-latest",
+        model: moderationModel,
         input: [
           ...(body ? [{ type: "text" as const, text: body }] : []),
           ...imageUrls.map((url) => ({ type: "image_url" as const, image_url: { url } })),
@@ -87,7 +87,7 @@ export function createPostReviewer(client: ReviewClient | null, model: string) {
   };
 }
 
-export const reviewCommunityPost = createPostReviewer(openAIClient, env.OPENAI_MODEL);
+export const reviewCommunityPost = createPostReviewer(openAIClient, env.OPENAI_MODEL, env.OPENAI_MODERATION_MODEL);
 
 /** Chữ đem đi kiểm: nội dung bài + công thức tự viết (tên, nguyên liệu, các bước). */
 export function reviewTextOf(content: string, memberRecipe: { name: string; ingredients: Array<{ name: string }>; steps: string[] } | null | undefined) {

@@ -1,3 +1,5 @@
+import { NUTRITION_FORMULA as F } from "../shared/limits.js";
+
 type NutritionInput = {
   age?: number | null;
   gender?: "MALE" | "FEMALE" | "OTHER" | null;
@@ -16,16 +18,18 @@ const activityFactor = {
 };
 
 export function calculateNutritionTargets(profile: NutritionInput) {
-  const age = profile.age ?? 25;
-  const height = profile.heightCm ?? 165;
-  const weight = profile.weightKg ?? 60;
+  const age = profile.age ?? F.defaultBody.age;
+  const height = profile.heightCm ?? F.defaultBody.heightCm;
+  const weight = profile.weightKg ?? F.defaultBody.weightKg;
   const genderOffset = profile.gender === "MALE" ? 5 : profile.gender === "FEMALE" ? -161 : -78;
   const bmr = 10 * weight + 6.25 * height - 5 * age + genderOffset;
   const tdee = bmr * activityFactor[profile.activityLevel ?? "MODERATE"];
-  const calorieAdjustment = profile.goal === "LOSE_WEIGHT" ? -350 : profile.goal === "GAIN_WEIGHT" || profile.goal === "BUILD_MUSCLE" ? 300 : 0;
-  const calories = Math.max(1200, Math.round(tdee + calorieAdjustment));
-  const proteinRatio = profile.goal === "BUILD_MUSCLE" ? 0.3 : 0.25;
-  const fatRatio = 0.28;
+  const calorieAdjustment = profile.goal === "LOSE_WEIGHT"
+    ? F.calorieAdjustment.loseWeight
+    : profile.goal === "GAIN_WEIGHT" || profile.goal === "BUILD_MUSCLE" ? F.calorieAdjustment.gainWeight : 0;
+  const calories = Math.max(F.minCalories, Math.round(tdee + calorieAdjustment));
+  const proteinRatio = profile.goal === "BUILD_MUSCLE" ? F.proteinRatio.buildMuscle : F.proteinRatio.default;
+  const fatRatio = F.fatRatio;
   return {
     calories,
     proteinG: Math.round((calories * proteinRatio) / 4),

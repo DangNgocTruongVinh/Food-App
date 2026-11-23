@@ -1,4 +1,5 @@
 import { formatNumber } from "../../features/dashboard/dashboard.logic";
+import { nutritionFormulaText } from "../../features/profile/profile.logic";
 import type { NutritionProfile } from "../../types";
 import { Card } from "../ui";
 
@@ -31,11 +32,7 @@ export function ProfileTargetsCard({ profile, dirty, bmi }: ProfileTargetsCardPr
         <p className="ui-text">Lưu hồ sơ để Nouri tính calo, đạm, tinh bột và béo mỗi ngày.</p>
       )}
       {dirty && hasTargets && <p className="hs-targets__dirty">Số liệu trên theo hồ sơ đã lưu; bấm "Lưu hồ sơ" để tính lại.</p>}
-      <p className="ui-small hs-targets__how">
-        Cách tính: năng lượng nghỉ theo công thức Mifflin–St Jeor (tuổi, giới tính, chiều cao, cân nặng) nhân hệ số vận động, rồi trừ
-        350 kcal khi giảm cân hoặc cộng 300 kcal khi tăng cân, tăng cơ; tối thiểu 1.200 kcal. Đạm chiếm 25% (tăng cơ 30%), béo 28%,
-        còn lại là tinh bột. Chưa nhập số đo thì dùng 25 tuổi, 165 cm, 60 kg.
-      </p>
+      <p className="ui-small hs-targets__how">{nutritionFormulaText()}</p>
       {bmi !== null && (
         <p className="ui-small">Chỉ số BMI theo số đo đang nhập: {bmi.toLocaleString("vi-VN", { minimumFractionDigits: 1, maximumFractionDigits: 1 })}.</p>
       )}

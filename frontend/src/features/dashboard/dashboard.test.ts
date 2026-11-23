@@ -1,3 +1,5 @@
+import { existsSync, readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import type { QueryClient } from "@tanstack/react-query";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { api } from "../../api/client";
@@ -10,11 +12,8 @@ import {
   daysLeft,
   daysLeftLabel,
   dashboardRecipeSearchPath,
-  dashboardWaterLiters,
-  DASHBOARD_MAX_WATER_GLASSES,
   expiringCountLabel,
   nextMealId,
-  nextWaterGlasses,
   orderTodayMeals,
   percentOf,
   recommendationReason,
@@ -205,16 +204,19 @@ describe("recommendation wording (from real data only)", () => {
   });
 });
 
-describe("search and water", () => {
+describe("search", () => {
   it("keeps the Recipes search path and blank-search behavior", () => {
     expect(dashboardRecipeSearchPath("  ức gà ")).toBe(`/recipes?q=${encodeURIComponent("ức gà")}`);
     expect(dashboardRecipeSearchPath("   ")).toBeNull();
   });
 
-  it("converts glasses to liters and adds one glass up to the maximum", () => {
-    expect(dashboardWaterLiters(5)).toBe(1.25);
-    expect(nextWaterGlasses(0)).toBe(1);
-    expect(nextWaterGlasses(DASHBOARD_MAX_WATER_GLASSES)).toBe(DASHBOARD_MAX_WATER_GLASSES);
+  // Audit H3: khối "Lượng nước" (8 ly cố định, không lưu vào tài khoản) đã gỡ khỏi Tổng quan; lưu theo ngày là hướng phát triển.
+  it("Tổng quan không còn khối Lượng nước (audit H3)", () => {
+    const read = (path: string) => readFileSync(fileURLToPath(new URL(path, import.meta.url)), "utf8");
+    expect(read("../../pages/DashboardPage.tsx")).not.toMatch(/WaterTracker|waterGlasses|nước hôm nay/i);
+    expect(existsSync(fileURLToPath(new URL("../../components/dashboard/WaterTracker.tsx", import.meta.url)))).toBe(false);
+    expect(read("./dashboard.logic.ts")).not.toMatch(/WATER|Water/);
+    expect(read("../../styles/ui/dashboard.css")).not.toContain("dash-water");
   });
 });
 

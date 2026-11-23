@@ -10,11 +10,10 @@ import { NutritionTodayCard } from "../components/dashboard/NutritionTodayCard";
 import { PantrySnapshot } from "../components/dashboard/PantrySnapshot";
 import { RecommendedRecipes } from "../components/dashboard/RecommendedRecipes";
 import { TodayMealsCard } from "../components/dashboard/TodayMealsCard";
-import { WaterTracker } from "../components/dashboard/WaterTracker";
 import { ErrorState, PageHeader } from "../components/ui";
 import { useAuth } from "../contexts/AuthContext";
 import {
-  buildNutritionSummary, dashboardRecipeSearchPath, HERO_RECIPE_LIMIT, heroRecipeCandidates, nextMealId, nextWaterGlasses, orderTodayMeals,
+  buildNutritionSummary, dashboardRecipeSearchPath, HERO_RECIPE_LIMIT, heroRecipeCandidates, nextMealId, orderTodayMeals,
   todayFigures, usableTargets,
 } from "../features/dashboard/dashboard.logic";
 import { dashboardQueries } from "../features/dashboard/dashboard.queries";
@@ -29,7 +28,6 @@ export default function DashboardPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
-  const [waterGlasses, setWaterGlasses] = useState(0);
 
   const overview = useQuery(dashboardQueries.overview());
   // Gợi ý cho ô tìm món (cùng danh sách với trang Công thức, dùng chung bộ nhớ đệm).
@@ -102,9 +100,8 @@ export default function DashboardPage() {
             />
             <MealStatusNotice notice={consumption.notice} busy={consumption.pending} onUndo={(notice) => consumption.undo(notice.target)} />
           </div>
-          <aside className="dash-today__side" aria-label="Dinh dưỡng và nước hôm nay">
+          <aside className="dash-today__side" aria-label="Dinh dưỡng hôm nay">
             <NutritionTodayCard summary={summary} macrosStatus={macrosStatus} onRetryMacros={() => void plan.refetch()} />
-            <WaterTracker glasses={waterGlasses} onAddGlass={() => setWaterGlasses(nextWaterGlasses)} />
           </aside>
         </div>
 

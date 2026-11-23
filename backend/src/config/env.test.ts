@@ -31,3 +31,11 @@ describe("Cloudinary environment (all three or none)", () => {
     expect(() => envSchema.parse({ ...base, ...partial })).toThrow(/CLOUDINARY_CLOUD_NAME/);
   });
 });
+
+describe("OpenAI moderation model (audit M6)", () => {
+  it("defaults to omni-moderation-latest (also for the empty value docker compose passes) and can be overridden", () => {
+    expect(envSchema.parse(base).OPENAI_MODERATION_MODEL).toBe("omni-moderation-latest");
+    expect(envSchema.parse({ ...base, OPENAI_MODERATION_MODEL: "" }).OPENAI_MODERATION_MODEL).toBe("omni-moderation-latest");
+    expect(envSchema.parse({ ...base, OPENAI_MODERATION_MODEL: "text-moderation-latest" }).OPENAI_MODERATION_MODEL).toBe("text-moderation-latest");
+  });
+});

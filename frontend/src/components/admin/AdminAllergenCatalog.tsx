@@ -3,17 +3,25 @@ import type { AdminAllergenGroup, AllergenTermLevel, CatalogKind } from "../../f
 import type { SaveCatalog } from "../../pages/admin/AdminCatalogPage";
 import { Button, Card, Field, useConfirm } from "../ui";
 
-type Props = { groups: AdminAllergenGroup[]; save: SaveCatalog; busy: boolean };
+type Props = { groups: AdminAllergenGroup[]; save: SaveCatalog; busy: boolean; diet?: boolean };
 export type Entry = { id: string; name: string; hiddenAt: string | null; detail?: string };
 
 const LEVEL_LABEL: Record<AllergenTermLevel, string> = { CONTAINS: "Chứa", MAY_CONTAIN: "Có thể chứa" };
 
-/** Nhóm dị ứng: thêm nhóm; mỗi nhóm đổi tên, ẩn/hiện, thêm và ẩn/hiện tên gọi khác, nguyên liệu thuộc nhóm. */
-export function AdminAllergenCatalog({ groups, save, busy }: Props) {
+/**
+ * Nhóm dị ứng: thêm nhóm; mỗi nhóm đổi tên, ẩn/hiện, thêm và ẩn/hiện tên gọi khác, nguyên liệu thuộc nhóm.
+ * `diet` (tab Nhãn chay, audit H1): nhóm cố định, chỉ thêm và ẩn/hiện từng từ.
+ */
+export function AdminAllergenCatalog({ groups, save, busy, diet = false }: Props) {
   return (
     <div className="ad-catalog">
-      <NewGroupForm roots={groups.filter((group) => !group.parentId)} save={save} busy={busy} />
-      {groups.map((group) => <GroupCard key={group.id} group={group} groups={groups} save={save} busy={busy} />)}
+      {diet ? (
+        <p className="ad-sub">
+          Nguyên liệu chứa các từ dưới đây không được có trong món gắn nhãn Ăn chay/Thuần chay (cùng với nhóm dị ứng Hải sản; thuần chay
+          thêm Sữa, Trứng). Không hiện ở ô Dị ứng của hồ sơ.
+        </p>
+      ) : <NewGroupForm roots={groups.filter((group) => !group.parentId)} save={save} busy={busy} />}
+      {groups.map((group) => <GroupCard key={group.id} group={group} groups={groups} save={save} busy={busy} diet={diet} />)}
     </div>
   );
 }
@@ -47,7 +55,7 @@ function NewGroupForm({ roots, save, busy }: { roots: AdminAllergenGroup[]; save
   );
 }
 
-function GroupCard({ group, groups, save, busy }: { group: AdminAllergenGroup; groups: AdminAllergenGroup[]; save: SaveCatalog; busy: boolean }) {
+function GroupCard({ group, groups, save, busy, diet }: { group: AdminAllergenGroup; groups: AdminAllergenGroup[]; save: SaveCatalog; busy: boolean; diet: boolean }) {
   const confirm = useConfirm();
   const [label, setLabel] = useState(group.label);
   const parent = groups.find((item) => item.id === group.parentId);
@@ -79,18 +87,22 @@ function GroupCard({ group, groups, save, busy }: { group: AdminAllergenGroup; g
           <span className="ad-sub">{meta.filter(Boolean).join(" · ")}</span>
         </div>
         {group.hiddenAt && <span className="ad-status ad-status--hidden">Đang ẩn</span>}
-        <Button variant={group.hiddenAt ? "secondary" : "danger"} busy={busy} onClick={() => void toggleGroup()}
+        {!diet && <Button variant={group.hiddenAt ? "secondary" : "danger"} busy={busy} onClick={() => void toggleGroup()}
           aria-label={`${group.hiddenAt ? "Hiện lại" : "Ẩn"} nhóm ${group.label}`}>
           {group.hiddenAt ? "Hiện lại" : "Ẩn nhóm"}
-        </Button>
+        </Button>}
       </header>
-      <form className="ad-catalog__form" onSubmit={rename}>
-        <Field label="Tên nhóm" hint="Tên cũ được giữ làm tên gọi khác" value={label} onChange={(event) => setLabel(event.target.value)} required />
-        <Button type="submit" busy={busy} disabled={label.trim() === group.label}>Đổi tên</Button>
-      </form>
-      <EntryList title="Tên gọi khác" kind="allergen-aliases" groupLabel={group.label} entries={group.aliases} save={save} busy={busy} />
-      <AddAlias groupId={group.id} save={save} busy={busy} />
-      <EntryList title="Nguyên liệu thuộc nhóm" kind="allergen-terms" groupLabel={group.label} entries={terms} save={save} busy={busy} />
+      {!diet && (
+        <>
+          <form className="ad-catalog__form" onSubmit={rename}>
+            <Field label="Tên nhóm" hint="Tên cũ được giữ làm tên gọi khác" value={label} onChange={(event) => setLabel(event.target.value)} required />
+            <Button type="submit" busy={busy} disabled={label.trim() === group.label}>Đổi tên</Button>
+          </form>
+          <EntryList title="Tên gọi khác" kind="allergen-aliases" groupLabel={group.label} entries={group.aliases} save={save} busy={busy} />
+          <AddAlias groupId={group.id} save={save} busy={busy} />
+        </>
+      )}
+      <EntryList title={diet ? "Từ cần tránh" : "Nguyên liệu thuộc nhóm"} kind="allergen-terms" groupLabel={group.label} entries={terms} save={save} busy={busy} />
       <AddTerm groupId={group.id} save={save} busy={busy} />
       {group.exclusions.length > 0 && (
         <p className="ad-sub">Ngoại lệ (tên chứa cụm này không thuộc nhóm): {group.exclusions.map((item) => item.phrase).join(", ")}</p>

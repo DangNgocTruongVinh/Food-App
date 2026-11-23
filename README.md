@@ -44,8 +44,10 @@ Cần: **Docker Desktop** (có Docker Compose), **Node.js 20+** và npm (để c
    - Bắt buộc: `POSTGRES_PASSWORD` (chỉ chữ và số), `JWT_SECRET` (chuỗi ngẫu nhiên ≥ 32 ký tự).
    - Nên có: `ADMIN_EMAIL`, `ADMIN_PASSWORD` (seed tạo tài khoản Admin; không có thì không có Admin).
    - Tùy chọn: `OPENAI_API_KEY` (thực đơn/chat/quét hóa đơn bằng AI), `CLOUDINARY_*` (tải ảnh), `SMTP_*` + `MAIL_FROM` (email).
-   - Cho script Playwright (`e2e/acceptance/`): `DEMO_EMAIL`, `DEMO_PASSWORD` = email và mật khẩu tài khoản demo (mục **Tài khoản**
-     bên dưới); ứng dụng không đọc hai biến này, chỉ script đọc. Thiếu thì script dừng và báo tên biến.
+   - Máy demo: `SEED_DEMO=true` và `DEMO_PASSWORD` (tự chọn, tối thiểu 8 ký tự) thì seed tạo tài khoản demo và tài khoản mẫu,
+     `demo:reset` mới chạy. Mặc định `SEED_DEMO=false`: máy chủ thật không có tài khoản demo.
+   - Cho script Playwright (`e2e/acceptance/`): `DEMO_EMAIL` (email demo, mục **Tài khoản** bên dưới) cùng `DEMO_PASSWORD` ở trên.
+     Thiếu thì script dừng và báo tên biến.
    - Ý nghĩa từng biến ghi ngay trong `.env.example`.
 
 3. Build và chạy (migration cơ sở dữ liệu tự áp khi backend khởi động):
@@ -68,7 +70,8 @@ Cần: **Docker Desktop** (có Docker Compose), **Node.js 20+** và npm (để c
 
 6. Mở **http://localhost:8080**. API ở `http://localhost:4000/api` (chỉ nghe trên máy, kiểm tra `GET /api/health`).
 
-**Tài khoản:** demo `demo@nouri.vn` / `Demo@123` (dữ liệu mẫu, dùng khi trình bày); Admin là `ADMIN_EMAIL`/`ADMIN_PASSWORD` trong `.env`.
+**Tài khoản:** demo `demo@nouri.vn` (dữ liệu mẫu, dùng khi trình bày; chỉ có khi `SEED_DEMO=true`, mật khẩu là `DEMO_PASSWORD` trong
+`.env`); Admin là `ADMIN_EMAIL`/`ADMIN_PASSWORD` trong `.env`. Triển khai thật: xem [docs/trien-khai.md](docs/trien-khai.md).
 
 **Ảnh món:** seed chưa có ảnh món thật; Admin tải ảnh ở *Admin → Công thức → Sửa*, hoặc dùng `npm run upload:recipe-photos`
 (cần `CLOUDINARY_*`, xem [docs/anh-mon-can-tim.md](docs/anh-mon-can-tim.md)).

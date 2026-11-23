@@ -1,7 +1,7 @@
 # Sơ đồ dữ liệu (ERD)
 
-Sinh tự động từ `backend/prisma/schema.prisma` bằng `node scripts/docs/gen-erd.mjs` (2026-11-15).
-32 bảng, 19 kiểu enum, 39 quan hệ khóa ngoại. CSDL: PostgreSQL qua Prisma; mọi thay đổi schema có migration
+Sinh tự động từ `backend/prisma/schema.prisma` bằng `node scripts/docs/gen-erd.mjs` (2026-11-23).
+32 bảng, 20 kiểu enum, 39 quan hệ khóa ngoại. CSDL: PostgreSQL qua Prisma; mọi thay đổi schema có migration
 riêng trong `backend/prisma/migrations/`.
 
 Ký hiệu: `||--o{` một – nhiều, `||--o|` một – một (khóa ngoại duy nhất), `|o--o{` khóa ngoại có thể rỗng. Nhãn trên đường là tên quan hệ
@@ -314,6 +314,7 @@ erDiagram
     String id PK
     String code UK
     String label UK
+    AllergenGroupPurpose purpose
     String parentId FK
     Int sortOrder
     DateTime hiddenAt
@@ -448,6 +449,7 @@ erDiagram
 | AdminAuditTargetType | RECIPE, CATALOG, USER, COMMUNITY_POST, COMMUNITY_COMMENT |
 | ReceiptOcrProvider | TESSERACT, OPENAI, MOCK |
 | ReceiptScanStatus | PROCESSING, READY, COMMITTED, REVERSED, FAILED |
+| AllergenGroupPurpose | ALLERGEN, DIET_MEAT, DIET_ANIMAL |
 | AllergenTermLevel | CONTAINS // chắc chắn chứa (vd. Nước tương → Đậu nành), MAY_CONTAIN // có thể chứa, tùy nhãn hàng (vd. Tương đen → Gluten); vẫn bị lọc khi dị ứng, nhãn ghi "Có thể chứa" |
 | FoodTextMatch | PREFIX // tên bắt đầu bằng cụm ("đậu" → "đậu hũ", "đậu xanh"), PREFIX_WORD // tên bắt đầu bằng nguyên cụm từ ("bánh mì" → "bánh mì sandwich", không khớp "bánh mìx"), CONTAINS_WORD // tên có nguyên từ này ở bất kỳ đâu ("khô" → "mì khô") |
 | ReceiptKeywordMatch | WORD // có nguyên từ ở bất kỳ đâu ("vat", "giam gia"), PREFIX // dòng bắt đầu bằng ("tong", "tien mat"), LINE // cả dòng đúng bằng từ này, có thể kèm các từ LINE_SUFFIX cùng lý do ("tui", "tui nilon nho"), LINE_SUFFIX // từ đi kèm được phép sau từ LINE ("nilon", "giay") |
@@ -880,6 +882,7 @@ Nhóm dị ứng. Nhóm có con (Hải sản → Cá, Giáp xác, Nhuyễn thể
 | id | String | có | PK | — |
 | code | String | có | UK | — |
 | label | String | có | UK | — |
+| purpose | AllergenGroupPurpose (enum) | có | — | — |
 | parentId | String | không | FK | — |
 | sortOrder | Int | có | — | — |
 | hiddenAt | DateTime | không | — | — |

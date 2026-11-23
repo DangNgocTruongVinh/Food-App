@@ -605,6 +605,14 @@ model SavedPost {
 // Code đọc qua services/catalog/catalog.service.ts (cache trong bộ nhớ, làm mới khi Admin sửa). Ẩn (hiddenAt) = không dùng nữa,
 // giữ dòng để nhật ký và dữ liệu cũ còn tham chiếu được.
 
+// Nhóm dị ứng (ALLERGEN) hay nhóm từ để kiểm nhãn chay (audit H1): DIET_MEAT = thịt/cá cho nhãn Ăn chay, DIET_ANIMAL = sản phẩm
+// động vật khác cho nhãn Thuần chay (cộng với nhóm Hải sản, Sữa, Trứng). Nhóm DIET_* không dùng cho hồ sơ dị ứng.
+enum AllergenGroupPurpose {
+  ALLERGEN
+  DIET_MEAT
+  DIET_ANIMAL
+}
+
 enum AllergenTermLevel {
   CONTAINS // chắc chắn chứa (vd. Nước tương → Đậu nành)
   MAY_CONTAIN // có thể chứa, tùy nhãn hàng (vd. Tương đen → Gluten); vẫn bị lọc khi dị ứng, nhãn ghi "Có thể chứa"
@@ -612,16 +620,17 @@ enum AllergenTermLevel {
 
 // Nhóm dị ứng. Nhóm có con (Hải sản → Cá, Giáp xác, Nhuyễn thể) là nhóm gộp: chọn nhóm cha = chọn mọi nhóm con.
 model AllergenGroup {
-  id         String              @id @default(cuid())
-  code       String              @unique
-  label      String              @unique
+  id         String               @id @default(cuid())
+  code       String               @unique
+  label      String               @unique
+  purpose    AllergenGroupPurpose @default(ALLERGEN)
   parentId   String?
-  parent     AllergenGroup?      @relation("AllergenGroupParent", fields: [parentId], references: [id], onDelete: Restrict)
-  children   AllergenGroup[]     @relation("AllergenGroupParent")
-  sortOrder  Int                 @default(0)
+  parent     AllergenGroup?       @relation("AllergenGroupParent", fields: [parentId], references: [id], onDelete: Restrict)
+  children   AllergenGroup[]      @relation("AllergenGroupParent")
+  sortOrder  Int                  @default(0)
   hiddenAt   DateTime?
-  createdAt  DateTime            @default(now())
-  updatedAt  DateTime            @updatedAt
+  createdAt  DateTime             @default(now())
+  updatedAt  DateTime             @updatedAt
   aliases    AllergenAlias[]
   terms      AllergenTerm[]
   exclusions AllergenExclusion[]

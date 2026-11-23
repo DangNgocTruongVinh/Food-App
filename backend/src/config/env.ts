@@ -14,6 +14,8 @@ export const envSchema = z.object({
   OPENAI_MODEL: z.string().default("gpt-5-mini"),
   // Quét hóa đơn bằng AI (GĐ3c phần 2): model phải đọc được ảnh.
   OPENAI_VISION_MODEL: z.preprocess((value) => (value === "" ? undefined : value), z.string().default("gpt-5-mini")),
+  // Kiểm duyệt bài cộng đồng (Moderation API, audit M6): để trống = omni-moderation-latest.
+  OPENAI_MODERATION_MODEL: z.preprocess((value) => (value === "" ? undefined : value), z.string().default("omni-moderation-latest")),
   // Upload ảnh (tùy chọn): đủ cả ba hoặc không có biến nào; không có thì API upload trả 503, phần còn lại vẫn chạy.
   // Email (quên mật khẩu): SMTP_HOST + MAIL_FROM là đủ để gửi (SMTP_USER/SMTP_PASS khi máy chủ cần đăng nhập, vd. Gmail
   // dùng App Password). Thiếu thì email chỉ được ghi ra log, /api/health báo email chưa cấu hình.

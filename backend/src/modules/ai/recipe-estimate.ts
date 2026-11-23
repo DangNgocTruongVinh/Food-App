@@ -31,6 +31,9 @@ export type RecipeEstimate = {
   ingredients: Array<{ original: string; name: string; matched: boolean }>;
 };
 
+/** Ước tính dinh dưỡng một món (Admin duyệt bài thành món): tối đa 45 giây, thử lại một lần. */
+export const RECIPE_ESTIMATE_TIMEOUT_MS = 45_000;
+
 export function createRecipeEstimator(client: Pick<OpenAI, "responses"> | null, model: string) {
   return async function estimate(recipe: RecipeToEstimate, knownNames: string[]): Promise<RecipeEstimate | null> {
     if (!client) return null;
@@ -42,7 +45,7 @@ export function createRecipeEstimator(client: Pick<OpenAI, "responses"> | null, 
         { role: "user", content: JSON.stringify({ recipe: { ...recipe, ingredients: recipe.ingredients.map((item, index) => ({ index, ...item })) }, knownNames }) },
       ],
       text: { format: zodTextFormat(estimateSchema, "recipe_estimate") },
-    }, { timeout: 45_000, maxRetries: 1 });
+    }, { timeout: RECIPE_ESTIMATE_TIMEOUT_MS, maxRetries: 1 });
     const parsed = estimateSchema.parse(JSON.parse(response.output_text));
     // Chỉ nhận tên có trong thư viện (viết đúng như thư viện) hoặc tên gốc; tên AI tự đặt khác đi thì giữ tên gốc.
     const known = new Map(knownNames.map((name) => [normalizeFoodText(name), name]));

@@ -110,14 +110,17 @@ Chi tiết cách kiểm: `docs/test-evidence/bao-mat.md`. Hướng xử lý: nâ
   trước. Lịch tuần, báo cáo, nhắc hạn tính theo giờ Việt Nam.
 - Bảng tin cộng đồng chỉ tải 30 bài mới nhất, chưa phân trang; lịch sử chat hiện 50 tin gần nhất.
 - Ô chọn công thức khi đăng bài lọc ở trình duyệt trên toàn bộ danh sách món (đủ với 33 món, cần chuyển sang tìm ở backend khi nhiều món).
-- Lượng nước ở Tổng quan chỉ ghi nhận trong lần xem, chưa lưu vào tài khoản.
+- Khối "Lượng nước" đã gỡ khỏi Tổng quan (23/11/2026, audit H3): mục tiêu 8 ly cố định cho mọi người và không lưu vào tài khoản
+  (tải lại trang là mất), nên dễ bị hiểu là chức năng giả.
 - **Chỉ có giao diện sáng** (bỏ chế độ tối 12/11/2026): máy để chế độ tối vẫn thấy giao diện sáng. Lý do: mỗi màn hình, trạng thái
   và ảnh món phải kiểm hai lần (tương phản, biểu đồ, trang chủ có bộ màu riêng), dễ sót lỗi trong thời gian còn lại; ưu tiên một giao
   diện sáng đã kiểm kỹ.
 
 ## 3. Hướng phát triển
 
-- **Lượng nước** theo ngày lưu vào tài khoản; thành viên/chủ đề nổi bật tính từ dữ liệu thật.
+- **Lượng nước** (đã gỡ khỏi Tổng quan): làm lại đúng cách — lưu theo ngày giờ VN vào database (bảng ghi số ly theo người dùng × ngày
+  + API), mục tiêu tính theo cân nặng trong hồ sơ thay vì 8 ly cố định, có thống kê tuần ở Báo cáo.
+- Thành viên/chủ đề nổi bật trong cộng đồng tính từ dữ liệu thật.
 - **Theo dõi thành viên** (bảng tin theo người mình theo dõi, thông báo khi họ đăng bài).
 - Cộng đồng: tab "Dành cho bạn" (gợi ý bài theo khẩu vị, R9), phân trang bảng tin.
 - **Đăng nhập Google (OAuth)**: tùy chọn ở giai đoạn 6, chưa làm.

@@ -1,6 +1,7 @@
 import type { DietType, MealType } from "@prisma/client";
 import { describe, expect, it } from "vitest";
-import { filterRecipesForProfile } from "../services/dietary.service.js";
+import { allergyGroups, resolveRestriction } from "../services/allergy-groups.js";
+import { findDietViolations, filterRecipesForProfile } from "../services/dietary.service.js";
 import { fallbackPlan, reconcileAIPlan } from "../modules/meal-plans/meal-plan-generator.js";
 import { scoredPlan } from "../modules/meal-plans/meal-plan-scorer.js";
 import { pickSwapRecipe } from "../modules/meal-plans/meal-swap.js";
@@ -225,5 +226,42 @@ describe("Dị ứng gõ theo nhiều cách: cùng kết quả với nhóm chu�
   it("bánh mì ốp la bị lọc với hồ sơ \"trứng gà\" (lỗi người dùng báo)", () => {
     const banhMi = visible.find((recipe) => recipe.name.startsWith("Bánh mì ốp la"))!;
     expect(recipeFit(banhMi, { allergies: ["trứng gà"] })).toMatchObject({ safe: false, allergens: ["Trứng (Trứng)"] });
+  });
+});
+
+// Audit H1: từ kiểm nhãn chay nằm trong danh mục (nhóm DIET_MEAT/DIET_ANIMAL), và lọc cho hồ sơ chay kiểm cả nguyên liệu
+// (phòng thủ hai lớp): món GẮN NHÃN chay nhưng có thịt (dữ liệu cũ, sửa thẳng database) cũng không được gợi ý.
+describe("Nhãn chay sai với nguyên liệu: bị chặn khi lưu và không được gợi ý (audit H1)", () => {
+  const vegan = visible.find((recipe) => recipe.dietTags.includes("VEGAN"))!;
+  const mislabelled = (slug: string, ingredient: string, dietTags: DietType[] = ["VEGETARIAN"]) => ({
+    ...vegan, id: slug, slug, name: `Món ${slug}`, dietTags,
+    ingredients: [...vegan.ingredients, { ...vegan.ingredients[0], id: `${slug}-x`, name: ingredient }],
+  });
+  const bad = [mislabelled("lap-xuong", "Lạp xưởng"), mislabelled("thit-vit", "Thịt vịt"), mislabelled("mat-ong", "Mật ong", ["VEGAN", "VEGETARIAN"])];
+  const fine = [mislabelled("gio-chay", "Giò chay"), mislabelled("long-do", "Lòng đỏ trứng")];
+  const pool = [...visible, ...bad, ...fine];
+
+  it("findDietViolations (dùng khi Admin lưu món) báo các từ mới bổ sung; ngoại lệ \"chay\", \"lòng đỏ\" không bị báo", () => {
+    expect(findDietViolations(bad[0])).toEqual([{ ingredient: "Lạp xưởng", terms: ["lạp xưởng"], dietTag: "VEGETARIAN" }]);
+    expect(findDietViolations(bad[1])).toEqual([{ ingredient: "Thịt vịt", terms: ["thịt", "vịt"], dietTag: "VEGETARIAN" }]);
+    expect(findDietViolations(bad[2])).toEqual([{ ingredient: "Mật ong", terms: ["mật ong"], dietTag: "VEGAN" }]);
+    for (const recipe of fine) expect(findDietViolations(recipe), recipe.slug).toEqual([]);
+  });
+
+  it.each(["VEGETARIAN", "VEGAN"] as const)("hồ sơ %s: món gắn nhãn chay có thịt/mật ong không xuất hiện ở mọi nơi lọc", (dietType) => {
+    const profile = { dietType, allergies: [], dislikedFoods: [] };
+    const badSlugs = bad.filter((recipe) => dietType === "VEGAN" || recipe.slug !== "mat-ong").map((recipe) => recipe.slug);
+    const results = [safeRecipes(pool, profile), filterRecipesForProfile(pool, profile)].map((list) => list.map((recipe) => recipe.slug));
+    for (const slugs of results) {
+      for (const slug of badSlugs) expect(slugs).not.toContain(slug);
+      if (dietType === "VEGETARIAN") for (const recipe of fine) expect(slugs).toContain(recipe.slug);
+    }
+    for (const recipe of bad.filter((item) => badSlugs.includes(item.slug))) expect(recipeFit(recipe, profile).safe, recipe.slug).toBe(false);
+  });
+
+  it("nhóm kiểm nhãn chay không phải nhóm dị ứng: không có trong gợi ý ô Dị ứng, \"thịt\"/\"lạp xưởng\" không thành nhóm", () => {
+    expect(allergyGroups().map((group) => group.id)).not.toEqual(expect.arrayContaining(["DIET_MEAT"]));
+    expect(allergyGroups().some((group) => group.id.startsWith("DIET_"))).toBe(false);
+    for (const raw of ["thịt", "lạp xưởng", "mật ong", "Thịt (kiểm nhãn chay)"]) expect(resolveRestriction(raw).groups, raw).toEqual([]);
   });
 });

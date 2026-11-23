@@ -12,7 +12,7 @@ import {
 import { invalidatePantryQueries, pantryMutations, pantryQueries } from "./pantry.queries";
 import {
   activeStatFilter, applyStatFilter, expiryCopy, filterAndSortPantry, formatPantryQuantity, getDaysLeft, getPantryStatus,
-  initialPantryForm, isBelowMinimum, isExpiryEstimated, itemsToUseSoon, pantryCategories, pantryCategoryOptions, pantryCounts, pantryDoneMessage,
+  initialPantryForm, withDefaultCategory, isBelowMinimum, isExpiryEstimated, itemsToUseSoon, pantryCategories, pantryCategoryOptions, pantryCounts, pantryDoneMessage,
   pantryItemPage, pantryStatusLabel, stockWarning, validatePantryForm, type PantryFilters,
 } from "./pantry.logic";
 
@@ -245,7 +245,7 @@ describe("Pantry page logic", () => {
   });
 
   it("validates each form field with a message that says how to fix it", () => {
-    expect(validatePantryForm(initialPantryForm, false)).toEqual({ name: "Nhập tên thực phẩm, ví dụ: Ức gà." });
+    expect(validatePantryForm(initialPantryForm, false)).toEqual({ name: "Nhập tên thực phẩm, ví dụ: Ức gà.", category: "Chọn nhóm thực phẩm." });
     expect(validatePantryForm(form, false)).toEqual({});
     expect(validatePantryForm({ ...form, expiryDate: "" }, false)).toEqual({});
     const errors = validatePantryForm({ ...form, name: "  ", quantity: 0, minimumStock: -1, note: "x".repeat(301) }, true);
@@ -254,8 +254,16 @@ describe("Pantry page logic", () => {
     expect(errors.quantity).toBe("Nhập số lượng lớn hơn 0.");
   });
 
+  // Audit M7: nhóm mặc định không viết cứng, lấy nhóm đầu tiên của danh mục (/api/catalog).
+  it("fills the default category from the catalog's first category, never overwriting a chosen one", () => {
+    expect(withDefaultCategory(initialPantryForm, ["Trái cây", "Rau củ"]).category).toBe("Trái cây");
+    expect(withDefaultCategory(initialPantryForm, SEED_FOOD_CATEGORIES).category).toBe(SEED_FOOD_CATEGORIES[0]);
+    expect(withDefaultCategory(initialPantryForm, [])).toBe(initialPantryForm);
+    expect(withDefaultCategory({ ...initialPantryForm, category: "Gia vị" }, ["Trái cây"]).category).toBe("Gia vị");
+  });
+
   it("keeps the default form, category options and done messages", () => {
-    expect(initialPantryForm).toMatchObject({ category: "Rau củ", quantity: 1, unit: "ITEM", storageLocation: "REFRIGERATOR", expiryDate: "" });
+    expect(initialPantryForm).toMatchObject({ category: "", quantity: 1, unit: "ITEM", storageLocation: "REFRIGERATOR", expiryDate: "" });
     expect(pantryCategoryOptions("Rau củ", SEED_FOOD_CATEGORIES)).toEqual(["Rau củ", "Thịt & cá", "Trứng & sữa", "Đậu & hạt", "Ngũ cốc", "Trái cây", "Gia vị", "Khác"]);
     expect(pantryCategoryOptions("Đồ hộp", SEED_FOOD_CATEGORIES)[0]).toBe("Đồ hộp");
     expect(pantryDoneMessage("create", "Ức gà")).toBe("Đã lưu “Ức gà” vào kho.");
