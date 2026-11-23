@@ -5,7 +5,7 @@ import {
   nutritionChatSystemPrompt, nutritionChatUserPrompt,
 } from "./ai.prompts.js";
 import { generatedPlanSchema } from "./ai.schema.js";
-import { createOpenAIService } from "./openai.service.js";
+import { CHAT_TIMEOUT_MS, createOpenAIService } from "./openai.service.js";
 
 vi.mock("../../config/env.js", () => ({
   env: { OPENAI_API_KEY: undefined, OPENAI_MODEL: "gpt-5-mini" },
@@ -76,7 +76,7 @@ describe("OpenAI adapter (mocked; no external requests)", () => {
         ...history,
         { role: "user", content: nutritionChatUserPrompt(context, "Tôi nên ăn gì?") },
       ],
-    }, { timeout: 45_000, maxRetries: 1 });
+    }, { timeout: CHAT_TIMEOUT_MS, maxRetries: 1 });
   });
 
   it("system prompt pins allergy and topic rules against 'ignore instructions' requests", () => {

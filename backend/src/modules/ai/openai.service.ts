@@ -8,6 +8,7 @@ import {
 import { generatedPlanSchema, type GeneratedPlan } from "./ai.schema.js";
 
 export type ChatTurn = { role: "user" | "assistant"; content: string };
+/** Trợ lý AI (một câu trả lời): tối đa 45 giây, thử lại một lần. */
 export const CHAT_TIMEOUT_MS = 45_000;
 // Tạo thực đơn 7 ngày: tối đa 120 giây (đo thực tế 80–90+ giây), không thử lại (nginx chờ 180 giây); quá hạn/lỗi thì dùng bộ tạo dự phòng.
 // Trước đây không đặt: SDK chờ tới 10 phút và thử lại 2 lần, nginx trả 504 sau 60 giây dù thực đơn vẫn được tạo sau đó.

@@ -22,9 +22,9 @@ const post = { text: "Hôm nay mình nấu canh chua cá lóc.", imageUrls: ["ht
 describe("createPostReviewer", () => {
   it("bài sạch, liên quan ăn uống → không đánh dấu; hai bước gọi song song, chung tín hiệu hủy, không thử lại", async () => {
     const fake = fakeClient();
-    await expect(createPostReviewer(fake.client, "gpt-5-mini")(post)).resolves.toEqual({ flagged: false, reason: null });
+    await expect(createPostReviewer(fake.client, "gpt-5-mini", "omni-moderation-latest")(post)).resolves.toEqual({ flagged: false, reason: null });
     const [body, options] = fake.moderations.create.mock.calls[0] as unknown as [{ model: string; input: unknown[] }, object];
-    expect(body.model).toBe("omni-moderation-latest");
+    expect(body.model).toBe("omni-moderation-latest"); // model kiểm duyệt từ OPENAI_MODERATION_MODEL (audit M6)
     expect(body.input).toEqual([{ type: "text", text: post.text }, { type: "image_url", image_url: { url: post.imageUrls[0] } }]);
     expect(options).toEqual({ signal: expect.any(AbortSignal), maxRetries: 0 });
     const [, topicOptions] = fake.responses.create.mock.calls[0] as unknown as [object, object];
@@ -33,19 +33,19 @@ describe("createPostReviewer", () => {
 
   it("Moderation API đánh dấu → lý do nêu nhóm vi phạm bằng tiếng Việt", async () => {
     const fake = fakeClient({ flagged: true, categories: { violence: true, "violence/graphic": true, hate: false } });
-    await expect(createPostReviewer(fake.client, "m")(post)).resolves.toEqual({ flagged: true, reason: "Nội dung nhạy cảm (bạo lực)" });
+    await expect(createPostReviewer(fake.client, "m", "mod")(post)).resolves.toEqual({ flagged: true, reason: "Nội dung nhạy cảm (bạo lực)" });
   });
 
   it("không liên quan ăn uống → đánh dấu kèm lý do của model", async () => {
     const fake = fakeClient({ foodRelated: false });
-    const review = await createPostReviewer(fake.client, "m")({ text: "Bán điện thoại giá rẻ", imageUrls: [] });
+    const review = await createPostReviewer(fake.client, "m", "mod")({ text: "Bán điện thoại giá rẻ", imageUrls: [] });
     expect(review).toEqual({ flagged: true, reason: "Có thể không liên quan ăn uống: Quảng cáo bán điện thoại." });
   });
 
   it("Moderation API lỗi/hết giờ → null (đăng như thường)", async () => {
     vi.spyOn(console, "warn").mockImplementation(() => undefined);
     const fake = fakeClient({ moderationError: new Error("timeout") });
-    await expect(createPostReviewer(fake.client, "m")(post)).resolves.toBeNull();
+    await expect(createPostReviewer(fake.client, "m", "mod")(post)).resolves.toBeNull();
   });
 
   it("quá 8 giây → hủy cả hai lần gọi, trả null (đăng như dự phòng)", async () => {
@@ -55,7 +55,7 @@ describe("createPostReviewer", () => {
       options.signal.addEventListener("abort", () => reject(new Error("aborted")));
     }));
     const client = { moderations: { create: hang }, responses: { create: hang } } as never;
-    const pending = createPostReviewer(client, "m")(post);
+    const pending = createPostReviewer(client, "m", "mod")(post);
     await vi.advanceTimersByTimeAsync(REVIEW_TIMEOUT_MS - 1);
     expect(hang).toHaveBeenCalledTimes(2);
     await vi.advanceTimersByTimeAsync(1);
@@ -66,13 +66,13 @@ describe("createPostReviewer", () => {
   it("bước kiểm chủ đề lỗi → chỉ dùng kết quả Moderation", async () => {
     vi.spyOn(console, "warn").mockImplementation(() => undefined);
     const clean = fakeClient({ topicError: new Error("500") });
-    await expect(createPostReviewer(clean.client, "m")(post)).resolves.toEqual({ flagged: false, reason: null });
+    await expect(createPostReviewer(clean.client, "m", "mod")(post)).resolves.toEqual({ flagged: false, reason: null });
     const flagged = fakeClient({ flagged: true, categories: { harassment: true }, topicError: new Error("500") });
-    await expect(createPostReviewer(flagged.client, "m")(post)).resolves.toEqual({ flagged: true, reason: "Nội dung nhạy cảm (quấy rối)" });
+    await expect(createPostReviewer(flagged.client, "m", "mod")(post)).resolves.toEqual({ flagged: true, reason: "Nội dung nhạy cảm (quấy rối)" });
   });
 
   it("không có key → null, không gọi API", async () => {
-    await expect(createPostReviewer(null, "m")(post)).resolves.toBeNull();
+    await expect(createPostReviewer(null, "m", "mod")(post)).resolves.toBeNull();
   });
 });
 
