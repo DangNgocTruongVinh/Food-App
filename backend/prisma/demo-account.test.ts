@@ -52,7 +52,7 @@ describe("seedDemoAccount", () => {
 
   it("only targets the demo email and never overwrites an existing demo profile or pantry", async () => {
     client.pantryItem.count.mockResolvedValue(3);
-    const result = await seedDemoAccount(client as never, now);
+    const result = await seedDemoAccount(client as never, "Demo-dai-du-8", now);
     expect(client.user.upsert).toHaveBeenCalledWith(expect.objectContaining({ where: { email: DEMO_EMAIL }, update: {} }));
     expect(client.nutritionProfile.update.mock.calls[0][0].data).not.toHaveProperty("dietType");
     expect(client.pantryItem.createMany).not.toHaveBeenCalled();
@@ -62,7 +62,7 @@ describe("seedDemoAccount", () => {
 
   it("creates the sample pantry when the demo pantry is empty", async () => {
     client.pantryItem.count.mockResolvedValue(0);
-    await seedDemoAccount(client as never, now);
+    await seedDemoAccount(client as never, "Demo-dai-du-8", now);
     expect(client.pantryItem.createMany.mock.calls[0][0].data).toHaveLength(demoPantryTemplate.length);
   });
 });
@@ -88,7 +88,7 @@ describe("resetDemoAccount", () => {
   const samples = { hashes: vi.fn(async () => ["h1"]), rebuild: vi.fn(async () => ({ accounts: 8, posts: 8, likes: 20 })) };
   const history = vi.fn(async () => ({ meals: 10, likes: 3 }));
   const report = vi.fn(async () => ({ transactions: 48, meals: 12 }));
-  const reset = () => resetDemoAccount(client as never, now, samples as never, history as never, report as never);
+  const reset = () => resetDemoAccount(client as never, "Demo-dai-du-8", now, samples as never, history as never, report as never);
   beforeEach(() => {
     for (const model of Object.values(tx)) for (const fn of Object.values(model)) fn.mockReset().mockResolvedValue({ count: 2 });
     client.user.findUnique.mockReset().mockResolvedValue({ id: "demo-id" });

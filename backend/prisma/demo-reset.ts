@@ -1,11 +1,14 @@
 import { PrismaClient } from "@prisma/client";
 import { createInterface } from "node:readline/promises";
+import { demoResetPassword } from "../src/config/seed-env.js";
 import { confirmReset, DEMO_EMAIL, resetDemoAccount } from "./demo-account.js";
 
 // Đặt lại tài khoản demo (chạy trước buổi demo): `npm run demo:reset -- --yes` (trong container backend) hoặc
 // `npm run demo:reset:dev -- --yes` (máy dev). Không có --yes thì hỏi xác nhận; không có terminal để hỏi thì dừng.
+// Cần SEED_DEMO=true và DEMO_PASSWORD trong .env; SEED_DEMO tắt (máy chủ thật) thì từ chối.
 
 async function main() {
+  const password = demoResetPassword(); // SEED_DEMO tắt thì dừng ngay (audit M4)
   const rl = createInterface({ input: process.stdin, output: process.stdout });
   const confirmed = await confirmReset(process.argv.slice(2), Boolean(process.stdin.isTTY), (question) => rl.question(question)).finally(() => rl.close());
   if (!confirmed) {
@@ -15,7 +18,7 @@ async function main() {
   }
   const prisma = new PrismaClient();
   try {
-    const result = await resetDemoAccount(prisma);
+    const result = await resetDemoAccount(prisma, password);
     // Ảnh bài viết của demo trên Cloudinary: xóa sau khi transaction thành công (lỗi chỉ ghi log). Nạp muộn vì cần biến môi trường.
     if (result.imagePublicIds.length) {
       const { deleteImageQuietly } = await import("../src/services/image-upload.service.js");

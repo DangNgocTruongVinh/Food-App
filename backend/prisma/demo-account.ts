@@ -12,7 +12,6 @@ import { rebuildSampleAccounts, samplePasswordHashes } from "./sample-accounts.j
 import { DEMO_EMAIL } from "../src/config/demo.js";
 
 export { DEMO_EMAIL };
-export const DEMO_PASSWORD = "Demo@123";
 export const DEMO_NAME = "Minh Anh";
 
 export const demoProfile = {
@@ -53,12 +52,12 @@ type DemoClient = Pick<PrismaClient, "user" | "nutritionProfile" | "pantryItem" 
  * (demo-history.ts) nếu demo chưa có thực đơn nào. Không ghi đè hồ sơ, kho hay thực đơn demo đã có (người dùng có thể đang thử),
  * chỉ tính lại 4 chỉ tiêu từ chính hồ sơ đó. Gọi sau khi đã tạo tài khoản mẫu (lịch sử mẫu thích bài của họ).
  */
-export async function seedDemoAccount(client: DemoClient, now = new Date()) {
+export async function seedDemoAccount(client: DemoClient, password: string, now = new Date()) {
   const user = await client.user.upsert({
     where: { email: DEMO_EMAIL },
     update: {},
     create: {
-      email: DEMO_EMAIL, name: DEMO_NAME, passwordHash: await bcrypt.hash(DEMO_PASSWORD, 12),
+      email: DEMO_EMAIL, name: DEMO_NAME, passwordHash: await bcrypt.hash(password, 12),
       profile: { create: { ...demoProfile, ...nutritionTargetFields(demoProfile) } },
     },
   });
@@ -82,11 +81,11 @@ type ResetClient = Pick<PrismaClient, "user" | "$transaction">;
  * Trả về publicId ảnh bài viết đã xóa để xóa trên Cloudinary sau khi transaction thành công.
  */
 export async function resetDemoAccount(
-  client: ResetClient, now = new Date(), samples = { hashes: samplePasswordHashes, rebuild: rebuildSampleAccounts },
+  client: ResetClient, password: string, now = new Date(), samples = { hashes: samplePasswordHashes, rebuild: rebuildSampleAccounts },
   history = createDemoHistory, report = createDemoReportHistory,
 ) {
   const existing = await client.user.findUnique({ where: { email: DEMO_EMAIL }, select: { id: true } });
-  const passwordHash = await bcrypt.hash(DEMO_PASSWORD, 12);
+  const passwordHash = await bcrypt.hash(password, 12);
   const sampleHashes = await samples.hashes();
   return client.$transaction(async (tx) => {
     const user = existing ?? await tx.user.create({ data: { email: DEMO_EMAIL, name: DEMO_NAME, passwordHash } });

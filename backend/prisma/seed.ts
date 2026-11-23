@@ -1,7 +1,7 @@
 import { PrismaClient } from "@prisma/client";
 import { readSeedEnv } from "../src/config/seed-env.js";
 import { seedCatalog } from "../src/services/catalog/catalog.service.js";
-import { DEMO_EMAIL, DEMO_PASSWORD, seedDemoAccount } from "./demo-account.js";
+import { DEMO_EMAIL, seedDemoAccount } from "./demo-account.js";
 import { seedRecipes } from "./seed-data.js";
 import { seedSampleAccounts } from "./sample-accounts.js";
 import { seedAdminAccount, seedRecipeCatalog } from "./seed-steps.js";
@@ -23,6 +23,12 @@ async function main() {
     console.warn("Bỏ qua tạo tài khoản Admin: chưa khai báo ADMIN_EMAIL và ADMIN_PASSWORD.");
   }
 
+  // Audit M4: tài khoản demo và tài khoản mẫu minh họa chỉ khi SEED_DEMO=true (mật khẩu demo: DEMO_PASSWORD trong .env).
+  if (!options.demo) {
+    console.log("Bỏ qua tài khoản demo và tài khoản mẫu: SEED_DEMO chưa bật.");
+    console.log("Seed hoàn tất.");
+    return;
+  }
   // Đổi tên nutriplan → nouri: chuyển tài khoản demo cũ sang email mới thay vì tạo thêm tài khoản thứ hai.
   const legacyEmail = "demo@nutriplan.vn";
   if (!(await prisma.user.findUnique({ where: { email: DEMO_EMAIL } })) && (await prisma.user.findUnique({ where: { email: legacyEmail } }))) {
@@ -33,12 +39,12 @@ async function main() {
   console.log(samples
     ? `Tài khoản mẫu minh họa: đã tạo ${samples.accounts} tài khoản, ${samples.posts} bài viết, ${samples.likes} lượt thích (mật khẩu ngẫu nhiên, không in).`
     : "Tài khoản mẫu minh họa: đã có đủ, giữ nguyên.");
-  const demo = await seedDemoAccount(prisma);
+  const demo = await seedDemoAccount(prisma, options.demo.password);
   console.log(demo.pantryCreated
     ? "Kho demo: đã tạo kho mẫu (hạn tính từ hôm nay)."
     : "Kho demo: đã có dữ liệu, giữ nguyên (đặt lại bằng npm run demo:reset -- --yes).");
   if (demo.historyCreated) console.log("Lịch sử mẫu của demo: đã tạo thực đơn 2 tuần trước (dữ liệu mẫu).");
-  console.log(`Seed hoàn tất. Demo: ${DEMO_EMAIL} / ${DEMO_PASSWORD}`);
+  console.log(`Seed hoàn tất. Demo: ${DEMO_EMAIL} (mật khẩu là DEMO_PASSWORD trong .env, không in).`);
 }
 
 main().finally(() => prisma.$disconnect());
