@@ -57,8 +57,8 @@ commit, kể cả trong lịch sử git (xem mục "Đã kiểm, không có vấ
 | backend/src/services/food-category.ts:4 ↔ frontend/src/utils/food-categories.ts:2 (**B7**) | 8 nhóm thực phẩm `["Rau củ", "Thịt & cá", …]` | Danh sách nghiệp vụ ở hai phía, không có test giữ khớp; lệch thì lọc Kho/đi chợ sai nhóm | **vừa** | Đưa vào file hằng dùng chung ở B6 | S |
 | backend/src/modules/ai/openai.service.ts:14 ↔ frontend/nginx.conf (`proxy_read_timeout 180s`) (**B5**) | `MEAL_PLAN_TIMEOUT_MS = 120_000` | Hai giá trị phụ thuộc nhau ở hai file (đã từng gây lỗi 504); không có kiểm tra | **vừa** | Thêm test đọc `nginx.conf` kiểm `proxy_read_timeout` > `MEAL_PLAN_TIMEOUT_MS` | S |
 | frontend/src/components/admin/AdminRecipeImageField.tsx:55, frontend/src/components/pantry/ReceiptScanPicker.tsx:51, frontend/src/features/landing/landing.data.ts:57, frontend/src/components/community/PostComposer.tsx:37 | Chữ "tối đa 5 MB", "tối đa 4 ảnh", "2000 ký tự" viết thẳng trong chuỗi | Chuỗi giao diện lặp lại giá trị giới hạn | thấp | Lấy số từ hằng ở B6 khi làm B6 | S |
-| backend/src/modules/ai/recipe-estimate.ts:44 | `timeout: 45_000` | Thời gian chờ không có tên (các chỗ khác đều có tên) | thấp | Đặt tên hằng (vd. dùng chung `CHAT_TIMEOUT_MS`) | S |
-| backend/src/modules/community/community-ai-review.ts:45 | `model: "omni-moderation-latest"` | Tên model AI cứng (các model khác đọc từ `.env`) | thấp | Biến `.env` tùy chọn `OPENAI_MODERATION_MODEL` (mặc định giữ nguyên) | S |
+| backend/src/modules/ai/recipe-estimate.ts:44 (**đã sửa 23/11**, `RECIPE_ESTIMATE_TIMEOUT_MS`) | `timeout: 45_000` | Thời gian chờ không có tên (các chỗ khác đều có tên) | thấp | Đặt tên hằng (vd. dùng chung `CHAT_TIMEOUT_MS`) | S |
+| backend/src/modules/community/community-ai-review.ts:45 (**đã sửa 23/11**, `OPENAI_MODERATION_MODEL`) | `model: "omni-moderation-latest"` | Tên model AI cứng (các model khác đọc từ `.env`) | thấp | Biến `.env` tùy chọn `OPENAI_MODERATION_MODEL` (mặc định giữ nguyên) | S |
 | backend/src/modules/auth/auth.routes.ts:18, 22–24; notifications/expiry-email.routes.ts:19; suggestions/suggestions.routes.ts:18–19 | `rateLimit({ windowMs: 60_000, max: 20 })`, `3_600_000 / 5`, `60_000 / 120` | Giới hạn lượt phụ thuộc triển khai, viết thẳng trong file route | thấp | Giữ trong code (là chính sách bảo mật), chỉ đưa thành hằng có tên ở đầu file | S |
 | 12 file backend (vd. recipe-fit.service.ts:9, knowledge-based.ts:26, reports.logic.ts:6, refresh-token.service.ts:14…) | `const DAY_MS = 86_400_000` | Cùng một hằng khai báo lại 12 lần | thấp | Gom vào `backend/src/utils/vietnam-date.ts` (làm cùng E2) | S |
 
@@ -91,7 +91,7 @@ commit, kể cả trong lịch sử git (xem mục "Đã kiểm, không có vấ
 
 | file:dòng | Giá trị / đoạn ngắn | Vì sao nhóm D | Rủi ro | Đề xuất | Công sức |
 |---|---|---|---|---|---|
-| frontend/src/features/dashboard/dashboard.logic.ts:154, frontend/src/components/dashboard/WaterTracker.tsx:12 | Lượng nước: 8 ly, "2 lít" cố định, chỉ đếm trong lần xem (không lưu) | Chức năng chỉ ở giao diện, số không phải dữ liệu thật của người dùng (đã ghi ở docs/han-che.md) | thấp | Giữ, đã ghi hạn chế; lưu DB → hướng phát triển | M |
+| frontend/src/features/dashboard/dashboard.logic.ts:154, frontend/src/components/dashboard/WaterTracker.tsx:12 (**đã gỡ 23/11**) | Lượng nước: 8 ly, "2 lít" cố định, chỉ đếm trong lần xem (không lưu) | Chức năng chỉ ở giao diện, số không phải dữ liệu thật của người dùng (đã ghi ở docs/han-che.md) | thấp | Giữ, đã ghi hạn chế; lưu DB → hướng phát triển | M |
 
 ## E. Business logic cần tái cấu trúc
 
@@ -109,7 +109,7 @@ commit, kể cả trong lịch sử git (xem mục "Đã kiểm, không có vấ
 |---|---|---|---|---|---|
 | backend/src/services/email.service.ts:37–40 (**F1**) | `console.info(\`[email chưa cấu hình] Tới: … \n${message.text}\`)` | Chưa có SMTP thì ghi cả nội dung thư — gồm **liên kết đặt lại mật khẩu (token còn hiệu lực 30 phút)** và email người dùng — ra log, không phân biệt `NODE_ENV`. Ai đọc được log container là đổi được mật khẩu người khác | **vừa** | Production (`NODE_ENV=production`): chỉ ghi "Tới, Tiêu đề", bỏ nội dung; dev giữ như cũ. Thêm test | S |
 | docker-compose.yml:10 (**F2**) | `ports: - "5432:5432"` | PostgreSQL nghe trên mọi địa chỉ mạng của máy chạy demo (mạng LAN/Wi-Fi trường) — chỉ còn mật khẩu `POSTGRES_PASSWORD` bảo vệ; backend đã giới hạn `127.0.0.1:4000` | **vừa** | Đổi thành `"127.0.0.1:5432:5432"` (máy dev vẫn kết nối được); ghi README | S |
-| backend/prisma/demo-account.ts:15, README.md:71 | `DEMO_PASSWORD = "Demo@123"` | Mật khẩu tài khoản demo trong mã và README | thấp | Giữ: tài khoản demo có chủ đích, quyền USER, `demo:reset` đặt lại; nếu đưa lên mạng công khai thì đổi bằng biến `.env` hoặc tắt tài khoản demo → ghi trong README phần triển khai | S |
+| backend/prisma/demo-account.ts:15, README.md:71 (**đã sửa 23/11**, `SEED_DEMO` + `DEMO_PASSWORD` trong `.env`) | `DEMO_PASSWORD = "Demo@123"` | Mật khẩu tài khoản demo trong mã và README | thấp | Giữ: tài khoản demo có chủ đích, quyền USER, `demo:reset` đặt lại; nếu đưa lên mạng công khai thì đổi bằng biến `.env` hoặc tắt tài khoản demo → ghi trong README phần triển khai | S |
 
 ## Đã kiểm, không có vấn đề
 
@@ -124,6 +124,24 @@ commit, kể cả trong lịch sử git (xem mục "Đã kiểm, không có vấ
 - `MockProvider` (`backend/src/services/receipt/providers/mock-provider.ts`) chỉ dùng trong `scripts/eval-receipt-ocr.ts`; API chỉ nhận
   `"auto" | "tesseract" | "openai"` (`receipt-scan.schema.ts:14`) → không lọt vào luồng thật.
 - Không có truy vấn Prisma trong controller/route; không có số liệu quảng cáo giả trên giao diện (đã gỡ từ UI-11).
+
+## Lượt sửa trước buổi bảo vệ và triển khai thật (23/11/2026, nhánh `sua-truoc-trien-khai`)
+
+Theo lượt audit lại ngày 23/11 (0 nghiêm trọng, 3 cao, 9 vừa, 9 thấp; báo cáo trong phiên làm việc). Mỗi mục có test riêng.
+
+| Mục | Đã sửa | Test |
+|---|---|---|
+| H1 | Từ kiểm nhãn chay (thịt, sản phẩm động vật) chuyển từ `dietary.service.ts` vào bảng `AllergenGroup` (cột mới `purpose`: `DIET_MEAT`, `DIET_ANIMAL`), dữ liệu ban đầu ở `catalog-data.ts`, bổ sung vịt, ngan, ngỗng, dê, cừu, lạp xưởng, giò, chả, pate, xúc xích, thịt nguội, mỡ, tiết, lòng (ngoại lệ "chay", "lòng đỏ", "lòng trắng"). Admin quản lý ở `/admin/catalog` tab Nhãn chay (thêm/ẩn từ, có nhật ký; không ẩn được cả nhóm). Không vào bộ lọc dị ứng, gợi ý ô Dị ứng, `/api/catalog`. `matchesRequiredDiet` loại cả món gắn nhãn chay mà nguyên liệu vi phạm. Migration `20261123090000_diet_terms_catalog`. | `dietary-matrix.test.ts`, `admin-recipes.test.ts`, `admin-catalog.test.ts` |
+| H2 | Lời khuyên thực đơn so dị ứng theo mã nhóm (`FISH`; `SOY`, `TREE_NUT`) qua `resolveRestriction`, không theo chữ; thêm tên gọi khác walnut, almond, cashew cho Hạt cây. | `meal-plan-suggestions.test.ts` |
+| H3 | Gỡ khối Lượng nước khỏi Tổng quan; ghi hướng phát triển ở `docs/han-che.md`. | `dashboard.test.ts` |
+| M1, M2 | Số của công thức chỉ tiêu (cơ thể mặc định, −350/+300 kcal, tối thiểu 1.200, tỷ lệ đạm/béo) thành `NUTRITION_FORMULA` trong `shared/limits.ts`; câu "Cách tính" ở Hồ sơ ghép từ hằng. Kết quả tính không đổi. | `nutrition.service.test.ts` (so với công thức cũ trên 25.920 tổ hợp), `profile.logic.test.ts` |
+| M4 | Mật khẩu demo đọc từ `DEMO_PASSWORD`; seed chỉ tạo demo và tài khoản mẫu khi `SEED_DEMO=true`; `demo:reset` từ chối khi tắt; compose mặc định `SEED_DEMO=false`. | `seed-env.test.ts`, `demo-account.test.ts`, `docker-compose.test.ts` |
+| M5 | `FRONTEND_URL: ${FRONTEND_URL:-http://localhost:8080}` trong compose. | `docker-compose.test.ts` |
+| M6 | `OPENAI_MODERATION_MODEL` (mặc định `omni-moderation-latest`); thời gian chờ AI đều là hằng có tên. | `env.test.ts`, `community-ai-review.test.ts`, `ai-timeouts.test.ts` |
+| M7 | Nhóm mặc định khi thêm thực phẩm là nhóm đầu tiên của danh mục; backend trả 422 khi nhóm không có trong danh mục (giữ nguyên nhóm cũ đã ẩn thì vẫn sửa được). | `pantry.test.ts` (cả hai phía) |
+
+Hướng dẫn triển khai thật (biến bắt buộc, HTTPS, sao lưu): `docs/trien-khai.md`. `eval:recommend` và `eval:mealplan`: mọi chỉ số chất
+lượng giữ nguyên, chỉ thời gian chạy dao động.
 
 ---
 
@@ -183,6 +201,6 @@ Ba lượt nhỏ, mỗi lượt một nhánh, không đổi giá trị nào (ch�
 | ~~C — danh mục nhóm dị ứng, hạn gợi ý, viết tắt hóa đơn, danh sách ẩm thực vào DB~~ | **Đã làm** ở nhánh `hardcode-2` (xem mục C) |
 | E — gộp 5 hàm chuẩn hóa chữ | Các hàm cố ý khác nghĩa; gộp đổi kết quả so khớp, ảnh hưởng ma trận an toàn và số liệu đánh giá; công sức L |
 | E — chuyển `useQuery` khỏi 10 component | Chỉ là quy ước tổ chức, không lỗi người dùng thấy; đụng nhiều màn, cần so ảnh trước/sau |
-| D — lưu lượng nước theo ngày | Chức năng mới (cần migration, API), trái quy tắc đóng băng; đã ghi hạn chế |
-| B — giới hạn lượt, tên model kiểm duyệt ra `.env` | Rủi ro thấp; giá trị hiện tại là chính sách đã chốt, không cần đổi theo môi trường khi demo |
+| D — lưu lượng nước theo ngày | Chức năng mới (cần migration, API), trái quy tắc đóng băng; khối giao diện đã gỡ 23/11, ghi ở hướng phát triển |
+| B — giới hạn lượt ra `.env` (tên model kiểm duyệt: **đã làm 23/11**) | Rủi ro thấp; giá trị hiện tại là chính sách đã chốt, không cần đổi theo môi trường khi demo |
 | A — bổ sung tài liệu bộ phạt `fallbackPlan`, nguồn tỷ lệ đạm/béo | Chỉ là tài liệu, có thể làm cùng bước "Tài liệu" cuối, không cần lượt refactor |

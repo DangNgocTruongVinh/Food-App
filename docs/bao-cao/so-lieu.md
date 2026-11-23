@@ -191,13 +191,13 @@ Hiện chỉ có test với dữ liệu giả lập (`backend/src/services/recei
 
 ## 6. Quy mô hệ thống — đo thật trên mã
 
-Đếm lại ngày 15/11/2026 ở commit `3258f13` (mã giống `2ebc970`).
+Đếm lại ngày 15/11/2026 ở commit `3258f13` (mã giống `2ebc970`); enum và migration đếm lại 23/11/2026 (nhánh `sua-truoc-trien-khai`).
 
 | Mục | Số lượng | Nguồn |
 |---|---|---|
 | Endpoint API | 87 (công khai 11, đăng nhập 54, Admin 22) | `docs/bao-cao/api.md` (sinh từ routes bằng `node scripts/docs/gen-api.mjs`) |
-| Bảng CSDL / enum / quan hệ khóa ngoại | 32 / 19 / 39 (trong đó 9 bảng danh mục nghiệp vụ thêm ngày 14/11) | `docs/bao-cao/erd.md` (sinh từ `schema.prisma` bằng `node scripts/docs/gen-erd.mjs`) |
-| Migration | 26 | `backend/prisma/migrations/` (đếm thư mục) |
+| Bảng CSDL / enum / quan hệ khóa ngoại | 32 / 20 / 39 (trong đó 9 bảng danh mục nghiệp vụ thêm ngày 14/11; enum `AllergenGroupPurpose` thêm 23/11) | `docs/bao-cao/erd.md` (sinh từ `schema.prisma` bằng `node scripts/docs/gen-erd.mjs`) |
+| Migration | 27 | `backend/prisma/migrations/` (đếm thư mục) |
 | Món trong bộ seed | 33 | `backend/prisma/seed-data.ts` |
 | Ảnh màn hình cho quyển | 29 màn hình (24 ở 1440px, 5 ở 390px), 30 tệp; chụp 12/11, cần chụp lại (`docs/bao-cao/quyen/danh-sach-anh.md`) | `docs/bao-cao/anh-man-hinh/README.md` |
 | Use case | 26 khảo sát (15 đã làm, 11 làm khác; không làm phần "theo dõi thành viên") + 14 mới (UC27–UC40) | `docs/bao-cao/use-case.md` |
