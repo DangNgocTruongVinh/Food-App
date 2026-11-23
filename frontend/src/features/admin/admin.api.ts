@@ -176,6 +176,8 @@ type CatalogRow = { id: string; sortOrder: number; hiddenAt: string | null };
 export type AllergenTermLevel = "CONTAINS" | "MAY_CONTAIN";
 export type AdminAllergenGroup = CatalogRow & {
   code: string; label: string; parentId: string | null;
+  /** ALLERGEN: nhóm dị ứng; DIET_*: từ kiểm nhãn chay (tab Nhãn chay, audit H1). */
+  purpose: "ALLERGEN" | "DIET_MEAT" | "DIET_ANIMAL";
   aliases: Array<CatalogRow & { name: string }>;
   terms: Array<CatalogRow & { name: string; level: AllergenTermLevel; processed: boolean }>;
   exclusions: Array<{ id: string; phrase: string }>;

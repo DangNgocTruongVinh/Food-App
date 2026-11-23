@@ -31,7 +31,7 @@ export async function readCatalogRows(client: CatalogClient = prisma): Promise<C
 /** Đọc database và đưa vào bộ nhớ (gọi khi khởi động và sau mỗi lần Admin sửa danh mục). */
 export async function loadCatalog(client: CatalogClient = prisma) {
   const rows = await readCatalogRows(client);
-  if (!rows.allergenGroups.length || !rows.foodCategories.length) {
+  if (!rows.allergenGroups.some((group) => group.purpose === "ALLERGEN") || !rows.foodCategories.length) {
     // Không bao giờ chạy với danh mục rỗng: lọc dị ứng sẽ bỏ sót mà không báo.
     throw new Error("Danh mục dữ liệu trong database đang trống. Chạy seed (npm run db:seed) hoặc khởi động lại để tự tạo.");
   }
@@ -41,17 +41,20 @@ export async function loadCatalog(client: CatalogClient = prisma) {
 
 /**
  * Tạo dữ liệu ban đầu cho bảng danh mục CÒN TRỐNG (lần đầu sau migration, hoặc database mới). Bảng đã có dữ liệu thì không đụng
- * (giữ chỉnh sửa của Admin). Trả về số dòng đã tạo theo từng nhóm bảng.
+ * (giữ chỉnh sửa của Admin), riêng nhóm dị ứng/nhãn chay: tạo các nhóm ban đầu chưa có mã trong bảng (vd. DIET_MEAT, DIET_ANIMAL
+ * thêm ở audit H1; Admin không xóa được nhóm nên mã vắng nghĩa là chưa từng tạo). Trả về số dòng đã tạo theo từng nhóm bảng.
  */
 export async function seedCatalog(client: CatalogClient = prisma) {
   const seed = seedCatalogRows();
   const created = { allergenGroups: 0, foodCategories: 0, receiptAbbreviations: 0, receiptSkipKeywords: 0 };
-  if (!(await client.allergenGroup.count())) {
-    const ids = new Map<string, string>();
-    for (const group of seed.allergenGroups) {
+  const ids = new Map((await client.allergenGroup.findMany({ select: { id: true, code: true } })).map((row) => [row.code, row.id]));
+  const missing = seed.allergenGroups.filter((group) => !ids.has(group.code));
+  if (missing.length) {
+    const sortStart = ids.size ? await client.allergenGroup.count() : 0; // nhóm thêm vào bảng đã có dữ liệu xếp sau cùng
+    for (const group of missing) {
       const row = await client.allergenGroup.create({
         data: {
-          code: group.code, label: group.label, sortOrder: group.sortOrder,
+          code: group.code, label: group.label, purpose: group.purpose, sortOrder: sortStart + group.sortOrder,
           aliases: { create: group.aliases.map(({ name, sortOrder }) => ({ name, sortOrder })) },
           terms: { create: group.terms.map(({ name, level, processed, sortOrder }) => ({ name, level, processed, sortOrder })) },
           exclusions: { create: group.exclusions },
@@ -60,10 +63,10 @@ export async function seedCatalog(client: CatalogClient = prisma) {
       });
       ids.set(group.code, row.id);
     }
-    for (const group of seed.allergenGroups.filter((item) => item.parentCode)) {
+    for (const group of missing.filter((item) => item.parentCode && ids.has(item.parentCode))) {
       await client.allergenGroup.update({ where: { id: ids.get(group.code)! }, data: { parentId: ids.get(group.parentCode!)! } });
     }
-    created.allergenGroups = seed.allergenGroups.length;
+    created.allergenGroups = missing.length;
   }
   if (!(await client.foodCategory.count())) {
     for (const { terms, shelfLifeRules, hiddenAt: _hidden, ...category } of seed.foodCategories) {

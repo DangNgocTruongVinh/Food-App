@@ -12,7 +12,7 @@ import { catalogQuery } from "../../features/catalog/catalog.queries";
 /** Lưu một mục; true = thành công (form tự xóa ô nhập). Lỗi máy chủ hiện ở đầu trang. */
 export type SaveCatalog = (input: CatalogSaveInput, done: string) => Promise<boolean>;
 
-const TABS = [["allergens", "Nhóm dị ứng"], ["food", "Nhóm thực phẩm"], ["receipt", "Hóa đơn"]] as const;
+const TABS = [["allergens", "Nhóm dị ứng"], ["diet", "Nhãn chay"], ["food", "Nhóm thực phẩm"], ["receipt", "Hóa đơn"]] as const;
 type Tab = (typeof TABS)[number][0];
 
 /**
@@ -58,7 +58,9 @@ export default function AdminCatalogPage() {
       ) : catalog.isError || !data ? (
         <ErrorState message="Chưa tải được danh mục dữ liệu." onRetry={() => void catalog.refetch()} retrying={catalog.isFetching} />
       ) : tab === "allergens" ? (
-        <AdminAllergenCatalog groups={data.allergenGroups} save={save} busy={busy} />
+        <AdminAllergenCatalog groups={data.allergenGroups.filter((group) => group.purpose === "ALLERGEN")} save={save} busy={busy} />
+      ) : tab === "diet" ? (
+        <AdminAllergenCatalog diet groups={data.allergenGroups.filter((group) => group.purpose !== "ALLERGEN")} save={save} busy={busy} />
       ) : tab === "food" ? (
         <AdminFoodCatalog categories={data.foodCategories} save={save} busy={busy} />
       ) : (

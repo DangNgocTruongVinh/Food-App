@@ -13,7 +13,7 @@ export function fakeCatalogDb() {
   const table = (unique: string[][], defaults: Record<string, unknown> = {}, children?: Table["children"]): Table =>
     ({ rows: [], unique, defaults: { hiddenAt: null, ...defaults }, children });
   const tables: Record<string, Table> = {
-    allergenGroup: table([["code"], ["label"]], { parentId: null },
+    allergenGroup: table([["code"], ["label"]], { parentId: null, purpose: "ALLERGEN" },
       { aliases: ["allergenAlias", "groupId"], terms: ["allergenTerm", "groupId"], exclusions: ["allergenExclusion", "groupId"] }),
     allergenAlias: table([["groupId", "name"]]),
     allergenTerm: table([["groupId", "name", "level"]], { level: "CONTAINS", processed: false }),

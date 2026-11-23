@@ -69,7 +69,7 @@ export const ALLERGEN_GROUP_SEED: AllergenGroupSeed[] = [
   },
   {
     id: "TREE_NUT", label: "Hạt cây",
-    aliases: ["hạt cây", "các loại hạt", "hạt", "tree nut", "tree nuts", "nuts"],
+    aliases: ["hạt cây", "các loại hạt", "hạt", "tree nut", "tree nuts", "nuts", "walnut", "almond", "cashew"],
     terms: ["óc chó", "hạnh nhân", "hạt điều", "hạt dẻ", "hạt phỉ", "hồ đào", "mắc ca", "macca", "hạt thông", "hạt dẻ cười", "sữa hạnh nhân", "sữa óc chó"],
   },
   {
@@ -99,6 +99,23 @@ export const ALLERGEN_GROUP_SEED: AllergenGroupSeed[] = [
     terms: ["mè", "vừng", "mè rang", "dầu mè", "dầu vừng", "muối mè", "tahini", "sốt mè"],
     mayContain: ["tương đen", "sốt mè rang"],
   },
+];
+
+/**
+ * Từ kiểm nhãn chay khi Admin lưu món và khi lọc món cho hồ sơ chay (audit H1; cột AllergenGroup.purpose). KHÔNG phải nhóm dị ứng:
+ * không hiện ở gợi ý ô Dị ứng, không nhận ra từ chữ người dùng gõ. Nhãn Ăn chay cấm DIET_MEAT + nhóm Hải sản; Thuần chay cấm thêm
+ * DIET_ANIMAL + nhóm Sữa, Trứng. `excludes`: nguyên liệu chứa cụm này không tính ("Giò chay", "Lòng đỏ trứng").
+ */
+export const DIET_GROUP_SEED: Array<Pick<AllergenGroupSeed, "id" | "label" | "terms" | "excludes"> & { purpose: "DIET_MEAT" | "DIET_ANIMAL" }> = [
+  {
+    id: "DIET_MEAT", label: "Thịt (kiểm nhãn chay)", purpose: "DIET_MEAT",
+    terms: [
+      "thịt", "sườn", "xương", "gà", "bò", "heo", "đùi gà", "ức gà", "vịt", "ngan", "ngỗng", "dê", "cừu", "lạp xưởng", "giò", "chả", "pate",
+      "xúc xích", "thịt nguội", "mỡ", "tiết", "lòng",
+    ],
+    excludes: ["chay", "lòng đỏ", "lòng trắng"],
+  },
+  { id: "DIET_ANIMAL", label: "Sản phẩm động vật khác (kiểm nhãn thuần chay)", purpose: "DIET_ANIMAL", terms: ["mật ong"] },
 ];
 
 /**

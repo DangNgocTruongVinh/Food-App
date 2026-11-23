@@ -196,6 +196,17 @@ describe("Admin recipe management", () => {
     expect(mocks.create).not.toHaveBeenCalled();
   });
 
+  // Audit H1: từ thịt nằm trong danh mục (nhóm DIET_MEAT), gồm cả các từ bổ sung (lạp xưởng, vịt…).
+  it.each([["Lạp xưởng", ["lạp xưởng"]], ["Thịt vịt", ["thịt", "vịt"]]])(
+    "rejects %s in a dish labelled vegetarian (diet terms come from the catalog)", async (name, terms) => {
+      const body = { ...input, dietTags: ["VEGETARIAN"], ingredients: [...input.ingredients, { name, quantity: 50, unit: "G" }] };
+      const response = await request(app, "/api/admin/recipes", { method: "POST", token: token(), body });
+      expect(response.status).toBe(422);
+      expect(response.body.details.violations).toEqual([{ ingredient: name, terms, dietTag: "VEGETARIAN" }]);
+      expect(mocks.create).not.toHaveBeenCalled();
+    },
+  );
+
   it("rejects eggs in a vegan dish (also on update)", async () => {
     const body = { ...input, ingredients: [...input.ingredients, { name: "Trứng gà", quantity: 1, unit: "ITEM" }] };
     const response = await request(app, `/api/admin/recipes/${recipeId}`, { method: "PUT", token: token(), body });

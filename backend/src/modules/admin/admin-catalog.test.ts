@@ -5,11 +5,11 @@ import { getAccountStatus } from "../../services/account-status.service.js";
 import { allergyGroups, groupsOfFoodName, resolveRestriction } from "../../services/allergy-groups.js";
 import { buildAllergyGroups, buildFoodCatalog, buildReceiptCatalog, seedCatalogRows, useSeedCatalog } from "../../services/catalog/catalog-build.js";
 import { ensureCatalog, loadCatalog, seedCatalog } from "../../services/catalog/catalog.service.js";
-import { expandRestrictedTerms } from "../../services/dietary.service.js";
+import { expandRestrictedTerms, findDietViolations } from "../../services/dietary.service.js";
 import { foodCategoryNames, foodCategoryOf, shelfLifeFor } from "../../services/food-category.js";
 import { canonicalFoodName, buildNameIndex } from "../../services/receipt/receipt-normalize.js";
 import { skipRules } from "../../services/receipt/receipt-catalog.js";
-import type { fakeCatalogDb } from "../../test/fake-catalog-db.js";
+import { fakeCatalogDb as freshCatalogDb, type fakeCatalogDb } from "../../test/fake-catalog-db.js";
 import { request, testApp } from "../../test/http-test-utils.js";
 import catalogRoutes from "../catalog/catalog.routes.js";
 import adminRoutes from "./admin.routes.js";
@@ -35,8 +35,9 @@ afterAll(() => useSeedCatalog());
 describe("Danh mục dữ liệu trong database (seed → nạp → Admin sửa → lọc dùng ngay)", () => {
   it("seed tạo đủ dữ liệu, chạy lại không tạo trùng, và danh mục đọc từ database giống hệt dữ liệu ban đầu", async () => {
     const seed = seedCatalogRows();
+    // 11 nhóm dị ứng + 2 nhóm kiểm nhãn chay (audit H1).
     expect(await seedCatalog(db as never)).toEqual({
-      allergenGroups: 11, foodCategories: 8, receiptAbbreviations: seed.receiptAbbreviations.length, receiptSkipKeywords: seed.receiptSkipKeywords.length,
+      allergenGroups: 13, foodCategories: 8, receiptAbbreviations: seed.receiptAbbreviations.length, receiptSkipKeywords: seed.receiptSkipKeywords.length,
     });
     expect(await seedCatalog(db as never)).toEqual({ allergenGroups: 0, foodCategories: 0, receiptAbbreviations: 0, receiptSkipKeywords: 0 });
     expect(db.rows("allergenTerm").length).toBe(seed.allergenGroups.reduce((sum, group) => sum + group.terms.length, 0));
@@ -85,6 +86,37 @@ describe("Danh mục dữ liệu trong database (seed → nạp → Admin sửa 
     expect(resolveRestriction("Cần tây").groups.map((item) => item.label)).toEqual(["Rau cần"]);
     expect((await admin("POST", "allergen-groups", { code: "CELERY", label: "Khác" })).status).toBe(409);
     expect((await admin("PATCH", `allergen-groups/${groupId("SEAFOOD")}`, { parentId: groupId("EGG") })).status).toBe(400);
+  });
+
+  // Audit H1: từ kiểm nhãn chay là nhóm DIET_* trong cùng bảng, Admin quản lý ở tab Nhãn chay (thêm/ẩn từ, có nhật ký).
+  it("Admin thêm/ẩn từ kiểm nhãn chay: áp ngay khi kiểm món chay; không thành nhóm dị ứng; không ẩn được cả nhóm", async () => {
+    const vegetarian = { dietTags: ["VEGETARIAN" as const], ingredients: [{ name: "Nhộng tằm" }] };
+    expect(findDietViolations(vegetarian)).toEqual([]);
+    const created = await admin("POST", "allergen-terms", { groupId: groupId("DIET_MEAT"), name: "nhộng" });
+    expect(created.status).toBe(201);
+    expect(lastAudit()).toMatchObject({ action: "CATALOG_CREATE", targetLabel: "nhộng" });
+    expect(findDietViolations(vegetarian)).toEqual([{ ingredient: "Nhộng tằm", terms: ["nhộng"], dietTag: "VEGETARIAN" }]);
+    expect(resolveRestriction("nhộng").groups).toEqual([]);
+
+    expect((await admin("PATCH", `allergen-terms/${created.body.id}`, { hidden: true })).status).toBe(200);
+    expect(findDietViolations(vegetarian)).toEqual([]);
+    expect((await admin("PATCH", `allergen-groups/${groupId("DIET_MEAT")}`, { hidden: true })).status).toBe(400);
+    expect((await admin("PATCH", `allergen-groups/${groupId("EGG")}`, { parentId: groupId("DIET_MEAT") })).status).toBe(400);
+    expect(findDietViolations({ dietTags: ["VEGETARIAN"], ingredients: [{ name: "Lạp xưởng" }] })).toHaveLength(1);
+    const publicCatalog = await request(publicApp, "/api/catalog");
+    expect(publicCatalog.body.allergenGroups.some((group: { id: string }) => group.id.startsWith("DIET_"))).toBe(false);
+  });
+
+  it("database đã có danh mục từ trước (chưa có nhóm DIET_*): khởi động tạo thêm đúng 2 nhóm, không đụng nhóm cũ", async () => {
+    const old = freshCatalogDb();
+    await seedCatalog(old as never);
+    const dietIds = old.rows("allergenGroup").filter((row) => String(row.code).startsWith("DIET_")).map((row) => row.id);
+    for (const table of ["allergenGroup", "allergenTerm", "allergenExclusion"]) {
+      const rows = old.rows(table);
+      rows.splice(0, rows.length, ...rows.filter((row) => !dietIds.includes(row.id) && !dietIds.includes(row.groupId as string)));
+    }
+    expect(await seedCatalog(old as never)).toEqual({ allergenGroups: 2, foodCategories: 0, receiptAbbreviations: 0, receiptSkipKeywords: 0 });
+    expect(old.rows("allergenGroup").slice(-2).map((row) => [row.code, row.purpose, row.sortOrder])).toEqual([["DIET_MEAT", "DIET_MEAT", 22], ["DIET_ANIMAL", "DIET_ANIMAL", 23]]);
   });
 
   it("Admin sửa nhóm thực phẩm: hạn dùng mới áp ngay, đổi tên đổi theo trong Kho, không ẩn được nhóm mặc định", async () => {

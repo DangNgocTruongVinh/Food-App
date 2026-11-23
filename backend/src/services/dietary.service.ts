@@ -58,7 +58,8 @@ function syncWithCatalog() {
   }
   CATALOG_EXCLUDES = excludes;
   expandCache.clear();
-  dietTermsCache = null;
+  dietGroupsCache = null;
+  dietFitCache = new WeakMap();
   builtForVersion = allergyCatalogVersion();
 }
 
@@ -160,16 +161,29 @@ export function allergenLabels(recipe: Pick<DietaryRecipe, "name" | "ingredients
   return [...labels].map(([label, hits]) => `${label} (${[...hits].join(", ")})`);
 }
 
-// Nguyên liệu động vật trái với nhãn chay/thuần chay. Dùng chung cho kiểm tra dữ liệu seed và API Admin công thức.
-// Dựng từ danh mục dị ứng (nạp từ database) nên tính khi cần, nhớ tới lần nạp lại danh mục kế tiếp.
-let dietTermsCache: { meatAndFish: string[]; animalProduct: string[] } | null = null;
-function dietTerms() {
+// Nguyên liệu động vật trái với nhãn chay/thuần chay. Dùng chung cho kiểm tra dữ liệu seed, API Admin công thức và lọc món cho hồ
+// sơ chay. Từ thịt/sản phẩm động vật khác: nhóm DIET_* trong danh mục (database, audit H1); hải sản, sữa, trứng: nhóm dị ứng.
+type DietGroup = { terms: string[]; excludes: string[] };
+export type DietCatalog = { meat: DietGroup; animal: DietGroup };
+let dietCatalog: DietCatalog | null = null;
+/** Gọi từ applyCatalog (catalog-build.ts) mỗi lần nạp danh mục, ngay trước setAllergyCatalog (làm mới cache dưới đây). */
+export function setDietCatalog(catalog: DietCatalog) {
+  dietCatalog = catalog;
+}
+let dietGroupsCache: { VEGETARIAN: DietGroup[]; VEGAN: DietGroup[] } | null = null;
+function dietGroups() {
   syncWithCatalog();
-  if (!dietTermsCache) {
-    const meatAndFish = ["thịt", "sườn", "xương", "gà", "bò", "heo", "đùi gà", "ức gà", ...expandRestrictedTerms(["Hải sản"])];
-    dietTermsCache = { meatAndFish, animalProduct: [...meatAndFish, ...expandRestrictedTerms(["Sữa", "Trứng"]), "mật ong"] };
+  if (!dietCatalog) throw new Error("Chưa nạp danh mục nhãn chay (loadCatalog/useSeedCatalog).");
+  if (!dietGroupsCache) {
+    // Từ của nhóm DIET_* so như chữ thường (hai chiều, như trước khi chuyển vào database), ngoại lệ so theo cả tên nguyên liệu.
+    const fromCatalog = ({ terms, excludes }: DietGroup) => ({ terms, excludes: excludes.map(normalizeAllergyText) });
+    const vegetarian = [fromCatalog(dietCatalog.meat), { terms: expandRestrictedTerms(["Hải sản"]), excludes: [] }];
+    dietGroupsCache = {
+      VEGETARIAN: vegetarian,
+      VEGAN: [...vegetarian, { terms: expandRestrictedTerms(["Sữa", "Trứng"]), excludes: [] }, fromCatalog(dietCatalog.animal)],
+    };
   }
-  return dietTermsCache;
+  return dietGroupsCache;
 }
 
 /** Nhãn chế độ ăn không trùng lặp; món thuần chay luôn được gắn thêm nhãn chay. */
@@ -188,19 +202,32 @@ export type DietViolation = { ingredient: string; terms: string[]; dietTag: "VEG
 export function findDietViolations(recipe: Pick<DietaryRecipe, "dietTags" | "ingredients">): DietViolation[] {
   const dietTag = recipe.dietTags.includes("VEGAN") ? "VEGAN" : recipe.dietTags.includes("VEGETARIAN") ? "VEGETARIAN" : null;
   if (!dietTag) return [];
-  const forbidden = dietTag === "VEGAN" ? dietTerms().animalProduct : dietTerms().meatAndFish;
+  const groups = dietGroups()[dietTag];
   return recipe.ingredients.flatMap(({ name }) => {
-    const terms = findRestrictedTerms({ name: "", ingredients: [{ name }] }, forbidden);
-    return terms.length ? [{ ingredient: name, terms, dietTag }] : [];
+    const text = ` ${normalizeAllergyText(name)} `;
+    const terms = groups.flatMap((group) => (group.excludes.some((phrase) => text.includes(` ${phrase} `))
+      ? []
+      : findRestrictedTerms({ name: "", ingredients: [{ name }] }, group.terms)));
+    return terms.length ? [{ ingredient: name, terms: [...new Set(terms)], dietTag }] : [];
   });
 }
 
-/** Chay và thuần chay là ràng buộc bắt buộc; các chế độ khác chỉ dùng để ưu tiên. */
-export function matchesRequiredDiet(recipe: Pick<DietaryRecipe, "dietTags">, dietType: DietType) {
-  if (dietType === "VEGAN") return recipe.dietTags.includes("VEGAN");
-  if (dietType === "VEGETARIAN") return recipe.dietTags.includes("VEGETARIAN") || recipe.dietTags.includes("VEGAN");
-  return true;
+/**
+ * Chay và thuần chay là ràng buộc bắt buộc; các chế độ khác chỉ dùng để ưu tiên. Phòng thủ hai lớp (audit H1): món mang nhãn
+ * nhưng có nguyên liệu trái nhãn (dữ liệu cũ, sửa thẳng database) cũng bị loại.
+ */
+export function matchesRequiredDiet(recipe: Pick<DietaryRecipe, "dietTags" | "ingredients">, dietType: DietType) {
+  if (dietType !== "VEGAN" && dietType !== "VEGETARIAN") return true;
+  const tagged = dietType === "VEGAN" ? recipe.dietTags.includes("VEGAN") : recipe.dietTags.includes("VEGETARIAN") || recipe.dietTags.includes("VEGAN");
+  if (!tagged) return false;
+  syncWithCatalog();
+  // Bộ gợi ý kiểm cùng món rất nhiều lần: nhớ kết quả theo danh sách nguyên liệu (đến lần nạp lại danh mục).
+  const cached = dietFitCache.get(recipe.ingredients) ?? {};
+  cached[dietType] ??= !findDietViolations({ dietTags: [dietType], ingredients: recipe.ingredients }).length;
+  dietFitCache.set(recipe.ingredients, cached);
+  return cached[dietType];
 }
+let dietFitCache = new WeakMap<object, { VEGAN?: boolean; VEGETARIAN?: boolean }>();
 
 export function prefersDiet(recipe: Pick<DietaryRecipe, "dietTags">, dietType: DietType) {
   return (dietType === "LOW_CARB" || dietType === "HIGH_PROTEIN") && recipe.dietTags.includes(dietType);

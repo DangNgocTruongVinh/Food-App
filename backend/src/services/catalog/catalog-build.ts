@@ -1,9 +1,10 @@
-import type { AllergenTermLevel, FoodTextMatch, ReceiptKeywordMatch, StorageLocation } from "@prisma/client";
+import type { AllergenGroupPurpose, AllergenTermLevel, FoodTextMatch, ReceiptKeywordMatch, StorageLocation } from "@prisma/client";
 import {
-  ALLERGEN_GROUP_SEED, FOOD_CATEGORY_SEED, FOOD_CATEGORY_TERM_SEED, PROCESSED_TERM_SEED, RECEIPT_ABBREVIATION_SEED, RECEIPT_SKIP_SEED,
+  ALLERGEN_GROUP_SEED, DIET_GROUP_SEED, FOOD_CATEGORY_SEED, FOOD_CATEGORY_TERM_SEED, PROCESSED_TERM_SEED, RECEIPT_ABBREVIATION_SEED, RECEIPT_SKIP_SEED,
   SHELF_LIFE_RULE_SEED,
 } from "../../../prisma/catalog-data.js";
 import { type AllergyGroup, setAllergyCatalog } from "../allergy-groups.js";
+import { type DietCatalog, setDietCatalog } from "../dietary.service.js";
 import { type FoodCatalog, setFoodCatalog } from "../food-category.js";
 import { type ReceiptCatalog, setReceiptCatalog } from "../receipt/receipt-catalog.js";
 import type { ReceiptSkipReason } from "../receipt/receipt-types.js";
@@ -15,7 +16,7 @@ import type { ReceiptSkipReason } from "../receipt/receipt-types.js";
  */
 type Hidden = { hiddenAt: Date | null };
 export type AllergenGroupRow = Hidden & {
-  code: string; label: string; parentCode: string | null; sortOrder: number;
+  code: string; label: string; purpose: AllergenGroupPurpose; parentCode: string | null; sortOrder: number;
   aliases: Array<Hidden & { name: string; sortOrder: number }>;
   terms: Array<Hidden & { name: string; level: AllergenTermLevel; processed: boolean; sortOrder: number }>;
   exclusions: Array<{ phrase: string }>;
@@ -37,9 +38,9 @@ export type CatalogRows = {
 const visible = <T extends Hidden>(rows: T[]) => rows.filter((row) => !row.hiddenAt);
 const bySort = <T extends { sortOrder: number }>(rows: T[]) => [...rows].sort((a, b) => a.sortOrder - b.sortOrder);
 
-/** Nhóm ẩn bị bỏ; nhóm có nhóm con (đang hiện) là nhóm gộp (`covers`). Thứ tự nhóm và nguyên liệu theo sortOrder. */
+/** Nhóm ẩn bị bỏ; nhóm có nhóm con (đang hiện) là nhóm gộp (`covers`). Thứ tự nhóm và nguyên liệu theo sortOrder. Chỉ nhóm dị ứng. */
 export function buildAllergyGroups(rows: AllergenGroupRow[]): AllergyGroup[] {
-  const groups = bySort(visible(rows));
+  const groups = bySort(visible(rows.filter((row) => row.purpose === "ALLERGEN")));
   return groups.map((group) => {
     const terms = bySort(visible(group.terms));
     const children = groups.filter((child) => child.parentCode === group.code).map((child) => child.code);
@@ -56,6 +57,18 @@ export function buildAllergyGroups(rows: AllergenGroupRow[]): AllergyGroup[] {
       ...(processed.length ? { processed } : {}),
     };
   });
+}
+
+/** Từ kiểm nhãn chay (nhóm DIET_*): mọi từ đang hiện và ngoại lệ của nhóm. */
+export function buildDietCatalog(rows: AllergenGroupRow[]): DietCatalog {
+  const group = (purpose: AllergenGroupPurpose) => {
+    const found = rows.filter((row) => row.purpose === purpose);
+    return {
+      terms: found.flatMap((row) => bySort(visible(row.terms)).map((term) => term.name)),
+      excludes: found.flatMap((row) => row.exclusions.map((item) => item.phrase)),
+    };
+  };
+  return { meat: group("DIET_MEAT"), animal: group("DIET_ANIMAL") };
 }
 
 export function buildFoodCatalog(rows: FoodCategoryRow[]): FoodCatalog {
@@ -85,6 +98,7 @@ export function buildReceiptCatalog(abbreviations: ReceiptAbbreviationRow[], key
 
 /** Đưa danh mục vào bộ nhớ cho mọi hàm lọc/nhóm/đọc hóa đơn (gọi lại khi Admin sửa). */
 export function applyCatalog(rows: CatalogRows) {
+  setDietCatalog(buildDietCatalog(rows.allergenGroups)); // trước setAllergyCatalog: đổi phiên bản danh mục làm mới cache của bộ lọc
   setAllergyCatalog(buildAllergyGroups(rows.allergenGroups));
   setFoodCatalog(buildFoodCatalog(rows.foodCategories));
   setReceiptCatalog(buildReceiptCatalog(rows.receiptAbbreviations, rows.receiptSkipKeywords));
@@ -93,12 +107,12 @@ export function applyCatalog(rows: CatalogRows) {
 /** Dữ liệu ban đầu (prisma/catalog-data.ts) dưới dạng dòng bảng: dùng để seed database và nạp cho test/script mô phỏng. */
 export function seedCatalogRows(): CatalogRows {
   const coverParent = new Map(ALLERGEN_GROUP_SEED.flatMap((group) => (group.covers ?? []).map((child) => [child, group.id] as const)));
-  const allergenGroups = ALLERGEN_GROUP_SEED.map((group, index): AllergenGroupRow => ({
-    code: group.id, label: group.label, parentCode: coverParent.get(group.id) ?? null, sortOrder: index, hiddenAt: null,
-    aliases: group.aliases.map((name, order) => ({ name, sortOrder: order, hiddenAt: null })),
+  const allergenGroups = [...ALLERGEN_GROUP_SEED, ...DIET_GROUP_SEED].map((group, index): AllergenGroupRow => ({
+    code: group.id, label: group.label, purpose: "purpose" in group ? group.purpose : "ALLERGEN", parentCode: coverParent.get(group.id) ?? null, sortOrder: index, hiddenAt: null,
+    aliases: ("aliases" in group ? group.aliases : []).map((name, order) => ({ name, sortOrder: order, hiddenAt: null })),
     terms: [
       ...group.terms.map((name) => ({ name, level: "CONTAINS" as const })),
-      ...(group.mayContain ?? []).map((name) => ({ name, level: "MAY_CONTAIN" as const })),
+      ...(("mayContain" in group && group.mayContain) || []).map((name) => ({ name, level: "MAY_CONTAIN" as const })),
     ].map((term, order) => ({ ...term, processed: PROCESSED_TERM_SEED.has(term.name), sortOrder: order, hiddenAt: null })),
     exclusions: (group.excludes ?? []).map((phrase) => ({ phrase })),
   }));

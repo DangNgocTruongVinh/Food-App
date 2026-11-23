@@ -54,8 +54,9 @@ async function nextPriority(tx: Tx, table: "foodCategoryTerm" | "foodShelfLifeRu
 async function checkParent(tx: Tx, groupId: string | null, parentId: string | null | undefined) {
   if (!parentId) return;
   if (parentId === groupId) throw new HttpError(400, "Nhóm không thể là nhóm cha của chính nó.");
-  const parent = await tx.allergenGroup.findUnique({ where: { id: parentId }, select: { parentId: true } });
+  const parent = await tx.allergenGroup.findUnique({ where: { id: parentId }, select: { parentId: true, purpose: true } });
   if (!parent) throw new HttpError(400, "Không tìm thấy nhóm cha.");
+  if (parent.purpose !== "ALLERGEN") throw new HttpError(400, "Nhóm kiểm nhãn chay không thể làm nhóm cha.");
   if (parent.parentId) throw new HttpError(400, "Nhóm cha phải là nhóm gốc (chỉ một tầng, như Hải sản → Cá).");
   if (groupId && (await tx.allergenGroup.count({ where: { parentId: groupId } }))) {
     throw new HttpError(400, "Nhóm đang có nhóm con nên không thể làm nhóm con.");
@@ -131,6 +132,10 @@ async function updateRow(tx: Tx, id: string, input: CatalogUpdateInput): Promise
     case "allergen-groups": {
       const current = await tx.allergenGroup.findUnique({ where: { id } });
       if (!current) throw notFound();
+      // Nhóm kiểm nhãn chay (audit H1): ẩn cả nhóm thì Admin lưu được món chay có thịt; ẩn từng từ thì được.
+      if (current.purpose !== "ALLERGEN" && (input.hidden || input.parentId)) {
+        throw new HttpError(400, "Không thể ẩn hoặc gắn nhóm cha cho nhóm kiểm nhãn chay. Hãy ẩn từng từ nếu cần.");
+      }
       if (input.parentId !== undefined) await checkParent(tx, id, input.parentId);
       const row = await tx.allergenGroup.update({
         where: { id }, data: { label: input.label, parentId: input.parentId, hiddenAt: hiddenAt(input.hidden, current.hiddenAt) },
