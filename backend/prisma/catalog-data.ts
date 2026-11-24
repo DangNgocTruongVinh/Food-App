@@ -146,7 +146,7 @@ export const FOOD_CATEGORY_SEED: FoodCategorySeed[] = [
   { name: "Ngũ cốc", defaultStorage: "REFRIGERATOR", defaultShelfLifeDays: 2 }, // đồ tươi (bún, bánh phở…); đồ khô xem quy tắc hạn
   { name: "Trái cây", defaultStorage: "REFRIGERATOR", defaultShelfLifeDays: 5 },
   { name: "Gia vị", defaultStorage: "DRY_STORAGE", defaultShelfLifeDays: 180 },
-  { name: "Khác", defaultStorage: "REFRIGERATOR", defaultShelfLifeDays: null, isFallback: true },
+  { name: "Khác", defaultStorage: "REFRIGERATOR", defaultShelfLifeDays: 7, isFallback: true },
 ];
 
 /**

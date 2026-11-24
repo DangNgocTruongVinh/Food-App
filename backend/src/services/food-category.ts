@@ -42,6 +42,8 @@ const fallbackCategory = () => {
   const { categories } = foodCatalog();
   return categories.find((category) => category.isFallback) ?? categories[categories.length - 1];
 };
+/** Hạn mặc định (ngày) của nhóm dự phòng ("Khác"); null = Admin chưa đặt. */
+export const fallbackShelfLifeDays = () => fallbackCategory().defaultShelfLifeDays;
 
 const key = (name: string) => normalizeFoodText(name.normalize("NFC"));
 

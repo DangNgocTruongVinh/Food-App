@@ -2,22 +2,29 @@ import type { FoodUnit } from "@prisma/client";
 import { canConvertUnit } from "../utils/food-units.js";
 import { DAY_MS, vietnamToday } from "../utils/vietnam-date.js";
 import { normalizeFoodText } from "./dietary.service.js";
-import { foodCategoryOf, shelfLifeFor } from "./food-category.js";
+import { FALLBACK_SHELF_LIFE_DAYS } from "../shared/limits.js";
+import { fallbackShelfLifeDays, foodCategoryOf, shelfLifeFor } from "./food-category.js";
 import { pantryExpiryState } from "./recipe-fit.service.js";
 
 // "Đã mua" → thêm vào kho (GĐ3b lượt 6): phần tính toán thuần. Đọc/ghi DB ở modules/meal-plans/shopping-purchase.service.ts.
 
 
 /**
- * Nhóm, nơi bảo quản và hạn gợi ý cho thực phẩm mới từ "Đã mua". Hạn tính từ hôm nay theo giờ Việt Nam; có hạn thì đánh dấu
+ * Hạn khi thực phẩm vào kho (quét hóa đơn, "Đã mua", thêm tay), theo thứ tự: 1) hạn người dùng nhập — giữ nguyên, kèm cờ ước tính
+ * đã có; 2) hạn của nhóm thực phẩm (quy tắc loại con, rồi mặc định của nhóm; bảng FoodCategory, FoodShelfLifeRule); 3) hạn mặc định
+ * của nhóm dự phòng ("Khác"); 4) FALLBACK_SHELF_LIFE_DAYS. Hạn tự gán tính từ ngày mua theo giờ Việt Nam và đánh dấu
  * `expiryEstimated` để giao diện ghi "Hạn ước tính" (người dùng sửa sang ngày khác thì mất cờ).
  */
+export function resolveDefaultExpiry(purchaseDate: Date, name: string, category: string, expiryDate: Date | null = null, expiryEstimated = false) {
+  if (expiryDate) return { expiryDate, expiryEstimated };
+  const days = shelfLifeFor(name, category).days ?? fallbackShelfLifeDays() ?? FALLBACK_SHELF_LIFE_DAYS;
+  return { expiryDate: new Date(vietnamToday(purchaseDate).getTime() + days * DAY_MS), expiryEstimated: true };
+}
+
+/** Nhóm, nơi bảo quản và hạn gợi ý cho thực phẩm mới từ "Đã mua" và dòng hóa đơn (màn duyệt). */
 export function suggestedPantryDefaults(name: string, category: string | null | undefined, now = new Date()) {
   const known = category?.trim() || foodCategoryOf(name);
-  // Hạn và nơi bảo quản theo nhóm + loại con (bảng FoodCategory, FoodShelfLifeRule; Admin sửa được).
-  const rule = shelfLifeFor(name, known);
-  const expiryDate = rule.days === null ? null : new Date(vietnamToday(now).getTime() + rule.days * DAY_MS);
-  return { category: category?.trim() || known, storageLocation: rule.storage, expiryDate, expiryEstimated: expiryDate !== null };
+  return { category: known, storageLocation: shelfLifeFor(name, known).storage, ...resolveDefaultExpiry(now, name, known) };
 }
 
 export type PurchasePantryItem = { id: string; name: string; quantity: number; unit: FoodUnit; expiryDate: Date | null };

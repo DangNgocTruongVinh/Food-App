@@ -8,6 +8,7 @@ import { jpegWithGps } from "../../test/image-fixtures.js";
 import { receiptJobs } from "./receipt-scan.jobs.js";
 import receiptScanRoutes from "./receipt-scan.routes.js";
 import { RECEIPT_CREATED_NOTE } from "./receipt-scan.service.js";
+import { vietnamDaysUntil } from "../../utils/vietnam-date.js";
 
 const mocks = vi.hoisted(() => ({
   secret: "nouri-test-only-secret-at-least-32-characters",
@@ -232,6 +233,10 @@ describe("POST /:id/commit", () => {
     await commit([line({ price: 65_000 }), line({ name: "Rau muống", quantity: 1, unit: "ITEM", category: "Rau củ", expiryDate: null })]);
     expect(mocks.createPantry.mock.calls[0][0].data.unitPrice).toBe(130_000);
     expect(mocks.createPantry.mock.calls[1][0].data).not.toHaveProperty("unitPrice");
+    // Dòng người dùng xóa hạn ở màn duyệt vẫn vào kho với hạn ước tính theo nhóm (Rau củ: 5 ngày từ hôm nay).
+    const vegetables = mocks.createPantry.mock.calls[1][0].data;
+    expect(vegetables.expiryEstimated).toBe(true);
+    expect(vietnamDaysUntil(vegetables.expiryDate, new Date())).toBe(5);
     expect(historyData()[0]).toMatchObject({ unitPrice: 130_000, category: "Thịt & cá" });
   });
 

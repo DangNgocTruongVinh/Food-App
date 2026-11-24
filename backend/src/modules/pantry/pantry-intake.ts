@@ -1,5 +1,5 @@
 import type { FoodUnit, PantryTransaction, Prisma, StorageLocation } from "@prisma/client";
-import { choosePurchaseTarget } from "../../services/pantry-purchase.js";
+import { choosePurchaseTarget, resolveDefaultExpiry } from "../../services/pantry-purchase.js";
 import { convertQuantity, roundQuantity } from "../../utils/food-units.js";
 import { HttpError } from "../../utils/http-error.js";
 import { syncPantryNotifications } from "../notifications/notifications.service.js";
@@ -39,6 +39,8 @@ export const changedPantryError = () => new HttpError(409, "Kho vừa thay đổ
 export async function addToPantry(tx: Tx, userId: string, input: IntakeInput, link: IntakeLink, now: Date) {
   const pantry = await tx.pantryItem.findMany({ where: { userId } });
   const target = choosePurchaseTarget(pantry, input.name, input.unit, now);
+  // Dòng không có hạn (người dùng xóa hạn ở màn duyệt) vẫn vào kho với hạn ước tính.
+  const expiry = resolveDefaultExpiry(now, input.name, input.category, input.expiryDate, input.expiryEstimated);
   let action: IntakeAction;
   let item;
   let added: number;
@@ -49,7 +51,7 @@ export async function addToPantry(tx: Tx, userId: string, input: IntakeInput, li
     item = await tx.pantryItem.create({
       data: {
         userId, name: input.name, unit: input.unit, quantity: added, category: input.category, storageLocation: input.storageLocation,
-        expiryDate: input.expiryDate, expiryEstimated: input.expiryDate ? input.expiryEstimated : false,
+        ...expiry,
         ...(input.price && added > 0 ? { unitPrice: input.price / added } : {}),
         purchasedAt: now, createdAt: now, updatedAt: now,
       },
@@ -62,7 +64,7 @@ export async function addToPantry(tx: Tx, userId: string, input: IntakeInput, li
     const price = input.price && added > 0 ? { unitPrice: input.price / added } : {};
     const data = target.kind === "merge"
       ? { quantity, ...price }
-      : { quantity, ...price, purchasedAt: now, expiryDate: input.expiryDate, expiryEstimated: input.expiryDate ? input.expiryEstimated : false };
+      : { quantity, ...price, purchasedAt: now, ...expiry };
     const updated = await tx.pantryItem.updateMany({ where: { id: target.item.id, userId, quantity: target.item.quantity }, data });
     if (!updated.count) throw changedPantryError();
     item = { ...target.item, ...data };

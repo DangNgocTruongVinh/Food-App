@@ -46,7 +46,9 @@ export function PantryItemDialog({ item, onClose, onSaved }: PantryItemDialogPro
   const editing = Boolean(item);
   // Hạn ước tính (đã mua → kho) còn nguyên ngày cũ thì nhắc; sửa sang ngày khác thì lưu xong mất chữ này.
   const estimated = item && isExpiryEstimated(item) && form.expiryDate === toPantryFormValues(item).expiryDate;
-  const expiryHint = estimated ? "Hạn ước tính theo nhóm thực phẩm. Sửa nếu bao bì ghi ngày khác." : "Để trống nếu không có hạn.";
+  // Thêm mới không nhập hạn: backend gán hạn ước tính theo nhóm (resolveDefaultExpiry). Sửa mà xóa hạn thì không còn hạn.
+  const expiryHint = estimated ? "Hạn ước tính theo nhóm thực phẩm. Sửa nếu bao bì ghi ngày khác."
+    : editing ? "Để trống nếu không có hạn." : "Để trống thì Nouri ước tính hạn theo nhóm thực phẩm.";
 
   const onSuccess = () => {
     invalidatePantryQueries(queryClient);
@@ -61,7 +63,7 @@ export function PantryItemDialog({ item, onClose, onSaved }: PantryItemDialogPro
   const submit = (event: FormEvent) => {
     event.preventDefault();
     setSubmitted(true);
-    // Hạn sử dụng trống = không có hạn (gửi null, kể cả khi sửa để xóa hạn cũ); nhập sai thì không lưu.
+    // Hạn sử dụng trống gửi null: thêm mới thì backend ước tính hạn, sửa thì xóa hạn cũ; nhập sai thì không lưu.
     if (Object.keys(validatePantryForm(form, expiryInvalid)).length) {
       requestAnimationFrame(() => formRef.current?.querySelector<HTMLElement>("[aria-invalid='true']")?.focus());
       return;

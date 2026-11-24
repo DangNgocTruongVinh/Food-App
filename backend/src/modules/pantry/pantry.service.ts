@@ -1,5 +1,6 @@
 import { prisma } from "../../lib/prisma.js";
 import { isFoodCategory } from "../../services/food-category.js";
+import { resolveDefaultExpiry } from "../../services/pantry-purchase.js";
 import { syncPantryNotifications } from "../notifications/notifications.service.js";
 import { HttpError } from "../../utils/http-error.js";
 import { manualEditChange, recordPantryChange } from "./pantry-history.service.js";
@@ -15,11 +16,10 @@ async function syncNotificationsWithoutFailingCrud(userId: string) {
   }
 }
 
-function toCreateData(input: CreatePantryInput) {
-  return {
-    ...input,
-    expiryDate: input.expiryDate ? new Date(`${input.expiryDate}T00:00:00.000Z`) : null,
-  };
+/** Thêm tay không nhập hạn: gán hạn ước tính như khi quét hóa đơn (resolveDefaultExpiry). */
+function toCreateData(input: CreatePantryInput, now: Date) {
+  const entered = input.expiryDate ? new Date(`${input.expiryDate}T00:00:00.000Z`) : null;
+  return { ...input, ...resolveDefaultExpiry(now, input.name, input.category, entered) };
 }
 
 function toUpdateData(input: UpdatePantryInput) {
@@ -43,7 +43,7 @@ const UNKNOWN_CATEGORY = "Nhóm thực phẩm không có trong danh mục. Hãy 
 export async function createPantryItem(userId: string, input: CreatePantryInput) {
   if (!isFoodCategory(input.category)) throw new HttpError(422, UNKNOWN_CATEGORY);
   const item = await prisma.$transaction(async (transaction) => {
-    const created = await transaction.pantryItem.create({ data: { userId, ...toCreateData(input) } });
+    const created = await transaction.pantryItem.create({ data: { userId, ...toCreateData(input, new Date()) } });
     await recordPantryChange(transaction, { item: created, delta: created.quantity, source: "MANUAL_ADD" });
     return created;
   });

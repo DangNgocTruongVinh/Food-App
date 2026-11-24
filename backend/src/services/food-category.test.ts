@@ -55,7 +55,7 @@ describe("Food categories (8 shared groups)", () => {
     for (const name of ["Bún tươi", "Bánh phở", "Bánh cuốn", "Mì tươi", "Bánh hỏi", "Bánh bao"]) expect(shelfLifeFor(name, "Ngũ cốc"), name).toEqual({ days: 2, storage: "REFRIGERATOR" });
     expect(shelfLifeFor("Bánh mì", "Ngũ cốc")).toEqual({ days: 2, storage: "DRY_STORAGE" });
     expect(shelfLifeFor("Muối", "Gia vị")).toEqual({ days: 180, storage: "DRY_STORAGE" });
-    expect(shelfLifeFor("Khăn giấy", "Nhóm đã xóa")).toEqual({ days: null, storage: "REFRIGERATOR" });
+    expect(shelfLifeFor("Khăn giấy", "Nhóm đã xóa")).toEqual({ days: 7, storage: "REFRIGERATOR" }); // nhóm dự phòng "Khác"
   });
 
   it("fills a missing category of an old shopping line when reading, keeps an existing one", () => {
