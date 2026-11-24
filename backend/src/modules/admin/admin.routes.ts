@@ -1,6 +1,8 @@
 import { Router } from "express";
 import { requireAdmin, requireAuth } from "../../middleware/auth.js";
 import { singleImageUpload } from "../../middleware/image-upload.js";
+import { byUser, rateLimit } from "../../middleware/rate-limit.js";
+import { USER_RATE_LIMITS } from "../../shared/limits.js";
 import { validate } from "../../middleware/validate.js";
 import { asyncHandler } from "../../utils/async-handler.js";
 import { listAdminAuditLogsController } from "./admin-audit.controller.js";
@@ -50,6 +52,11 @@ import {
 const router = Router();
 router.use(requireAuth, requireAdmin);
 
+// Chỉ giới hạn thao tác gọi AI (ước tính dinh dưỡng khi "Chuyển thành công thức", audit S3); thao tác kiểm duyệt không giới hạn.
+const { aiRecipeEstimates } = USER_RATE_LIMITS;
+export const recipeEstimateLimit = rateLimit({ ...aiRecipeEstimates, keyOf: byUser,
+  message: `Bạn đã dùng hết ${aiRecipeEstimates.max} lượt ước tính dinh dưỡng bằng AI trong ngày. Vui lòng thử lại sau hoặc tự nhập dinh dưỡng.` });
+
 router.get("/recipes", validate(listAdminRecipesSchema), asyncHandler(listAdminRecipesController));
 router.post("/recipes", validate(createAdminRecipeSchema), asyncHandler(createAdminRecipeController));
 router.get("/recipes/:id", validate(adminRecipeIdSchema), asyncHandler(getAdminRecipeController));
@@ -66,7 +73,7 @@ router.get("/community/posts", validate(listModerationPostsSchema), asyncHandler
 router.get("/community/posts/:postId", validate(moderatePostSchema), asyncHandler(getModerationPostController));
 router.patch("/community/posts/:postId/visibility", validate(setPostVisibilitySchema), asyncHandler(setPostVisibilityController));
 router.patch("/community/posts/:postId/review", validate(reviewPostSchema), asyncHandler(reviewPostController));
-router.post("/community/posts/:postId/recipe-estimate", validate(moderatePostSchema), asyncHandler(estimatePostRecipeController));
+router.post("/community/posts/:postId/recipe-estimate", validate(moderatePostSchema), recipeEstimateLimit, asyncHandler(estimatePostRecipeController));
 router.delete("/community/posts/:postId", validate(moderatePostSchema), asyncHandler(moderateDeletePostController));
 router.delete("/community/comments/:commentId", validate(moderateCommentSchema), asyncHandler(moderateDeleteCommentController));
 

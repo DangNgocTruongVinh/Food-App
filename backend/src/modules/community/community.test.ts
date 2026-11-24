@@ -1,8 +1,8 @@
 import { Prisma } from "@prisma/client";
 import jwt from "jsonwebtoken";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { request, testApp } from "../../test/http-test-utils.js";
-import communityRoutes from "./community.routes.js";
+import { request, requestWithCookies, testApp } from "../../test/http-test-utils.js";
+import communityRoutes, { commentLimit, likeLimit, postWriteLimit } from "./community.routes.js";
 
 const mocks = vi.hoisted(() => ({
   secret: "nouri-test-only-secret-at-least-32-characters",
@@ -85,6 +85,7 @@ const createdComment = {
 };
 
 beforeEach(() => {
+  for (const limit of [postWriteLimit, commentLimit, likeLimit]) limit.reset(); // giới hạn theo tài khoản (S3): mỗi test bắt đầu từ 0
   vi.resetAllMocks();
   mocks.findPosts.mockResolvedValue([]);
   mocks.findProfile.mockResolvedValue(null);
@@ -494,5 +495,37 @@ describe("Thích đồng thời cùng một bài (audit R4)", () => {
     const conflict = responses.find((response) => response.status === 409)!;
     expect(conflict.body).toEqual({ message: "Dữ liệu vừa thay đổi, vui lòng tải lại rồi thử lại." });
     expect(JSON.stringify(conflict.body)).not.toMatch(/CommunityLike|postId|Unique/);
+  });
+});
+
+// Audit S3: giới hạn theo tài khoản (không theo IP). Mọi request trong test đều từ 127.0.0.1, nên hai người dùng dưới đây CÙNG IP.
+describe("Giới hạn tần suất theo tài khoản ở cộng đồng (audit S3)", () => {
+  const other = () => `Bearer ${jwt.sign({ sub: ownerId, email: "other@nouri.vn" }, mocks.secret)}`;
+  const send = (path: string, body?: unknown, as = token()) => requestWithCookies(app, path, { method: "POST", token: as, body });
+  const expectLimited = (response: Awaited<ReturnType<typeof send>>, message: string) => {
+    expect(response.status).toBe(429);
+    expect(response.body).toEqual({ message });
+    expect(Number(response.retryAfter)).toBeGreaterThan(0);
+  };
+
+  it("đăng bài: 10 lần/giờ; lần thứ 11 → 429; người dùng khác cùng IP vẫn đăng được", async () => {
+    for (let i = 1; i <= 10; i += 1) expect((await send("/api/community", { content: `Bài ${i}` })).status).toBe(201);
+    expectLimited(await send("/api/community", { content: "Bài 11" }), "Bạn đã đăng hoặc sửa bài 10 lần trong 1 giờ. Vui lòng thử lại sau.");
+    expect(mocks.createPost).toHaveBeenCalledTimes(10);
+    expect((await send("/api/community", { content: "Bài của người khác" }, other())).status).toBe(201);
+  });
+
+  it("bình luận: 20 lần/10 phút; lần thứ 21 → 429; người dùng khác cùng IP vẫn bình luận được", async () => {
+    for (let i = 1; i <= 20; i += 1) expect((await send(`/api/community/${postId}/comments`, { content: `Ý kiến ${i}` })).status).toBe(201);
+    expectLimited(await send(`/api/community/${postId}/comments`, { content: "Ý kiến 21" }), "Bạn bình luận quá nhanh. Vui lòng đợi vài phút rồi thử lại.");
+    expect(mocks.createComment).toHaveBeenCalledTimes(20);
+    expect((await send(`/api/community/${postId}/comments`, { content: "Hay quá" }, other())).status).toBe(201);
+  });
+
+  it("thích/bỏ thích: 60 lần/phút; lần thứ 61 → 429; người dùng khác cùng IP vẫn thích được", async () => {
+    for (let i = 1; i <= 60; i += 1) expect((await send(`/api/community/${postId}/like`)).status).toBe(200);
+    expectLimited(await send(`/api/community/${postId}/like`), "Bạn thao tác quá nhanh. Vui lòng đợi một chút rồi thử lại.");
+    expect(mocks.createLike).toHaveBeenCalledTimes(60);
+    expect((await send(`/api/community/${postId}/like`, undefined, other())).status).toBe(200);
   });
 });
