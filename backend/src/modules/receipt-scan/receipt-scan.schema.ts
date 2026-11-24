@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { isFoodCategory } from "../../services/food-category.js";
+import { PANTRY_QUANTITY_MAX } from "../../shared/limits.js";
 
 const empty = z.object({});
 const scanParams = z.object({ id: z.string().cuid() });
@@ -21,7 +22,7 @@ export const receiptScanIdSchema = z.object({ body: empty, params: scanParams, q
 /** Dòng người dùng đã duyệt (sửa/bỏ ở màn duyệt). Server kiểm lại toàn bộ, không dựa vào dòng nháp. */
 export const receiptLineSchema = z.object({
   name: text(100),
-  quantity: z.number().positive().max(100_000),
+  quantity: z.number().positive().max(PANTRY_QUANTITY_MAX),
   unit: z.enum(["G", "KG", "ML", "L", "ITEM", "PACKAGE"]),
   // Nhóm phải có trong danh mục FoodCategory (database), kiểm khi nhận request.
   category: z.string().trim().refine(isFoodCategory, "Nhóm thực phẩm không có trong danh mục."),

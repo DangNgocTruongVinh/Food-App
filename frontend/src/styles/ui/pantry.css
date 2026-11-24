@@ -21,7 +21,7 @@
 .kho-hero__actions { display: flex; flex: 1 1 auto; flex-wrap: nowrap; align-items: center; justify-content: flex-end; gap: var(--space-3); max-width: 760px; }
 .kho-hero__actions .ui-button { flex: 0 0 auto; }
 .kho-search { position: relative; flex: 1 1 260px; min-width: 200px; }
-.kho-search__icon { position: absolute; top: 50%; left: var(--space-4); width: 20px; height: 20px; color: var(--muted); stroke-width: 1.75; transform: translateY(-50%); pointer-events: none; }
+.kho-search__icon { position: absolute; z-index: 1; /* trên ô Combobox (position: relative) */ top: 50%; left: var(--space-4); width: 20px; height: 20px; color: var(--muted); stroke-width: 1.75; transform: translateY(-50%); pointer-events: none; }
 .kho-search__input.ui-input { padding-left: 48px; border-radius: var(--radius-pill); }
 
 /* Bốn ô thống kê trong một card; ô là nút lọc (aria-pressed). */

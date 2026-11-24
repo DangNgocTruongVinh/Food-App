@@ -1,6 +1,7 @@
 import { ChevronDown, LogOut, Shield, UserRound } from "lucide-react";
 import { Link } from "react-router-dom";
-import { accountMenuItems, userInitial } from "../../features/layout/layout.logic";
+import { accountMenuItems } from "../../features/layout/layout.logic";
+import { nameInitials } from "../../utils/initials";
 import { useDisclosure } from "../../features/layout/useDisclosure";
 import type { User } from "../../types";
 
@@ -12,7 +13,7 @@ export function AccountMenu({ user, onLogout }: { user: User | null; onLogout: (
   return (
     <div className="account-menu" ref={rootRef}>
       <button type="button" className="account-menu__button" {...buttonProps} aria-label={`Tài khoản: ${user?.name ?? "Người dùng"}`}>
-        <span className="account-menu__avatar" aria-hidden="true">{userInitial(user?.name)}</span>
+        <span className="account-menu__avatar" aria-hidden="true">{nameInitials(user?.name)}</span>
         <span className="account-menu__name" aria-hidden="true">{user?.name}</span>
         <ChevronDown className="account-menu__chevron" aria-hidden="true" />
       </button>

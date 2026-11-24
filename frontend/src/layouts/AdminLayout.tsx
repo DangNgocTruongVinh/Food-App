@@ -3,7 +3,8 @@ import { BookOpen, Database, LayoutDashboard, LogOut, Menu, ScrollText, ShieldCh
 import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
 import { Button, NouriWordmark } from "../components/ui";
 import { useAuth } from "../contexts/AuthContext";
-import { ADMIN_NAV, userInitial } from "../features/layout/layout.logic";
+import { ADMIN_NAV } from "../features/layout/layout.logic";
+import { nameInitials } from "../utils/initials";
 import { useDisclosure } from "../features/layout/useDisclosure";
 import { cx } from "../features/ui/ui.logic";
 import { ErrorBoundary } from "../components/ErrorBoundary";
@@ -63,7 +64,7 @@ export default function AdminLayout() {
           </nav>
           <div className="ad-sidebar__foot">
             <div className="ad-account">
-              <span className="account-menu__avatar" aria-hidden="true">{userInitial(user?.name)}</span>
+              <span className="account-menu__avatar" aria-hidden="true">{nameInitials(user?.name)}</span>
               <span className="ad-account__who">
                 <span className="ad-account__name">{user?.name}</span>
                 <span className="ad-account__email">{user?.email}</span>

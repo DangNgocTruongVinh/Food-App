@@ -64,12 +64,6 @@ export function accountMenuItems(user: { role?: string } | null | undefined): Ac
   ];
 }
 
-/** Chữ cái đầu của tên (ảnh đại diện chữ); tên trống → "N". */
-export function userInitial(name: string | null | undefined) {
-  const first = name?.trim().charAt(0);
-  return first ? first.toLocaleUpperCase("vi") : "N";
-}
-
 /** Nhóm liên kết footer: chỉ trang có thật. */
 export const FOOTER_GROUPS: { title: string; links: NavLinkItem[] }[] = [
   {

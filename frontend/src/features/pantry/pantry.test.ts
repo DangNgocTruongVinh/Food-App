@@ -252,6 +252,10 @@ describe("Pantry page logic", () => {
     expect(Object.keys(errors).sort()).toEqual(["expiryDate", "minimumStock", "name", "note", "quantity"]);
     expect(errors.expiryDate).toContain("dd/mm/yyyy");
     expect(errors.quantity).toBe("Nhập số lượng lớn hơn 0.");
+    // Số lượng phải > 0 và tối đa PANTRY_QUANTITY_MAX (100.000), như API.
+    expect(validatePantryForm({ ...form, quantity: 0 }, false).quantity).toBe("Nhập số lượng lớn hơn 0.");
+    expect(validatePantryForm({ ...form, quantity: 1e12 }, false).quantity).toBe("Số lượng tối đa 100.000.");
+    expect(validatePantryForm({ ...form, quantity: 100_000 }, false)).toEqual({});
   });
 
   // Audit M7: nhóm mặc định không viết cứng, lấy nhóm đầu tiên của danh mục (/api/catalog).

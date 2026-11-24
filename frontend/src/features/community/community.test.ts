@@ -16,7 +16,6 @@ import {
   COMMUNITY_COMMENT_MAX_LENGTH,
   COMMUNITY_POST_MAX_LENGTH,
   communityCommentInputId,
-  communityInitials,
   communityPostElementId,
   communityShareRecipePath,
   communityShareText,
@@ -193,8 +192,6 @@ describe("Community query and cache definitions", () => {
 
 describe("Community page business logic", () => {
   it("keeps initials and content normalization behavior", () => {
-    expect(communityInitials("  Nguyễn Linh Nhi ")).toBe("LN");
-    expect(communityInitials("Nouri")).toBe("N");
     expect(normalizeCommunityContent("  Bữa trưa  ")).toBe("Bữa trưa");
     expect(normalizeCommunityContent("   ")).toBeNull();
   });

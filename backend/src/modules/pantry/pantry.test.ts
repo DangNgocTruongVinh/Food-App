@@ -351,6 +351,8 @@ describe("Pantry validation", () => {
     { ...createBody, category: "" },
     { ...createBody, category: "   " },
     { ...createBody, quantity: -1 },
+    { ...createBody, quantity: 0 }, // phải > 0 (PANTRY_QUANTITY_MAX, shared/limits.ts)
+    { ...createBody, quantity: 1e12 }, // tối đa 100.000
     { ...createBody, unit: "BOX" },
     { ...createBody, storageLocation: "CUPBOARD" },
     { ...createBody, expiryDate: "20-09-2026" },
@@ -363,12 +365,16 @@ describe("Pantry validation", () => {
     expect(mocks.create).not.toHaveBeenCalled();
   });
 
-  it("rejects invalid update data before checking ownership", async () => {
+  it.each([-1, 0, 1e12])("rejects invalid update data (quantity %s) before checking ownership", async (quantity) => {
     const response = await request(app, `/api/pantry/${itemId}`, {
-      method: "PUT", token: token(), body: { quantity: -1 },
+      method: "PUT", token: token(), body: { quantity },
     });
     expect(response.status).toBe(422);
     expect(mocks.transaction).not.toHaveBeenCalled();
+  });
+
+  it("accepts the maximum quantity 100.000", async () => {
+    expect((await request(app, "/api/pantry", { method: "POST", token: token(), body: { ...createBody, quantity: 100_000 } })).status).toBe(201);
   });
 
   it.each(["PUT", "DELETE"])("rejects an invalid id for %s", async (method) => {

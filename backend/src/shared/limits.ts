@@ -64,3 +64,6 @@ export const NUTRITION_FORMULA = {
  * (backend services/pantry-purchase.ts, resolveDefaultExpiry).
  */
 export const FALLBACK_SHELF_LIFE_DAYS = 7;
+
+/** Số lượng một thực phẩm trong kho (thêm tay, sửa, dòng hóa đơn): lớn hơn 0, tối đa 100.000 (đơn vị bất kỳ). */
+export const PANTRY_QUANTITY_MAX = 100_000;
