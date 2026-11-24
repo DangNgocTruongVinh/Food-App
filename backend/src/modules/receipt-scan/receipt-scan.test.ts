@@ -285,6 +285,7 @@ describe("POST /:id/commit", () => {
     ["đơn vị lạ", [line({ unit: "BOX" })]],
     ["nhóm ngoài 8 nhóm", [line({ category: "Đồ ăn vặt" })]],
     ["số lượng 0", [line({ quantity: 0 })]],
+    ["số lượng 1e12", [line({ quantity: 1e12 })]],
     ["ngày sai định dạng", [line({ expiryDate: "11/11/2026" })]],
   ])("dữ liệu sai (%s) → 422", async (_label, lines) => {
     expect((await commit(lines)).status).toBe(422);

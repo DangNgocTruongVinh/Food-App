@@ -1,11 +1,12 @@
 import { Bookmark, Clock3, EyeOff, Heart, MessageCircle, MoreHorizontal, Pencil, Share2, Trash2 } from "lucide-react";
 import type { FormEvent } from "react";
 import {
-  communityCommentInputId, communityExactTime, communityInitials, communityPostElementId, communityRelativeTime, shareCommunityPost,
+  communityCommentInputId, communityExactTime, communityPostElementId, communityRelativeTime, shareCommunityPost,
 } from "../../features/community/community.logic";
 import { useDisclosure } from "../../features/layout/useDisclosure";
 import { cx } from "../../features/ui/ui.logic";
 import type { CommunityPost } from "../../types";
+import { nameInitials } from "../../utils/initials";
 import { Card, Tag } from "../ui";
 import CommentForm from "./CommentForm";
 import MemberRecipeCard from "./MemberRecipeCard";
@@ -68,7 +69,7 @@ export default function PostCard(props: PostCardProps) {
       aria-label={`Bài viết của ${post.author.name}`}
     >
       <header className="cm-post__head">
-        <span className="cm-avatar" aria-hidden="true">{communityInitials(post.author.name)}</span>
+        <span className="cm-avatar" aria-hidden="true">{nameInitials(post.author.name)}</span>
         <div className="cm-post__who">
           <span className="cm-post__author">
             {post.author.name}
@@ -115,7 +116,7 @@ export default function PostCard(props: PostCardProps) {
         <ul className="cm-comments" aria-label="Bình luận">
           {post.comments.map((comment) => (
             <li className="cm-comment" key={comment.id}>
-              <span className="cm-avatar cm-avatar--small" aria-hidden="true">{communityInitials(comment.author.name)}</span>
+              <span className="cm-avatar cm-avatar--small" aria-hidden="true">{nameInitials(comment.author.name)}</span>
               <div className="cm-comment__body">
                 <p className="cm-comment__head"><span className="cm-comment__author">{comment.author.name}</span><PostTime value={comment.createdAt} /></p>
                 <p className="cm-comment__text">{comment.content}</p>

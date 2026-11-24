@@ -16,10 +16,6 @@ export function communityCommentInputId(postId: string) {
   return `comment-${postId}`;
 }
 
-export function communityInitials(name: string) {
-  return name.trim().split(/\s+/).slice(-2).map((part) => part.charAt(0).toUpperCase()).join("");
-}
-
 export function communityRelativeTime(value: string) {
   return formatDistanceToNow(new Date(value), { addSuffix: true, locale: vi });
 }

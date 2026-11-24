@@ -2,8 +2,8 @@ import type {
   FoodUnit, ReceiptCommitLine, ReceiptCommitResult, ReceiptDraftLine, ReceiptLineFlag, ReceiptLineTarget, ReceiptProviderId,
   ReceiptScanMode, ReceiptScanPhase, ReceiptScanStatus, ReceiptSkipReason, ReceiptUndoResult, StorageLocation,
 } from "../../types";
-import { formatPantryQuantity } from "./pantry.logic";
-import { IMAGE_MIME_TYPES, MAX_IMAGE_BYTES, MAX_IMAGE_MB } from "../shared/limits";
+import { formatPantryQuantity, QUANTITY_TOO_LARGE } from "./pantry.logic";
+import { IMAGE_MIME_TYPES, MAX_IMAGE_BYTES, MAX_IMAGE_MB, PANTRY_QUANTITY_MAX } from "../shared/limits";
 
 // Quét hóa đơn (GĐ3c): logic thuần cho hộp quét, màn tiến trình và màn duyệt ở trang Kho.
 
@@ -177,7 +177,7 @@ export function lineErrors(line: EditableLine, expiryInvalid: boolean): LineErro
   if (!name) errors.name = "Nhập tên thực phẩm.";
   else if (name.length > 100) errors.name = "Tên tối đa 100 ký tự.";
   if (!Number.isFinite(line.quantity) || line.quantity <= 0) errors.quantity = "Nhập số lượng lớn hơn 0.";
-  else if (line.quantity > 100_000) errors.quantity = "Số lượng quá lớn.";
+  else if (line.quantity > PANTRY_QUANTITY_MAX) errors.quantity = QUANTITY_TOO_LARGE;
   if (expiryInvalid) errors.expiryDate = "Nhập ngày theo dạng dd/mm/yyyy hoặc để trống.";
   return errors;
 }

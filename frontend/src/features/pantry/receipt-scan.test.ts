@@ -104,6 +104,8 @@ describe("receipt-scan.logic", () => {
   it("số lượng 0 hoặc trống bị chặn", () => {
     const [line] = toEditableLines([draft()]);
     expect(reviewErrors([{ ...line, quantity: Number.NaN }], new Set())).toEqual({ l1: { quantity: "Nhập số lượng lớn hơn 0." } });
+    expect(reviewErrors([{ ...line, quantity: 0 }], new Set())).toEqual({ l1: { quantity: "Nhập số lượng lớn hơn 0." } });
+    expect(reviewErrors([{ ...line, quantity: 1e12 }], new Set())).toEqual({ l1: { quantity: "Số lượng tối đa 100.000." } });
   });
 
   it("thông báo lưu/hoàn tác và lỗi hết lượt", () => {

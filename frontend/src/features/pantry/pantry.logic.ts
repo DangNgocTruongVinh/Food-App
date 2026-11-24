@@ -4,7 +4,7 @@ import { formatDisplayDate } from "../../utils/date";
 import { foodUnitLabel } from "../../utils/units";
 import type { PantryFormValues } from "./pantry.api";
 import type { ComboOption } from "../ui/combobox.logic";
-import { EXPIRING_SOON_DAYS } from "../shared/limits";
+import { EXPIRING_SOON_DAYS, PANTRY_QUANTITY_MAX } from "../shared/limits";
 
 /** depleted: số lượng 0 (giữ lại trong kho sau khi trừ hết, GĐ3b quyết định 1). */
 export type PantryItemStatus = "good" | "expiring" | "expired" | "depleted";
@@ -168,6 +168,9 @@ export function pantryItemPage(items: { id: string }[], itemId: string, pageSize
 export type PantryFormField = "name" | "category" | "expiryDate" | "quantity" | "minimumStock" | "note" | "unitPrice";
 export type PantryFormErrors = Partial<Record<PantryFormField, string>>;
 
+/** Dùng chung cho form Kho và màn duyệt hóa đơn. */
+export const QUANTITY_TOO_LARGE = `Số lượng tối đa ${PANTRY_QUANTITY_MAX.toLocaleString("vi-VN")}.`;
+
 /** Lỗi theo từng trường, nói rõ cách sửa. Hạn sử dụng trống là hợp lệ (không có hạn). */
 export function validatePantryForm(form: PantryFormValues, expiryDateInvalid: boolean): PantryFormErrors {
   const errors: PantryFormErrors = {};
@@ -177,6 +180,7 @@ export function validatePantryForm(form: PantryFormValues, expiryDateInvalid: bo
   if (!form.category) errors.category = "Chọn nhóm thực phẩm.";
   if (expiryDateInvalid) errors.expiryDate = "Ngày không hợp lệ. Nhập theo dạng dd/mm/yyyy, hoặc để trống nếu không có hạn.";
   if (!Number.isFinite(form.quantity) || form.quantity <= 0) errors.quantity = "Nhập số lượng lớn hơn 0.";
+  else if (form.quantity > PANTRY_QUANTITY_MAX) errors.quantity = QUANTITY_TOO_LARGE;
   if (!Number.isFinite(form.minimumStock) || form.minimumStock < 0) errors.minimumStock = "Nhập 0 hoặc một số dương.";
   // Đơn giá không bắt buộc: để trống được; nhập thì phải là số không âm.
   if (Number.isFinite(form.unitPrice) && (form.unitPrice < 0 || form.unitPrice > 1_000_000_000)) errors.unitPrice = "Nhập đơn giá từ 0 đồng, hoặc để trống.";

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { accountMenuItems, ADMIN_NAV, adminRedirect, FOOTER_GROUPS, isAdmin, isRecipePreviewPath, postLoginPath, PRIMARY_NAV, userInitial } from "./layout.logic";
+import { accountMenuItems, ADMIN_NAV, adminRedirect, FOOTER_GROUPS, isAdmin, isRecipePreviewPath, postLoginPath, PRIMARY_NAV } from "./layout.logic";
 
 describe("account menu", () => {
   it("shows Quản trị only to an ADMIN account", () => {
@@ -16,15 +16,6 @@ describe("account menu", () => {
     expect(isAdmin({})).toBe(false);
     expect(isAdmin(undefined)).toBe(false);
     expect(isAdmin({ role: "ADMIN" })).toBe(true);
-  });
-});
-
-describe("userInitial", () => {
-  it("uses the first letter of the name, uppercased (Vietnamese aware)", () => {
-    expect(userInitial("minh Anh")).toBe("M");
-    expect(userInitial("  đức")).toBe("Đ");
-    expect(userInitial("")).toBe("N");
-    expect(userInitial(undefined)).toBe("N");
   });
 });
 

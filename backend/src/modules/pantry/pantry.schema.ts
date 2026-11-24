@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { PANTRY_QUANTITY_MAX } from "../../shared/limits.js";
 
 const empty = z.object({});
 const unitSchema = z.enum(["G", "KG", "ML", "L", "ITEM", "PACKAGE"]);
@@ -10,7 +11,7 @@ const normalizedText = (max: number) => z.string()
 export const pantryItemSchema = z.object({
   name: normalizedText(100),
   category: normalizedText(50),
-  quantity: z.number().nonnegative(),
+  quantity: z.number().positive().max(PANTRY_QUANTITY_MAX),
   unit: unitSchema,
   storageLocation: storageLocationSchema.optional(),
   expiryDate: z.string().date().nullable().optional(),

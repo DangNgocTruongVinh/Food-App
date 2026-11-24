@@ -1,6 +1,7 @@
 import { BookOpen, ImagePlus, NotebookPen } from "lucide-react";
 import type { FormEvent, ReactNode } from "react";
-import { COMMUNITY_IMAGE_TYPES, COMMUNITY_MAX_IMAGES, COMMUNITY_POST_MAX_LENGTH, communityInitials } from "../../features/community/community.logic";
+import { COMMUNITY_IMAGE_TYPES, COMMUNITY_MAX_IMAGES, COMMUNITY_POST_MAX_LENGTH } from "../../features/community/community.logic";
+import { nameInitials } from "../../utils/initials";
 import { cx } from "../../features/ui/ui.logic";
 import type { CommunityRecipeSummary } from "../../types";
 import { Button, Card } from "../ui";
@@ -43,7 +44,7 @@ export default function PostComposer(props: PostComposerProps) {
     <Card as="section" className="cm-composer" aria-labelledby="cm-composer-title">
       <form onSubmit={onSubmit} className="cm-composer__form">
         <div className="cm-composer__head">
-          <span className="cm-avatar" aria-hidden="true">{communityInitials(userName ?? "N")}</span>
+          <span className="cm-avatar" aria-hidden="true">{nameInitials(userName)}</span>
           <label id="cm-composer-title" className="cm-composer__label" htmlFor={COMMUNITY_POST_INPUT_ID}>Chia sẻ với cộng đồng</label>
         </div>
         <textarea

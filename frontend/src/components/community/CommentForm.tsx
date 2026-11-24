@@ -1,6 +1,7 @@
 import { Send } from "lucide-react";
 import type { FormEvent } from "react";
-import { COMMUNITY_COMMENT_MAX_LENGTH, communityCommentInputId, communityInitials } from "../../features/community/community.logic";
+import { COMMUNITY_COMMENT_MAX_LENGTH, communityCommentInputId } from "../../features/community/community.logic";
+import { nameInitials } from "../../utils/initials";
 import { IconButton } from "../ui";
 
 type CommentFormProps = {
@@ -16,7 +17,7 @@ type CommentFormProps = {
 export default function CommentForm({ postId, postAuthorName, userName, value, onChange, onSubmit, isPending }: CommentFormProps) {
   return (
     <form className="cm-comment-form" onSubmit={onSubmit}>
-      <span className="cm-avatar cm-avatar--small" aria-hidden="true">{communityInitials(userName ?? "N")}</span>
+      <span className="cm-avatar cm-avatar--small" aria-hidden="true">{nameInitials(userName)}</span>
       <input
         id={communityCommentInputId(postId)}
         className="ui-input cm-comment-form__input"

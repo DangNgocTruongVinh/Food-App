@@ -127,7 +127,7 @@ body:has(.ad-shell) { background: var(--bg); }
 /* Thanh công cụ danh sách. */
 .ad-toolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-3); }
 .ad-search { position: relative; flex: 1 1 280px; max-width: 420px; }
-.ad-search__icon { position: absolute; top: 50%; left: var(--space-4); width: 20px; height: 20px; color: var(--muted); transform: translateY(-50%); pointer-events: none; }
+.ad-search__icon { position: absolute; z-index: 1; /* trên ô Combobox (position: relative) */ top: 50%; left: var(--space-4); width: 20px; height: 20px; color: var(--muted); transform: translateY(-50%); pointer-events: none; }
 .ad-search__input.ui-input { min-height: var(--control-h); padding-left: 48px; border-radius: var(--radius-pill); }
 .ad-filter { display: flex; flex-wrap: wrap; gap: var(--space-2); }
 .ad-panel > .ui-empty,

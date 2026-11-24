@@ -21,7 +21,7 @@
 }
 .recipes-hero__inner > .ui-text { max-width: 52ch; font-size: 1.0625rem; }
 .recipes-search { position: relative; max-width: 560px; }
-.recipes-search__icon { position: absolute; top: 50%; left: var(--space-5); width: 20px; height: 20px; color: var(--muted); stroke-width: 1.75; transform: translateY(-50%); pointer-events: none; }
+.recipes-search__icon { position: absolute; z-index: 1; /* trên ô Combobox (position: relative) */ top: 50%; left: var(--space-5); width: 20px; height: 20px; color: var(--muted); stroke-width: 1.75; transform: translateY(-50%); pointer-events: none; }
 .recipes-search__input.ui-input { min-height: 56px; padding-left: 52px; border-radius: var(--radius-pill); }
 
 .recipes-content { display: grid; gap: var(--space-7); width: 100%; max-width: var(--content-max); margin: 0 auto; padding: 0 var(--gutter); }
