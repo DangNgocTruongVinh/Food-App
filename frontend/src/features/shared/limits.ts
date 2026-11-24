@@ -58,3 +58,9 @@ export const NUTRITION_FORMULA = {
   proteinRatio: { default: 0.25, buildMuscle: 0.3 },
   fatRatio: 0.28,
 } as const;
+
+/**
+ * Hạn (số ngày) cuối cùng khi thực phẩm vào kho mà không có hạn: nhóm thực phẩm và nhóm dự phòng ("Khác") đều chưa đặt hạn mặc định
+ * (backend services/pantry-purchase.ts, resolveDefaultExpiry).
+ */
+export const FALLBACK_SHELF_LIFE_DAYS = 7;

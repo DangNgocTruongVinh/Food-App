@@ -67,7 +67,7 @@ export function ReceiptReviewRow({ line, index, errors, onChange, onExpiryStatus
           )}
         </Field>
         <Field label="Hạn sử dụng" error={errors.expiryDate} className="kho-scan-row__half"
-          hint={errors.expiryDate ? undefined : estimated ? "Ước tính theo nhóm. Sửa nếu bao bì ghi ngày khác." : "Để trống nếu không có hạn."}>
+          hint={errors.expiryDate ? undefined : estimated ? "Ước tính theo nhóm. Sửa nếu bao bì ghi ngày khác." : "Để trống thì Nouri ước tính hạn theo nhóm."}>
           {({ className, ...control }) => (
             <DateInput {...control} className="ui-date" inputClassName={className} value={line.expiryDate}
               onChange={(expiryDate, status) => { onChange({ expiryDate }); onExpiryStatus(status === "invalid"); }} />

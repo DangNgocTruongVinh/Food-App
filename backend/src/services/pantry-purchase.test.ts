@@ -1,5 +1,8 @@
-import { describe, expect, it } from "vitest";
-import { choosePurchaseTarget, suggestedPantryDefaults } from "./pantry-purchase.js";
+import { afterEach, describe, expect, it } from "vitest";
+import { FALLBACK_SHELF_LIFE_DAYS } from "../shared/limits.js";
+import { buildFoodCatalog, seedCatalogRows, useSeedCatalog } from "./catalog/catalog-build.js";
+import { setFoodCatalog } from "./food-category.js";
+import { choosePurchaseTarget, resolveDefaultExpiry, suggestedPantryDefaults } from "./pantry-purchase.js";
 
 // 23:30 ngày 03/11 giờ UTC = 06:30 ngày 04/11 giờ Việt Nam: hạn gợi ý tính từ ngày Việt Nam.
 const now = new Date("2026-11-03T23:30:00.000Z");
@@ -30,9 +33,9 @@ describe("Suggested pantry defaults for a purchased item (decision 5)", () => {
     });
   });
 
-  it("sets no expiry for the group Khác (not estimated), and keeps an unknown stored category", () => {
-    expect(suggestedPantryDefaults("Đá viên", null, now)).toEqual({ category: "Khác", storageLocation: "REFRIGERATOR", expiryDate: null, expiryEstimated: false });
-    expect(suggestedPantryDefaults("Đậu hũ", "Đồ chay", now)).toMatchObject({ category: "Đồ chay", storageLocation: "REFRIGERATOR", expiryDate: null });
+  it("gives the group Khác its default expiry (estimated), and keeps an unknown stored category", () => {
+    expect(suggestedPantryDefaults("Đá viên", null, now)).toEqual({ category: "Khác", storageLocation: "REFRIGERATOR", expiryDate: vnDay(7), expiryEstimated: true });
+    expect(suggestedPantryDefaults("Đậu hũ", "Đồ chay", now)).toMatchObject({ category: "Đồ chay", storageLocation: "REFRIGERATOR", expiryDate: vnDay(7) });
   });
 });
 
@@ -61,5 +64,38 @@ describe("Choosing where a purchase goes in the pantry", () => {
 
   it("creates a new item when nothing matches by name", () => {
     expect(choosePurchaseTarget([item("a", "Đậu hũ non", 100, "G", null)], "Đậu hũ", "G", now)).toEqual({ kind: "create" });
+  });
+});
+
+// Hạn khi vào kho (quét hóa đơn, "Đã mua", thêm tay): đủ 4 bậc ưu tiên.
+describe("resolveDefaultExpiry", () => {
+  // Danh mục giả: đặt hạn mặc định của một nhóm (Rau củ) và của nhóm dự phòng (Khác), còn lại như seed.
+  const withDefaults = (vegetables: number | null, other: number | null) => {
+    const rows = seedCatalogRows().foodCategories.map((row) => (
+      row.name === "Rau củ" ? { ...row, defaultShelfLifeDays: vegetables } : row.isFallback ? { ...row, defaultShelfLifeDays: other } : row));
+    setFoodCatalog(buildFoodCatalog(rows));
+  };
+  afterEach(() => useSeedCatalog());
+
+  it("1) hạn người dùng nhập: giữ nguyên, kèm cờ ước tính có sẵn", () => {
+    const entered = new Date("2026-12-01T00:00:00.000Z");
+    expect(resolveDefaultExpiry(now, "Cải ngọt", "Rau củ", entered)).toEqual({ expiryDate: entered, expiryEstimated: false });
+    expect(resolveDefaultExpiry(now, "Cải ngọt", "Rau củ", entered, true)).toEqual({ expiryDate: entered, expiryEstimated: true });
+  });
+
+  it("2) hạn mặc định của nhóm thực phẩm (tính từ ngày mua giờ Việt Nam)", () => {
+    expect(resolveDefaultExpiry(now, "Cải ngọt", "Rau củ")).toEqual({ expiryDate: vnDay(5), expiryEstimated: true });
+  });
+
+  it("3) nhóm chưa đặt hạn → hạn mặc định của nhóm dự phòng", () => {
+    withDefaults(null, 4);
+    expect(resolveDefaultExpiry(now, "Cải ngọt", "Rau củ")).toEqual({ expiryDate: vnDay(4), expiryEstimated: true });
+    expect(resolveDefaultExpiry(now, "Đá viên", "Khác")).toEqual({ expiryDate: vnDay(4), expiryEstimated: true });
+  });
+
+  it("4) cả nhóm và nhóm dự phòng chưa đặt hạn → FALLBACK_SHELF_LIFE_DAYS (7 ngày)", () => {
+    withDefaults(null, null);
+    expect(FALLBACK_SHELF_LIFE_DAYS).toBe(7);
+    expect(resolveDefaultExpiry(now, "Cải ngọt", "Rau củ")).toEqual({ expiryDate: vnDay(FALLBACK_SHELF_LIFE_DAYS), expiryEstimated: true });
   });
 });

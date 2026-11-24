@@ -185,6 +185,6 @@ describe("Danh mục dữ liệu trong database (seed → nạp → Admin sửa 
     expect(response.body.cuisines).toEqual(["Việt Nam", "Nhật Bản"]);
     expect(response.status).toBe(200);
     expect(response.body.allergenGroups.map((group: { id: string }) => group.id)).toContain("CELERY");
-    expect(response.body.foodCategories.at(-1)).toEqual({ name: "Khác", defaultStorage: "REFRIGERATOR", defaultShelfLifeDays: null });
+    expect(response.body.foodCategories.at(-1)).toEqual({ name: "Khác", defaultStorage: "REFRIGERATOR", defaultShelfLifeDays: 7 });
   });
 });

@@ -97,7 +97,7 @@ describe("Pantry HTTP contract and ownership (no database)", () => {
     });
     expect(response).toEqual({ status: 201, body: JSON.parse(JSON.stringify(item)) });
     expect(mocks.create).toHaveBeenCalledWith({ data: {
-      userId, ...createBody, expiryDate: new Date("2026-09-20T00:00:00.000Z"),
+      userId, ...createBody, expiryDate: new Date("2026-09-20T00:00:00.000Z"), expiryEstimated: false,
     } });
     expect(mocks.syncNotifications).toHaveBeenCalledWith(userId);
   });
@@ -109,11 +109,22 @@ describe("Pantry HTTP contract and ownership (no database)", () => {
     expect(mocks.create.mock.calls[0][0].data).toMatchObject({ name: "Ức gà", category: "Thịt & cá" });
   });
 
-  it("stores a missing or null create expiry date as null and never accepts expiryEstimated from the client", async () => {
-    const { expiryDate: _expiryDate, ...withoutExpiry } = createBody;
-    await request(app, "/api/pantry", { method: "POST", token: token(), body: { ...withoutExpiry, expiryEstimated: true } });
-    expect(mocks.create.mock.calls[0][0].data.expiryDate).toBeNull();
-    expect(mocks.create.mock.calls[0][0].data).not.toHaveProperty("expiryEstimated");
+  // Thêm tay không nhập hạn: gán hạn ước tính theo nhóm (resolveDefaultExpiry), như khi quét hóa đơn.
+  it("gives a missing or null create expiry date the group's estimated expiry; never accepts expiryEstimated from the client", async () => {
+    vi.useFakeTimers({ now: new Date("2026-11-03T23:30:00.000Z"), toFake: ["Date"] }); // 04/11 giờ Việt Nam
+    try {
+      const { expiryDate: _expiryDate, ...withoutExpiry } = createBody;
+      await request(app, "/api/pantry", { method: "POST", token: token(), body: { ...withoutExpiry, expiryEstimated: true } });
+      await request(app, "/api/pantry", { method: "POST", token: token(), body: { ...createBody, expiryDate: null } });
+      await request(app, "/api/pantry", { method: "POST", token: token(), body: { ...createBody, expiryEstimated: true } });
+    } finally {
+      vi.useRealTimers();
+    }
+    const data = mocks.create.mock.calls.map(([args]) => args.data);
+    // "Thịt & cá": 2 ngày từ 04/11.
+    expect(data[0]).toMatchObject({ expiryDate: new Date("2026-11-06T00:00:00.000Z"), expiryEstimated: true });
+    expect(data[1]).toMatchObject({ expiryDate: new Date("2026-11-06T00:00:00.000Z"), expiryEstimated: true });
+    expect(data[2]).toMatchObject({ expiryDate: new Date("2026-09-20T00:00:00.000Z"), expiryEstimated: false });
   });
 
   it("updates by id and owner, cleans old pantry notifications, then resyncs", async () => {
