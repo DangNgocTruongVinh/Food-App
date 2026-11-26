@@ -41,8 +41,13 @@ export async function settleMealPlanJobsForTest({ clear = false } = {}) {
   if (clear) jobs.clear();
 }
 
-export function startMealPlanJob(userId: string, startDate: string, generate: Generate = generateWeeklyPlan, now = new Date()) {
+/** Mỗi người một việc đang chạy: còn việc RUNNING → 409. Route gọi trước bộ đếm lượt/ngày để lần bị từ chối không bị trừ lượt. */
+export function assertNoRunningMealPlanJob(userId: string) {
   if (jobs.get(userId)?.status === "RUNNING") throw new HttpError(409, "Đang tạo thực đơn bằng AI, vui lòng chờ xong.");
+}
+
+export function startMealPlanJob(userId: string, startDate: string, generate: Generate = generateWeeklyPlan, now = new Date()) {
+  assertNoRunningMealPlanJob(userId);
   const job: MealPlanJob = {
     id: `job-${now.getTime()}-${Math.random().toString(36).slice(2, 8)}`, status: "RUNNING", startDate,
     startedAt: now.toISOString(), finishedAt: null, planId: null, fallbackReason: null, error: null,

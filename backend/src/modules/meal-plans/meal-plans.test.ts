@@ -540,4 +540,20 @@ describe("Giới hạn Tạo bằng AI theo tài khoản (audit S3)", () => {
     expect((await generate("ai")).status).toBe(409);
     finish(null); // cho việc nền xong để afterEach không phải chờ
   });
+
+  // Lần bị 409 (đang có việc chạy) không bị trừ lượt: trước khi sửa, 1 lần 202 + 10 lần 409 đã tính 11 lượt → lần sau bị 429.
+  it("10 lần bị 409 vì đang chạy không bị trừ lượt; xong việc thì lần tiếp theo vẫn 202", async () => {
+    let finish!: (value: null) => void;
+    mocks.generatePlanWithAI.mockReturnValue(new Promise((resolve) => { finish = resolve; }));
+    expect((await generate("ai")).status).toBe(202);
+    for (let i = 1; i <= 10; i += 1) {
+      const busy = await generate("ai");
+      expect(busy.status).toBe(409);
+      expect(busy.body).toEqual({ message: "Đang tạo thực đơn bằng AI, vui lòng chờ xong." });
+    }
+    finish(null);
+    await settleAndKeep();
+    mocks.generatePlanWithAI.mockResolvedValue(null);
+    expect((await generate("ai")).status).toBe(202);
+  });
 });

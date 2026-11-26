@@ -11,3 +11,5 @@ output
 **/.env
 **/.env.*
 !**/.env.example
+# Bộ skill học thuật tải về: không gửi vào build Docker
+academic-research-skills/
