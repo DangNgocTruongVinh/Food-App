@@ -8,7 +8,7 @@ import { jpegWithGps } from "../../test/image-fixtures.js";
 import { receiptJobs } from "./receipt-scan.jobs.js";
 import receiptScanRoutes from "./receipt-scan.routes.js";
 import { RECEIPT_CREATED_NOTE } from "./receipt-scan.service.js";
-import { vietnamDaysUntil } from "../../utils/vietnam-date.js";
+import { DAY_MS, vietnamDaysUntil, vietnamToday } from "../../utils/vietnam-date.js";
 
 const mocks = vi.hoisted(() => ({
   secret: "nouri-test-only-secret-at-least-32-characters",
@@ -241,7 +241,7 @@ describe("POST /:id/commit", () => {
   });
 
   it("lưu các dòng đã duyệt trong một transaction, nguồn RECEIPT_SCAN gắn receiptScanId", async () => {
-    const eggs = { id: "cm61111111111111111111111", userId, name: "Trứng gà", quantity: 4, unit: "ITEM", expiryDate: day(10) };
+    const eggs = { id: "cm61111111111111111111111", userId, name: "Trứng gà", quantity: 4, unit: "ITEM", expiryDate: new Date(vietnamToday().getTime() + 10 * DAY_MS) };
     mocks.listPantry.mockResolvedValue([eggs]);
     const response = await commit([line(), line({ name: "Trứng gà", quantity: 10, unit: "ITEM", category: "Trứng & sữa", expiryDate: null })]);
     expect(response.status).toBe(200);
