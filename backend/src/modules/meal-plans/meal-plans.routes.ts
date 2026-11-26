@@ -4,7 +4,9 @@ import { requireAuth } from "../../middleware/auth.js";
 import { byUser, rateLimit } from "../../middleware/rate-limit.js";
 import { USER_RATE_LIMITS } from "../../shared/limits.js";
 import { validate } from "../../middleware/validate.js";
+import type { AuthenticatedRequest } from "../../types/http.js";
 import { asyncHandler } from "../../utils/async-handler.js";
+import { assertNoRunningMealPlanJob } from "./meal-plan-jobs.js";
 import {
   addMealPlanItemController, deleteMealPlanController, deleteMealPlanItemController, generateMealPlanController, currentMealPlanJobController, getMealPlanController,
   listMealPlansController, mealConsumptionPreviewController, swapMealItemController, updateMealCompletionController, updateMealPlanStatusController,
@@ -21,10 +23,19 @@ router.use(requireAuth);
 router.get("/", validate(listMealPlansSchema), asyncHandler(listMealPlansController));
 router.get("/:id", validate(getMealPlanSchema), asyncHandler(getMealPlanController));
 // "Tạo bằng AI" (audit S3): giới hạn theo tài khoản, chỉ đếm mode "ai" (sau validate để có mode mặc định); bộ tạo thuật toán không giới hạn.
+// Đang có việc chạy → 409 trước khi đếm: lần bị từ chối không làm mất lượt trong ngày.
 const { aiMealPlans } = USER_RATE_LIMITS;
 export const aiMealPlanLimit = rateLimit({ ...aiMealPlans, keyOf: byUser,
   message: `Bạn đã dùng hết ${aiMealPlans.max} lượt tạo thực đơn bằng AI trong ngày. Vui lòng thử lại sau, hoặc tạo bằng thuật toán.` });
-const limitAiMode = (req: Request, res: Response, next: NextFunction) => (req.body?.mode === "ai" ? aiMealPlanLimit(req, res, next) : next());
+const limitAiMode = (req: Request, res: Response, next: NextFunction) => {
+  if (req.body?.mode !== "ai") return next();
+  try {
+    assertNoRunningMealPlanJob((req as AuthenticatedRequest).userId);
+  } catch (error) {
+    return next(error);
+  }
+  return aiMealPlanLimit(req, res, next);
+};
 router.post("/generate", validate(generateMealPlanSchema), limitAiMode, asyncHandler(generateMealPlanController));
 router.get("/generate/current", validate(listMealPlansSchema), asyncHandler(currentMealPlanJobController));
 router.post("/:id/items", validate(addMealPlanItemSchema), asyncHandler(addMealPlanItemController));
