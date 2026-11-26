@@ -2,6 +2,7 @@ import type { DietType, MealType } from "@prisma/client";
 import jwt from "jsonwebtoken";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { request, testApp } from "../../test/http-test-utils.js";
+import { DAY_MS, vietnamToday } from "../../utils/vietnam-date.js";
 import { pickFeaturedRecipes } from "./featured-recipes.js";
 import recipeRoutes from "./recipes.routes.js";
 
@@ -154,7 +155,7 @@ describe("Recipe \"Dành cho bạn\" for the signed-in user", () => {
       { id: "i3", recipeId, name: "Hành lá", quantity: 10, unit: "G", optional: true },
     ],
   };
-  const future = new Date(Date.now() + 30 * 86_400_000);
+  const future = new Date(vietnamToday().getTime() + 30 * DAY_MS); // hạn theo ngày VN như API kho
 
   it("returns pantry match, calorie share and warnings from the JWT user's own data", async () => {
     mocks.findUnique.mockResolvedValue(seafoodRecipe);

@@ -2,6 +2,7 @@ import jwt from "jsonwebtoken";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { request, testApp } from "../../test/http-test-utils.js";
 import { seedRecipesAsRecords } from "../../test/seed-recipes.js";
+import { vietnamToday } from "../../utils/vietnam-date.js";
 import recommendationRoutes from "./recommendation.routes.js";
 import { clearRecommendationCache } from "./recommendation.service.js";
 
@@ -99,8 +100,10 @@ describe("GET /api/recommendations", () => {
   });
 
   it("suggests dishes for an owned expiring item", async () => {
-    mocks.findPantryItem.mockResolvedValue({ id: pantryItemId, userId, name: "Đậu hũ", quantity: 300, unit: "G", expiryDate: new Date() });
-    mocks.findPantry.mockResolvedValue([{ id: pantryItemId, userId, name: "Đậu hũ", quantity: 300, unit: "G", expiryDate: new Date() }]);
+    // Hạn lưu như API kho: ngày lịch VN, 00:00 UTC. Trước đây dùng new Date() (cả giờ) nên 00:00–07:00 giờ VN thành "đã hết hạn".
+    const expiryDate = vietnamToday();
+    mocks.findPantryItem.mockResolvedValue({ id: pantryItemId, userId, name: "Đậu hũ", quantity: 300, unit: "G", expiryDate });
+    mocks.findPantry.mockResolvedValue([{ id: pantryItemId, userId, name: "Đậu hũ", quantity: 300, unit: "G", expiryDate }]);
     const response = await get(`?context=pantry&pantryItemId=${pantryItemId}&limit=12`);
     expect(response.status).toBe(200);
     expect(response.body.items.length).toBeGreaterThan(0);
