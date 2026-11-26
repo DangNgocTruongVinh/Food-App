@@ -37,3 +37,5 @@ nouri-login-handoff/
 
 # Ảnh tham khảo thiết kế tải về (tài liệu riêng, có thể có bản quyền, không commit)
 docs/design-references/
+# Bộ skill học thuật tải về (repo riêng, cài ở %USERPROFILE%\.claude\skills): không đưa vào git
+academic-research-skills/
