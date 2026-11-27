@@ -13,3 +13,7 @@ output
 !**/.env.example
 # Bộ skill học thuật tải về: không gửi vào build Docker
 academic-research-skills/
+# Thư mục công cụ (skill của Claude Code/agent), không cần cho build
+.claude/
+.agents/
+skills-lock.json
